@@ -1,0 +1,23 @@
+# tau-bench retail and airline customer-service tools (26 raw tools).
+classes: [user_lookup, order_lookup, product_lookup, reservation_lookup, flight_search,
+          order_modify, order_cancel, order_return, order_exchange, reservation_modify,
+          reservation_cancel, reservation_book, think, escalate, other]
+default: other
+exact:
+  user_lookup: [get_user_details, find_user_id_by_name_zip, find_user_id_by_email]
+  order_lookup: [get_order_details]
+  product_lookup: [get_product_details, list_all_product_types]
+  reservation_lookup: [get_reservation_details]
+  flight_search: [search_direct_flight, search_onestop_flight, list_all_airports,
+                  get_flight_status]
+  order_modify: [modify_pending_order_items, modify_pending_order_address,
+                 modify_pending_order_payment, modify_user_address]
+  order_cancel: [cancel_pending_order]
+  order_return: [return_delivered_order_items]
+  order_exchange: [exchange_delivered_order_items]
+  reservation_modify: [update_reservation_flights, update_reservation_baggages,
+                       update_reservation_passengers]
+  reservation_cancel: [cancel_reservation]
+  reservation_book: [book_reservation]
+  think: [think, calculate]
+  escalate: [transfer_to_human_agents]

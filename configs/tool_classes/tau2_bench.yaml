@@ -1,0 +1,2 @@
+# tau2-bench reuses the tau-bench airline and retail tool set.
+extends: tau_bench

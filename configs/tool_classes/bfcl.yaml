@@ -1,0 +1,36 @@
+# BFCL: about 600 single-use function names across many domains, grouped by keyword.
+# Rules are checked in the order below; the first match wins.
+classes: [math, finance, weather, science, health, location, travel, events, legal,
+          data_ml, media, shopping, other]
+default: other
+ignore_case: true   # regexes only, so fetch_DNA_sequence matches 'dna'
+regex:
+  weather: ['weather', 'forecast', 'precipitation', 'climate', 'temperature', 'air_quality']
+  finance: ['stock', 'invest', 'return_on', 'loan', 'mortgage', 'tax', 'interest',
+            'currency', 'exchange_rate', 'financ', 'portfolio', 'bank', 'payment',
+            'salary', 'budget', 'profit', 'dividend', 'crypto', 'market']
+  legal: ['court', 'lawsuit', 'law_', 'legal', 'case_', 'patent', 'crime', 'criminal']
+  health: ['bmi', 'diabetes', 'food', 'nutrition', 'calorie', 'diet', 'health', 'medical',
+           'disease', 'drug', 'fitness', 'workout', 'recipe', 'heart', 'hospital', 'doctor']
+  science: ['physics', 'chemi', 'dna', 'gene', 'mutation', 'protein', 'cell', 'electric',
+            'magnetic', 'velocity', 'speed', 'acceleration', 'force', 'density', 'energy',
+            'molecul', 'ecology', 'species', 'evolution', 'biology', 'planet', 'astronom',
+            'light_year', 'wavelength', 'frequency', 'pressure', 'thermo', 'displacement',
+            'gravit', 'element', 'atomic', 'population']
+  math: ['^math\.', 'calculat', 'algebra', 'geometry', 'calculus', 'solve', 'integra',
+         'derivative', 'factorial', 'prime', 'gcd', 'lcm', 'hcf', 'hypot', 'area',
+         'circumference', 'volume', 'quadratic', 'probability', 'statistic', 'average',
+         'mean', 'median', 'matrix', 'vector', 'fibonacci', 'sum_', 'sort', 'binomial',
+         'permutation', 'combination', 'number', 'triangle', 'circle']
+  data_ml: ['random_forest', 'predict', 'model', 'train', 'database', 'data', 'query',
+            'regression', 'cluster', 'classif', 'array']
+  travel: ['flight', 'hotel', 'travel', 'trip', 'itinerary', 'book', 'ride', 'route',
+           'distance', 'transit', 'car_rental', 'Flights_', 'Hotels_', 'Travel_',
+           'RideSharing', 'Buses_', 'Trains_', 'RentalCars']
+  location: ['restaurant', 'nearby', 'location', 'map', 'geo', 'city', 'address', 'place',
+             'Restaurants_', 'Homes_']
+  events: ['event', 'concert', 'game', 'sport', 'match', 'team', 'player', 'league',
+           'Events_', 'ticket']
+  media: ['music', 'song', 'movie', 'film', 'video', 'author', 'art', 'paint', 'color',
+          'Music_', 'Movies_', 'Media_', 'news', 'histor']
+  shopping: ['shop', 'product', 'price', 'store', 'order', 'buy', 'cart', 'grocery']

@@ -1,0 +1,23 @@
+# TraceLab: Claude Code and Codex CLI coding agents.
+classes: [shell, shell_io, read_file, write_file, search, web, planning, agent, user_io,
+          schedule, custom_tool, other]
+default: other
+exact:
+  shell: [exec_command, Bash, exec, shell, shell_command, run]
+  # Feeding or polling an already running process (Codex write_stdin, Claude BashOutput).
+  shell_io: [write_stdin, BashOutput, KillBash, wait]
+  read_file: [Read, view_image, NotebookRead]
+  write_file: [Edit, Write, MultiEdit, apply_patch, NotebookEdit]
+  search: [Grep, Glob, LS]
+  web: [WebFetch, WebSearch]
+  planning: [update_plan, TodoWrite, ExitPlanMode, EnterPlanMode, ToolSearch, Skill]
+  agent: [Agent, Task, spawn_agent, wait_agent, close_agent, list_agents, send_message,
+          SendMessage, send_input, followup_task]
+  user_io: [AskUserQuestion, request_user_input, SendUserFile, StructuredOutput,
+            PushNotification]
+  schedule: [ScheduleWakeup, CronCreate, CronDelete, CronList, Monitor]
+prefix:
+  planning: [Task]          # TaskCreate, TaskUpdate, TaskList, TaskGet, TaskOutput, TaskStop
+  agent: [EnterWorktree, ExitWorktree]
+regex:
+  custom_tool: ['^custom_tool_\d+$', '^mcp__', '^list_mcp_resource']

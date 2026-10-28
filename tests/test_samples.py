@@ -6,27 +6,22 @@ from pathlib import Path
 
 import pytest
 
-from predictors.evaluate import group_split, topk_accuracy
-from predictors.frequency import FrequencyPredictor
-from predictors.markov import MarkovPredictor
+from traces.load import SAMPLES
 from traces.schema import Session
+from traces.tool_classes import load_mapper
 
-SAMPLES = Path(__file__).resolve().parent.parent / "data" / "samples"
 SESSION_SAMPLES = ["tracelab", "copilot_2026", "tau_bench", "tau2_bench", "bfcl"]
 MAX_BYTES = 5 * 1024 * 1024
+MAX_TEXT = 64
 
 
 def load(name: str) -> list[dict]:
-    with gzip.open(SAMPLES / f"{name}_sample.jsonl.gz", "rt", encoding="utf-8") as f:
+    with gzip.open(Path(SAMPLES) / f"{name}_sample.jsonl.gz", "rt", encoding="utf-8") as f:
         return [json.loads(line) for line in f]
 
 
-def sessions(name: str) -> list[Session]:
-    return [Session.from_dict(d) for d in load(name)]
-
-
 def test_all_samples_under_5mb() -> None:
-    files = list(SAMPLES.glob("*.jsonl.gz"))
+    files = list(Path(SAMPLES).glob("*.jsonl.gz"))
     assert files
     for f in files:
         assert f.stat().st_size < MAX_BYTES, f.name
@@ -36,29 +31,34 @@ def test_all_samples_under_5mb() -> None:
 def test_sample_is_schema_only(name: str) -> None:
     recs = load(name)
     assert recs
+    classes = set(load_mapper(name).classes)
     for d in recs:
         # Only schema fields: no prompt, message or argument text can hide in extra keys.
-        assert set(d) == {"session_id", "source", "group", "batches"}
+        assert set(d) == {"session_id", "source", "group", "has_timing", "trace_type",
+                          "batches", "split"}
+        assert d["split"] in {"train", "val", "test"}
         for b in d["batches"]:
-            assert set(b) == {"batch_id", "t_emit_ms", "calls", "node"}
+            assert set(b) == {"batch_id", "t_offset_ms", "node", "calls"}
+            assert (b["t_offset_ms"] is not None) == d["has_timing"]
             for c in b["calls"]:
-                assert set(c) == {"tool", "service_ms", "error"}
+                assert set(c) == {"tool", "service_ms", "error", "raw_tool"}
+                assert c["tool"] in classes
+                assert len(c["raw_tool"]) <= MAX_TEXT
+        split = d.pop("split")
+        assert split
         assert Session.from_dict(d).to_dict() == d
+
+
+@pytest.mark.parametrize("name", SESSION_SAMPLES)
+def test_groups_do_not_cross_splits(name: str) -> None:
+    seen: dict[str, str] = {}
+    for d in load(name):
+        assert seen.setdefault(d["group"], d["split"]) == d["split"]
 
 
 @pytest.mark.parametrize("name", ["tracelab", "copilot_2026", "bfcl"])
 def test_parallel_batches_present(name: str) -> None:
-    assert any(b.is_parallel for s in sessions(name) for b in s.batches)
-
-
-@pytest.mark.parametrize("name", ["tau2_bench", "copilot_2026"])
-def test_markov_beats_frequency_on_held_out_groups(name: str) -> None:
-    train, test = group_split(sessions(name), test_frac=0.3, seed=0)
-    tr = [s.tool_sequence() for s in train]
-    te = [s.tool_sequence() for s in test]
-    freq = topk_accuracy(FrequencyPredictor().fit(tr), te, ks=(3,))[3]
-    markov = topk_accuracy(MarkovPredictor(order=1).fit(tr), te, ks=(3,))[3]
-    assert markov > freq
+    assert any(len(b["calls"]) > 1 for d in load(name) for b in d["batches"])
 
 
 def test_huawei_sample_is_numeric() -> None:

@@ -32,7 +32,7 @@ What each dataset gives us:
 |---|---|---|---|---|---|
 | tracelab | yes (129) | both, per call | yes (14% of rounds) | yes | `user` |
 | copilot_2026 | yes; custom tools anonymised | batch time + per-call duration | yes (`tool_batches`) | yes (`status`) | session only |
-| tau_bench v1 | yes | none | no | from reply text | `task_id` |
+| tau_bench v1 | yes | none | no | reply starts with `Error:` | `task_id` |
 | tau2_bench | yes | both, per message | no (in the file we have) | yes | `task_id` |
 | bfcl | yes | none | yes, by design | no | question `id` |
 | huawei_coldstart | function ids | cold-start breakdown | n/a | n/a | `userID`, `funcName` |
@@ -49,12 +49,13 @@ Notes:
 
 ## Samples (committed)
 
-`data/samples/` holds small, text-free samples: up to 200 sessions per dataset, each file
-under 5 MB. They are in the common schema (`traces/schema.py`) with only tool names, timing,
-errors, batch structure and a group id. Tests and CI use them. To rebuild them:
+`data/samples/` holds small, text-free samples: up to 200 sessions per dataset (split
+evenly across train, val and test), each file under 5 MB. They are taken from the pipeline
+output, so they are in the common schema with their `split` field. Tests and CI use them
+through `traces.load` with `root=SAMPLES`. To rebuild them after running the pipeline:
 
 ```bash
-python tools/make_sample.py --all
+python tools/make_sample.py --all          # or: make samples
 python tools/inspect_dataset.py tracelab   # read-only overview of a raw dataset
 ```
 
@@ -68,9 +69,43 @@ respects each dataset's own licence. A size guard enforces this:
 
 ## Pipeline
 
-1. **Download** each dataset into `data/raw/<dataset>/` with `data/download.py`.
-2. **Read** the native format (JSONL, JSON, tar of JSONL shards, zip of CSV).
-3. **Convert** to the common schema in `traces/schema.py` (`Session` → `Batch` → `Call`).
-4. **Map tools** to 12 to 15 shared tool classes so that datasets are comparable.
-5. **Split** 70/30 train/test **by group** with `predictors.evaluate.group_split`.
-6. **Save** as Parquet under `data/processed/`.
+One command per source turns `data/raw/` into `data/processed/<source>/`:
+
+```bash
+python -m traces.pipeline --source tracelab          # or: make data SOURCE=tracelab
+python -m traces.pipeline --source copilot_2026 --shards 1
+python -m traces.pipeline --source tau_bench --limit 100   # quick check
+make data-all                                        # every downloaded source
+```
+
+Stages:
+
+1. **Read**: stream the raw files (`traces/convert_<source>.py`; nothing is loaded whole
+   except one tau-bench JSON file at a time).
+2. **Convert** to the common schema in [`traces/schema.py`](../traces/schema.py): one batch
+   per LLM turn, times in ms since session start, `null` where the source has no timing.
+3. **Map tools** to at most 15 classes per source with the rules in
+   [`configs/tool_classes/<source>.yaml`](../configs/tool_classes/) (exact names, then
+   prefixes, then regexes; everything else is `other`). `raw_tool` keeps the original name.
+4. **Clean**: drop sessions with no calls, with fewer than 2 batches (1 for BFCL) and
+   duplicate ids; sort batches by time; clip negative times and tool runs over 1 hour.
+   Every drop and clip is counted in the report.
+5. **Split by group**: 70% train and 30% test, then 20% of the train groups become
+   validation (seed 0). Saved to `splits.json` so every later step uses the same split.
+6. **Write** `sessions.jsonl.gz` and `calls.parquet`.
+7. **Validate**, failing loudly: no group in two splits, every tool is a known class,
+   batch ids increase, times never decrease, no text field over 64 characters.
+8. **Report** to `report.md` and the terminal.
+
+The file formats and the loader API are described in [`docs/schema.md`](../docs/schema.md).
+
+### Source-specific decisions
+
+| Source | Decision |
+|---|---|
+| tracelab | Batch = one LLM round. 8,841 calls that resumed Claude sessions copy from an earlier session are dropped. `is_error` null (19%) is stored as False |
+| copilot_2026 | Batch time = `tool_batches[].timestamp` relative to the first batch (LLM-call timestamps do not line up). Error = `status == 2`; undocumented `status 0` counts as no error. Group = session (no user id exists) |
+| tau_bench | No timing. Tool replies are paired with calls by position, because the Sonnet trajectories reuse call ids |
+| tau2_bench | Times come from a simulated run; tool run times are a few ms and do not represent real MCP tools |
+| bfcl | Each item is one parallel batch; sessions keep 1 batch |
+| toolathlon | Not converted (gated) |

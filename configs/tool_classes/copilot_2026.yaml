@@ -1,0 +1,19 @@
+# GitHub Copilot coding agent (2026). Custom tools are anonymised as tool_<12 hex>.
+classes: [read_file, write_file, shell, build, run_tests, search, project, planning,
+          package, custom_tool, other]
+default: other
+exact:
+  read_file: [get_file, read_file, get_currentfile]
+  write_file: [replace_string_in_file, multi_replace_string_in_file, apply_patch,
+               create_file, edit_file, remove_file]
+  shell: [run_command_in_terminal, get_background_terminal_output, get_output_window_logs]
+  build: [run_build, get_errors]
+  run_tests: [run_tests, get_tests]
+  search: [code_search, file_search, text_search, find_symbol, get_symbols_by_name]
+  project: [get_projects_in_solution, get_files_in_project]
+  planning: [update_plan_progress, plan, finish_plan, record_observation, detect_memories,
+             clarify_requirements]
+prefix:
+  package: [nuget_, npm_, pip_]
+regex:
+  custom_tool: ['^tool_[0-9a-f]{12}$']

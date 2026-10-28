@@ -83,7 +83,8 @@ offline.
 
 | Path | Contents | Owner |
 |---|---|---|
-| [`traces/`](traces/) | Common trace schema (`Session`, `Batch`, `Call`) and converters | L. Mohnish |
+| [`traces/`](traces/) | Trace schema, converters, pipeline and loader API | L. Mohnish |
+| [`configs/tool_classes/`](configs/tool_classes/) | Raw tool name → tool class rules per source | L. Mohnish |
 | [`replayer/`](replayer/) | Replays sessions against the cluster, generates load | L. Mohnish |
 | [`data/`](data/) | Dataset notes and pipeline (data itself is not committed) | L. Mohnish |
 | [`predictors/`](predictors/) | Predictor and policy interfaces, baselines, Markov, evaluation | G. Parthav |
@@ -185,6 +186,8 @@ make e1
 | `python tools/make_sample.py --all` | Rebuild the committed samples |
 | `make cluster` | Create the local kind cluster from `deploy/kind/cluster.yaml` |
 | `make deploy` | `kubectl apply -f deploy/k8s/` |
+| `make data SOURCE=tracelab` | Convert one raw dataset into `data/processed/<source>/` |
+| `make data-all` | Convert every downloaded dataset |
 | `make e1` | Run E1 (predictor accuracy) |
 | `make clean-cluster` | Delete the kind cluster |
 | `kubectl get pods -n skypiea-tools -w` | Watch tool pods scale up and down |
@@ -194,7 +197,8 @@ make e1
 ## Roadmap
 
 - [x] Project skeleton: schema, policy interface, frequency and Markov predictors, tests, CI
-- [ ] Dataset converters (TraceLab, Copilot, tau-bench, Toolathlon, BFCL)
+- [x] Dataset downloader, converters, tool-class mapping, group splits and loader (TraceLab, Copilot, tau-bench, tau2-bench, BFCL)
+- [ ] Toolathlon (gated; waiting for access and the instructor's answer)
 - [ ] E0: cold-start measurements
 - [ ] Markov features, LightGBM re-ranker, GRU check
 - [ ] Controller, shaper, replayer

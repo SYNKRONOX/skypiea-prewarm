@@ -51,7 +51,8 @@ def test_backoff_to_unigram() -> None:
 
 def test_group_split_no_leak() -> None:
     sessions = [
-        Session(f"s{i}", "test", f"g{i % 5}", [Batch(0, 0.0, [Call("a")])]) for i in range(20)
+        Session(f"s{i}", "test", f"g{i % 5}", batches=[Batch(0, None, calls=[Call("a")])])
+        for i in range(20)
     ]
     train, test = group_split(sessions, test_frac=0.4, seed=1)
     assert len(train) + len(test) == 20
