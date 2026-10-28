@@ -1,0 +1,120 @@
+{
+  "files": {
+    "data/raw/bfcl/BFCL_v4_live_parallel.json": {
+      "dataset": "bfcl",
+      "url": "https://raw.githubusercontent.com/ShishirPatil/gorilla/6ea57973c7a6097fd7c5915698c54c17c5b1b6c8/berkeley-function-call-leaderboard/bfcl_eval/data/BFCL_v4_live_parallel.json",
+      "licence": "Apache-2.0",
+      "bytes": 15649,
+      "sha256": "6c26e9fdc3350cf596e6d1ea9c179cbff834761bccf562f4141ed29a839ca421",
+      "downloaded": "2026-10-28"
+    },
+    "data/raw/bfcl/BFCL_v4_live_parallel_multiple.json": {
+      "dataset": "bfcl",
+      "url": "https://raw.githubusercontent.com/ShishirPatil/gorilla/6ea57973c7a6097fd7c5915698c54c17c5b1b6c8/berkeley-function-call-leaderboard/bfcl_eval/data/BFCL_v4_live_parallel_multiple.json",
+      "licence": "Apache-2.0",
+      "bytes": 82332,
+      "sha256": "21d4b9319c1faac431e22757b367ea28917fe467364c3a4b17f16ec06d4f6e79",
+      "downloaded": "2026-10-28"
+    },
+    "data/raw/bfcl/BFCL_v4_parallel.json": {
+      "dataset": "bfcl",
+      "url": "https://raw.githubusercontent.com/ShishirPatil/gorilla/6ea57973c7a6097fd7c5915698c54c17c5b1b6c8/berkeley-function-call-leaderboard/bfcl_eval/data/BFCL_v4_parallel.json",
+      "licence": "Apache-2.0",
+      "bytes": 171896,
+      "sha256": "19f51a82eff42e5d62541aa500115a056eb78f437c2ba1f10415fd7c8e5dda84",
+      "downloaded": "2026-10-28"
+    },
+    "data/raw/bfcl/BFCL_v4_parallel_multiple.json": {
+      "dataset": "bfcl",
+      "url": "https://raw.githubusercontent.com/ShishirPatil/gorilla/6ea57973c7a6097fd7c5915698c54c17c5b1b6c8/berkeley-function-call-leaderboard/bfcl_eval/data/BFCL_v4_parallel_multiple.json",
+      "licence": "Apache-2.0",
+      "bytes": 347080,
+      "sha256": "8863ea8433239f55c5f016154cf0830853c89f693c6ea270396a2fa121960579",
+      "downloaded": "2026-10-28"
+    },
+    "data/raw/bfcl/possible_answer_BFCL_v4_live_parallel.json": {
+      "dataset": "bfcl",
+      "url": "https://raw.githubusercontent.com/ShishirPatil/gorilla/6ea57973c7a6097fd7c5915698c54c17c5b1b6c8/berkeley-function-call-leaderboard/bfcl_eval/data/possible_answer/BFCL_v4_live_parallel.json",
+      "licence": "Apache-2.0",
+      "bytes": 4972,
+      "sha256": "8a9f189ff0e832ebbbbdade1fd95a7dbcc67406e9177df3f0aad76f59ab00350",
+      "downloaded": "2026-10-28"
+    },
+    "data/raw/bfcl/possible_answer_BFCL_v4_live_parallel_multiple.json": {
+      "dataset": "bfcl",
+      "url": "https://raw.githubusercontent.com/ShishirPatil/gorilla/6ea57973c7a6097fd7c5915698c54c17c5b1b6c8/berkeley-function-call-leaderboard/bfcl_eval/data/possible_answer/BFCL_v4_live_parallel_multiple.json",
+      "licence": "Apache-2.0",
+      "bytes": 7420,
+      "sha256": "f5b5f360556c5feb51db46fb9f56ee4b304f4b45b161599bbb14161c98a2873f",
+      "downloaded": "2026-10-28"
+    },
+    "data/raw/bfcl/possible_answer_BFCL_v4_parallel.json": {
+      "dataset": "bfcl",
+      "url": "https://raw.githubusercontent.com/ShishirPatil/gorilla/6ea57973c7a6097fd7c5915698c54c17c5b1b6c8/berkeley-function-call-leaderboard/bfcl_eval/data/possible_answer/BFCL_v4_parallel.json",
+      "licence": "Apache-2.0",
+      "bytes": 66005,
+      "sha256": "8a6aa19c1adddc6a5a2f7e40f9dbf30cc7e95815e7b830c90589ab318229e0f0",
+      "downloaded": "2026-10-28"
+    },
+    "data/raw/bfcl/possible_answer_BFCL_v4_parallel_multiple.json": {
+      "dataset": "bfcl",
+      "url": "https://raw.githubusercontent.com/ShishirPatil/gorilla/6ea57973c7a6097fd7c5915698c54c17c5b1b6c8/berkeley-function-call-leaderboard/bfcl_eval/data/possible_answer/BFCL_v4_parallel_multiple.json",
+      "licence": "Apache-2.0",
+      "bytes": 74602,
+      "sha256": "5ebf24f458c1f16300c05505d83d6f0a1b68b79be273a033febd0d4f840507e3",
+      "downloaded": "2026-10-28"
+    },
+    "data/raw/copilot_2026/date.2026-06-06.tar.gz": {
+      "dataset": "copilot_2026",
+      "url": "https://github.com/Azure/AzurePublicDataset/releases/download/ghcp-coding-agent-2026/date.2026-06-06.tar.gz",
+      "licence": "CC BY 4.0",
+      "bytes": 124247983,
+      "sha256": "9546e3fd156d379e2420b8a0ada496ff507cf74aab32b9fc97bd1b6b353fa182",
+      "downloaded": "2026-10-28"
+    },
+    "data/raw/huawei_coldstart/R3.zip": {
+      "dataset": "huawei_coldstart",
+      "url": "https://drive.usercontent.google.com/download?id=1WlUk-tQLao6mU0FoMx9YO2-HIMevEDjX&export=download",
+      "licence": "CC BY 4.0",
+      "bytes": 20636393,
+      "sha256": "3cf5cea4ee81935f5dd8ccccd129da87a298607db318080734827face8f5a49c",
+      "downloaded": "2026-10-28"
+    },
+    "data/raw/tau2_bench/": {
+      "dataset": "tau_bench",
+      "url": "https://github.com/sierra-research/tau2-bench",
+      "licence": "MIT",
+      "bytes": 172730753,
+      "commit": "122e2432b82d740e8f313f46f0a071729c404f39",
+      "exclude": [
+        "data/tau2/results/",
+        "data/tau2/multilingual/",
+        "data/tau2/multilingual_extensions/",
+        "data/voice/",
+        "web/"
+      ],
+      "include": [
+        "data/tau2/results/final/o4-mini-2025-04-16_airline_default_gpt-4.1-2025-04-14_4trials.json"
+      ],
+      "downloaded": "2026-10-28"
+    },
+    "data/raw/tau_bench/": {
+      "dataset": "tau_bench",
+      "url": "https://github.com/sierra-research/tau-bench",
+      "licence": "MIT",
+      "bytes": 62665799,
+      "commit": "59a200c6d575d595120f1cb70fea53cef0632f6b",
+      "exclude": [],
+      "include": [],
+      "downloaded": "2026-10-28"
+    },
+    "data/raw/tracelab/syfi_coding_trace.jsonl.gz": {
+      "dataset": "tracelab",
+      "url": "https://github.com/uw-syfi/TraceLab/releases/download/v0.0.2/syfi_coding_trace.jsonl.gz",
+      "licence": "CC BY 4.0",
+      "bytes": 100939722,
+      "sha256": "11ce51ec0a25e3d1d95b025bca2f7d1647e47571eb7cc968acd5fc64d4b4fb65",
+      "downloaded": "2026-10-28"
+    }
+  }
+}

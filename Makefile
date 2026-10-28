@@ -1,4 +1,4 @@
-.PHONY: test lint cluster deploy e1 clean-cluster
+.PHONY: test lint check-sizes install-hooks cluster deploy e1 clean-cluster
 
 CLUSTER ?= skypiea
 
@@ -7,6 +7,13 @@ test:
 
 lint:
 	ruff check .
+
+check-sizes:
+	python tools/check_sizes.py
+
+install-hooks:
+	cp tools/pre-commit.sh .git/hooks/pre-commit
+	chmod +x .git/hooks/pre-commit
 
 cluster:
 	kind create cluster --name $(CLUSTER) --config deploy/kind/cluster.yaml

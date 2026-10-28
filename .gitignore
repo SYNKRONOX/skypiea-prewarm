@@ -17,6 +17,8 @@ data/processed/*
 !data/processed/.gitkeep
 *.parquet
 *.jsonl.gz
+# Small text-free samples (< 5 MB each) are committed for tests and CI
+!data/samples/*.jsonl.gz
 
 # Kubernetes credentials
 kubeconfig

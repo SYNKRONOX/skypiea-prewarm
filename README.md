@@ -147,7 +147,15 @@ make test
 
 ### 3. Get the data
 
-Follow [`data/README.md`](data/README.md). Raw data goes in `data/raw/` and is never committed.
+Raw data goes in `data/raw/` and is never committed. Rebuild it with the downloader, which
+checks sizes first and records sha256 hashes (details in [`data/README.md`](data/README.md)):
+
+```bash
+python data/download.py --list
+python data/download.py --dataset tracelab
+```
+
+Tests do not need the raw data: they use the small samples committed in `data/samples/`.
 
 ### 4. Start a local cluster
 
@@ -170,6 +178,11 @@ make e1
 |---|---|
 | `make test` | Run unit tests (`pytest -q`) |
 | `make lint` | Lint with `ruff check .` |
+| `make check-sizes` | Fail if any git-tracked file is over 50 MB |
+| `make install-hooks` | Install the pre-commit size check |
+| `python data/download.py --dataset <name>` | Download a dataset into `data/raw/` |
+| `python tools/inspect_dataset.py <name>` | Read-only overview of a raw dataset |
+| `python tools/make_sample.py --all` | Rebuild the committed samples |
 | `make cluster` | Create the local kind cluster from `deploy/kind/cluster.yaml` |
 | `make deploy` | `kubectl apply -f deploy/k8s/` |
 | `make e1` | Run E1 (predictor accuracy) |

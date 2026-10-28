@@ -15,5 +15,6 @@ jobs:
           python-version: "3.11"
           cache: pip
       - run: pip install pytest ruff
+      - run: python tools/check_sizes.py
       - run: ruff check .
       - run: pytest -q

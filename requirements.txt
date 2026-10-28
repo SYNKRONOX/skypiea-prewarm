@@ -6,3 +6,4 @@ lightgbm
 pyyaml
 pytest
 ruff
+requests
