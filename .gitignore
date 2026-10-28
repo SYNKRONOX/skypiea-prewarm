@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.venv/
+venv/
+.env
+.env.*
+
+# Data: raw and processed data are never committed
+data/raw/*
+!data/raw/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+*.parquet
+*.jsonl.gz
+
+# Kubernetes credentials
+kubeconfig
+kubeconfig*
+*.kubeconfig
+.kube/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

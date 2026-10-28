@@ -1,0 +1,16 @@
+# E1: next-tool predictor accuracy.
+name: e1_predictor_accuracy
+datasets: [tau-bench, toolathlon]
+split:
+  by: group
+  test_frac: 0.3
+  seed: 0
+predictors:
+  - {name: frequency}
+  - {name: markov, order: 1}
+  - {name: markov, order: 2}
+  - {name: markov, order: 3}
+metrics:
+  topk: [1, 3]
+  ahead: [1, 3, 5]
+output: results/e1
