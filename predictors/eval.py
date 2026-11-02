@@ -281,22 +281,29 @@ def model_config(model: NextToolModel) -> dict[str, Any]:
 def evaluate(model: NextToolModel, source: str, split: str = "fixed",
              vocab: str | None = None, *, root: Path = PROCESSED, n_boot: int | None = None,
              write: bool = True, csv_path: Path = CSV_PATH,
-             test_source: str | None = None) -> dict[str, Any]:
+             test_source: str | None = None, refit: bool = True) -> dict[str, Any]:
     """Fit a fresh copy of ``model`` on the split's train part and score its test part.
 
     With ``test_source`` (cross-source), train and val come from ``source`` and the test set
     is ``test_source``'s test split (same split spec); both must share ``vocab``. Results are
     recorded with source "<source>-><test_source>".
+
+    ``refit=False`` scores ``model`` as given; the caller guarantees it was fitted on this
+    same split's train/val (used to score one fitted ranker with and without calibration).
+    The fitted model is returned under ``"fitted"``.
     """
     train, val, test = split_groups(source, split, root, vocab)
     if test_source is not None:
         test = split_groups(test_source, split, root, vocab)[2]
     if not train or not test:
         raise ValueError(f"{source} {split}: empty train or test")
-    m = copy.deepcopy(model)
-    t0 = time.perf_counter()
-    m.fit(train, val)
-    fit_s = time.perf_counter() - t0
+    if refit:
+        m = copy.deepcopy(model)
+        t0 = time.perf_counter()
+        m.fit(train, val)
+        fit_s = time.perf_counter() - t0
+    else:
+        m, fit_s = model, math.nan
     rec, groups = score(m, test)
     res: dict[str, Any] = {k: float(np.mean(v)) for k, v in rec.num.items()}
     res.update({f"n_{k}": len(v) for k, v in rec.num.items()})
@@ -311,6 +318,7 @@ def evaluate(model: NextToolModel, source: str, split: str = "fixed",
     res["ci"] = group_bootstrap(rec, len(groups), boot)
     res["config"] = model_config(m)
     res["model"], res["vocab"], res["split"] = m.name, vocab, split
+    res["fitted"] = m
     res["source"] = source if test_source is None else f"{source}->{test_source}"
     if write:
         _write(res, csv_path)
