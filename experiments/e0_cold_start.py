@@ -265,6 +265,7 @@ def plot(summary, target: str, path: Path, parallel: int = 1) -> None:
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
     import numpy as np
+    import pandas as pd
 
     label = f"{target}, pull: {PULL_SOURCE.get(target, '?')}"
     if parallel > 1:
@@ -282,8 +283,8 @@ def plot(summary, target: str, path: Path, parallel: int = 1) -> None:
     for i, mode in enumerate(modes):
         s = summary[summary["mode"] == mode].set_index("tool").reindex(tools)
         xs = x + (i - (len(modes) - 1) / 2) * w
-        med = s["total_median_ms"] / 1000
-        p95 = s["total_p95_ms"] / 1000
+        med = pd.to_numeric(s["total_median_ms"], errors="coerce") / 1000
+        p95 = pd.to_numeric(s["total_p95_ms"], errors="coerce") / 1000
         ax.bar(xs, med, w * 0.92, color=PALETTE[i], label=f"{mode}: median", zorder=2)
         ax.scatter(xs, p95, marker="_", s=120, color=INK, zorder=3,
                    label="p95" if i == 0 else None)
@@ -300,7 +301,8 @@ def plot(summary, target: str, path: Path, parallel: int = 1) -> None:
         s = summary[summary["mode"] == mode].set_index("tool").reindex(tools)
         bottom = np.zeros(len(tools))
         for j, ph in enumerate(PHASES):
-            v = s[f"{ph}_median_ms"].fillna(0).clip(lower=0).to_numpy() / 1000
+            v = (pd.to_numeric(s[f"{ph}_median_ms"], errors="coerce").fillna(0).clip(lower=0)
+                 .to_numpy(dtype=float) / 1000)
             ax.bar(x, v, 0.7, bottom=bottom, color=PALETTE[j], label=ph.replace("_", " "),
                    edgecolor="white", linewidth=1, zorder=2)
             bottom += v
@@ -502,7 +504,6 @@ def main() -> None:
         r["report_commit"] = git_commit
         if not r.get("error"):
             r.update({f"{k}_ms": v for k, v in phases(r).items()})
-    pd.DataFrame(rows).to_csv(runs_csv, index=False)
     summary, ok = summarise(rows)
     summary.insert(0, "pull_source", PULL_SOURCE[a.target])
     meta = pd.read_csv(runs_csv, usecols=["git_commit", "run_params"]).drop_duplicates()
@@ -521,6 +522,11 @@ def main() -> None:
         print(ln)
     if (h := huawei_line(ok)) is not None:
         print(h)
+    # rewrite the runs CSV (raw columns unchanged, phases re-derived) only after the summary
+    # and figure succeeded, atomically
+    tmp = runs_csv.with_suffix(".csv.tmp")
+    pd.DataFrame(rows).to_csv(tmp, index=False)
+    os.replace(tmp, runs_csv)
     if a.write_config:
         write_config(cfg, summary, a.target)
     print(f"wrote results/{stem}_runs.csv, results/{stem}_summary.csv, results/{stem}.png")
