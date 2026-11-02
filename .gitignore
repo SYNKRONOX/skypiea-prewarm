@@ -31,3 +31,6 @@ kubeconfig*
 .idea/
 .DS_Store
 Thumbs.db
+
+# Chat exports (handoff notes are tracked, raw transcripts are not)
+docs/handoff/*.txt
