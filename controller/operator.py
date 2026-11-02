@@ -48,6 +48,7 @@ async def startup(settings: kopf.OperatorSettings, **_) -> None:
     settings.posting.level = logging.WARNING
     settings.watching.server_timeout = 300
     settings.scanning.disabled = True   # no cluster-wide namespace/CRD discovery (namespaced RBAC)
+    logging.getLogger("kopf.objects").setLevel(logging.WARNING)  # no per-event INFO lines
     _svc = ControllerService(K8sScaler(NS), _cfg())
     runner = web.AppRunner(_svc.web_app(), access_log=None)
     await runner.setup()
