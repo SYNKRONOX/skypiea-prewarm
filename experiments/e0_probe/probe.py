@@ -25,6 +25,7 @@ import time
 import urllib.request
 
 from kubernetes import client, config, watch
+from mcp import Client  # imported up front: client import cost is not part of a cold start
 
 PULLED_RX = re.compile(r"in ([\d.]+)(ms|s) \(([\d.]+)(ms|s) including waiting\)")
 SIZE_RX = re.compile(r"Image size: (\d+) bytes")
@@ -115,8 +116,6 @@ class Run:
 
     # ---- MCP calls through the Service ----
     async def call_once(self) -> float:
-        from mcp import Client
-
         t = time.monotonic()
         async with Client(self.url, mode="2026-07-28") as c:
             res = await c.call_tool(self.tool, {"service_ms": self.service_ms})
@@ -231,6 +230,41 @@ class Run:
         return self.r
 
 
+def warm_client() -> float:
+    """One real HTTP MCP round trip against a throwaway local server, before any t0, so the
+    probe's own first-use costs (lazy imports, HTTP client setup) never land in first_call."""
+    import uvicorn
+    from mcp.server.mcpserver import MCPServer
+
+    srv = MCPServer("warmup")
+
+    @srv.tool()
+    def ping(service_ms: int = 0) -> dict:
+        return {"ok": True}
+
+    with socket.socket() as s:
+        s.bind(("127.0.0.1", 0))
+        port = s.getsockname()[1]
+    app = srv.streamable_http_app(json_response=True, stateless_http=True)
+    server = uvicorn.Server(uvicorn.Config(app, host="127.0.0.1", port=port, log_level="error"))
+    th = threading.Thread(target=server.run, daemon=True)
+    th.start()
+    while not server.started:
+        time.sleep(0.005)
+
+    async def calls() -> float:
+        t = time.monotonic()
+        for _ in range(2):
+            async with Client(f"http://127.0.0.1:{port}/mcp", mode="2026-07-28") as c:
+                await c.call_tool("ping", {"service_ms": 0})
+        return (time.monotonic() - t) * 1000
+
+    ms = asyncio.run(calls())
+    server.should_exit = True
+    th.join(timeout=5)
+    return round(ms, 1)
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -247,7 +281,10 @@ def main() -> None:
     if a.cmd == "ping":
         print(json.dumps({"ok": True}))
         return
+    warm_ms = warm_client()
     runs = [Run(t, a.namespace, a.warm, a.service_ms, a.timeout) for t in a.tool]
+    for r in runs:
+        r.r["probe_warmup_ms"] = warm_ms
     errs = {r.tool: e for r in runs if (e := r.precheck())}
     if errs:
         print(json.dumps([{"tool": t, "error": e} for t, e in errs.items()]))

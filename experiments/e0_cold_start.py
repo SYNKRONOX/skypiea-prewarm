@@ -19,7 +19,9 @@ Phases (ms; they sum to total):
   container_start remainder until the process started (sandbox, network, unpack, create)
   app_init        process start -> /healthz answers on the pod IP (imports, data/model load)
   readiness_lag   /healthz OK -> pod Ready=True observed (probe period 1 s)
-  first_call      Ready -> first successful MCP call through the Service. With the MCP SDK
+  first_call      Ready -> first successful MCP call through the Service (the probe's client is
+                  warmed up before t0, so only routing + the server's first request count;
+                  a 100 ms TCP gate keeps dropped SYNs from stalling an attempt). With the MCP SDK
                   2.3.0 client pinned to protocol 2026-07-28 a call is two stateless POSTs
                   (tools/call, then tools/list for output-schema validation); no initialize.
   total           scale request -> first successful response
@@ -180,6 +182,7 @@ RUN_FIELDS = (["target", "pull_source", "parallel", "round", "group", "tool", "t
               "app_startup_ms", "pull_incl_wait_ms", "t_scale_ack", "t_pod_seen",
               "t_scheduled", "t_pod_ip", "t_proc_start", "t_running_observed", "t_health_ok",
               "t_ready", "t_first_ok", "first_call_attempts", "tcp_gate_fails", "attempt_log",
+              "probe_warmup_ms",
               "health_rtt_ms", "scale_down_ms",
               "pull_event", "warnings", "error"])
 
