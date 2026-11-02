@@ -30,13 +30,25 @@ Key facts:
 
 ## E0 status
 
-- **Not run yet** (timed runs wait for the user to pause model training).
-- Only smoke runs exist (n=2, 4 tools; untracked `results/e0_kind*`, not results).
-- Next commands, once the user says go:
-  `python -m experiments.e0_cold_start --target kind --n 10` (about 1 h, estimate), then
-  `python -m experiments.e0_cold_start --target kind --n 10 --parallel 3` (about 30 min).
-- Then the AWS phase (Terraform plan/apply only after the user confirms the account), E0 on AWS
-  at n=30 and n=100.
+**kind: done** (commit `c0deb28`; data `f72afa0`, images `8ddcf55`, phases derived at `620a6ea`).
+Files: `results/e0_kind{,_p3}_{runs,summary}.csv`, `results/e0_kind{,_p3}.png`.
+
+| kind (local registry = pull lower bound) | cached median / p95 | uncached median / p95 |
+|---|---|---|
+| sequential, n=10 (320 runs) | 2544 / 4219 ms | 4070 / 6326 ms |
+| 3 tools at once, n=10 (360 runs) | 2936 / 4035 ms | 4730 / 6940 ms |
+
+0 noisy, 0 failed, 0 cached/uncached mismatches; outliers kept (2 + 6, all < 1.7x their median).
+Every tool is above 1 s in both modes. Biggest cached phase: app_init; uncached: image_pull.
+Caveat: the sequential run's app_init was ~35% slower than plain docker and than the later
+parallel run (server-reported too); WSL load average was low, Windows host load is not visible.
+
+E0 harness fixes since the first commit: uncached removes all tool images (shared layers);
+probe on an alpine base; 100 ms TCP gate; client warm-up before t0; pull phase includes queue
+wait; pull time recovered from the kubelet event in report mode.
+
+Next for E0: AWS (Terraform plan/apply only after the user confirms the account), n=30 then
+n=100, plus `--parallel 3` n=10.
 
 ## Next: gateway + controller
 
