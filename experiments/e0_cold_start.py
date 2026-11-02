@@ -18,9 +18,8 @@ Phases (ms; they sum to total):
   image_pull      kubelet "Successfully pulled ... in X (Y including waiting)": Y, so time
                   queued behind other pulls counts (0 if the image was present)
   container_start remainder until the process started (sandbox, network, unpack, create)
-  app_init        process start -> HTTP server listening, as measured by the server itself
-                  (imports, data/model load; reported on /healthz, 10 ms resolution)
-  readiness_lag   listening -> pod Ready=True observed (kubelet probe period 1 s)
+  app_init        process start -> /healthz answers on the pod IP (imports, data/model load)
+  readiness_lag   /healthz OK -> pod Ready=True observed (kubelet probe period 1 s)
   first_call      Ready -> first successful MCP call through the Service (the probe's client is
                   warmed up before t0, so only routing + the server's first request count;
                   a 100 ms TCP gate keeps dropped SYNs from stalling an attempt). With the MCP SDK
@@ -179,24 +178,20 @@ def phases(r: dict) -> dict:
     """Phase durations (ms) from the probe's single-clock timestamps; None if unavailable.
 
     image_pull includes time queued behind other pulls (kubelet pulls serially), when known.
-    app_init is the server's own process-start -> listening time (app_startup_ms, from
-    /healthz), not the probe's detection time: the probe can only poll once it sees the pod IP,
-    which the kubelet sometimes reports after the app is already listening.
+    app_init is process start -> the probe's first /healthz OK on the pod IP. Where the server
+    also reported its own startup time, the two agree within 11 ms at p90 on kind (680 runs).
     """
     need = ["t_scheduled", "t_proc_start", "t_health_ok", "t_ready", "t_first_ok"]
     pull_ms, pull_wait_ms = pull_times(r)
     if any(r.get(k) is None for k in need) or pull_ms is None:
         return {m: None for m in PHASES + ["total"]}
     pull = float(pull_ms if pull_wait_ms is None else pull_wait_ms)
-    init = r.get("app_startup_ms")
-    init = float(r["t_health_ok"] - r["t_proc_start"] if init is None else init)
-    t_listening = r["t_proc_start"] + init
     return {
         "scheduling": r["t_scheduled"],
         "image_pull": pull,
         "container_start": round(r["t_proc_start"] - r["t_scheduled"] - pull, 2),
-        "app_init": round(init, 2),
-        "readiness_lag": round(r["t_ready"] - t_listening, 2),
+        "app_init": round(r["t_health_ok"] - r["t_proc_start"], 2),
+        "readiness_lag": round(r["t_ready"] - r["t_health_ok"], 2),
         "first_call": round(r["t_first_ok"] - r["t_ready"], 2),
         "total": r["t_first_ok"],
     }

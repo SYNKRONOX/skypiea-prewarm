@@ -71,12 +71,12 @@ def test_parallel_groups_cover_every_tool():
     assert {t for g in groups for t in g} == set(order)
 
 
-def test_app_init_uses_server_startup_and_pull_includes_wait():
+def test_pull_includes_queue_wait():
     r = probe_result(False)
-    r.update(app_startup_ms=700.0, pull_incl_wait_ms=1800.0, t_proc_start=15 + 1800 + 300)
-    r.update(t_health_ok=r["t_proc_start"] + 1400)  # probe detected the app 700 ms late
+    r.update(pull_incl_wait_ms=1800.0, t_proc_start=15 + 1800 + 300,
+             t_health_ok=15 + 1800 + 300 + 900)
     ph = e0.phases(r)
-    assert ph["app_init"] == 700 and ph["image_pull"] == 1800 and ph["container_start"] == 300
+    assert ph["image_pull"] == 1800 and ph["container_start"] == 300 and ph["app_init"] == 900
     assert sum(ph[p] for p in e0.PHASES) == pytest.approx(ph["total"])
 
 
