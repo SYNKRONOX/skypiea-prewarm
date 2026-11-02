@@ -1,0 +1,15 @@
+# E0 cold-start measurement settings (experiments/e0_cold_start.py).
+# Measured results for the simulator go to configs/cold_start.yaml
+# (python -m experiments.e0_write_cold_start; schema in docs/cold_start_schema.md).
+seed: 0
+warm_calls: 20          # warm latency: calls to the Ready pod after the first success
+service_ms: 0           # service_ms passed on every E0 call (0 = pure overhead)
+run_timeout_s: 180      # per run: scale request -> first successful call
+namespace: skypiea-tools
+kind:
+  context: kind-skypiea
+  cluster: skypiea
+aws:
+  kubeconfig: ~/.kube/skypiea-aws
+  ssh_user: ubuntu
+  ssh_key: ~/.ssh/skypiea-aws

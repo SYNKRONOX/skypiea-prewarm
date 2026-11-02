@@ -56,7 +56,7 @@ from pathlib import Path
 import yaml
 
 ROOT = Path(__file__).resolve().parent.parent
-CFG_PATH = ROOT / "configs" / "cold_start.yaml"
+CFG_PATH = ROOT / "experiments" / "e0_config.yaml"
 PHASES = ["scheduling", "image_pull", "container_start", "app_init", "readiness_lag",
           "first_call"]
 METRICS = PHASES + ["total", "warm_median"]
@@ -375,17 +375,6 @@ def huawei_line(ok) -> str | None:
             f"{h[col].median():.3f} (dataset units, n={len(h)}); different systems.")
 
 
-def write_config(cfg: dict, summary, target: str) -> None:
-    meas = cfg.get("measured") or {}
-    meas[target] = {
-        r["tool"] + "." + r["mode"]: {"n": int(r["n"]), "median_ms": r["total_median_ms"],
-                                      "p95_ms": r["total_p95_ms"]}
-        for _, r in summary.iterrows()}
-    cfg["measured"] = meas
-    header = [ln for ln in CFG_PATH.read_text().splitlines() if ln.startswith("#")]
-    CFG_PATH.write_text("\n".join(header) + "\n" + yaml.safe_dump(cfg, sort_keys=False))
-
-
 def groups_for_round(order: list[str], k: int) -> list[list[str]]:
     """Chunks of k tools; the last chunk is topped up from the start of the order."""
     if k <= 1:
@@ -416,8 +405,6 @@ def main() -> None:
                     help="append to the existing runs CSV instead of starting a new one")
     ap.add_argument("--report-only", action="store_true",
                     help="re-make summary/figure from the existing runs CSV")
-    ap.add_argument("--write-config", action="store_true",
-                    help="store measured medians in configs/cold_start.yaml")
     a = ap.parse_args()
     cfg = yaml.safe_load(CFG_PATH.read_text())
     seed = cfg["seed"] if a.seed is None else a.seed
@@ -426,7 +413,7 @@ def main() -> None:
     stem = f"e0_{a.target}" + (f"_p{a.parallel}" if a.parallel > 1 else "")
     runs_csv = res / f"{stem}_runs.csv"
     dirty = sh(["git", "-C", str(ROOT), "status", "--porcelain", "--", "experiments/",
-                "tools/", "charts/", "configs/cold_start.yaml"], check=False).stdout.strip()
+                "tools/", "charts/"], check=False).stdout.strip()
     git_commit = sh(["git", "-C", str(ROOT), "rev-parse", "--short", "HEAD"]).stdout.strip() \
         + ("-dirty" if dirty else "")
     run_params = (f"n={a.n} modes={a.modes} tools={a.tools} parallel={a.parallel} seed={seed} "
@@ -543,8 +530,6 @@ def main() -> None:
     tmp = runs_csv.with_suffix(".csv.tmp")
     pd.DataFrame(rows).to_csv(tmp, index=False)
     os.replace(tmp, runs_csv)
-    if a.write_config:
-        write_config(cfg, summary, a.target)
     print(f"wrote results/{stem}_runs.csv, results/{stem}_summary.csv, results/{stem}.png")
 
 
