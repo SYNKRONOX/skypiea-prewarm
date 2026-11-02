@@ -1,6 +1,6 @@
 # Prediction engine: state of work (branch feat/model)
 
-Last updated: 2026-11-02 (after Phase 4 code). Local commits only; nothing pushed or merged.
+Last updated: 2026-11-02 (after Phase 4 full runs). Local commits only; nothing pushed or merged.
 
 ## Commits
 
@@ -10,6 +10,9 @@ Last updated: 2026-11-02 (after Phase 4 code). Local commits only; nothing pushe
 | 3273927 | Phases 1-2: evaluation harness, baseline ladder, paper protocol, graph-prior ablation, leakage property test |
 | f597c7b | Phase 3: TransitionGraph, poisoning guards, gated rebuild, end-node fix |
 | 2a3746c | Phase 4 code: LightGBM re-ranker, isotonic calibrator (JSON), graph-derived base models, cross-source evaluation; unit-tested on samples only |
+| 7d23f85 | Phase 4 runner `predictors/phase4.py`; `evaluate(refit=False)` |
+| 06c2e8e | Ranker fix: isotonic ties broken by raw score (calibration never reorders) |
+| (this) | Phase 4 results: `results/p4_report.md`, `p4_ranker.csv`, `p4_importance.csv`, `p1_accuracy.csv.gz`; `docs/model.md` contract alignment |
 | 2d03cba | Phase 2 results (`results/p1_accuracy.csv.gz`, `ablation_graph.csv`, `paper_protocol.csv`); rows record `37c400d-dirty` because they were produced before commit 3273927, which holds that code |
 
 ## Done
@@ -68,21 +71,34 @@ Last updated: 2026-11-02 (after Phase 4 code). Local commits only; nothing pushe
 - Fix: the end decision point carries the node of the last call (what a live request would
   send); Phase 2 numbers unaffected.
 
-## Phase 4 (code done, tested on samples only)
+## Phase 4 (done: full runs after E0, num_threads 4)
 
 - `predictors/lgbm_ranker.py`: candidates = graph n-gram top-20 U graph-prior-blend top-5 U
-  `<end>`; 29 features (one_step, k_step 2/3/5, n-gram, blend, expected calls, timing
-  quantiles, p_end, last 1-5 tools, last batch size / error / service_ms, step, time since
-  start, candidate frequency / recency / is-last, n-gram rank, node). Train rows use 3-fold
-  group out-of-fold base features; early stopping and isotonic calibration on val. Outputs:
-  `ranked` (sums to <= 1, explicit `<end>`) and `batch_probs` (calibrated, may sum > 1).
-  Config `configs/model/ranker.yaml` (num_threads 4, seed 0).
-- `predictors/graph_models.py`: the ranker's n-gram and graph-prior blend are computed from
-  the TransitionGraph's guarded counts, so `counts.json` + `ranker.lgb` + `calibrator.json`
-  + `ranker_meta.json` fully define the model (save/load tested, byte-identical retraining).
-- `evaluate(..., test_source=...)` for the cross-source test (TraceLab -> Copilot).
-- Sample smoke run (TraceLab sample, NOT a result): fit 3.4 s, top-1 0.451, top-3 0.821,
-  p99 a few ms. No full training yet.
+  `<end>`; 29 features; 3-fold group out-of-fold base features on train; early stopping and
+  isotonic calibration on val; `ranked` (sums to <= 1) and `batch_probs` (marginal).
+  Base models come from the TransitionGraph's guarded counts (`predictors/graph_models.py`).
+- Fix found in the smoke run: isotonic steps tied distinct raw scores and ties fell back to
+  tool names (tau2 top-1 .520 -> .453). Ties are now broken by the raw score; test added.
+- Results (`results/p4_report.md`; fixed split top-1, 95% group CI; GKF mean ± sd):
+
+| Source | n-gram | Ranker | GKF n-gram | GKF ranker | ranker > n-gram folds |
+|---|---|---|---|---|---|
+| TraceLab native | .454 [.42,.51] | .529 [.48,.57] | .473 ± .038 | .535 ± .052 | 5/5 |
+| TraceLab coding_common | .549 | .572 | .569 | .584 | 5/5 |
+| Copilot coding_common | .490 [.47,.51] | .506 [.49,.52] | .499 ± .009 | .516 ± .011 | 5/5 |
+| tau-bench | .607 | .618 | .601 | .611 | 4/5 |
+| tau2 (15 groups) | .620 [.49,.73] | .520 [.44,.58] | .574 | .599 | 5/5 (fixed split: worse) |
+| Synthetic A / B / RW | .918 / 1 / .614 | same | same | same | 0/5 (no headroom) |
+| TraceLab -> Copilot | .437 | .458 | - | - | cross-source drop: ranker -4.8, n-gram -5.3 points |
+
+- Calibration: raw LightGBM (binary log-loss) is already calibrated on test (row ECE
+  .002-.004 on real sources); val-fitted isotonic makes it slightly worse there (.003-.006)
+  and helps only on tau2 (.026 -> .019) and synthetic A (.030 -> .011). Top-1 ECE moves both
+  ways. Open question for the user: keep isotonic or ship raw scores.
+- Ranker p99 latency 1.7-6.6 ms (single predict + top-3, Python feature build; one noisy
+  10.1 ms raw-mode run); n-gram p99 <= 0.07 ms. Fit: 92 s TraceLab, 14 s Copilot.
+- Top features: n-gram, one_step, candidate frequency in the session; TraceLab native also
+  uses last_service_ms and candidate recency.
 
 ## Decisions made
 
@@ -96,11 +112,17 @@ Last updated: 2026-11-02 (after Phase 4 code). Local commits only; nothing pushe
 - Ranker candidates: n-gram top-20 U graph-prior top-5 (closed).
 - No heavy jobs while E0 runs on the infra side; after E0, LightGBM uses num_threads=4.
 
+## Contract
+
+- `docs/model.md` lists every difference between the original service design and the infra
+  contract `docs/predictor_contract.md` (feat/infra 18a711f), and proposals P1-P8 (not
+  applied). The service (Phase 9) will conform to the contract exactly: `POST /decide`.
+
 ## Next
 
-After you confirm E0 is done:
-1. Phase 4 full runs: ranker on every source (fixed split, CIs, GKF), top-15 importance,
-   ECE before/after calibration on test, p99 latency, cross-source TraceLab -> Copilot drop.
-2. Per-session cap measurement on full TraceLab (cap 3 vs 5 vs none); raise the cap if 3 costs
-   more than 1 point of top-1.
-Then Phase 5 (decisions).
+1. (Waiting for the user's go after the Phase 4 report.) Per-session cap measurement on full
+   TraceLab (cap 3 vs 5 vs none); raise the cap if 3 costs more than 1 point of top-1.
+2. Phase 5 decisions, then Phase 6 sim on full data with `configs/cold_start.yaml` (E0 kind,
+   committed on feat/infra c21a567, a lower bound). The sim report must add a hideable
+   fraction per source and tool class (think gap > cold start, cached and uncached) and the
+   cold rate split by hideable / non-hideable.
