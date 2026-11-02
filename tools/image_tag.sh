@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
-# Image tag for the current checkout: git short sha, plus -dirty if tools/ or the E0 probe have local changes.
+# Image tag = short sha of the last commit that changed an image input (tools/ or the E0 probe),
+# plus -dirty if those paths have uncommitted changes. Commits that only touch results or docs
+# therefore keep the tag (and the images) unchanged. E0 also records each image's digest.
 set -euo pipefail
 cd "$(dirname "$0")/.."
-sha=$(git rev-parse --short HEAD)
-if [ -n "$(git status --porcelain -- tools/ experiments/e0_probe/)" ]; then sha="${sha}-dirty"; fi
+paths=(tools/ experiments/e0_probe/)
+sha=$(git log -1 --format=%h -- "${paths[@]}")
+if [ -n "$(git status --porcelain -- "${paths[@]}")" ]; then sha="${sha}-dirty"; fi
 echo "$sha"
