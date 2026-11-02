@@ -1,0 +1,6 @@
+apiVersion: v2
+name: skypiea
+description: Skypiea - MCP tool servers at 0 replicas, the gateway, our scale-to-zero controller and the predictor placeholder.
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

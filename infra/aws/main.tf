@@ -1,7 +1,7 @@
 locals {
   # Single source of truth for the tool list: tools/tool_map.yaml (+ the E0 probe image).
   tools       = keys(yamldecode(file("${path.module}/../../tools/tool_map.yaml")).servers)
-  images      = concat(local.tools, ["e0-probe"])
+  images      = concat(local.tools, ["e0-probe", "platform"])
   account_id  = data.aws_caller_identity.me.account_id
   ecr_host    = "${local.account_id}.dkr.ecr.${var.region}.amazonaws.com"
   bucket_name = "skypiea-${random_id.bucket.hex}"

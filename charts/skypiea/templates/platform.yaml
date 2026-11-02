@@ -1,0 +1,245 @@
+{{- if .Values.platform.enabled }}
+{{- $p := .Values.platform }}
+{{- $ns := .Release.Namespace }}
+{{- $img := printf "%sskypiea/platform:%s" .Values.registry (toString .Values.imageTag) }}
+{{- $ctl := dict "root" $ "name" "skypiea-controller" }}
+{{- $gw := dict "root" $ "name" "skypiea-gateway" }}
+{{- $pr := dict "root" $ "name" "skypiea-predictor" }}
+# ======================= controller (kopf) =======================
+# Least privilege: read/patch Deployments (and their scale) in THIS namespace only; post events.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: skypiea-controller
+  namespace: {{ $ns }}
+  labels: {{- include "skypiea.labels" $ctl | nindent 4 }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: skypiea-controller
+  namespace: {{ $ns }}
+  labels: {{- include "skypiea.labels" $ctl | nindent 4 }}
+rules:
+  - apiGroups: [apps]
+    resources: [deployments]
+    verbs: [get, list, watch, patch]
+  - apiGroups: [apps]
+    resources: [deployments/scale]
+    verbs: [get, patch, update]
+  - apiGroups: ["", events.k8s.io]
+    resources: [events]
+    verbs: [create]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: skypiea-controller
+  namespace: {{ $ns }}
+  labels: {{- include "skypiea.labels" $ctl | nindent 4 }}
+roleRef: {apiGroup: rbac.authorization.k8s.io, kind: Role, name: skypiea-controller}
+subjects:
+  - {kind: ServiceAccount, name: skypiea-controller, namespace: {{ $ns }}}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: skypiea-controller
+  namespace: {{ $ns }}
+  labels: {{- include "skypiea.labels" $ctl | nindent 4 }}
+spec:
+  replicas: 1                 # single writer
+  strategy: {type: Recreate}  # never two controllers at once
+  selector:
+    matchLabels: {skypiea.io/tool: skypiea-controller}
+  template:
+    metadata:
+      labels: {{- include "skypiea.labels" $ctl | nindent 8 }}
+    spec:
+      serviceAccountName: skypiea-controller
+      enableServiceLinks: false
+      terminationGracePeriodSeconds: 5
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext: {runAsNonRoot: true, runAsUser: 10001, seccompProfile: {type: RuntimeDefault}}
+      containers:
+        - name: controller
+          image: {{ $img }}
+          imagePullPolicy: IfNotPresent
+          command: [kopf, run, --standalone, --namespace, {{ $ns | quote }}, -m, controller.operator]
+          ports: [{name: api, containerPort: 8081}]
+          env:
+            - {name: SKYPIEA_NAMESPACE, value: {{ $ns | quote }}}
+            - {name: SKYPIEA_DEFAULT_TTL_S, value: {{ $p.controller.defaultTtlS | quote }}}
+            - {name: SKYPIEA_PURGE_S, value: {{ $p.controller.purgeS | quote }}}
+            - {name: SKYPIEA_MIN_DWELL_S, value: {{ $p.controller.minDwellS | quote }}}
+            - {name: SKYPIEA_MAX_PER_TOOL, value: {{ $p.controller.maxPerTool | quote }}}
+            - {name: SKYPIEA_MAX_TOTAL, value: {{ $p.controller.maxTotal | quote }}}
+            - {name: SKYPIEA_ALWAYS_WARM, value: {{ $p.controller.alwaysWarm | quote }}}
+          readinessProbe:
+            httpGet: {path: /healthz, port: api}
+            periodSeconds: 2
+          resources: {{- toYaml $p.controller.resources | nindent 12 }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: [ALL]}
+          volumeMounts: [{name: tmp, mountPath: /tmp}]
+      volumes: [{name: tmp, emptyDir: {sizeLimit: 16Mi}}]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: skypiea-controller
+  namespace: {{ $ns }}
+  labels: {{- include "skypiea.labels" $ctl | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector: {skypiea.io/tool: skypiea-controller}
+  ports: [{name: api, port: 8081, targetPort: api}]
+---
+# ======================= gateway =======================
+# Least privilege: read EndpointSlices (ready pods per tool) in THIS namespace only.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: skypiea-gateway
+  namespace: {{ $ns }}
+  labels: {{- include "skypiea.labels" $gw | nindent 4 }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: skypiea-gateway
+  namespace: {{ $ns }}
+  labels: {{- include "skypiea.labels" $gw | nindent 4 }}
+rules:
+  - apiGroups: [discovery.k8s.io]
+    resources: [endpointslices]
+    verbs: [get, list, watch]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: skypiea-gateway
+  namespace: {{ $ns }}
+  labels: {{- include "skypiea.labels" $gw | nindent 4 }}
+roleRef: {apiGroup: rbac.authorization.k8s.io, kind: Role, name: skypiea-gateway}
+subjects:
+  - {kind: ServiceAccount, name: skypiea-gateway, namespace: {{ $ns }}}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: skypiea-gateway
+  namespace: {{ $ns }}
+  labels: {{- include "skypiea.labels" $gw | nindent 4 }}
+spec:
+  replicas: {{ $p.gateway.replicas }}
+  selector:
+    matchLabels: {skypiea.io/tool: skypiea-gateway}
+  template:
+    metadata:
+      labels: {{- include "skypiea.labels" $gw | nindent 8 }}
+    spec:
+      serviceAccountName: skypiea-gateway
+      enableServiceLinks: false
+      terminationGracePeriodSeconds: 10
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext: {runAsNonRoot: true, runAsUser: 10001, seccompProfile: {type: RuntimeDefault}}
+      containers:
+        - name: gateway
+          image: {{ $img }}
+          imagePullPolicy: IfNotPresent
+          command: [python, -m, gateway.main, gateway]
+          ports: [{name: http, containerPort: 8080}]
+          env:
+            - {name: SKYPIEA_NAMESPACE, value: {{ $ns | quote }}}
+            - {name: SKYPIEA_HOLD_MS, value: {{ $p.gateway.holdMs | quote }}}
+            - {name: SKYPIEA_COLD_TIMEOUT_S, value: {{ $p.gateway.coldTimeoutS | quote }}}
+            - {name: SKYPIEA_DEMAND_TTL_S, value: {{ $p.gateway.demandTtlS | quote }}}
+            - {name: SKYPIEA_PREDICTOR_TIMEOUT_MS, value: {{ $p.gateway.predictorTimeoutMs | quote }}}
+            - {name: SKYPIEA_SESSION_IDLE_S, value: {{ $p.gateway.sessionIdleS | quote }}}
+            - {name: SKYPIEA_CONTROLLER_URL, value: "http://skypiea-controller.{{ $ns }}.svc:8081"}
+            {{- if $p.predictor.url }}
+            - {name: SKYPIEA_PREDICTOR_URL, value: {{ $p.predictor.url | quote }}}
+            {{- else if $p.predictor.enabled }}
+            - {name: SKYPIEA_PREDICTOR_URL, value: "http://skypiea-predictor.{{ $ns }}.svc:80"}
+            {{- end }}
+          readinessProbe:
+            httpGet: {path: /healthz, port: http}
+            periodSeconds: 2
+          resources: {{- toYaml $p.gateway.resources | nindent 12 }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: [ALL]}
+          volumeMounts: [{name: tmp, mountPath: /tmp}]
+      volumes: [{name: tmp, emptyDir: {sizeLimit: 16Mi}}]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: skypiea-gateway
+  namespace: {{ $ns }}
+  labels: {{- include "skypiea.labels" $gw | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector: {skypiea.io/tool: skypiea-gateway}
+  ports: [{name: http, port: 80, targetPort: http}]
+{{- if and $p.predictor.enabled (not $p.predictor.url) }}
+---
+# ======================= predictor PLACEHOLDER =======================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: skypiea-predictor
+  namespace: {{ $ns }}
+  labels: {{- include "skypiea.labels" $pr | nindent 4 }}
+    skypiea.io/placeholder: "true"
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {skypiea.io/tool: skypiea-predictor}
+  template:
+    metadata:
+      labels: {{- include "skypiea.labels" $pr | nindent 8 }}
+    spec:
+      automountServiceAccountToken: false
+      enableServiceLinks: false
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext: {runAsNonRoot: true, runAsUser: 10001, seccompProfile: {type: RuntimeDefault}}
+      containers:
+        - name: predictor
+          image: {{ $img }}
+          imagePullPolicy: IfNotPresent
+          command: [python, -m, gateway.main, predictor]
+          ports: [{name: http, containerPort: 8080}]
+          env:
+            - {name: SKYPIEA_POLICY, value: {{ $p.predictor.policy | quote }}}
+          readinessProbe:
+            httpGet: {path: /healthz, port: http}
+            periodSeconds: 2
+          resources: {{- toYaml $p.predictor.resources | nindent 12 }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: [ALL]}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: skypiea-predictor
+  namespace: {{ $ns }}
+  labels: {{- include "skypiea.labels" $pr | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector: {skypiea.io/tool: skypiea-predictor}
+  ports: [{name: http, port: 80, targetPort: http}]
+{{- end }}
+{{- end }}

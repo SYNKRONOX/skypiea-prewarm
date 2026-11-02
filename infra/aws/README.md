@@ -1,7 +1,7 @@
 # AWS cloud run (Terraform + k3s + ECR)
 
 One EC2 VM in **ap-south-1** running single-node [k3s](https://k3s.io/), with the same Helm
-chart as the local kind cluster (`charts/skypiea-tools`, `values-aws.yaml`). Everything is
+chart as the local kind cluster (`charts/skypiea`, `values-aws.yaml`). Everything is
 tagged `project=skypiea`. State is **local** (`infra/aws/terraform.tfstate`, git-ignored).
 
 ## What gets created

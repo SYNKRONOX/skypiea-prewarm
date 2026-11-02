@@ -26,3 +26,10 @@ if [ "${WITH_PROBE:-1}" = "1" ]; then
   DOCKER_BUILDKIT=1 docker build --quiet --file experiments/e0_probe/Dockerfile \
     --tag "skypiea/e0-probe:${TAG}" experiments/e0_probe/ >/dev/null
 fi
+
+# The platform image: gateway, controller, predictor placeholder (context = repo root).
+if [ "${WITH_PLATFORM:-1}" = "1" ]; then
+  echo "==> building skypiea/platform:${TAG}"
+  DOCKER_BUILDKIT=1 docker build --quiet --file deploy/platform/Dockerfile \
+    --tag "skypiea/platform:${TAG}" . >/dev/null
+fi

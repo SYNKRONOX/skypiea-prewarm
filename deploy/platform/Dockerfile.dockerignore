@@ -1,0 +1,11 @@
+*
+!deploy/platform/requirements.txt
+!deploy/platform/constraints.txt
+!tools/__init__.py
+!tools/common/__init__.py
+!tools/common/toolmap.py
+!tools/tool_map.yaml
+!configs/cold_start.yaml
+!gateway/
+!controller/
+**/__pycache__

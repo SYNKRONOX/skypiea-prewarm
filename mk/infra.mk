@@ -3,17 +3,20 @@
 .PHONY: build-images measure-startup infra-test cluster-kind cluster-kind-down push-images-kind \
         deploy-kind e0-kind aws-ip aws-plan aws-apply aws-up aws-kubeconfig push-images-aws \
         deploy-aws e0-aws aws-stop aws-start aws-destroy infra-check \
-        e0-kind-parallel e0-aws-parallel tool-map-coverage
+        e0-kind-parallel e0-aws-parallel tool-map-coverage deploy-kind-e0 kind-integration
 
 PY          ?= $(if $(wildcard .venv/bin/python),.venv/bin/python,python3)
 IMAGE_TAG   ?= $(shell tools/image_tag.sh)
 TOOL_LIST    = $(shell $(PY) -c 'import yaml;print(" ".join(yaml.safe_load(open("tools/tool_map.yaml"))["servers"]))')
-IMAGES       = $(TOOL_LIST) e0-probe
-CHART        = charts/skypiea-tools
+IMAGES       = $(TOOL_LIST) e0-probe platform
+CHART        = charts/skypiea
 NS           = skypiea-tools
 KIND_CTX    ?= kind-skypiea
 KIND_REG    ?= localhost:5001
 N           ?= 10
+# AWS deploy: E0 first (no controller); afterwards PLATFORM=true E0PROBE=false
+PLATFORM    ?= false
+E0PROBE     ?= true
 TF           = terraform -chdir=infra/aws
 AWS_KUBECONFIG ?= $(HOME)/.kube/skypiea-aws
 AWS_REGION  ?= ap-south-1
@@ -39,10 +42,16 @@ push-images-kind:
 	  docker push -q $(KIND_REG)/skypiea/$$i:$(IMAGE_TAG) >/dev/null && echo "pushed $$i" || exit 1; \
 	done
 
-deploy-kind: push-images-kind  ## helm install the tools chart on kind (all tools at 0)
-	helm upgrade --install skypiea-tools $(CHART) --kube-context $(KIND_CTX) \
+deploy-kind: push-images-kind  ## helm install skypiea on kind: tools at 0 + gateway, controller, predictor
+	helm upgrade --install skypiea $(CHART) --kube-context $(KIND_CTX) \
 	  -n $(NS) --create-namespace -f $(CHART)/values-kind.yaml \
-	  --set imageTag=$(IMAGE_TAG) --set e0Probe.enabled=true --wait
+	  --set imageTag=$(IMAGE_TAG) --set platform.enabled=true --set e0Probe.enabled=false --wait
+	kubectl --context $(KIND_CTX) -n $(NS) get deploy
+
+deploy-kind-e0: push-images-kind  ## tools + E0 probe, NO controller (E0 scales tools itself)
+	helm upgrade --install skypiea $(CHART) --kube-context $(KIND_CTX) \
+	  -n $(NS) --create-namespace -f $(CHART)/values-kind.yaml \
+	  --set imageTag=$(IMAGE_TAG) --set platform.enabled=false --set e0Probe.enabled=true --wait
 	kubectl --context $(KIND_CTX) -n $(NS) get deploy
 
 e0-kind:
@@ -83,10 +92,11 @@ push-images-aws:         ## docker login to ECR, push all images, docker logout
 	docker logout $$REG >/dev/null
 
 deploy-aws:              ## helm install the tools chart on the k3s VM (all tools at 0)
-	helm upgrade --install skypiea-tools $(CHART) --kubeconfig $(AWS_KUBECONFIG) \
+	helm upgrade --install skypiea $(CHART) --kubeconfig $(AWS_KUBECONFIG) \
 	  -n $(NS) --create-namespace -f $(CHART)/values-aws.yaml \
 	  --set registry=$$($(TF) output -raw ecr_registry)/ \
-	  --set imageTag=$(IMAGE_TAG) --set e0Probe.enabled=true --wait
+	  --set imageTag=$(IMAGE_TAG) --set platform.enabled=$(PLATFORM) \
+	  --set e0Probe.enabled=$(E0PROBE) --wait
 	kubectl --kubeconfig $(AWS_KUBECONFIG) -n $(NS) get deploy
 
 e0-aws:
@@ -128,3 +138,6 @@ e0-aws-parallel:
 
 tool-map-coverage:       ## traffic share per server per scenario (needs data/processed)
 	$(PY) tools/tool_map_coverage.py
+
+kind-integration:        ## replay Scenario A and B through the gateway under each policy (functional)
+	$(PY) -m gateway.replay_check --context $(KIND_CTX) --namespace $(NS)

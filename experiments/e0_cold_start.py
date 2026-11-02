@@ -436,6 +436,11 @@ def main() -> None:
         missing = [t for t in tools if t not in image_of]
         if missing:
             sys.exit(f"not deployed: {missing}")
+        ctl = tgt.k("get", "deploy", "skypiea-controller", "-o", "jsonpath={.spec.replicas}",
+                    check=False)
+        if ctl.returncode == 0 and ctl.stdout.strip() not in ("", "0"):
+            sys.exit("the Skypiea controller is running and would scale tools during E0; "
+                     "deploy with --set platform.enabled=false first (make deploy-kind-e0)")
         busy = [d["metadata"]["name"] for d in deploys
                 if d["metadata"]["name"] != "e0-probe" and d["spec"].get("replicas")]
         if busy:

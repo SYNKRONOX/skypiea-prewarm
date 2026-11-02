@@ -20,6 +20,7 @@ readinessProbe:
 # with headroom for 3 copies of 3 heavy tools:
 #   requests 16 pods: 9x(50m,96Mi) + 4x(50m,192Mi) + 3x(75m,256Mi) = 875m, 2400Mi
 #   +6 heavy copies:                                       + 450m, 1536Mi  => 1325m, 3936Mi
+#   + platform (gateway, controller, predictor):            + 200m,  352Mi  => 1525m, 4288Mi
 # On the 2 vCPU VM, heavy tools starting together compete for CPU (see docs/infra.md).
 # CPU limit is one full core so startup (CPU-bound imports) is not artificially throttled.
 resources:
@@ -50,6 +51,39 @@ tools:
   run_tests: {tier: heavy}
   post_comment: {tier: light}
   generic_fallback: {tier: heavy}
+
+# Skypiea platform: gateway, controller, predictor placeholder (one image, skypiea/platform).
+# All Services are ClusterIP (nothing exposed outside the cluster).
+# E0 must run WITHOUT the controller (it scales tools itself): --set platform.enabled=false.
+platform:
+  enabled: true
+  gateway:
+    replicas: 1
+    holdMs: 150              # FR-9
+    coldTimeoutS: 120
+    demandTtlS: 0            # a pod started by a call itself: scale-to-zero after use
+    predictorTimeoutMs: 300
+    sessionIdleS: 600
+    resources:
+      requests: {cpu: 100m, memory: 128Mi}
+      limits: {cpu: "1", memory: 256Mi}
+  controller:
+    defaultTtlS: 30          # when a decision has no ttl_s
+    purgeS: 5                # removed at TTL + 5 s (FR-3)
+    minDwellS: 5
+    maxPerTool: 3
+    maxTotal: 20
+    alwaysWarm: false        # always-warm baseline
+    resources:
+      requests: {cpu: 50m, memory: 128Mi}
+      limits: {cpu: 500m, memory: 256Mi}
+  predictor:
+    enabled: true            # placeholder until the model branch's service is merged
+    url: ""                  # set to use an external predictor instead of the placeholder
+    policy: scale_to_zero
+    resources:
+      requests: {cpu: 50m, memory: 96Mi}
+      limits: {cpu: 500m, memory: 192Mi}
 
 # Long-running in-cluster client used by E0 (experiments/e0_cold_start.py) so that the first
 # MCP call is measured from inside the cluster.
