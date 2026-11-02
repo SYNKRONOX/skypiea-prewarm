@@ -1,5 +1,8 @@
 # AWS cloud run (Terraform + k3s + ECR)
 
+Full pre-apply review (all 53 resources, prices with sources, security groups, cost guards,
+teardown): [`docs/aws_plan.md`](../../docs/aws_plan.md).
+
 One EC2 VM in **ap-south-1** running single-node [k3s](https://k3s.io/), with the same Helm
 chart as the local kind cluster (`charts/skypiea`, `values-aws.yaml`). Everything is
 tagged `project=skypiea`. State is **local** (`infra/aws/terraform.tfstate`, git-ignored).
@@ -9,11 +12,12 @@ tagged `project=skypiea`. State is **local** (`infra/aws/terraform.tfstate`, git
 | Resource | Details |
 |---|---|
 | EC2 instance `skypiea-node` | `m7i-flex.large` (2 vCPU, 8 GiB), Ubuntu 24.04 LTS, 30 GB gp3 encrypted root, IMDSv2 only |
-| Security group `skypiea-node` | Inbound **22** and **6443** from your IP (`/32`) only. Nothing is open to `0.0.0.0/0`. Outbound all |
+| Security group `skypiea-node` | Inbound **22** and **6443** from your IP (`/32`) only; nothing inbound from `0.0.0.0/0`. Outbound only TCP 443 and 80 (ECR/S3/AWS APIs/k3s install; apt) |
 | Key pair `skypiea-aws` | From `~/.ssh/skypiea-aws.pub` (created by `make aws-plan` if missing) |
 | IAM role + instance profile `skypiea-node` | `AmazonEC2ContainerRegistryReadOnly` + read/write on the one bucket only |
 | ECR repositories `skypiea/<tool>` | One per tool in `tools/tool_map.yaml` + `skypiea/e0-probe`. Lifecycle: keep the last 3 images |
 | S3 bucket `skypiea-<random>` | Models and results. All public access blocked, versioning on, SSE-S3 |
+| CloudWatch alarm `skypiea-node-idle-stop` | Cost guard: stops the VM after 60 min below 5% CPU |
 
 `user_data` installs k3s (pinned `v1.37.1+k3s1`, traefik/servicelb/metrics-server disabled)
 and a systemd timer `skypiea-ecr-refresh.timer` that re-creates the `skypiea-tools/ecr-pull`
@@ -52,6 +56,10 @@ security group.
   transfer from ECR to EC2 in the same region is free.
 
 ## Stop, start, destroy
+
+Two automatic cost guards: the VM stops after 60 min of idle CPU (CloudWatch alarm) and powers
+itself off (= stop) after 12 h of uptime (`make aws-extend H=<hours>` raises the limit on the
+VM for long runs).
 
 ```bash
 make aws-stop       # stop the VM at the end of every day (disk, ECR, S3 kept)

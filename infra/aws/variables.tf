@@ -37,3 +37,20 @@ variable "bucket_force_destroy" {
   type        = bool
   default     = false
 }
+
+variable "idle_stop_cpu_percent" {
+  description = "Cost guard: stop the VM when average CPU stays below this for idle_stop_minutes. Check the real k3s idle baseline in CloudWatch after the first boot and adjust."
+  type        = number
+  default     = 5
+}
+
+variable "idle_stop_minutes" {
+  type    = number
+  default = 60
+}
+
+variable "max_uptime_hours" {
+  description = "Cost guard: the VM powers itself off (stop, not terminate) after this many hours of uptime. Raise it on the VM for a long run: `make aws-extend H=<hours>`."
+  type        = number
+  default     = 12
+}

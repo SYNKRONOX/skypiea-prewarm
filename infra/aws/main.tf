@@ -51,11 +51,25 @@ resource "aws_vpc_security_group_ingress_rule" "k3s_api" {
   to_port           = 6443
 }
 
-resource "aws_vpc_security_group_egress_rule" "all" {
+# Egress: only HTTPS and HTTP. ECR, S3, the k3s installer (get.k3s.io, GitHub releases), snap
+# and the AWS APIs are HTTPS on public addresses; Ubuntu's apt mirrors use HTTP. DNS (VPC
+# resolver) and time sync (169.254.169.123) are link-local and not filtered by security groups.
+resource "aws_vpc_security_group_egress_rule" "https" {
   security_group_id = aws_security_group.node.id
-  description       = "Outbound (ECR, S3, k3s install, apt)"
+  description       = "HTTPS out: ECR, S3, AWS APIs, k3s install, snap"
   cidr_ipv4         = "0.0.0.0/0"
-  ip_protocol       = "-1"
+  ip_protocol       = "tcp"
+  from_port         = 443
+  to_port           = 443
+}
+
+resource "aws_vpc_security_group_egress_rule" "http" {
+  security_group_id = aws_security_group.node.id
+  description       = "HTTP out: Ubuntu apt mirrors"
+  cidr_ipv4         = "0.0.0.0/0"
+  ip_protocol       = "tcp"
+  from_port         = 80
+  to_port           = 80
 }
 
 resource "aws_key_pair" "op" {
@@ -185,12 +199,32 @@ resource "aws_instance" "node" {
     http_put_response_hop_limit = 1          # pods cannot reach the node's role credentials
   }
 
+  # cost guard: an OS shutdown (max-uptime timer) STOPS the instance, never terminates it
+  instance_initiated_shutdown_behavior = "stop"
+
   user_data = templatefile("${path.module}/user_data.sh.tftpl", {
-    k3s_version = var.k3s_version
-    region      = var.region
-    ecr_host    = local.ecr_host
+    k3s_version      = var.k3s_version
+    region           = var.region
+    ecr_host         = local.ecr_host
+    max_uptime_hours = var.max_uptime_hours
   })
   user_data_replace_on_change = true
 
   tags = { Name = "skypiea-node" }
+}
+
+# ---------------- cost guard: stop the VM when it sits idle ----------------
+resource "aws_cloudwatch_metric_alarm" "idle_stop" {
+  alarm_name          = "skypiea-node-idle-stop"
+  alarm_description   = "Stop the Skypiea VM after ${var.idle_stop_minutes} min below ${var.idle_stop_cpu_percent}% CPU"
+  namespace           = "AWS/EC2"
+  metric_name         = "CPUUtilization"
+  dimensions          = { InstanceId = aws_instance.node.id }
+  statistic           = "Average"
+  period              = 300 # basic monitoring (free): 5-minute datapoints
+  evaluation_periods  = ceil(var.idle_stop_minutes / 5)
+  threshold           = var.idle_stop_cpu_percent
+  comparison_operator = "LessThanThreshold"
+  treat_missing_data  = "notBreaching" # a stopped VM has no datapoints: do nothing
+  alarm_actions       = ["arn:aws:automate:${var.region}:ec2:stop"]
 }

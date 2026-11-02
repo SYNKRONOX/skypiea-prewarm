@@ -3,7 +3,7 @@
 .PHONY: build-images measure-startup infra-test cluster-kind cluster-kind-down push-images-kind \
         deploy-kind e0-kind aws-ip aws-plan aws-apply aws-up aws-kubeconfig push-images-aws \
         deploy-aws e0-aws aws-stop aws-start aws-destroy infra-check \
-        e0-kind-parallel e0-aws-parallel tool-map-coverage deploy-kind-e0 kind-integration grafana-kind
+        e0-kind-parallel e0-aws-parallel tool-map-coverage deploy-kind-e0 kind-integration grafana-kind aws-extend
 
 PY          ?= $(if $(wildcard .venv/bin/python),.venv/bin/python,python3)
 IMAGE_TAG   ?= $(shell tools/image_tag.sh)
@@ -145,3 +145,8 @@ kind-integration:        ## replay Scenario A and B through the gateway under ea
 
 grafana-kind:            ## open Grafana on http://127.0.0.1:3000 (anonymous viewer)
 	kubectl --context $(KIND_CTX) -n $(NS) port-forward svc/skypiea-grafana 3000:3000
+
+aws-extend:              ## raise the VM's max-uptime cost guard to H hours (no instance replacement)
+	@test -n "$(H)" || { echo "usage: make aws-extend H=<hours>"; exit 1; }
+	ssh -o BatchMode=yes -i $(SSH_KEY) ubuntu@$$($(TF) output -raw instance_ip) \
+	  "echo $(H) | sudo tee /etc/skypiea/max-uptime-hours >/dev/null && uptime -p"
