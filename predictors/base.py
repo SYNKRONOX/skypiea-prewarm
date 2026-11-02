@@ -11,8 +11,10 @@ from abc import ABC, abstractmethod
 from collections.abc import Sequence
 from dataclasses import dataclass
 
-END = "<end>"
-"""Pseudo-tool marking the end of a session."""
+from predictors.data import END, Context, Episode
+
+__all__ = ["END", "Context", "Episode", "NextToolModel", "Policy", "Predictor",
+           "ThresholdPolicy", "WarmDecision"]
 
 
 @dataclass(frozen=True)
@@ -70,3 +72,36 @@ class ThresholdPolicy(Policy):
             for tool, p in probs.items()
             if tool != END and p >= self.tau
         }
+
+
+class NextToolModel(ABC):
+    """A next-tool model over prediction contexts (``predictors.data``).
+
+    ``predict(ctx, k)`` returns a distribution over the tools of the k-th next batch, which
+    may include ``END``; values are >= 0 and sum to at most 1. ``batch_probs(ctx)`` returns,
+    per tool, the probability that it appears in the next batch (these may sum above 1).
+    Models must read the history only through ``ctx.prefix()``, ``ctx.last()`` or
+    ``ctx.tools()`` (see the leakage property test).
+    """
+
+    name: str = "model"
+    mean_batch_size: float = 1.0
+
+    @abstractmethod
+    def fit(self, train: Sequence[Episode], val: Sequence[Episode]) -> NextToolModel:
+        """Train on ``train``; tune any hyper-parameters on ``val`` only. Returns self."""
+
+    @abstractmethod
+    def predict(self, ctx: Context, k: int = 1) -> dict[str, float]:
+        """Distribution over the tools of the k-th next batch (may include ``END``)."""
+
+    def predict_many(self, ctxs: Sequence[Context], k: int = 1) -> list[dict[str, float]]:
+        return [self.predict(c, k) for c in ctxs]
+
+    def batch_probs(self, ctx: Context) -> dict[str, float]:
+        """P(tool in next batch). Default: 1 - (1 - p)^m with m the mean train batch size."""
+        m = max(self.mean_batch_size, 1.0)
+        return {t: 1.0 - (1.0 - p) ** m for t, p in self.predict(ctx, 1).items() if t != END}
+
+    def batch_probs_many(self, ctxs: Sequence[Context]) -> list[dict[str, float]]:
+        return [self.batch_probs(c) for c in ctxs]
