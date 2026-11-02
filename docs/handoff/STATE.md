@@ -79,9 +79,31 @@ Commits `71fd418` (code + tests), `f82e66b` (chart `skypiea`, platform image, re
   `platform.predictor.url` with no gateway change.
 - E0 must run without the controller: `make deploy-kind-e0` / AWS `PLATFORM=false`.
 
+## Replayer, CLI, monitoring, AWS plan, root fixes (untimed): done
+
+Commits `a8567cc` (replayer, CLI, gateway session introspection), `0b24053` (monitoring),
+`c1aecf2` (AWS plan doc + Terraform cost guards), plus the root README/Makefile commit.
+
+- Replayer `python -m replayer.replay --config replayer/configs/<x>.yaml`: open loop across
+  sessions, real think gaps and concurrent batches inside a session; `results` mode refuses
+  scaled gaps; per-call CSV (session, tool, cold, added_latency_ms, hold_ms, predicted,
+  policy, commit). Functional run on kind: 4-6 sessions, all calls ok (not results).
+- CLI `bin/skypiea --context kind-skypiea | --kubeconfig ~/.kube/skypiea-aws`: status, policy
+  get/set, sessions, trace, explain; via the Kubernetes API proxy (no port-forward, no secrets).
+  Checked on kind.
+- Monitoring (chart, default on, off for E0): Prometheus scrapes tools/gateway/controller;
+  Grafana dashboard provisioned (cold rate, prewarm hit rate, p50/p99 added latency, hold,
+  warm pool, idle pods/pod-seconds, predictor latency/errors, scale events). Checked on kind:
+  3/3 targets up, dashboard served, Grafana -> Prometheus query works. Grafana needed 512Mi.
+- `docs/aws_plan.md`: 53 resources, SG (ingress /32 only; egress 443/80 explained), prices
+  from AWS price lists (about $0.110/h running, $2.74/month stopped), cost guards (idle-stop
+  alarm, 12 h max-uptime power-off = stop, `make aws-extend H=`), teardown. Not planned or
+  applied.
+- Root: Makefile includes `mk/infra.mk` (`make cluster/deploy/clean-cluster` now kind + helm);
+  README layout, setup (kind + AWS), quick reference, roadmap, docs links updated;
+  `deploy/k8s/` and `infra/azure/` removed.
+
 ## Open decisions for the user
 
 - Whether light tools need heavier, more realistic startup (decide after E0).
-- Root Makefile: add `include mk/infra.mk`; README still says kind has 2 workers (now 1),
-  and references `charts/skypiea-tools` / `make deploy` (now `charts/skypiea`, `make deploy-kind`).
 - Confirm the predictor contract v1 with the model window (docs/predictor_contract.md).

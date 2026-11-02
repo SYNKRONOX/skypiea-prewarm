@@ -62,20 +62,24 @@ tested and owns all of it.
 
 ```mermaid
 flowchart LR
-    R[Replayer] --> S[Request shaper<br/>150 ms hold]
+    R[Replayer / agent] -->|POST /mcp| S[Gateway<br/>150 ms hold]
     S --> T[MCP tool pods<br/>0..N per tool]
     S -->|call metadata| P[Predictor service<br/>Markov + LightGBM]
-    P -->|WarmDecision| C[kopf controller]
+    P -->|decisions| S
+    S -->|POST /v1/warm| C[kopf controller]
     C -->|scale 0..N| T
     T --> M[Prometheus / Grafana]
     S --> M
+    C --> M
     SIM[Simulator<br/>500 sessions] -.->|same Policy code| P
 ```
 
-The replayer sends agent sessions through the shaper, which forwards each call to its tool
-pod and tells the predictor what happened. The predictor's policy asks the controller to scale
-the likely next tools up before their calls arrive. The simulator runs the same policy code
-offline.
+The replayer (or a real agent) sends sessions through the gateway, which forwards each call
+to a ready pod of its tool (holding it up to 150 ms if a pod is about to be ready) and then
+tells the predictor what happened. The gateway passes the predictor's warm decisions to our
+own scale-to-zero controller, which scales the likely next tools up before their calls
+arrive. The simulator runs the same policy code offline. Details:
+[`docs/gateway_controller.md`](docs/gateway_controller.md).
 
 ---
 
@@ -85,15 +89,17 @@ offline.
 |---|---|---|
 | [`traces/`](traces/) | Trace schema, converters, pipeline and loader API | L. Mohnish |
 | [`configs/tool_classes/`](configs/tool_classes/) | Raw tool name → tool class rules per source | L. Mohnish |
-| [`replayer/`](replayer/) | Replays sessions against the cluster, generates load | L. Mohnish |
+| [`replayer/`](replayer/) | Open-loop trace replayer through the gateway, per-call CSV | L. Mohnish, Ch. Dhanunjaya |
 | [`data/`](data/) | Dataset notes and pipeline (data itself is not committed) | L. Mohnish |
 | [`predictors/`](predictors/) | Predictor and policy interfaces, baselines, Markov, evaluation | G. Parthav |
 | [`sim/`](sim/) | Discrete-event warm-pool simulator | G. Parthav |
+| [`gateway/`](gateway/) | MCP gateway (one `/mcp` endpoint, 150 ms hold; the request shaper), predictor client and placeholder | Ch. Dhanunjaya |
 | [`controller/`](controller/) | kopf scale-to-zero controller | Ch. Dhanunjaya |
-| [`shaper/`](shaper/) | Request shaper with 150 ms hold | Ch. Dhanunjaya |
-| [`tools/`](tools/) | MCP tool container images | Ch. Dhanunjaya |
-| [`deploy/`](deploy/) | kind cluster config and Kubernetes manifests | Ch. Dhanunjaya |
-| [`infra/`](infra/) | Azure k3s cloud run | Ch. Dhanunjaya |
+| [`skypiea_cli/`](skypiea_cli/), [`bin/skypiea`](bin/skypiea) | `skypiea status / policy / trace / explain` | Ch. Dhanunjaya |
+| [`tools/`](tools/) | 16 MCP tool servers and images; `tools/tool_map.yaml` (class -> server) | Ch. Dhanunjaya |
+| [`charts/skypiea/`](charts/skypiea/) | Helm chart: tools, gateway, controller, predictor placeholder, Prometheus + Grafana | Ch. Dhanunjaya |
+| [`deploy/`](deploy/) | kind cluster + local registry, platform image | Ch. Dhanunjaya |
+| [`infra/aws/`](infra/aws/) | Terraform: EC2 k3s, ECR, S3, cost guards | Ch. Dhanunjaya |
 | [`experiments/`](experiments/) | Experiment runner and YAML configs | All |
 | [`results/`](results/), [`report/`](report/) | Experiment outputs and final report | All |
 | [`tests/`](tests/) | Unit tests | All |
@@ -160,10 +166,22 @@ Tests do not need the raw data: they use the small samples committed in `data/sa
 
 ### 4. Start a local cluster
 
+Also needs [Helm](https://helm.sh/) and `pip install -r requirements-infra.txt`.
+
 ```bash
-make cluster    # kind: 1 control-plane + 2 workers
-make deploy     # creates the skypiea-tools namespace and manifests
+make build-images   # 16 tool images, E0 probe, platform image (one at a time)
+make cluster        # kind: 1 control-plane + 1 worker + local registry localhost:5001
+make deploy         # helm install skypiea: tools at 0 replicas, gateway, controller,
+                    # predictor placeholder, Prometheus + Grafana
+bin/skypiea --context kind-skypiea status
+make kind-integration   # functional check: Scenario A + B through the gateway, every policy
 ```
+
+### 4b. AWS (EC2 + k3s)
+
+Read [`docs/aws_plan.md`](docs/aws_plan.md) first (resources, cost, cost guards, teardown),
+then follow [`infra/aws/README.md`](infra/aws/README.md). Stop the VM every day:
+`make aws-stop`.
 
 ### 5. Run an experiment
 
@@ -184,12 +202,19 @@ make e1
 | `python data/download.py --dataset <name>` | Download a dataset into `data/raw/` |
 | `python tools/inspect_dataset.py <name>` | Read-only overview of a raw dataset |
 | `python tools/make_sample.py --all` | Rebuild the committed samples |
-| `make cluster` | Create the local kind cluster from `deploy/kind/cluster.yaml` |
-| `make deploy` | `kubectl apply -f deploy/k8s/` |
+| `make cluster` | kind cluster (1 control-plane + 1 worker) + local registry |
+| `make deploy` | `helm install skypiea charts/skypiea` on kind |
+| `make deploy-kind-e0` | Tools + E0 probe only (no controller), for E0 |
+| `make e0-kind` / `make e0-kind-parallel` | E0 cold-start measurement on kind |
+| `make kind-integration` | Functional replay of Scenario A/B under every policy |
+| `make grafana-kind` | Grafana on http://127.0.0.1:3000 |
+| `bin/skypiea status` | Tools, replicas, warm pool, policy (`--context` / `--kubeconfig`) |
+| `bin/skypiea trace <sid>` / `explain <sid>` | Calls of a session with cold/warm, and why |
+| `python -m replayer.replay --config <yaml>` | Replay trace sessions through the gateway |
 | `make data SOURCE=tracelab` | Convert one raw dataset into `data/processed/<source>/` |
 | `make data-all` | Convert every downloaded dataset |
 | `make e1` | Run E1 (predictor accuracy) |
-| `make clean-cluster` | Delete the kind cluster |
+| `make clean-cluster` | Delete the kind cluster and the local registry |
 | `kubectl get pods -n skypiea-tools -w` | Watch tool pods scale up and down |
 
 ---
@@ -199,11 +224,12 @@ make e1
 - [x] Project skeleton: schema, policy interface, frequency and Markov predictors, tests, CI
 - [x] Dataset downloader, converters, tool-class mapping, group splits and loader (TraceLab, Copilot, tau-bench, tau2-bench, BFCL)
 - [ ] Toolathlon (gated; waiting for access and the instructor's answer)
-- [ ] E0: cold-start measurements
+- [x] E0 on kind (local registry, lower bound): median total cold start 2.5 s cached, 4.1 s uncached
+- [ ] E0 on AWS (the reported numbers)
 - [ ] Markov features, LightGBM re-ranker, GRU check
-- [ ] Controller, shaper, replayer
+- [x] Gateway (shaper), controller, replayer, `skypiea` CLI, Grafana dashboard
 - [ ] Baselines and simulator
-- [ ] Azure k3s cloud run
+- [ ] AWS k3s cloud run (Terraform ready, not applied)
 - [ ] E1 to E5 and final report
 
 ---
@@ -213,7 +239,10 @@ make e1
 - [Trace schema](docs/schema.md)
 - [Experiments and baselines](docs/experiments.md)
 - [Data](data/README.md)
-- [Azure cloud run](infra/azure/README.md)
+- [Infrastructure, tools and E0](docs/infra.md)
+- [Gateway and controller](docs/gateway_controller.md), [predictor contract](docs/predictor_contract.md)
+- [Cold-start input for the simulator](docs/cold_start_schema.md)
+- [AWS plan review](docs/aws_plan.md), [AWS cloud run](infra/aws/README.md)
 
 ## License
 
