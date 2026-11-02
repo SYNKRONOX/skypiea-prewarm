@@ -78,3 +78,14 @@ def test_app_init_uses_server_startup_and_pull_includes_wait():
     ph = e0.phases(r)
     assert ph["app_init"] == 700 and ph["image_pull"] == 1800 and ph["container_start"] == 300
     assert sum(ph[p] for p in e0.PHASES) == pytest.approx(ph["total"])
+
+
+def test_pull_time_recovered_from_kubelet_event():
+    r = probe_result(False)
+    del r["pull_ms"]
+    r["pull_event"] = ('Successfully pulled image "x" in 1.586s (1.8s including waiting). '
+                       'Image size: 63224350 bytes.')
+    assert e0.pull_times(r) == (1586.0, 1800.0)
+    assert e0.phases(r)["image_pull"] == 1800.0
+    r2 = {"pull_event": 'Container image "x" already present on machine'}
+    assert e0.pull_times(r2) == (0.0, None)

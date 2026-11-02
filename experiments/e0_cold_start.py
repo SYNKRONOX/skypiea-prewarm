@@ -48,6 +48,7 @@ import csv
 import json
 import os
 import random
+import re
 import subprocess
 import sys
 import time
@@ -159,6 +160,21 @@ class Target:
         return st
 
 
+PULLED_RX = re.compile(r"in ([\d.]+)(ms|s) \(([\d.]+)(ms|s) including waiting\)")
+
+
+def pull_times(r: dict) -> tuple[float | None, float | None]:
+    """(pull_ms, pull_incl_wait_ms): stored values, else parsed from the kubelet's Pulled event."""
+    pull, wait = r.get("pull_ms"), r.get("pull_incl_wait_ms")
+    ev = r.get("pull_event") or ""
+    if pull is None and "already present" in ev:
+        return 0.0, None
+    if pull is None and (m := PULLED_RX.search(ev)):
+        f = {"ms": 1.0, "s": 1000.0}
+        return float(m.group(1)) * f[m.group(2)], float(m.group(3)) * f[m.group(4)]
+    return pull, wait
+
+
 def phases(r: dict) -> dict:
     """Phase durations (ms) from the probe's single-clock timestamps; None if unavailable.
 
@@ -168,10 +184,10 @@ def phases(r: dict) -> dict:
     which the kubelet sometimes reports after the app is already listening.
     """
     need = ["t_scheduled", "t_proc_start", "t_health_ok", "t_ready", "t_first_ok"]
-    if any(r.get(k) is None for k in need) or r.get("pull_ms") is None:
+    pull_ms, pull_wait_ms = pull_times(r)
+    if any(r.get(k) is None for k in need) or pull_ms is None:
         return {m: None for m in PHASES + ["total"]}
-    pull = r.get("pull_incl_wait_ms")
-    pull = float(r["pull_ms"] if pull is None else pull)
+    pull = float(pull_ms if pull_wait_ms is None else pull_wait_ms)
     init = r.get("app_startup_ms")
     init = float(r["t_health_ok"] - r["t_proc_start"] if init is None else init)
     t_listening = r["t_proc_start"] + init
@@ -192,7 +208,7 @@ RUN_FIELDS = (["git_commit", "run_params", "target", "pull_source", "parallel", 
                "quiet_wait_s", "node", "pod", "image", "image_digest", "image_bytes_local",
                "pulled_image_bytes", "wall_t0", "rmi"]
               + [f"{p}_ms" for p in PHASES] + ["total_ms", "warm_median_ms", "warm_p95_ms",
-              "app_startup_ms", "pull_incl_wait_ms", "t_scale_ack", "t_pod_seen",
+              "app_startup_ms", "pull_ms", "pull_incl_wait_ms", "t_scale_ack", "t_pod_seen",
               "t_scheduled", "t_pod_ip", "t_proc_start", "t_running_observed", "t_health_ok",
               "t_ready", "t_first_ok", "first_call_attempts", "tcp_gate_fails", "attempt_log",
               "probe_warmup_ms",
@@ -503,7 +519,12 @@ def main() -> None:
     for r in rows:  # phases are always derived from the raw timestamps, never stored values
         r["report_commit"] = git_commit
         if not r.get("error"):
-            r.update({f"{k}_ms": v for k, v in phases(r).items()})
+            ph = phases(r)
+            if ph["total"] is None:
+                sys.exit(f"refusing to rewrite {runs_csv.name}: run {r.get('tool')} "
+                         f"{r.get('mode')} round {r.get('round')} has no derivable phases")
+            r["pull_ms"], r["pull_incl_wait_ms"] = pull_times(r)
+            r.update({f"{k}_ms": v for k, v in ph.items()})
     summary, ok = summarise(rows)
     summary.insert(0, "pull_source", PULL_SOURCE[a.target])
     meta = pd.read_csv(runs_csv, usecols=["git_commit", "run_params"]).drop_duplicates()
