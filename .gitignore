@@ -31,3 +31,13 @@ kubeconfig*
 .idea/
 .DS_Store
 Thumbs.db
+
+# PRD PDF has personal contact details: keep PDFs in docs/ untracked, except the plan
+docs/*.pdf
+!docs/Skypiea_Final_Plan.pdf
+
+# Chat exports are never committed
+docs/handoff/*.txt
+
+# The full accuracy log is committed gzipped (results/p1_accuracy.csv.gz)
+results/p1_accuracy.csv

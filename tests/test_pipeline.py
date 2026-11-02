@@ -86,7 +86,10 @@ def test_assign_splits_is_deterministic_and_proportional() -> None:
 @pytest.mark.parametrize("source,raw,expected", [
     ("tracelab", "Read", "read_file"),
     ("tracelab", "TaskCreate", "planning"),
-    ("tracelab", "custom_tool_25", "custom_tool"),
+    ("tracelab", "custom_tool_25", "other"),
+    ("tracelab", "Bash:git", "git"),
+    ("tracelab", "exec_command:run_tests", "run_tests"),
+    ("tracelab", "Bash:shell_other", "shell_other"),
     ("tracelab", "never_seen_tool", "other"),
     ("copilot_2026", "tool_d299a3895ad9", "custom_tool"),
     ("tau_bench", "get_order_details", "order_lookup"),
@@ -105,3 +108,48 @@ def test_parquet_columns_match_schema(tmp_path: Path) -> None:
     pipeline.run("bfcl", raw=raw, out_root=out)
     df = pd.read_parquet(out / "bfcl" / "calls.parquet")
     assert list(df.columns) == pipeline.CALL_SCHEMA.names
+
+
+@pytest.mark.parametrize("executables,expected", [
+    (["pytest"], "run_tests"),
+    (["cd", "pytest"], "run_tests"),            # leading setup word is skipped
+    (["git", "grep"], "git"),                   # only the first word counts
+    (["rg", "head"], "search"),
+    (["sed"], "read_file"),
+    (["cargo"], "build"),
+    (["pip"], "package"),
+    (["docker"], "shell_other"),
+    (["cd"], "shell_other"),                    # nothing after the setup word
+    ([], "shell_other"),
+    (None, "shell_other"),
+])
+def test_tracelab_shell_first_word(executables: list[str] | None, expected: str) -> None:
+    from traces.tool_classes import load_shell_split
+    split = load_shell_split("tracelab")
+    assert split is not None
+    assert split.classify(executables) == expected
+
+
+def test_tracelab_converter_never_keeps_command_text() -> None:
+    from traces.convert_tracelab import _slim_tool
+    from traces.tool_classes import load_shell_split
+    stats: Counter[str] = Counter()
+    t = {"tool_call_id": "c1", "tool_name": "Bash", "emitted_at": "2026-01-01T00:00:00Z",
+         "tool_wall_latency_ms": 5, "is_error": False, "executables": ["git", "SECRET"],
+         "command_skeleton": "git | SECRET", "input_chars": 99}
+    out = _slim_tool(t, load_shell_split("tracelab"), stats)
+    assert out["shell_class"] == "git"
+    assert "SECRET" not in json.dumps(out)
+    assert set(out) == {"tool_call_id", "tool_name", "emitted_at", "tool_wall_latency_ms",
+                        "is_error", "shell_class"}
+
+
+def test_extend_splits_keeps_existing_and_is_stable() -> None:
+    old = pipeline.assign_splits([f"g{i}" for i in range(50)])
+    new_groups = [f"g{i}" for i in range(50)] + [f"n{i}" for i in range(2000)]
+    a = pipeline.extend_splits(new_groups, old)
+    assert all(a[g] == old[g] for g in old)
+    assert a == pipeline.extend_splits(list(reversed(new_groups)), old)
+    fresh = Counter(a[g] for g in new_groups if g.startswith("n"))
+    assert abs(fresh["test"] / 2000 - 0.30) < 0.04
+    assert abs(fresh["val"] / 2000 - 0.14) < 0.04

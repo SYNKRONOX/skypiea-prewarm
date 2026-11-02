@@ -1,0 +1,12 @@
+# Synthetic PRD stochastic random walk (traces/generate_synthetic.py).
+classes: [tool_0, tool_1, tool_2, tool_3, tool_4, tool_5, tool_6, tool_7, other]
+default: other
+regex:
+  tool_0: ['^tool_0$']
+  tool_1: ['^tool_1$']
+  tool_2: ['^tool_2$']
+  tool_3: ['^tool_3$']
+  tool_4: ['^tool_4$']
+  tool_5: ['^tool_5$']
+  tool_6: ['^tool_6$']
+  tool_7: ['^tool_7$']

@@ -1,0 +1,8 @@
+# Synthetic PRD Scenario B (traces/generate_synthetic.py); tools are already classes.
+classes: [read_file, run_tests, format_diff, post_comment, other]
+default: other
+exact:
+  read_file: [read_file]
+  run_tests: [run_tests]
+  format_diff: [format_diff]
+  post_comment: [post_comment]
