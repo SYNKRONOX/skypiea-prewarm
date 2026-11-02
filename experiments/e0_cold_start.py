@@ -4,8 +4,9 @@
     python -m experiments.e0_cold_start --target kind --n 10 --parallel 3     # 3 pods at once
 
 Per tool (or group of --parallel tools), mode and repetition (order shuffled per round, seed 0):
-  uncached: delete the image from every schedulable node (kind: docker exec <node> crictl rmi;
-            aws: ssh <vm> sudo k3s crictl rmi) so the pod must pull from the registry;
+  uncached: delete ALL tool images from every schedulable node (kind: docker exec <node>
+            crictl rmi; aws: ssh <vm> sudo k3s crictl rmi) so the pod must pull every layer
+            (tool images share base and dependency layers; the probe uses another base);
   cached:   image already on the node (a tool's uncached run goes first in each round, so the
             image is present; the kubelet event confirms which case actually happened -> mode_ok).
 The run itself (scale 0 -> 1, pod watch, /healthz on the pod IP, first MCP call through the
@@ -103,7 +104,8 @@ class Target:
         for node in self.schedulable_nodes():
             p = self.node_cmd(node, ["crictl", "rmi", image])
             out = (p.stdout + p.stderr).strip().replace("\n", " ")
-            if p.returncode != 0 and "not found" not in out.lower():
+            absent = any(s in out.lower() for s in ("not found", "no such image"))
+            if p.returncode != 0 and not absent:
                 raise RuntimeError(f"crictl rmi {image} on {node} failed: {out}")
             msgs.append(f"{node}:{'deleted' if p.returncode == 0 else 'absent'}")
         return ";".join(msgs)
@@ -166,7 +168,12 @@ RUN_FIELDS = (["target", "pull_source", "parallel", "round", "group", "tool", "t
 
 def run_group(tgt: Target, tools: list[str], mode: str, image_of: dict, cfg: dict) -> list[dict]:
     """One timed run of 1..K tools scaled up at the same moment. Returns one dict per tool."""
-    rmi = {t: tgt.rmi(image_of[t]) if mode == "uncached" else "" for t in tools}
+    rmi = {t: "" for t in tools}
+    if mode == "uncached":
+        # Remove EVERY tool image, not only this tool's: tools of a tier share their dependency
+        # layers, so a leftover sibling image would keep most layers cached.
+        removed = [tgt.rmi(img) for img in sorted(set(image_of.values()))]
+        rmi = {t: f"all {len(removed)} tool images removed" for t in tools}
     args = ["exec", "deploy/e0-probe", "--", "python", "/app/probe.py", "run",
             "--namespace", tgt.ns, "--warm", str(cfg["warm_calls"]),
             "--service-ms", str(cfg["service_ms"]), "--timeout", str(cfg["run_timeout_s"])]
@@ -380,7 +387,8 @@ def main() -> None:
         deploys = json.loads(tgt.k("get", "deploy", "-l", "app.kubernetes.io/part-of=skypiea",
                                    "-o", "json").stdout)["items"]
         image_of = {d["metadata"]["labels"]["skypiea.io/tool"]:
-                    d["spec"]["template"]["spec"]["containers"][0]["image"] for d in deploys}
+                    d["spec"]["template"]["spec"]["containers"][0]["image"] for d in deploys
+                    if d["metadata"]["name"] != "e0-probe"}
         missing = [t for t in tools if t not in image_of]
         if missing:
             sys.exit(f"not deployed: {missing}")
