@@ -21,7 +21,7 @@ COPY configs/cold_start.yaml configs/cold_start.yaml
 COPY gateway/ gateway/
 COPY controller/ controller/
 RUN python -m compileall -q tools gateway controller
-ENV PATH=/opt/venv/bin:$PATH PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PORT=8080
+ENV PATH=/opt/venv/bin:$PATH PYTHONPATH=/app PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PORT=8080
 USER 10001:10001
 EXPOSE 8080 8081
 CMD ["python", "-m", "gateway.main", "gateway"]
