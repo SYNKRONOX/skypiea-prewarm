@@ -47,8 +47,9 @@ async def startup(settings: kopf.OperatorSettings, **_) -> None:
     global _svc
     settings.posting.level = logging.WARNING
     settings.watching.server_timeout = 300
+    settings.scanning.disabled = True   # no cluster-wide namespace/CRD discovery (namespaced RBAC)
     _svc = ControllerService(K8sScaler(NS), _cfg())
-    runner = web.AppRunner(_svc.web_app())
+    runner = web.AppRunner(_svc.web_app(), access_log=None)
     await runner.setup()
     await web.TCPSite(runner, "0.0.0.0", int(os.environ.get("SKYPIEA_API_PORT", "8081"))).start()
 
