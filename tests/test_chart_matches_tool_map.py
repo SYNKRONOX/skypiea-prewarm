@@ -26,3 +26,10 @@ def test_kind_and_aws_values_differ_only_in_registry_and_pull_secret():
     kind = yaml.safe_load((CHART / "values-kind.yaml").read_text())
     aws = yaml.safe_load((CHART / "values-aws.yaml").read_text())
     assert set(kind) == set(aws) == {"registry", "imagePullSecrets"}
+
+
+def test_controller_owns_replicas():
+    """helm upgrade must keep the live replica count (lookup), not reset it to values."""
+    tpl = (CHART / "templates" / "tools.yaml").read_text()
+    assert 'lookup "apps/v1" "Deployment"' in tpl and "$live.spec.replicas" in tpl
+    assert "skypiea.io/replicas-owner: skypiea-controller" in tpl

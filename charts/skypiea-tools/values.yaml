@@ -7,7 +7,8 @@ registry: ""
 imageTag: latest          # set by make: --set imageTag=$(tools/image_tag.sh)
 imagePullSecrets: []
 
-replicas: 0               # tools sit at zero; the Skypiea controller scales them
+replicas: 0               # initial count only; afterwards the Skypiea controller owns replicas
+                          # (helm upgrade keeps the live count, see templates/tools.yaml)
 defaultServiceMs: 20
 
 readinessProbe:

@@ -10,8 +10,17 @@ metadata:
   labels:
     {{- include "skypiea.labels" $ctx | nindent 4 }}
     skypiea.io/tier: {{ $tool.tier }}
+  annotations:
+    skypiea.io/replicas-owner: skypiea-controller
 spec:
+  {{- /* The Skypiea controller owns replicas. Created at .Values.replicas (0); on upgrade the
+         live count is kept, so `helm upgrade` never undoes a scale-up. */}}
+  {{- $live := lookup "apps/v1" "Deployment" $.Release.Namespace $k8s }}
+  {{- if and $live $live.spec }}
+  replicas: {{ $live.spec.replicas | default 0 }}
+  {{- else }}
   replicas: {{ $.Values.replicas }}
+  {{- end }}
   revisionHistoryLimit: 2
   selector:
     matchLabels:
