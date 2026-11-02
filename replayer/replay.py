@@ -286,12 +286,11 @@ def main() -> int:
     finally:
         if pf is not None:
             pf.__exit__(None, None, None)
-    out = ROOT / cfg.out.format(run_id=rep.run_id)
+    out = (ROOT / Path(cfg.out.format(run_id=rep.run_id)).expanduser()).resolve()
     write_csv(rows, out)
     n_cold = sum(1 for r in rows if r.get("cold"))
     print(f"{len(rows)} calls from {len(sessions)} sessions, policy={policy}, "
-          f"cold={n_cold}, failed={sum(1 for r in rows if not r.get('ok'))} -> "
-          f"{out.relative_to(ROOT)}")
+          f"cold={n_cold}, failed={sum(1 for r in rows if not r.get('ok'))} -> {out}")
     return 0
 
 

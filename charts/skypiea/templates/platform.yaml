@@ -55,6 +55,8 @@ spec:
   template:
     metadata:
       labels: {{- include "skypiea.labels" $ctl | nindent 8 }}
+      annotations:
+        skypiea.io/metrics-port: "8081"
     spec:
       serviceAccountName: skypiea-controller
       enableServiceLinks: false
@@ -142,6 +144,8 @@ spec:
   template:
     metadata:
       labels: {{- include "skypiea.labels" $gw | nindent 8 }}
+      annotations:
+        skypiea.io/metrics-port: "8080"
     spec:
       serviceAccountName: skypiea-gateway
       enableServiceLinks: false

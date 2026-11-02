@@ -1,0 +1,238 @@
+{{- if .Values.monitoring.enabled }}
+{{- $m := .Values.monitoring }}
+{{- $ns := .Release.Namespace }}
+{{- $pctx := dict "root" $ "name" "skypiea-prometheus" }}
+{{- $gctx := dict "root" $ "name" "skypiea-grafana" }}
+# ======================= Prometheus =======================
+# Least privilege: discover pods in THIS namespace only (read-only).
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: skypiea-prometheus
+  namespace: {{ $ns }}
+  labels: {{- include "skypiea.labels" $pctx | nindent 4 }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: skypiea-prometheus
+  namespace: {{ $ns }}
+  labels: {{- include "skypiea.labels" $pctx | nindent 4 }}
+rules:
+  - apiGroups: [""]
+    resources: [pods]
+    verbs: [get, list, watch]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: skypiea-prometheus
+  namespace: {{ $ns }}
+  labels: {{- include "skypiea.labels" $pctx | nindent 4 }}
+roleRef: {apiGroup: rbac.authorization.k8s.io, kind: Role, name: skypiea-prometheus}
+subjects:
+  - {kind: ServiceAccount, name: skypiea-prometheus, namespace: {{ $ns }}}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: skypiea-prometheus
+  namespace: {{ $ns }}
+  labels: {{- include "skypiea.labels" $pctx | nindent 4 }}
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: {{ $m.scrapeInterval }}
+      evaluation_interval: {{ $m.scrapeInterval }}
+    scrape_configs:
+      - job_name: skypiea
+        kubernetes_sd_configs:
+          - role: pod
+            namespaces: {names: [{{ $ns }}]}
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_annotation_skypiea_io_metrics_port]
+            regex: .+
+            action: keep
+          - source_labels: [__meta_kubernetes_pod_phase]
+            regex: Running
+            action: keep
+          - source_labels: [__meta_kubernetes_pod_ip, __meta_kubernetes_pod_annotation_skypiea_io_metrics_port]
+            regex: (.+);(.+)
+            replacement: $1:$2
+            target_label: __address__
+          - source_labels: [__meta_kubernetes_pod_label_skypiea_io_tool]
+            target_label: component
+          - source_labels: [__meta_kubernetes_pod_name]
+            target_label: pod
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: skypiea-prometheus
+  namespace: {{ $ns }}
+  labels: {{- include "skypiea.labels" $pctx | nindent 4 }}
+spec:
+  replicas: 1
+  strategy: {type: Recreate}
+  selector:
+    matchLabels: {skypiea.io/tool: skypiea-prometheus}
+  template:
+    metadata:
+      labels: {{- include "skypiea.labels" $pctx | nindent 8 }}
+      annotations:
+        checksum/config: {{ $m | toJson | sha256sum | trunc 16 }}
+    spec:
+      serviceAccountName: skypiea-prometheus
+      enableServiceLinks: false
+      securityContext: {runAsNonRoot: true, runAsUser: 65534, fsGroup: 65534, seccompProfile: {type: RuntimeDefault}}
+      containers:
+        - name: prometheus
+          image: {{ $m.prometheus.image }}
+          imagePullPolicy: IfNotPresent
+          args:
+            - --config.file=/etc/prometheus/prometheus.yml
+            - --storage.tsdb.path=/prometheus
+            - --storage.tsdb.retention.time={{ $m.retention }}
+          ports: [{name: http, containerPort: 9090}]
+          readinessProbe:
+            httpGet: {path: /-/ready, port: http}
+            periodSeconds: 5
+          resources: {{- toYaml $m.prometheus.resources | nindent 12 }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: [ALL]}
+          volumeMounts:
+            - {name: config, mountPath: /etc/prometheus}
+            - {name: data, mountPath: /prometheus}
+      volumes:
+        - {name: config, configMap: {name: skypiea-prometheus}}
+        - {name: data, emptyDir: {sizeLimit: 2Gi}}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: skypiea-prometheus
+  namespace: {{ $ns }}
+  labels: {{- include "skypiea.labels" $pctx | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector: {skypiea.io/tool: skypiea-prometheus}
+  ports: [{name: http, port: 9090, targetPort: http}]
+---
+# ======================= Grafana =======================
+{{- $existing := lookup "v1" "Secret" $ns "skypiea-grafana" }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: skypiea-grafana
+  namespace: {{ $ns }}
+  labels: {{- include "skypiea.labels" $gctx | nindent 4 }}
+type: Opaque
+data:
+  # generated once at install and kept across upgrades; never in the repo
+  admin-password: {{ if and $existing $existing.data }}{{ index $existing.data "admin-password" }}{{ else }}{{ randAlphaNum 24 | b64enc }}{{ end }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: skypiea-grafana-provisioning
+  namespace: {{ $ns }}
+  labels: {{- include "skypiea.labels" $gctx | nindent 4 }}
+data:
+  datasources.yaml: |
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        uid: skypiea-prom
+        type: prometheus
+        access: proxy
+        url: http://skypiea-prometheus.{{ $ns }}.svc:9090
+        isDefault: true
+        editable: false
+  dashboards.yaml: |
+    apiVersion: 1
+    providers:
+      - name: skypiea
+        folder: Skypiea
+        type: file
+        disableDeletion: true
+        allowUiUpdates: false
+        options: {path: /var/lib/grafana/dashboards}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: skypiea-grafana-dashboards
+  namespace: {{ $ns }}
+  labels: {{- include "skypiea.labels" $gctx | nindent 4 }}
+data:
+  skypiea-dashboard.json: |-
+{{ .Files.Get "files/skypiea-dashboard.json" | indent 4 }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: skypiea-grafana
+  namespace: {{ $ns }}
+  labels: {{- include "skypiea.labels" $gctx | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {skypiea.io/tool: skypiea-grafana}
+  template:
+    metadata:
+      labels: {{- include "skypiea.labels" $gctx | nindent 8 }}
+      annotations:
+        checksum/dashboard: {{ .Files.Get "files/skypiea-dashboard.json" | sha256sum | trunc 16 }}
+    spec:
+      automountServiceAccountToken: false
+      enableServiceLinks: false
+      securityContext: {runAsNonRoot: true, runAsUser: 472, fsGroup: 472, seccompProfile: {type: RuntimeDefault}}
+      containers:
+        - name: grafana
+          image: {{ $m.grafana.image }}
+          imagePullPolicy: IfNotPresent
+          ports: [{name: http, containerPort: 3000}]
+          env:
+            - name: GF_SECURITY_ADMIN_PASSWORD
+              valueFrom: {secretKeyRef: {name: skypiea-grafana, key: admin-password}}
+            - {name: GF_AUTH_ANONYMOUS_ENABLED, value: "true"}
+            - {name: GF_AUTH_ANONYMOUS_ORG_ROLE, value: Viewer}
+            - {name: GF_USERS_ALLOW_SIGN_UP, value: "false"}
+            - {name: GF_ANALYTICS_REPORTING_ENABLED, value: "false"}
+            - {name: GF_ANALYTICS_CHECK_FOR_UPDATES, value: "false"}
+            - {name: GF_ANALYTICS_CHECK_FOR_PLUGIN_UPDATES, value: "false"}
+            - {name: GF_NEWS_NEWS_FEED_ENABLED, value: "false"}
+            - {name: GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH, value: /var/lib/grafana/dashboards/skypiea-dashboard.json}
+          readinessProbe:
+            httpGet: {path: /api/health, port: http}
+            periodSeconds: 5
+          resources: {{- toYaml $m.grafana.resources | nindent 12 }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: [ALL]}
+          volumeMounts:
+            - {name: provisioning, mountPath: /etc/grafana/provisioning/datasources/datasources.yaml, subPath: datasources.yaml}
+            - {name: provisioning, mountPath: /etc/grafana/provisioning/dashboards/dashboards.yaml, subPath: dashboards.yaml}
+            - {name: dashboards, mountPath: /var/lib/grafana/dashboards}
+            - {name: data, mountPath: /var/lib/grafana}
+            - {name: tmp, mountPath: /tmp}
+      volumes:
+        - {name: provisioning, configMap: {name: skypiea-grafana-provisioning}}
+        - {name: dashboards, configMap: {name: skypiea-grafana-dashboards}}
+        - {name: data, emptyDir: {sizeLimit: 512Mi}}
+        - {name: tmp, emptyDir: {sizeLimit: 64Mi}}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: skypiea-grafana
+  namespace: {{ $ns }}
+  labels: {{- include "skypiea.labels" $gctx | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector: {skypiea.io/tool: skypiea-grafana}
+  ports: [{name: http, port: 3000, targetPort: http}]
+{{- end }}

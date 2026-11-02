@@ -21,6 +21,8 @@ readinessProbe:
 #   requests 16 pods: 9x(50m,96Mi) + 4x(50m,192Mi) + 3x(75m,256Mi) = 875m, 2400Mi
 #   +6 heavy copies:                                       + 450m, 1536Mi  => 1325m, 3936Mi
 #   + platform (gateway, controller, predictor):            + 200m,  352Mi  => 1525m, 4288Mi
+#   + monitoring (prometheus, grafana):                     + 150m,  448Mi  => 1675m, 4736Mi
+#   (E0 runs with platform and monitoring disabled.)
 # On the 2 vCPU VM, heavy tools starting together compete for CPU (see docs/infra.md).
 # CPU limit is one full core so startup (CPU-bound imports) is not artificially throttled.
 resources:
@@ -84,6 +86,25 @@ platform:
     resources:
       requests: {cpu: 50m, memory: 96Mi}
       limits: {cpu: 500m, memory: 192Mi}
+
+# Monitoring: Prometheus (scrapes every pod with a skypiea.io/metrics-port annotation in this
+# namespace) and Grafana with the Skypiea dashboard provisioned (files/skypiea-dashboard.json).
+# ClusterIP only: kubectl port-forward svc/skypiea-grafana 3000 (anonymous Viewer). The admin
+# password is generated at install into Secret skypiea-grafana and never stored in the repo.
+monitoring:
+  enabled: true
+  scrapeInterval: 5s          # tool pods live seconds to minutes
+  retention: 2d
+  prometheus:
+    image: prom/prometheus:v3.15.1@sha256:fa3302279710be2f21a8301ec17a8b4f2301fd829bd113839b3b6b02b6f191a2
+    resources:
+      requests: {cpu: 100m, memory: 256Mi}
+      limits: {cpu: 500m, memory: 512Mi}
+  grafana:
+    image: grafana/grafana:13.3.0@sha256:488984b716c0862639f91a698adbe2862677a5a07bad42da5f03f3030883b205
+    resources:            # 256Mi was OOM-killed on kind during Grafana 13's first-start migrations
+      requests: {cpu: 50m, memory: 192Mi}
+      limits: {cpu: 500m, memory: 512Mi}
 
 # Long-running in-cluster client used by E0 (experiments/e0_cold_start.py) so that the first
 # MCP call is measured from inside the cluster.

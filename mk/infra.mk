@@ -3,7 +3,7 @@
 .PHONY: build-images measure-startup infra-test cluster-kind cluster-kind-down push-images-kind \
         deploy-kind e0-kind aws-ip aws-plan aws-apply aws-up aws-kubeconfig push-images-aws \
         deploy-aws e0-aws aws-stop aws-start aws-destroy infra-check \
-        e0-kind-parallel e0-aws-parallel tool-map-coverage deploy-kind-e0 kind-integration
+        e0-kind-parallel e0-aws-parallel tool-map-coverage deploy-kind-e0 kind-integration grafana-kind
 
 PY          ?= $(if $(wildcard .venv/bin/python),.venv/bin/python,python3)
 IMAGE_TAG   ?= $(shell tools/image_tag.sh)
@@ -51,7 +51,8 @@ deploy-kind: push-images-kind  ## helm install skypiea on kind: tools at 0 + gat
 deploy-kind-e0: push-images-kind  ## tools + E0 probe, NO controller (E0 scales tools itself)
 	helm upgrade --install skypiea $(CHART) --kube-context $(KIND_CTX) \
 	  -n $(NS) --create-namespace -f $(CHART)/values-kind.yaml \
-	  --set imageTag=$(IMAGE_TAG) --set platform.enabled=false --set e0Probe.enabled=true --wait
+	  --set imageTag=$(IMAGE_TAG) --set platform.enabled=false --set monitoring.enabled=false \
+	  --set e0Probe.enabled=true --wait
 	kubectl --context $(KIND_CTX) -n $(NS) get deploy
 
 e0-kind:
@@ -96,7 +97,7 @@ deploy-aws:              ## helm install the tools chart on the k3s VM (all tool
 	  -n $(NS) --create-namespace -f $(CHART)/values-aws.yaml \
 	  --set registry=$$($(TF) output -raw ecr_registry)/ \
 	  --set imageTag=$(IMAGE_TAG) --set platform.enabled=$(PLATFORM) \
-	  --set e0Probe.enabled=$(E0PROBE) --wait
+	  --set monitoring.enabled=$(PLATFORM) --set e0Probe.enabled=$(E0PROBE) --wait
 	kubectl --kubeconfig $(AWS_KUBECONFIG) -n $(NS) get deploy
 
 e0-aws:
@@ -141,3 +142,6 @@ tool-map-coverage:       ## traffic share per server per scenario (needs data/pr
 
 kind-integration:        ## replay Scenario A and B through the gateway under each policy (functional)
 	$(PY) -m gateway.replay_check --context $(KIND_CTX) --namespace $(NS)
+
+grafana-kind:            ## open Grafana on http://127.0.0.1:3000 (anonymous viewer)
+	kubectl --context $(KIND_CTX) -n $(NS) port-forward svc/skypiea-grafana 3000:3000
