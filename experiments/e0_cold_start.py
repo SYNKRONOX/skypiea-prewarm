@@ -174,7 +174,8 @@ def phases(r: dict) -> dict:
     }
 
 
-RUN_FIELDS = (["target", "pull_source", "parallel", "round", "group", "tool", "tier", "mode",
+RUN_FIELDS = (["git_commit", "run_params", "target", "pull_source", "parallel", "round",
+               "group", "tool", "tier", "mode",
                "mode_ok", "noisy", "load1", "cpus", "mem_avail_mb", "running_containers",
                "quiet_wait_s", "node", "pod", "image", "image_digest", "image_bytes_local",
                "pulled_image_bytes", "wall_t0", "rmi"]
@@ -399,6 +400,13 @@ def main() -> None:
     res.mkdir(exist_ok=True)
     stem = f"e0_{a.target}" + (f"_p{a.parallel}" if a.parallel > 1 else "")
     runs_csv = res / f"{stem}_runs.csv"
+    dirty = sh(["git", "-C", str(ROOT), "status", "--porcelain", "--", "experiments/",
+                "tools/", "charts/", "configs/cold_start.yaml"], check=False).stdout.strip()
+    git_commit = sh(["git", "-C", str(ROOT), "rev-parse", "--short", "HEAD"]).stdout.strip() \
+        + ("-dirty" if dirty else "")
+    run_params = (f"n={a.n} modes={a.modes} tools={a.tools} parallel={a.parallel} seed={seed} "
+                  f"require_quiet={a.require_quiet} warm_calls={cfg['warm_calls']} "
+                  f"service_ms={cfg['service_ms']} timeout_s={cfg['run_timeout_s']}")
 
     if not a.report_only:
         tgt = Target(a.target, cfg, a)
@@ -447,6 +455,7 @@ def main() -> None:
                         for tool, r in zip(group, results, strict=True):
                             ph = phases(r)
                             row = {**{k: r.get(k) for k in RUN_FIELDS}, **st, **{
+                                "git_commit": git_commit, "run_params": run_params,
                                 "target": a.target, "pull_source": PULL_SOURCE[a.target],
                                 "parallel": a.parallel, "round": rnd, "group": gi,
                                 "tool": tool, "tier": servers[tool]["tier"], "mode": mode,
@@ -479,6 +488,9 @@ def main() -> None:
             for r in rows]
     summary, ok = summarise(rows)
     summary.insert(0, "pull_source", PULL_SOURCE[a.target])
+    meta = pd.read_csv(runs_csv, usecols=["git_commit", "run_params"]).drop_duplicates()
+    summary.insert(0, "run_params", " | ".join(meta["run_params"].astype(str)))
+    summary.insert(0, "git_commit", " | ".join(meta["git_commit"].astype(str)))
     summary.to_csv(res / f"{stem}_summary.csv", index=False)
     plot(summary, a.target, res / f"{stem}.png", a.parallel)
     cols = ["tool", "mode", "n", "n_noisy", "n_failed", "n_mode_mismatch", "total_median_ms",
