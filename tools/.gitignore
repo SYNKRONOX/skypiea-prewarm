@@ -1,0 +1,2 @@
+# Heavy-tool models are trained at image build time (train.py), never committed.
+*/model.joblib

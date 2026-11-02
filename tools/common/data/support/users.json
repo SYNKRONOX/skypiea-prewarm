@@ -1,0 +1,2202 @@
+[
+{
+"email": "priya.menon0@example.com",
+"name": "Priya Menon",
+"payment_methods": [
+"gift_card",
+"paypal"
+],
+"tier": "silver",
+"user_id": "priya_menon_1000",
+"zip": "560005"
+},
+{
+"email": "priya.nair1@example.com",
+"name": "Priya Nair",
+"payment_methods": [
+"gift_card",
+"credit_card"
+],
+"tier": "silver",
+"user_id": "priya_nair_1001",
+"zip": "560061"
+},
+{
+"email": "ananya.shah2@example.com",
+"name": "Ananya Shah",
+"payment_methods": [
+"credit_card",
+"paypal"
+],
+"tier": "regular",
+"user_id": "ananya_shah_1002",
+"zip": "560036"
+},
+{
+"email": "dev.kumar3@example.com",
+"name": "Dev Kumar",
+"payment_methods": [
+"credit_card",
+"gift_card"
+],
+"tier": "silver",
+"user_id": "dev_kumar_1003",
+"zip": "560018"
+},
+{
+"email": "neha.das4@example.com",
+"name": "Neha Das",
+"payment_methods": [
+"paypal",
+"gift_card"
+],
+"tier": "regular",
+"user_id": "neha_das_1004",
+"zip": "560071"
+},
+{
+"email": "neha.kumar5@example.com",
+"name": "Neha Kumar",
+"payment_methods": [
+"gift_card",
+"paypal"
+],
+"tier": "regular",
+"user_id": "neha_kumar_1005",
+"zip": "560081"
+},
+{
+"email": "lakshmi.pillai6@example.com",
+"name": "Lakshmi Pillai",
+"payment_methods": [
+"gift_card",
+"credit_card"
+],
+"tier": "regular",
+"user_id": "lakshmi_pillai_1006",
+"zip": "560033"
+},
+{
+"email": "meera.menon7@example.com",
+"name": "Meera Menon",
+"payment_methods": [
+"gift_card",
+"credit_card"
+],
+"tier": "gold",
+"user_id": "meera_menon_1007",
+"zip": "560090"
+},
+{
+"email": "nikhil.das8@example.com",
+"name": "Nikhil Das",
+"payment_methods": [
+"gift_card",
+"paypal"
+],
+"tier": "regular",
+"user_id": "nikhil_das_1008",
+"zip": "560042"
+},
+{
+"email": "meera.reddy9@example.com",
+"name": "Meera Reddy",
+"payment_methods": [
+"credit_card",
+"gift_card"
+],
+"tier": "regular",
+"user_id": "meera_reddy_1009",
+"zip": "560072"
+},
+{
+"email": "dev.das10@example.com",
+"name": "Dev Das",
+"payment_methods": [
+"paypal",
+"gift_card"
+],
+"tier": "regular",
+"user_id": "dev_das_1010",
+"zip": "560011"
+},
+{
+"email": "arjun.nair11@example.com",
+"name": "Arjun Nair",
+"payment_methods": [
+"gift_card",
+"credit_card"
+],
+"tier": "silver",
+"user_id": "arjun_nair_1011",
+"zip": "560070"
+},
+{
+"email": "dev.gupta12@example.com",
+"name": "Dev Gupta",
+"payment_methods": [
+"gift_card",
+"paypal"
+],
+"tier": "regular",
+"user_id": "dev_gupta_1012",
+"zip": "560069"
+},
+{
+"email": "lakshmi.iyer13@example.com",
+"name": "Lakshmi Iyer",
+"payment_methods": [
+"paypal",
+"credit_card"
+],
+"tier": "silver",
+"user_id": "lakshmi_iyer_1013",
+"zip": "560076"
+},
+{
+"email": "karan.shah14@example.com",
+"name": "Karan Shah",
+"payment_methods": [
+"credit_card",
+"paypal"
+],
+"tier": "regular",
+"user_id": "karan_shah_1014",
+"zip": "560024"
+},
+{
+"email": "rahul.iyer15@example.com",
+"name": "Rahul Iyer",
+"payment_methods": [
+"credit_card",
+"gift_card"
+],
+"tier": "gold",
+"user_id": "rahul_iyer_1015",
+"zip": "560011"
+},
+{
+"email": "ravi.iyer16@example.com",
+"name": "Ravi Iyer",
+"payment_methods": [
+"gift_card",
+"paypal"
+],
+"tier": "gold",
+"user_id": "ravi_iyer_1016",
+"zip": "560089"
+},
+{
+"email": "ananya.nair17@example.com",
+"name": "Ananya Nair",
+"payment_methods": [
+"credit_card",
+"paypal"
+],
+"tier": "regular",
+"user_id": "ananya_nair_1017",
+"zip": "560066"
+},
+{
+"email": "tara.nair18@example.com",
+"name": "Tara Nair",
+"payment_methods": [
+"gift_card",
+"paypal"
+],
+"tier": "silver",
+"user_id": "tara_nair_1018",
+"zip": "560057"
+},
+{
+"email": "meera.gupta19@example.com",
+"name": "Meera Gupta",
+"payment_methods": [
+"paypal",
+"gift_card"
+],
+"tier": "regular",
+"user_id": "meera_gupta_1019",
+"zip": "560078"
+},
+{
+"email": "diya.reddy20@example.com",
+"name": "Diya Reddy",
+"payment_methods": [
+"paypal",
+"credit_card"
+],
+"tier": "gold",
+"user_id": "diya_reddy_1020",
+"zip": "560002"
+},
+{
+"email": "rohan.gupta21@example.com",
+"name": "Rohan Gupta",
+"payment_methods": [
+"paypal",
+"credit_card"
+],
+"tier": "silver",
+"user_id": "rohan_gupta_1021",
+"zip": "560021"
+},
+{
+"email": "arjun.shah22@example.com",
+"name": "Arjun Shah",
+"payment_methods": [
+"credit_card",
+"gift_card"
+],
+"tier": "regular",
+"user_id": "arjun_shah_1022",
+"zip": "560089"
+},
+{
+"email": "asha.iyer23@example.com",
+"name": "Asha Iyer",
+"payment_methods": [
+"gift_card",
+"credit_card"
+],
+"tier": "regular",
+"user_id": "asha_iyer_1023",
+"zip": "560081"
+},
+{
+"email": "priya.iyer24@example.com",
+"name": "Priya Iyer",
+"payment_methods": [
+"credit_card",
+"gift_card"
+],
+"tier": "regular",
+"user_id": "priya_iyer_1024",
+"zip": "560047"
+},
+{
+"email": "diya.shah25@example.com",
+"name": "Diya Shah",
+"payment_methods": [
+"paypal",
+"credit_card"
+],
+"tier": "regular",
+"user_id": "diya_shah_1025",
+"zip": "560091"
+},
+{
+"email": "ravi.rao26@example.com",
+"name": "Ravi Rao",
+"payment_methods": [
+"gift_card",
+"credit_card"
+],
+"tier": "silver",
+"user_id": "ravi_rao_1026",
+"zip": "560069"
+},
+{
+"email": "isha.iyer27@example.com",
+"name": "Isha Iyer",
+"payment_methods": [
+"gift_card",
+"paypal"
+],
+"tier": "regular",
+"user_id": "isha_iyer_1027",
+"zip": "560028"
+},
+{
+"email": "aditya.menon28@example.com",
+"name": "Aditya Menon",
+"payment_methods": [
+"gift_card",
+"paypal"
+],
+"tier": "regular",
+"user_id": "aditya_menon_1028",
+"zip": "560023"
+},
+{
+"email": "ravi.kumar29@example.com",
+"name": "Ravi Kumar",
+"payment_methods": [
+"paypal",
+"credit_card"
+],
+"tier": "gold",
+"user_id": "ravi_kumar_1029",
+"zip": "560012"
+},
+{
+"email": "isha.gupta30@example.com",
+"name": "Isha Gupta",
+"payment_methods": [
+"gift_card",
+"credit_card"
+],
+"tier": "silver",
+"user_id": "isha_gupta_1030",
+"zip": "560093"
+},
+{
+"email": "diya.rao31@example.com",
+"name": "Diya Rao",
+"payment_methods": [
+"credit_card",
+"paypal"
+],
+"tier": "regular",
+"user_id": "diya_rao_1031",
+"zip": "560086"
+},
+{
+"email": "ananya.nair32@example.com",
+"name": "Ananya Nair",
+"payment_methods": [
+"paypal",
+"credit_card"
+],
+"tier": "gold",
+"user_id": "ananya_nair_1032",
+"zip": "560015"
+},
+{
+"email": "asha.das33@example.com",
+"name": "Asha Das",
+"payment_methods": [
+"gift_card",
+"paypal"
+],
+"tier": "silver",
+"user_id": "asha_das_1033",
+"zip": "560087"
+},
+{
+"email": "aditya.menon34@example.com",
+"name": "Aditya Menon",
+"payment_methods": [
+"credit_card",
+"gift_card"
+],
+"tier": "silver",
+"user_id": "aditya_menon_1034",
+"zip": "560084"
+},
+{
+"email": "lakshmi.iyer35@example.com",
+"name": "Lakshmi Iyer",
+"payment_methods": [
+"credit_card",
+"paypal"
+],
+"tier": "gold",
+"user_id": "lakshmi_iyer_1035",
+"zip": "560042"
+},
+{
+"email": "kavya.reddy36@example.com",
+"name": "Kavya Reddy",
+"payment_methods": [
+"paypal",
+"gift_card"
+],
+"tier": "silver",
+"user_id": "kavya_reddy_1036",
+"zip": "560097"
+},
+{
+"email": "aditya.kumar37@example.com",
+"name": "Aditya Kumar",
+"payment_methods": [
+"credit_card",
+"paypal"
+],
+"tier": "gold",
+"user_id": "aditya_kumar_1037",
+"zip": "560081"
+},
+{
+"email": "priya.menon38@example.com",
+"name": "Priya Menon",
+"payment_methods": [
+"credit_card",
+"gift_card"
+],
+"tier": "regular",
+"user_id": "priya_menon_1038",
+"zip": "560083"
+},
+{
+"email": "neha.shah39@example.com",
+"name": "Neha Shah",
+"payment_methods": [
+"gift_card",
+"paypal"
+],
+"tier": "regular",
+"user_id": "neha_shah_1039",
+"zip": "560030"
+},
+{
+"email": "priya.kumar40@example.com",
+"name": "Priya Kumar",
+"payment_methods": [
+"paypal",
+"gift_card"
+],
+"tier": "regular",
+"user_id": "priya_kumar_1040",
+"zip": "560053"
+},
+{
+"email": "ravi.shah41@example.com",
+"name": "Ravi Shah",
+"payment_methods": [
+"paypal",
+"credit_card"
+],
+"tier": "regular",
+"user_id": "ravi_shah_1041",
+"zip": "560057"
+},
+{
+"email": "lakshmi.pillai42@example.com",
+"name": "Lakshmi Pillai",
+"payment_methods": [
+"gift_card",
+"credit_card"
+],
+"tier": "gold",
+"user_id": "lakshmi_pillai_1042",
+"zip": "560062"
+},
+{
+"email": "ravi.das43@example.com",
+"name": "Ravi Das",
+"payment_methods": [
+"paypal",
+"credit_card"
+],
+"tier": "silver",
+"user_id": "ravi_das_1043",
+"zip": "560041"
+},
+{
+"email": "sanjay.reddy44@example.com",
+"name": "Sanjay Reddy",
+"payment_methods": [
+"credit_card",
+"gift_card"
+],
+"tier": "gold",
+"user_id": "sanjay_reddy_1044",
+"zip": "560070"
+},
+{
+"email": "asha.menon45@example.com",
+"name": "Asha Menon",
+"payment_methods": [
+"paypal",
+"credit_card"
+],
+"tier": "silver",
+"user_id": "asha_menon_1045",
+"zip": "560086"
+},
+{
+"email": "diya.rao46@example.com",
+"name": "Diya Rao",
+"payment_methods": [
+"gift_card",
+"credit_card"
+],
+"tier": "regular",
+"user_id": "diya_rao_1046",
+"zip": "560091"
+},
+{
+"email": "diya.iyer47@example.com",
+"name": "Diya Iyer",
+"payment_methods": [
+"credit_card",
+"paypal"
+],
+"tier": "gold",
+"user_id": "diya_iyer_1047",
+"zip": "560077"
+},
+{
+"email": "isha.shah48@example.com",
+"name": "Isha Shah",
+"payment_methods": [
+"paypal",
+"credit_card"
+],
+"tier": "silver",
+"user_id": "isha_shah_1048",
+"zip": "560012"
+},
+{
+"email": "asha.nair49@example.com",
+"name": "Asha Nair",
+"payment_methods": [
+"paypal",
+"credit_card"
+],
+"tier": "regular",
+"user_id": "asha_nair_1049",
+"zip": "560057"
+},
+{
+"email": "ananya.gupta50@example.com",
+"name": "Ananya Gupta",
+"payment_methods": [
+"paypal",
+"credit_card"
+],
+"tier": "regular",
+"user_id": "ananya_gupta_1050",
+"zip": "560014"
+},
+{
+"email": "ravi.rao51@example.com",
+"name": "Ravi Rao",
+"payment_methods": [
+"paypal",
+"gift_card"
+],
+"tier": "gold",
+"user_id": "ravi_rao_1051",
+"zip": "560026"
+},
+{
+"email": "aditya.kumar52@example.com",
+"name": "Aditya Kumar",
+"payment_methods": [
+"gift_card",
+"paypal"
+],
+"tier": "gold",
+"user_id": "aditya_kumar_1052",
+"zip": "560005"
+},
+{
+"email": "lakshmi.menon53@example.com",
+"name": "Lakshmi Menon",
+"payment_methods": [
+"credit_card",
+"gift_card"
+],
+"tier": "gold",
+"user_id": "lakshmi_menon_1053",
+"zip": "560047"
+},
+{
+"email": "priya.kumar54@example.com",
+"name": "Priya Kumar",
+"payment_methods": [
+"credit_card",
+"gift_card"
+],
+"tier": "regular",
+"user_id": "priya_kumar_1054",
+"zip": "560037"
+},
+{
+"email": "isha.gupta55@example.com",
+"name": "Isha Gupta",
+"payment_methods": [
+"gift_card",
+"credit_card"
+],
+"tier": "silver",
+"user_id": "isha_gupta_1055",
+"zip": "560043"
+},
+{
+"email": "neha.kumar56@example.com",
+"name": "Neha Kumar",
+"payment_methods": [
+"paypal",
+"credit_card"
+],
+"tier": "regular",
+"user_id": "neha_kumar_1056",
+"zip": "560004"
+},
+{
+"email": "kavya.kumar57@example.com",
+"name": "Kavya Kumar",
+"payment_methods": [
+"paypal",
+"credit_card"
+],
+"tier": "silver",
+"user_id": "kavya_kumar_1057",
+"zip": "560037"
+},
+{
+"email": "karan.iyer58@example.com",
+"name": "Karan Iyer",
+"payment_methods": [
+"credit_card",
+"gift_card"
+],
+"tier": "gold",
+"user_id": "karan_iyer_1058",
+"zip": "560061"
+},
+{
+"email": "karan.shah59@example.com",
+"name": "Karan Shah",
+"payment_methods": [
+"credit_card",
+"paypal"
+],
+"tier": "gold",
+"user_id": "karan_shah_1059",
+"zip": "560066"
+},
+{
+"email": "priya.gupta60@example.com",
+"name": "Priya Gupta",
+"payment_methods": [
+"credit_card",
+"gift_card"
+],
+"tier": "silver",
+"user_id": "priya_gupta_1060",
+"zip": "560038"
+},
+{
+"email": "dev.das61@example.com",
+"name": "Dev Das",
+"payment_methods": [
+"paypal",
+"credit_card"
+],
+"tier": "silver",
+"user_id": "dev_das_1061",
+"zip": "560060"
+},
+{
+"email": "rahul.iyer62@example.com",
+"name": "Rahul Iyer",
+"payment_methods": [
+"paypal",
+"credit_card"
+],
+"tier": "silver",
+"user_id": "rahul_iyer_1062",
+"zip": "560089"
+},
+{
+"email": "karan.gupta63@example.com",
+"name": "Karan Gupta",
+"payment_methods": [
+"credit_card",
+"gift_card"
+],
+"tier": "gold",
+"user_id": "karan_gupta_1063",
+"zip": "560094"
+},
+{
+"email": "tara.menon64@example.com",
+"name": "Tara Menon",
+"payment_methods": [
+"credit_card",
+"gift_card"
+],
+"tier": "regular",
+"user_id": "tara_menon_1064",
+"zip": "560081"
+},
+{
+"email": "diya.reddy65@example.com",
+"name": "Diya Reddy",
+"payment_methods": [
+"credit_card",
+"gift_card"
+],
+"tier": "silver",
+"user_id": "diya_reddy_1065",
+"zip": "560007"
+},
+{
+"email": "priya.pillai66@example.com",
+"name": "Priya Pillai",
+"payment_methods": [
+"paypal",
+"gift_card"
+],
+"tier": "silver",
+"user_id": "priya_pillai_1066",
+"zip": "560066"
+},
+{
+"email": "tara.reddy67@example.com",
+"name": "Tara Reddy",
+"payment_methods": [
+"paypal",
+"credit_card"
+],
+"tier": "regular",
+"user_id": "tara_reddy_1067",
+"zip": "560054"
+},
+{
+"email": "isha.kumar68@example.com",
+"name": "Isha Kumar",
+"payment_methods": [
+"paypal",
+"credit_card"
+],
+"tier": "regular",
+"user_id": "isha_kumar_1068",
+"zip": "560099"
+},
+{
+"email": "aditya.iyer69@example.com",
+"name": "Aditya Iyer",
+"payment_methods": [
+"credit_card",
+"paypal"
+],
+"tier": "gold",
+"user_id": "aditya_iyer_1069",
+"zip": "560008"
+},
+{
+"email": "diya.iyer70@example.com",
+"name": "Diya Iyer",
+"payment_methods": [
+"paypal",
+"credit_card"
+],
+"tier": "silver",
+"user_id": "diya_iyer_1070",
+"zip": "560063"
+},
+{
+"email": "ravi.reddy71@example.com",
+"name": "Ravi Reddy",
+"payment_methods": [
+"credit_card",
+"gift_card"
+],
+"tier": "regular",
+"user_id": "ravi_reddy_1071",
+"zip": "560079"
+},
+{
+"email": "lakshmi.menon72@example.com",
+"name": "Lakshmi Menon",
+"payment_methods": [
+"credit_card",
+"gift_card"
+],
+"tier": "gold",
+"user_id": "lakshmi_menon_1072",
+"zip": "560046"
+},
+{
+"email": "nikhil.das73@example.com",
+"name": "Nikhil Das",
+"payment_methods": [
+"paypal",
+"gift_card"
+],
+"tier": "gold",
+"user_id": "nikhil_das_1073",
+"zip": "560018"
+},
+{
+"email": "ananya.das74@example.com",
+"name": "Ananya Das",
+"payment_methods": [
+"paypal",
+"gift_card"
+],
+"tier": "silver",
+"user_id": "ananya_das_1074",
+"zip": "560086"
+},
+{
+"email": "diya.pillai75@example.com",
+"name": "Diya Pillai",
+"payment_methods": [
+"credit_card",
+"paypal"
+],
+"tier": "regular",
+"user_id": "diya_pillai_1075",
+"zip": "560078"
+},
+{
+"email": "neha.gupta76@example.com",
+"name": "Neha Gupta",
+"payment_methods": [
+"credit_card",
+"paypal"
+],
+"tier": "gold",
+"user_id": "neha_gupta_1076",
+"zip": "560004"
+},
+{
+"email": "nikhil.shah77@example.com",
+"name": "Nikhil Shah",
+"payment_methods": [
+"paypal",
+"gift_card"
+],
+"tier": "gold",
+"user_id": "nikhil_shah_1077",
+"zip": "560048"
+},
+{
+"email": "meera.iyer78@example.com",
+"name": "Meera Iyer",
+"payment_methods": [
+"credit_card",
+"gift_card"
+],
+"tier": "regular",
+"user_id": "meera_iyer_1078",
+"zip": "560066"
+},
+{
+"email": "kavya.rao79@example.com",
+"name": "Kavya Rao",
+"payment_methods": [
+"paypal",
+"gift_card"
+],
+"tier": "regular",
+"user_id": "kavya_rao_1079",
+"zip": "560038"
+},
+{
+"email": "vikram.shah80@example.com",
+"name": "Vikram Shah",
+"payment_methods": [
+"paypal",
+"gift_card"
+],
+"tier": "silver",
+"user_id": "vikram_shah_1080",
+"zip": "560083"
+},
+{
+"email": "ananya.pillai81@example.com",
+"name": "Ananya Pillai",
+"payment_methods": [
+"credit_card",
+"gift_card"
+],
+"tier": "gold",
+"user_id": "ananya_pillai_1081",
+"zip": "560004"
+},
+{
+"email": "sanjay.reddy82@example.com",
+"name": "Sanjay Reddy",
+"payment_methods": [
+"gift_card",
+"paypal"
+],
+"tier": "gold",
+"user_id": "sanjay_reddy_1082",
+"zip": "560037"
+},
+{
+"email": "rahul.menon83@example.com",
+"name": "Rahul Menon",
+"payment_methods": [
+"credit_card",
+"gift_card"
+],
+"tier": "gold",
+"user_id": "rahul_menon_1083",
+"zip": "560077"
+},
+{
+"email": "asha.shah84@example.com",
+"name": "Asha Shah",
+"payment_methods": [
+"gift_card",
+"paypal"
+],
+"tier": "gold",
+"user_id": "asha_shah_1084",
+"zip": "560038"
+},
+{
+"email": "neha.iyer85@example.com",
+"name": "Neha Iyer",
+"payment_methods": [
+"paypal",
+"gift_card"
+],
+"tier": "silver",
+"user_id": "neha_iyer_1085",
+"zip": "560063"
+},
+{
+"email": "priya.menon86@example.com",
+"name": "Priya Menon",
+"payment_methods": [
+"gift_card",
+"credit_card"
+],
+"tier": "regular",
+"user_id": "priya_menon_1086",
+"zip": "560007"
+},
+{
+"email": "rohan.nair87@example.com",
+"name": "Rohan Nair",
+"payment_methods": [
+"credit_card",
+"gift_card"
+],
+"tier": "silver",
+"user_id": "rohan_nair_1087",
+"zip": "560093"
+},
+{
+"email": "rahul.menon88@example.com",
+"name": "Rahul Menon",
+"payment_methods": [
+"gift_card",
+"credit_card"
+],
+"tier": "silver",
+"user_id": "rahul_menon_1088",
+"zip": "560018"
+},
+{
+"email": "kavya.gupta89@example.com",
+"name": "Kavya Gupta",
+"payment_methods": [
+"gift_card",
+"paypal"
+],
+"tier": "regular",
+"user_id": "kavya_gupta_1089",
+"zip": "560052"
+},
+{
+"email": "priya.das90@example.com",
+"name": "Priya Das",
+"payment_methods": [
+"paypal",
+"credit_card"
+],
+"tier": "regular",
+"user_id": "priya_das_1090",
+"zip": "560006"
+},
+{
+"email": "asha.rao91@example.com",
+"name": "Asha Rao",
+"payment_methods": [
+"credit_card",
+"paypal"
+],
+"tier": "gold",
+"user_id": "asha_rao_1091",
+"zip": "560076"
+},
+{
+"email": "arjun.pillai92@example.com",
+"name": "Arjun Pillai",
+"payment_methods": [
+"credit_card",
+"paypal"
+],
+"tier": "silver",
+"user_id": "arjun_pillai_1092",
+"zip": "560083"
+},
+{
+"email": "rahul.iyer93@example.com",
+"name": "Rahul Iyer",
+"payment_methods": [
+"gift_card",
+"paypal"
+],
+"tier": "gold",
+"user_id": "rahul_iyer_1093",
+"zip": "560007"
+},
+{
+"email": "nikhil.gupta94@example.com",
+"name": "Nikhil Gupta",
+"payment_methods": [
+"gift_card",
+"paypal"
+],
+"tier": "regular",
+"user_id": "nikhil_gupta_1094",
+"zip": "560083"
+},
+{
+"email": "kavya.menon95@example.com",
+"name": "Kavya Menon",
+"payment_methods": [
+"gift_card",
+"credit_card"
+],
+"tier": "gold",
+"user_id": "kavya_menon_1095",
+"zip": "560037"
+},
+{
+"email": "ananya.reddy96@example.com",
+"name": "Ananya Reddy",
+"payment_methods": [
+"paypal",
+"gift_card"
+],
+"tier": "silver",
+"user_id": "ananya_reddy_1096",
+"zip": "560004"
+},
+{
+"email": "diya.das97@example.com",
+"name": "Diya Das",
+"payment_methods": [
+"credit_card",
+"gift_card"
+],
+"tier": "gold",
+"user_id": "diya_das_1097",
+"zip": "560045"
+},
+{
+"email": "ravi.das98@example.com",
+"name": "Ravi Das",
+"payment_methods": [
+"gift_card",
+"credit_card"
+],
+"tier": "regular",
+"user_id": "ravi_das_1098",
+"zip": "560032"
+},
+{
+"email": "rohan.iyer99@example.com",
+"name": "Rohan Iyer",
+"payment_methods": [
+"gift_card",
+"paypal"
+],
+"tier": "gold",
+"user_id": "rohan_iyer_1099",
+"zip": "560099"
+},
+{
+"email": "ananya.nair100@example.com",
+"name": "Ananya Nair",
+"payment_methods": [
+"paypal",
+"gift_card"
+],
+"tier": "regular",
+"user_id": "ananya_nair_1100",
+"zip": "560014"
+},
+{
+"email": "meera.iyer101@example.com",
+"name": "Meera Iyer",
+"payment_methods": [
+"credit_card",
+"paypal"
+],
+"tier": "regular",
+"user_id": "meera_iyer_1101",
+"zip": "560053"
+},
+{
+"email": "kavya.rao102@example.com",
+"name": "Kavya Rao",
+"payment_methods": [
+"gift_card",
+"paypal"
+],
+"tier": "silver",
+"user_id": "kavya_rao_1102",
+"zip": "560057"
+},
+{
+"email": "asha.das103@example.com",
+"name": "Asha Das",
+"payment_methods": [
+"paypal",
+"credit_card"
+],
+"tier": "gold",
+"user_id": "asha_das_1103",
+"zip": "560041"
+},
+{
+"email": "aditya.iyer104@example.com",
+"name": "Aditya Iyer",
+"payment_methods": [
+"gift_card",
+"credit_card"
+],
+"tier": "silver",
+"user_id": "aditya_iyer_1104",
+"zip": "560015"
+},
+{
+"email": "aditya.gupta105@example.com",
+"name": "Aditya Gupta",
+"payment_methods": [
+"credit_card",
+"paypal"
+],
+"tier": "regular",
+"user_id": "aditya_gupta_1105",
+"zip": "560022"
+},
+{
+"email": "meera.kumar106@example.com",
+"name": "Meera Kumar",
+"payment_methods": [
+"credit_card",
+"gift_card"
+],
+"tier": "regular",
+"user_id": "meera_kumar_1106",
+"zip": "560018"
+},
+{
+"email": "arjun.rao107@example.com",
+"name": "Arjun Rao",
+"payment_methods": [
+"gift_card",
+"credit_card"
+],
+"tier": "silver",
+"user_id": "arjun_rao_1107",
+"zip": "560037"
+},
+{
+"email": "nikhil.reddy108@example.com",
+"name": "Nikhil Reddy",
+"payment_methods": [
+"paypal",
+"credit_card"
+],
+"tier": "regular",
+"user_id": "nikhil_reddy_1108",
+"zip": "560018"
+},
+{
+"email": "rahul.gupta109@example.com",
+"name": "Rahul Gupta",
+"payment_methods": [
+"credit_card",
+"gift_card"
+],
+"tier": "silver",
+"user_id": "rahul_gupta_1109",
+"zip": "560090"
+},
+{
+"email": "diya.gupta110@example.com",
+"name": "Diya Gupta",
+"payment_methods": [
+"paypal",
+"gift_card"
+],
+"tier": "silver",
+"user_id": "diya_gupta_1110",
+"zip": "560042"
+},
+{
+"email": "dev.gupta111@example.com",
+"name": "Dev Gupta",
+"payment_methods": [
+"credit_card",
+"gift_card"
+],
+"tier": "gold",
+"user_id": "dev_gupta_1111",
+"zip": "560023"
+},
+{
+"email": "dev.kumar112@example.com",
+"name": "Dev Kumar",
+"payment_methods": [
+"paypal",
+"credit_card"
+],
+"tier": "regular",
+"user_id": "dev_kumar_1112",
+"zip": "560039"
+},
+{
+"email": "kavya.reddy113@example.com",
+"name": "Kavya Reddy",
+"payment_methods": [
+"credit_card",
+"gift_card"
+],
+"tier": "gold",
+"user_id": "kavya_reddy_1113",
+"zip": "560040"
+},
+{
+"email": "vikram.nair114@example.com",
+"name": "Vikram Nair",
+"payment_methods": [
+"gift_card",
+"credit_card"
+],
+"tier": "silver",
+"user_id": "vikram_nair_1114",
+"zip": "560047"
+},
+{
+"email": "kavya.kumar115@example.com",
+"name": "Kavya Kumar",
+"payment_methods": [
+"credit_card",
+"gift_card"
+],
+"tier": "silver",
+"user_id": "kavya_kumar_1115",
+"zip": "560002"
+},
+{
+"email": "kavya.menon116@example.com",
+"name": "Kavya Menon",
+"payment_methods": [
+"paypal",
+"credit_card"
+],
+"tier": "gold",
+"user_id": "kavya_menon_1116",
+"zip": "560038"
+},
+{
+"email": "tara.menon117@example.com",
+"name": "Tara Menon",
+"payment_methods": [
+"paypal",
+"credit_card"
+],
+"tier": "gold",
+"user_id": "tara_menon_1117",
+"zip": "560038"
+},
+{
+"email": "rohan.das118@example.com",
+"name": "Rohan Das",
+"payment_methods": [
+"gift_card",
+"credit_card"
+],
+"tier": "silver",
+"user_id": "rohan_das_1118",
+"zip": "560080"
+},
+{
+"email": "priya.menon119@example.com",
+"name": "Priya Menon",
+"payment_methods": [
+"gift_card",
+"paypal"
+],
+"tier": "silver",
+"user_id": "priya_menon_1119",
+"zip": "560001"
+},
+{
+"email": "lakshmi.reddy120@example.com",
+"name": "Lakshmi Reddy",
+"payment_methods": [
+"paypal",
+"credit_card"
+],
+"tier": "silver",
+"user_id": "lakshmi_reddy_1120",
+"zip": "560047"
+},
+{
+"email": "vikram.iyer121@example.com",
+"name": "Vikram Iyer",
+"payment_methods": [
+"gift_card",
+"credit_card"
+],
+"tier": "regular",
+"user_id": "vikram_iyer_1121",
+"zip": "560035"
+},
+{
+"email": "lakshmi.menon122@example.com",
+"name": "Lakshmi Menon",
+"payment_methods": [
+"paypal",
+"credit_card"
+],
+"tier": "silver",
+"user_id": "lakshmi_menon_1122",
+"zip": "560023"
+},
+{
+"email": "rohan.das123@example.com",
+"name": "Rohan Das",
+"payment_methods": [
+"credit_card",
+"paypal"
+],
+"tier": "gold",
+"user_id": "rohan_das_1123",
+"zip": "560043"
+},
+{
+"email": "lakshmi.iyer124@example.com",
+"name": "Lakshmi Iyer",
+"payment_methods": [
+"paypal",
+"credit_card"
+],
+"tier": "regular",
+"user_id": "lakshmi_iyer_1124",
+"zip": "560061"
+},
+{
+"email": "lakshmi.kumar125@example.com",
+"name": "Lakshmi Kumar",
+"payment_methods": [
+"credit_card",
+"paypal"
+],
+"tier": "regular",
+"user_id": "lakshmi_kumar_1125",
+"zip": "560059"
+},
+{
+"email": "arjun.nair126@example.com",
+"name": "Arjun Nair",
+"payment_methods": [
+"credit_card",
+"paypal"
+],
+"tier": "gold",
+"user_id": "arjun_nair_1126",
+"zip": "560069"
+},
+{
+"email": "rahul.iyer127@example.com",
+"name": "Rahul Iyer",
+"payment_methods": [
+"credit_card",
+"paypal"
+],
+"tier": "silver",
+"user_id": "rahul_iyer_1127",
+"zip": "560086"
+},
+{
+"email": "isha.rao128@example.com",
+"name": "Isha Rao",
+"payment_methods": [
+"gift_card",
+"credit_card"
+],
+"tier": "silver",
+"user_id": "isha_rao_1128",
+"zip": "560015"
+},
+{
+"email": "asha.nair129@example.com",
+"name": "Asha Nair",
+"payment_methods": [
+"gift_card",
+"paypal"
+],
+"tier": "gold",
+"user_id": "asha_nair_1129",
+"zip": "560050"
+},
+{
+"email": "lakshmi.iyer130@example.com",
+"name": "Lakshmi Iyer",
+"payment_methods": [
+"paypal",
+"gift_card"
+],
+"tier": "silver",
+"user_id": "lakshmi_iyer_1130",
+"zip": "560095"
+},
+{
+"email": "diya.kumar131@example.com",
+"name": "Diya Kumar",
+"payment_methods": [
+"credit_card",
+"paypal"
+],
+"tier": "regular",
+"user_id": "diya_kumar_1131",
+"zip": "560010"
+},
+{
+"email": "karan.pillai132@example.com",
+"name": "Karan Pillai",
+"payment_methods": [
+"gift_card",
+"credit_card"
+],
+"tier": "regular",
+"user_id": "karan_pillai_1132",
+"zip": "560043"
+},
+{
+"email": "vikram.iyer133@example.com",
+"name": "Vikram Iyer",
+"payment_methods": [
+"paypal",
+"credit_card"
+],
+"tier": "silver",
+"user_id": "vikram_iyer_1133",
+"zip": "560053"
+},
+{
+"email": "tara.pillai134@example.com",
+"name": "Tara Pillai",
+"payment_methods": [
+"gift_card",
+"credit_card"
+],
+"tier": "regular",
+"user_id": "tara_pillai_1134",
+"zip": "560080"
+},
+{
+"email": "sanjay.pillai135@example.com",
+"name": "Sanjay Pillai",
+"payment_methods": [
+"paypal",
+"gift_card"
+],
+"tier": "gold",
+"user_id": "sanjay_pillai_1135",
+"zip": "560051"
+},
+{
+"email": "lakshmi.gupta136@example.com",
+"name": "Lakshmi Gupta",
+"payment_methods": [
+"credit_card",
+"gift_card"
+],
+"tier": "gold",
+"user_id": "lakshmi_gupta_1136",
+"zip": "560072"
+},
+{
+"email": "arjun.iyer137@example.com",
+"name": "Arjun Iyer",
+"payment_methods": [
+"gift_card",
+"paypal"
+],
+"tier": "silver",
+"user_id": "arjun_iyer_1137",
+"zip": "560048"
+},
+{
+"email": "kavya.pillai138@example.com",
+"name": "Kavya Pillai",
+"payment_methods": [
+"paypal",
+"gift_card"
+],
+"tier": "silver",
+"user_id": "kavya_pillai_1138",
+"zip": "560085"
+},
+{
+"email": "sanjay.reddy139@example.com",
+"name": "Sanjay Reddy",
+"payment_methods": [
+"gift_card",
+"paypal"
+],
+"tier": "silver",
+"user_id": "sanjay_reddy_1139",
+"zip": "560061"
+},
+{
+"email": "rahul.rao140@example.com",
+"name": "Rahul Rao",
+"payment_methods": [
+"credit_card",
+"paypal"
+],
+"tier": "silver",
+"user_id": "rahul_rao_1140",
+"zip": "560056"
+},
+{
+"email": "ravi.kumar141@example.com",
+"name": "Ravi Kumar",
+"payment_methods": [
+"paypal",
+"gift_card"
+],
+"tier": "regular",
+"user_id": "ravi_kumar_1141",
+"zip": "560027"
+},
+{
+"email": "priya.rao142@example.com",
+"name": "Priya Rao",
+"payment_methods": [
+"gift_card",
+"credit_card"
+],
+"tier": "regular",
+"user_id": "priya_rao_1142",
+"zip": "560067"
+},
+{
+"email": "priya.rao143@example.com",
+"name": "Priya Rao",
+"payment_methods": [
+"credit_card",
+"gift_card"
+],
+"tier": "regular",
+"user_id": "priya_rao_1143",
+"zip": "560046"
+},
+{
+"email": "isha.nair144@example.com",
+"name": "Isha Nair",
+"payment_methods": [
+"credit_card",
+"paypal"
+],
+"tier": "regular",
+"user_id": "isha_nair_1144",
+"zip": "560093"
+},
+{
+"email": "diya.iyer145@example.com",
+"name": "Diya Iyer",
+"payment_methods": [
+"gift_card",
+"paypal"
+],
+"tier": "silver",
+"user_id": "diya_iyer_1145",
+"zip": "560055"
+},
+{
+"email": "priya.shah146@example.com",
+"name": "Priya Shah",
+"payment_methods": [
+"gift_card",
+"paypal"
+],
+"tier": "silver",
+"user_id": "priya_shah_1146",
+"zip": "560042"
+},
+{
+"email": "kavya.das147@example.com",
+"name": "Kavya Das",
+"payment_methods": [
+"gift_card",
+"paypal"
+],
+"tier": "regular",
+"user_id": "kavya_das_1147",
+"zip": "560090"
+},
+{
+"email": "kavya.reddy148@example.com",
+"name": "Kavya Reddy",
+"payment_methods": [
+"paypal",
+"gift_card"
+],
+"tier": "silver",
+"user_id": "kavya_reddy_1148",
+"zip": "560023"
+},
+{
+"email": "sanjay.das149@example.com",
+"name": "Sanjay Das",
+"payment_methods": [
+"credit_card",
+"gift_card"
+],
+"tier": "gold",
+"user_id": "sanjay_das_1149",
+"zip": "560049"
+},
+{
+"email": "lakshmi.reddy150@example.com",
+"name": "Lakshmi Reddy",
+"payment_methods": [
+"credit_card",
+"paypal"
+],
+"tier": "gold",
+"user_id": "lakshmi_reddy_1150",
+"zip": "560075"
+},
+{
+"email": "ravi.reddy151@example.com",
+"name": "Ravi Reddy",
+"payment_methods": [
+"credit_card",
+"paypal"
+],
+"tier": "regular",
+"user_id": "ravi_reddy_1151",
+"zip": "560081"
+},
+{
+"email": "ravi.shah152@example.com",
+"name": "Ravi Shah",
+"payment_methods": [
+"paypal",
+"credit_card"
+],
+"tier": "gold",
+"user_id": "ravi_shah_1152",
+"zip": "560029"
+},
+{
+"email": "ananya.nair153@example.com",
+"name": "Ananya Nair",
+"payment_methods": [
+"paypal",
+"gift_card"
+],
+"tier": "silver",
+"user_id": "ananya_nair_1153",
+"zip": "560098"
+},
+{
+"email": "ravi.pillai154@example.com",
+"name": "Ravi Pillai",
+"payment_methods": [
+"gift_card",
+"paypal"
+],
+"tier": "gold",
+"user_id": "ravi_pillai_1154",
+"zip": "560085"
+},
+{
+"email": "tara.das155@example.com",
+"name": "Tara Das",
+"payment_methods": [
+"gift_card",
+"paypal"
+],
+"tier": "silver",
+"user_id": "tara_das_1155",
+"zip": "560062"
+},
+{
+"email": "diya.gupta156@example.com",
+"name": "Diya Gupta",
+"payment_methods": [
+"credit_card",
+"gift_card"
+],
+"tier": "regular",
+"user_id": "diya_gupta_1156",
+"zip": "560034"
+},
+{
+"email": "vikram.gupta157@example.com",
+"name": "Vikram Gupta",
+"payment_methods": [
+"gift_card",
+"credit_card"
+],
+"tier": "silver",
+"user_id": "vikram_gupta_1157",
+"zip": "560000"
+},
+{
+"email": "kavya.iyer158@example.com",
+"name": "Kavya Iyer",
+"payment_methods": [
+"credit_card",
+"paypal"
+],
+"tier": "gold",
+"user_id": "kavya_iyer_1158",
+"zip": "560054"
+},
+{
+"email": "dev.reddy159@example.com",
+"name": "Dev Reddy",
+"payment_methods": [
+"paypal",
+"credit_card"
+],
+"tier": "regular",
+"user_id": "dev_reddy_1159",
+"zip": "560058"
+},
+{
+"email": "nikhil.iyer160@example.com",
+"name": "Nikhil Iyer",
+"payment_methods": [
+"gift_card",
+"paypal"
+],
+"tier": "silver",
+"user_id": "nikhil_iyer_1160",
+"zip": "560040"
+},
+{
+"email": "neha.nair161@example.com",
+"name": "Neha Nair",
+"payment_methods": [
+"credit_card",
+"gift_card"
+],
+"tier": "gold",
+"user_id": "neha_nair_1161",
+"zip": "560003"
+},
+{
+"email": "aditya.iyer162@example.com",
+"name": "Aditya Iyer",
+"payment_methods": [
+"paypal",
+"credit_card"
+],
+"tier": "gold",
+"user_id": "aditya_iyer_1162",
+"zip": "560026"
+},
+{
+"email": "diya.nair163@example.com",
+"name": "Diya Nair",
+"payment_methods": [
+"gift_card",
+"paypal"
+],
+"tier": "gold",
+"user_id": "diya_nair_1163",
+"zip": "560086"
+},
+{
+"email": "karan.pillai164@example.com",
+"name": "Karan Pillai",
+"payment_methods": [
+"paypal",
+"gift_card"
+],
+"tier": "silver",
+"user_id": "karan_pillai_1164",
+"zip": "560049"
+},
+{
+"email": "rohan.rao165@example.com",
+"name": "Rohan Rao",
+"payment_methods": [
+"credit_card",
+"gift_card"
+],
+"tier": "gold",
+"user_id": "rohan_rao_1165",
+"zip": "560039"
+},
+{
+"email": "lakshmi.das166@example.com",
+"name": "Lakshmi Das",
+"payment_methods": [
+"credit_card",
+"paypal"
+],
+"tier": "silver",
+"user_id": "lakshmi_das_1166",
+"zip": "560092"
+},
+{
+"email": "rahul.das167@example.com",
+"name": "Rahul Das",
+"payment_methods": [
+"credit_card",
+"gift_card"
+],
+"tier": "regular",
+"user_id": "rahul_das_1167",
+"zip": "560056"
+},
+{
+"email": "rohan.iyer168@example.com",
+"name": "Rohan Iyer",
+"payment_methods": [
+"paypal",
+"credit_card"
+],
+"tier": "regular",
+"user_id": "rohan_iyer_1168",
+"zip": "560097"
+},
+{
+"email": "lakshmi.kumar169@example.com",
+"name": "Lakshmi Kumar",
+"payment_methods": [
+"gift_card",
+"paypal"
+],
+"tier": "silver",
+"user_id": "lakshmi_kumar_1169",
+"zip": "560009"
+},
+{
+"email": "ravi.shah170@example.com",
+"name": "Ravi Shah",
+"payment_methods": [
+"credit_card",
+"gift_card"
+],
+"tier": "silver",
+"user_id": "ravi_shah_1170",
+"zip": "560031"
+},
+{
+"email": "isha.gupta171@example.com",
+"name": "Isha Gupta",
+"payment_methods": [
+"credit_card",
+"paypal"
+],
+"tier": "silver",
+"user_id": "isha_gupta_1171",
+"zip": "560040"
+},
+{
+"email": "nikhil.pillai172@example.com",
+"name": "Nikhil Pillai",
+"payment_methods": [
+"paypal",
+"gift_card"
+],
+"tier": "gold",
+"user_id": "nikhil_pillai_1172",
+"zip": "560025"
+},
+{
+"email": "ananya.kumar173@example.com",
+"name": "Ananya Kumar",
+"payment_methods": [
+"gift_card",
+"paypal"
+],
+"tier": "gold",
+"user_id": "ananya_kumar_1173",
+"zip": "560059"
+},
+{
+"email": "isha.reddy174@example.com",
+"name": "Isha Reddy",
+"payment_methods": [
+"gift_card",
+"credit_card"
+],
+"tier": "regular",
+"user_id": "isha_reddy_1174",
+"zip": "560002"
+},
+{
+"email": "vikram.menon175@example.com",
+"name": "Vikram Menon",
+"payment_methods": [
+"paypal",
+"credit_card"
+],
+"tier": "regular",
+"user_id": "vikram_menon_1175",
+"zip": "560031"
+},
+{
+"email": "dev.pillai176@example.com",
+"name": "Dev Pillai",
+"payment_methods": [
+"credit_card",
+"paypal"
+],
+"tier": "regular",
+"user_id": "dev_pillai_1176",
+"zip": "560054"
+},
+{
+"email": "isha.iyer177@example.com",
+"name": "Isha Iyer",
+"payment_methods": [
+"paypal",
+"credit_card"
+],
+"tier": "gold",
+"user_id": "isha_iyer_1177",
+"zip": "560094"
+},
+{
+"email": "dev.nair178@example.com",
+"name": "Dev Nair",
+"payment_methods": [
+"credit_card",
+"gift_card"
+],
+"tier": "gold",
+"user_id": "dev_nair_1178",
+"zip": "560028"
+},
+{
+"email": "ananya.nair179@example.com",
+"name": "Ananya Nair",
+"payment_methods": [
+"credit_card",
+"paypal"
+],
+"tier": "silver",
+"user_id": "ananya_nair_1179",
+"zip": "560086"
+},
+{
+"email": "rahul.nair180@example.com",
+"name": "Rahul Nair",
+"payment_methods": [
+"credit_card",
+"gift_card"
+],
+"tier": "regular",
+"user_id": "rahul_nair_1180",
+"zip": "560074"
+},
+{
+"email": "dev.pillai181@example.com",
+"name": "Dev Pillai",
+"payment_methods": [
+"gift_card",
+"credit_card"
+],
+"tier": "silver",
+"user_id": "dev_pillai_1181",
+"zip": "560041"
+},
+{
+"email": "kavya.menon182@example.com",
+"name": "Kavya Menon",
+"payment_methods": [
+"gift_card",
+"credit_card"
+],
+"tier": "regular",
+"user_id": "kavya_menon_1182",
+"zip": "560019"
+},
+{
+"email": "kavya.reddy183@example.com",
+"name": "Kavya Reddy",
+"payment_methods": [
+"gift_card",
+"credit_card"
+],
+"tier": "silver",
+"user_id": "kavya_reddy_1183",
+"zip": "560099"
+},
+{
+"email": "rohan.shah184@example.com",
+"name": "Rohan Shah",
+"payment_methods": [
+"paypal",
+"credit_card"
+],
+"tier": "silver",
+"user_id": "rohan_shah_1184",
+"zip": "560029"
+},
+{
+"email": "rahul.iyer185@example.com",
+"name": "Rahul Iyer",
+"payment_methods": [
+"gift_card",
+"paypal"
+],
+"tier": "regular",
+"user_id": "rahul_iyer_1185",
+"zip": "560078"
+},
+{
+"email": "rahul.das186@example.com",
+"name": "Rahul Das",
+"payment_methods": [
+"credit_card",
+"gift_card"
+],
+"tier": "regular",
+"user_id": "rahul_das_1186",
+"zip": "560039"
+},
+{
+"email": "rahul.das187@example.com",
+"name": "Rahul Das",
+"payment_methods": [
+"gift_card",
+"credit_card"
+],
+"tier": "silver",
+"user_id": "rahul_das_1187",
+"zip": "560069"
+},
+{
+"email": "isha.shah188@example.com",
+"name": "Isha Shah",
+"payment_methods": [
+"gift_card",
+"credit_card"
+],
+"tier": "silver",
+"user_id": "isha_shah_1188",
+"zip": "560077"
+},
+{
+"email": "neha.nair189@example.com",
+"name": "Neha Nair",
+"payment_methods": [
+"credit_card",
+"gift_card"
+],
+"tier": "regular",
+"user_id": "neha_nair_1189",
+"zip": "560049"
+},
+{
+"email": "neha.reddy190@example.com",
+"name": "Neha Reddy",
+"payment_methods": [
+"gift_card",
+"credit_card"
+],
+"tier": "silver",
+"user_id": "neha_reddy_1190",
+"zip": "560043"
+},
+{
+"email": "isha.gupta191@example.com",
+"name": "Isha Gupta",
+"payment_methods": [
+"paypal",
+"credit_card"
+],
+"tier": "regular",
+"user_id": "isha_gupta_1191",
+"zip": "560085"
+},
+{
+"email": "aditya.kumar192@example.com",
+"name": "Aditya Kumar",
+"payment_methods": [
+"gift_card",
+"credit_card"
+],
+"tier": "regular",
+"user_id": "aditya_kumar_1192",
+"zip": "560069"
+},
+{
+"email": "aditya.rao193@example.com",
+"name": "Aditya Rao",
+"payment_methods": [
+"credit_card",
+"gift_card"
+],
+"tier": "gold",
+"user_id": "aditya_rao_1193",
+"zip": "560062"
+},
+{
+"email": "rohan.rao194@example.com",
+"name": "Rohan Rao",
+"payment_methods": [
+"gift_card",
+"paypal"
+],
+"tier": "regular",
+"user_id": "rohan_rao_1194",
+"zip": "560001"
+},
+{
+"email": "meera.rao195@example.com",
+"name": "Meera Rao",
+"payment_methods": [
+"paypal",
+"credit_card"
+],
+"tier": "gold",
+"user_id": "meera_rao_1195",
+"zip": "560044"
+},
+{
+"email": "diya.das196@example.com",
+"name": "Diya Das",
+"payment_methods": [
+"paypal",
+"gift_card"
+],
+"tier": "regular",
+"user_id": "diya_das_1196",
+"zip": "560055"
+},
+{
+"email": "vikram.gupta197@example.com",
+"name": "Vikram Gupta",
+"payment_methods": [
+"paypal",
+"gift_card"
+],
+"tier": "gold",
+"user_id": "vikram_gupta_1197",
+"zip": "560093"
+},
+{
+"email": "asha.menon198@example.com",
+"name": "Asha Menon",
+"payment_methods": [
+"gift_card",
+"paypal"
+],
+"tier": "gold",
+"user_id": "asha_menon_1198",
+"zip": "560033"
+},
+{
+"email": "ravi.kumar199@example.com",
+"name": "Ravi Kumar",
+"payment_methods": [
+"paypal",
+"credit_card"
+],
+"tier": "silver",
+"user_id": "ravi_kumar_1199",
+"zip": "560015"
+}
+]

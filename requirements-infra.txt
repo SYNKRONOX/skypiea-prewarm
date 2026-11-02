@@ -1,0 +1,6 @@
+# Laptop-side deps for tools/, deploy/, experiments/e0_* (on top of requirements.txt).
+mcp==2.3.0
+uvicorn==0.54.0
+prometheus-client==0.26.0
+kubernetes==37.0.1
+matplotlib==3.11.2

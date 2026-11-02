@@ -1,0 +1,95 @@
+# Single source of truth: tool class -> deployed MCP tool server.
+#
+# Read by the tool images build (tools/build_images.sh), the Helm chart values, E0, and later
+# by the gateway/shaper and the controller. Each server exposes exactly one MCP tool whose name
+# equals the server name. Classes come from configs/tool_classes/*.yaml and configs/vocab/*.yaml
+# (owned by other sessions; tests/test_tool_map_coverage.py checks that every class is covered).
+#
+# tier = startup cost from real work at import time:
+#   light  = python-slim + MCP SDK only
+#   medium = + pandas/numpy, loads a data file at startup
+#   heavy  = + scikit-learn, loads a model file (trained at image build time) at startup
+# work = how service_ms is spent: cpu (hash loop) or io (file write/read loop)
+#
+# Rule: per scenario source, the named servers must cover >= 95% of calls; the rest go to the
+# fallback. Check with: python tools/tool_map_coverage.py <data/processed dir>
+
+fallback: generic_fallback
+# Classes matching these regexes go to the fallback server (other, other_support, ...).
+fallback_patterns: ['^other(_.*)?$']
+
+servers:
+  # --- Support scenarios (PRD A and C; tau-bench retail/airline) ---
+  user_lookup:
+    tier: light
+    work: cpu
+    classes: [user_lookup]
+  order_lookup:
+    tier: medium
+    work: cpu
+    classes: [order_lookup, shopping]
+  product_lookup:
+    tier: medium
+    work: cpu
+    classes: [product_lookup]
+  order_update:
+    tier: light
+    work: io
+    classes: [order_modify, order_cancel, order_exchange]
+  refund_issue:
+    tier: light
+    work: io
+    classes: [refund_issue, order_return]
+  policy_check:
+    tier: heavy
+    work: cpu
+    classes: [policy_check]
+  promo_code_lookup:
+    tier: light
+    work: cpu
+    classes: [promo_code_lookup]
+  travel_booking:
+    tier: medium
+    work: cpu
+    classes: [flight_search, reservation_lookup, reservation_modify, reservation_cancel,
+              reservation_book, travel]
+
+  # --- Coding scenario (PRD B; Copilot, TraceLab) ---
+  read_file:
+    tier: light
+    work: io
+    classes: [read_file]
+  edit_file:
+    tier: light
+    work: io
+    classes: [write_file]
+  format_diff:
+    tier: light
+    work: io
+    classes: [format_diff]
+  search:
+    tier: medium
+    work: io
+    classes: [search, project]
+  shell:
+    tier: light
+    work: cpu
+    classes: [shell, shell_other, shell_io, git, build, package]
+  run_tests:
+    tier: heavy
+    work: cpu
+    classes: [run_tests]
+  post_comment:
+    tier: light
+    work: io
+    # escalate (transfer to a human) and planning (plan/todo updates) post a message;
+    # without them tau-bench and Copilot fall below 95% server coverage.
+    classes: [post_comment, user_io, escalate, planning]
+
+  # --- Everything else ---
+  generic_fallback:
+    tier: heavy
+    work: cpu
+    classes: [other, think, agent, schedule, web, custom_tool,
+              math, finance, weather, science, health, location, events, legal, data_ml,
+              media]

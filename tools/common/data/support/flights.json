@@ -1,0 +1,6002 @@
+[
+{
+"cabin": "business",
+"day": 47,
+"depart": "19:45",
+"destination": "PNQ",
+"flight_no": "SK100",
+"origin": "DEL",
+"price": 9919,
+"seats_left": 23
+},
+{
+"cabin": "economy",
+"day": 34,
+"depart": "13:45",
+"destination": "HYD",
+"flight_no": "SK101",
+"origin": "BOM",
+"price": 10269,
+"seats_left": 1
+},
+{
+"cabin": "economy",
+"day": 34,
+"depart": "11:00",
+"destination": "PNQ",
+"flight_no": "SK102",
+"origin": "COK",
+"price": 9483,
+"seats_left": 2
+},
+{
+"cabin": "basic_economy",
+"day": 38,
+"depart": "05:45",
+"destination": "CCU",
+"flight_no": "SK103",
+"origin": "COK",
+"price": 6352,
+"seats_left": 32
+},
+{
+"cabin": "business",
+"day": 59,
+"depart": "22:15",
+"destination": "CCU",
+"flight_no": "SK104",
+"origin": "AMD",
+"price": 13973,
+"seats_left": 7
+},
+{
+"cabin": "economy",
+"day": 5,
+"depart": "16:30",
+"destination": "CCU",
+"flight_no": "SK105",
+"origin": "GOI",
+"price": 9658,
+"seats_left": 25
+},
+{
+"cabin": "business",
+"day": 8,
+"depart": "22:45",
+"destination": "BLR",
+"flight_no": "SK106",
+"origin": "HYD",
+"price": 13873,
+"seats_left": 37
+},
+{
+"cabin": "business",
+"day": 22,
+"depart": "16:30",
+"destination": "BLR",
+"flight_no": "SK107",
+"origin": "DEL",
+"price": 4823,
+"seats_left": 36
+},
+{
+"cabin": "economy",
+"day": 59,
+"depart": "10:45",
+"destination": "DEL",
+"flight_no": "SK108",
+"origin": "CCU",
+"price": 7298,
+"seats_left": 21
+},
+{
+"cabin": "business",
+"day": 20,
+"depart": "07:00",
+"destination": "BOM",
+"flight_no": "SK109",
+"origin": "MAA",
+"price": 10533,
+"seats_left": 13
+},
+{
+"cabin": "basic_economy",
+"day": 59,
+"depart": "16:00",
+"destination": "COK",
+"flight_no": "SK110",
+"origin": "HYD",
+"price": 10242,
+"seats_left": 36
+},
+{
+"cabin": "economy",
+"day": 1,
+"depart": "20:30",
+"destination": "GOI",
+"flight_no": "SK111",
+"origin": "BLR",
+"price": 3582,
+"seats_left": 2
+},
+{
+"cabin": "economy",
+"day": 10,
+"depart": "05:45",
+"destination": "GOI",
+"flight_no": "SK112",
+"origin": "BOM",
+"price": 6472,
+"seats_left": 19
+},
+{
+"cabin": "business",
+"day": 14,
+"depart": "10:15",
+"destination": "PNQ",
+"flight_no": "SK113",
+"origin": "BLR",
+"price": 3237,
+"seats_left": 13
+},
+{
+"cabin": "economy",
+"day": 25,
+"depart": "09:45",
+"destination": "CCU",
+"flight_no": "SK114",
+"origin": "DEL",
+"price": 7218,
+"seats_left": 1
+},
+{
+"cabin": "economy",
+"day": 41,
+"depart": "16:15",
+"destination": "BOM",
+"flight_no": "SK115",
+"origin": "CCU",
+"price": 8892,
+"seats_left": 5
+},
+{
+"cabin": "basic_economy",
+"day": 39,
+"depart": "08:15",
+"destination": "GOI",
+"flight_no": "SK116",
+"origin": "DEL",
+"price": 13915,
+"seats_left": 8
+},
+{
+"cabin": "economy",
+"day": 12,
+"depart": "16:45",
+"destination": "GOI",
+"flight_no": "SK117",
+"origin": "PNQ",
+"price": 13054,
+"seats_left": 24
+},
+{
+"cabin": "business",
+"day": 12,
+"depart": "12:00",
+"destination": "COK",
+"flight_no": "SK118",
+"origin": "MAA",
+"price": 5317,
+"seats_left": 17
+},
+{
+"cabin": "basic_economy",
+"day": 22,
+"depart": "16:30",
+"destination": "MAA",
+"flight_no": "SK119",
+"origin": "BOM",
+"price": 13766,
+"seats_left": 18
+},
+{
+"cabin": "basic_economy",
+"day": 44,
+"depart": "21:00",
+"destination": "PNQ",
+"flight_no": "SK120",
+"origin": "BOM",
+"price": 6085,
+"seats_left": 15
+},
+{
+"cabin": "business",
+"day": 43,
+"depart": "13:30",
+"destination": "DEL",
+"flight_no": "SK121",
+"origin": "MAA",
+"price": 3112,
+"seats_left": 30
+},
+{
+"cabin": "business",
+"day": 32,
+"depart": "18:15",
+"destination": "PNQ",
+"flight_no": "SK122",
+"origin": "HYD",
+"price": 9338,
+"seats_left": 37
+},
+{
+"cabin": "business",
+"day": 58,
+"depart": "10:30",
+"destination": "AMD",
+"flight_no": "SK123",
+"origin": "DEL",
+"price": 3210,
+"seats_left": 22
+},
+{
+"cabin": "economy",
+"day": 60,
+"depart": "09:30",
+"destination": "CCU",
+"flight_no": "SK124",
+"origin": "MAA",
+"price": 12121,
+"seats_left": 4
+},
+{
+"cabin": "business",
+"day": 49,
+"depart": "20:45",
+"destination": "BOM",
+"flight_no": "SK125",
+"origin": "PNQ",
+"price": 4297,
+"seats_left": 32
+},
+{
+"cabin": "business",
+"day": 37,
+"depart": "17:15",
+"destination": "HYD",
+"flight_no": "SK126",
+"origin": "AMD",
+"price": 5849,
+"seats_left": 38
+},
+{
+"cabin": "basic_economy",
+"day": 56,
+"depart": "10:15",
+"destination": "GOI",
+"flight_no": "SK127",
+"origin": "HYD",
+"price": 2801,
+"seats_left": 35
+},
+{
+"cabin": "economy",
+"day": 6,
+"depart": "05:15",
+"destination": "DEL",
+"flight_no": "SK128",
+"origin": "BOM",
+"price": 6260,
+"seats_left": 15
+},
+{
+"cabin": "business",
+"day": 57,
+"depart": "16:15",
+"destination": "DEL",
+"flight_no": "SK129",
+"origin": "CCU",
+"price": 12844,
+"seats_left": 8
+},
+{
+"cabin": "basic_economy",
+"day": 14,
+"depart": "06:45",
+"destination": "GOI",
+"flight_no": "SK130",
+"origin": "COK",
+"price": 8066,
+"seats_left": 31
+},
+{
+"cabin": "basic_economy",
+"day": 41,
+"depart": "09:15",
+"destination": "AMD",
+"flight_no": "SK131",
+"origin": "GOI",
+"price": 12789,
+"seats_left": 3
+},
+{
+"cabin": "economy",
+"day": 32,
+"depart": "18:00",
+"destination": "BOM",
+"flight_no": "SK132",
+"origin": "COK",
+"price": 9720,
+"seats_left": 28
+},
+{
+"cabin": "basic_economy",
+"day": 7,
+"depart": "20:15",
+"destination": "AMD",
+"flight_no": "SK133",
+"origin": "HYD",
+"price": 8998,
+"seats_left": 34
+},
+{
+"cabin": "business",
+"day": 48,
+"depart": "16:30",
+"destination": "HYD",
+"flight_no": "SK134",
+"origin": "DEL",
+"price": 8223,
+"seats_left": 0
+},
+{
+"cabin": "economy",
+"day": 53,
+"depart": "13:15",
+"destination": "DEL",
+"flight_no": "SK135",
+"origin": "BOM",
+"price": 11058,
+"seats_left": 8
+},
+{
+"cabin": "basic_economy",
+"day": 14,
+"depart": "14:15",
+"destination": "HYD",
+"flight_no": "SK136",
+"origin": "COK",
+"price": 9836,
+"seats_left": 19
+},
+{
+"cabin": "basic_economy",
+"day": 57,
+"depart": "20:15",
+"destination": "BLR",
+"flight_no": "SK137",
+"origin": "DEL",
+"price": 4314,
+"seats_left": 6
+},
+{
+"cabin": "basic_economy",
+"day": 47,
+"depart": "05:15",
+"destination": "PNQ",
+"flight_no": "SK138",
+"origin": "HYD",
+"price": 6808,
+"seats_left": 9
+},
+{
+"cabin": "business",
+"day": 55,
+"depart": "05:00",
+"destination": "BLR",
+"flight_no": "SK139",
+"origin": "GOI",
+"price": 8776,
+"seats_left": 30
+},
+{
+"cabin": "business",
+"day": 37,
+"depart": "14:30",
+"destination": "CCU",
+"flight_no": "SK140",
+"origin": "PNQ",
+"price": 8267,
+"seats_left": 33
+},
+{
+"cabin": "economy",
+"day": 40,
+"depart": "10:45",
+"destination": "DEL",
+"flight_no": "SK141",
+"origin": "BOM",
+"price": 7662,
+"seats_left": 7
+},
+{
+"cabin": "business",
+"day": 56,
+"depart": "22:30",
+"destination": "COK",
+"flight_no": "SK142",
+"origin": "GOI",
+"price": 11264,
+"seats_left": 22
+},
+{
+"cabin": "economy",
+"day": 9,
+"depart": "07:45",
+"destination": "COK",
+"flight_no": "SK143",
+"origin": "GOI",
+"price": 4667,
+"seats_left": 23
+},
+{
+"cabin": "basic_economy",
+"day": 13,
+"depart": "10:15",
+"destination": "CCU",
+"flight_no": "SK144",
+"origin": "HYD",
+"price": 11855,
+"seats_left": 31
+},
+{
+"cabin": "business",
+"day": 30,
+"depart": "14:00",
+"destination": "GOI",
+"flight_no": "SK145",
+"origin": "DEL",
+"price": 5659,
+"seats_left": 6
+},
+{
+"cabin": "economy",
+"day": 30,
+"depart": "09:45",
+"destination": "BOM",
+"flight_no": "SK146",
+"origin": "HYD",
+"price": 10588,
+"seats_left": 6
+},
+{
+"cabin": "basic_economy",
+"day": 26,
+"depart": "22:15",
+"destination": "BLR",
+"flight_no": "SK147",
+"origin": "CCU",
+"price": 12025,
+"seats_left": 33
+},
+{
+"cabin": "business",
+"day": 16,
+"depart": "18:30",
+"destination": "BOM",
+"flight_no": "SK148",
+"origin": "AMD",
+"price": 14207,
+"seats_left": 38
+},
+{
+"cabin": "economy",
+"day": 15,
+"depart": "12:00",
+"destination": "BOM",
+"flight_no": "SK149",
+"origin": "HYD",
+"price": 11410,
+"seats_left": 24
+},
+{
+"cabin": "business",
+"day": 13,
+"depart": "21:45",
+"destination": "CCU",
+"flight_no": "SK150",
+"origin": "HYD",
+"price": 10785,
+"seats_left": 37
+},
+{
+"cabin": "economy",
+"day": 18,
+"depart": "12:00",
+"destination": "GOI",
+"flight_no": "SK151",
+"origin": "DEL",
+"price": 14312,
+"seats_left": 24
+},
+{
+"cabin": "basic_economy",
+"day": 33,
+"depart": "11:45",
+"destination": "DEL",
+"flight_no": "SK152",
+"origin": "GOI",
+"price": 2990,
+"seats_left": 29
+},
+{
+"cabin": "business",
+"day": 5,
+"depart": "09:00",
+"destination": "BLR",
+"flight_no": "SK153",
+"origin": "AMD",
+"price": 6950,
+"seats_left": 9
+},
+{
+"cabin": "basic_economy",
+"day": 33,
+"depart": "22:45",
+"destination": "DEL",
+"flight_no": "SK154",
+"origin": "HYD",
+"price": 3339,
+"seats_left": 36
+},
+{
+"cabin": "economy",
+"day": 59,
+"depart": "17:15",
+"destination": "GOI",
+"flight_no": "SK155",
+"origin": "CCU",
+"price": 7433,
+"seats_left": 13
+},
+{
+"cabin": "economy",
+"day": 25,
+"depart": "12:00",
+"destination": "BOM",
+"flight_no": "SK156",
+"origin": "HYD",
+"price": 14359,
+"seats_left": 37
+},
+{
+"cabin": "basic_economy",
+"day": 31,
+"depart": "20:15",
+"destination": "AMD",
+"flight_no": "SK157",
+"origin": "MAA",
+"price": 12187,
+"seats_left": 39
+},
+{
+"cabin": "basic_economy",
+"day": 41,
+"depart": "13:15",
+"destination": "COK",
+"flight_no": "SK158",
+"origin": "PNQ",
+"price": 6219,
+"seats_left": 38
+},
+{
+"cabin": "business",
+"day": 28,
+"depart": "10:30",
+"destination": "AMD",
+"flight_no": "SK159",
+"origin": "COK",
+"price": 8093,
+"seats_left": 32
+},
+{
+"cabin": "basic_economy",
+"day": 37,
+"depart": "08:15",
+"destination": "DEL",
+"flight_no": "SK160",
+"origin": "COK",
+"price": 7411,
+"seats_left": 27
+},
+{
+"cabin": "business",
+"day": 49,
+"depart": "21:30",
+"destination": "COK",
+"flight_no": "SK161",
+"origin": "HYD",
+"price": 7958,
+"seats_left": 6
+},
+{
+"cabin": "economy",
+"day": 37,
+"depart": "22:30",
+"destination": "DEL",
+"flight_no": "SK162",
+"origin": "CCU",
+"price": 4649,
+"seats_left": 23
+},
+{
+"cabin": "economy",
+"day": 31,
+"depart": "06:00",
+"destination": "AMD",
+"flight_no": "SK163",
+"origin": "GOI",
+"price": 6471,
+"seats_left": 34
+},
+{
+"cabin": "economy",
+"day": 36,
+"depart": "09:45",
+"destination": "PNQ",
+"flight_no": "SK164",
+"origin": "DEL",
+"price": 2658,
+"seats_left": 2
+},
+{
+"cabin": "business",
+"day": 15,
+"depart": "17:45",
+"destination": "HYD",
+"flight_no": "SK165",
+"origin": "DEL",
+"price": 8546,
+"seats_left": 4
+},
+{
+"cabin": "economy",
+"day": 48,
+"depart": "21:00",
+"destination": "DEL",
+"flight_no": "SK166",
+"origin": "MAA",
+"price": 7571,
+"seats_left": 30
+},
+{
+"cabin": "economy",
+"day": 19,
+"depart": "16:30",
+"destination": "HYD",
+"flight_no": "SK167",
+"origin": "BLR",
+"price": 13978,
+"seats_left": 15
+},
+{
+"cabin": "business",
+"day": 49,
+"depart": "20:45",
+"destination": "AMD",
+"flight_no": "SK168",
+"origin": "PNQ",
+"price": 2657,
+"seats_left": 19
+},
+{
+"cabin": "economy",
+"day": 24,
+"depart": "21:15",
+"destination": "COK",
+"flight_no": "SK169",
+"origin": "HYD",
+"price": 12577,
+"seats_left": 31
+},
+{
+"cabin": "economy",
+"day": 42,
+"depart": "07:45",
+"destination": "BLR",
+"flight_no": "SK170",
+"origin": "HYD",
+"price": 9358,
+"seats_left": 11
+},
+{
+"cabin": "economy",
+"day": 18,
+"depart": "13:00",
+"destination": "HYD",
+"flight_no": "SK171",
+"origin": "GOI",
+"price": 3442,
+"seats_left": 1
+},
+{
+"cabin": "business",
+"day": 12,
+"depart": "10:30",
+"destination": "BOM",
+"flight_no": "SK172",
+"origin": "DEL",
+"price": 7819,
+"seats_left": 20
+},
+{
+"cabin": "economy",
+"day": 27,
+"depart": "15:15",
+"destination": "AMD",
+"flight_no": "SK173",
+"origin": "PNQ",
+"price": 12291,
+"seats_left": 39
+},
+{
+"cabin": "economy",
+"day": 15,
+"depart": "05:30",
+"destination": "AMD",
+"flight_no": "SK174",
+"origin": "DEL",
+"price": 4641,
+"seats_left": 26
+},
+{
+"cabin": "basic_economy",
+"day": 26,
+"depart": "10:30",
+"destination": "BLR",
+"flight_no": "SK175",
+"origin": "DEL",
+"price": 14449,
+"seats_left": 3
+},
+{
+"cabin": "basic_economy",
+"day": 20,
+"depart": "12:30",
+"destination": "GOI",
+"flight_no": "SK176",
+"origin": "AMD",
+"price": 3604,
+"seats_left": 35
+},
+{
+"cabin": "economy",
+"day": 2,
+"depart": "08:45",
+"destination": "AMD",
+"flight_no": "SK177",
+"origin": "BLR",
+"price": 9670,
+"seats_left": 33
+},
+{
+"cabin": "basic_economy",
+"day": 3,
+"depart": "19:45",
+"destination": "AMD",
+"flight_no": "SK178",
+"origin": "COK",
+"price": 9435,
+"seats_left": 37
+},
+{
+"cabin": "economy",
+"day": 48,
+"depart": "17:45",
+"destination": "GOI",
+"flight_no": "SK179",
+"origin": "PNQ",
+"price": 7048,
+"seats_left": 3
+},
+{
+"cabin": "basic_economy",
+"day": 21,
+"depart": "21:00",
+"destination": "DEL",
+"flight_no": "SK180",
+"origin": "AMD",
+"price": 6936,
+"seats_left": 27
+},
+{
+"cabin": "business",
+"day": 30,
+"depart": "18:45",
+"destination": "HYD",
+"flight_no": "SK181",
+"origin": "MAA",
+"price": 13505,
+"seats_left": 18
+},
+{
+"cabin": "basic_economy",
+"day": 24,
+"depart": "22:15",
+"destination": "COK",
+"flight_no": "SK182",
+"origin": "PNQ",
+"price": 8069,
+"seats_left": 5
+},
+{
+"cabin": "basic_economy",
+"day": 10,
+"depart": "06:45",
+"destination": "DEL",
+"flight_no": "SK183",
+"origin": "COK",
+"price": 7376,
+"seats_left": 16
+},
+{
+"cabin": "basic_economy",
+"day": 4,
+"depart": "15:45",
+"destination": "HYD",
+"flight_no": "SK184",
+"origin": "BOM",
+"price": 6642,
+"seats_left": 35
+},
+{
+"cabin": "economy",
+"day": 43,
+"depart": "10:00",
+"destination": "DEL",
+"flight_no": "SK185",
+"origin": "PNQ",
+"price": 10935,
+"seats_left": 35
+},
+{
+"cabin": "economy",
+"day": 40,
+"depart": "09:45",
+"destination": "COK",
+"flight_no": "SK186",
+"origin": "CCU",
+"price": 6328,
+"seats_left": 2
+},
+{
+"cabin": "basic_economy",
+"day": 55,
+"depart": "21:30",
+"destination": "AMD",
+"flight_no": "SK187",
+"origin": "BLR",
+"price": 4334,
+"seats_left": 14
+},
+{
+"cabin": "basic_economy",
+"day": 28,
+"depart": "17:45",
+"destination": "AMD",
+"flight_no": "SK188",
+"origin": "PNQ",
+"price": 8123,
+"seats_left": 14
+},
+{
+"cabin": "economy",
+"day": 11,
+"depart": "11:45",
+"destination": "CCU",
+"flight_no": "SK189",
+"origin": "GOI",
+"price": 8441,
+"seats_left": 28
+},
+{
+"cabin": "basic_economy",
+"day": 49,
+"depart": "11:45",
+"destination": "AMD",
+"flight_no": "SK190",
+"origin": "MAA",
+"price": 11827,
+"seats_left": 4
+},
+{
+"cabin": "economy",
+"day": 14,
+"depart": "15:00",
+"destination": "PNQ",
+"flight_no": "SK191",
+"origin": "DEL",
+"price": 10380,
+"seats_left": 1
+},
+{
+"cabin": "economy",
+"day": 59,
+"depart": "12:45",
+"destination": "BOM",
+"flight_no": "SK192",
+"origin": "BLR",
+"price": 3747,
+"seats_left": 13
+},
+{
+"cabin": "basic_economy",
+"day": 26,
+"depart": "14:30",
+"destination": "MAA",
+"flight_no": "SK193",
+"origin": "HYD",
+"price": 11095,
+"seats_left": 12
+},
+{
+"cabin": "business",
+"day": 46,
+"depart": "19:45",
+"destination": "CCU",
+"flight_no": "SK194",
+"origin": "MAA",
+"price": 4197,
+"seats_left": 11
+},
+{
+"cabin": "business",
+"day": 2,
+"depart": "21:00",
+"destination": "AMD",
+"flight_no": "SK195",
+"origin": "DEL",
+"price": 8392,
+"seats_left": 5
+},
+{
+"cabin": "economy",
+"day": 13,
+"depart": "17:00",
+"destination": "GOI",
+"flight_no": "SK196",
+"origin": "PNQ",
+"price": 5139,
+"seats_left": 39
+},
+{
+"cabin": "basic_economy",
+"day": 49,
+"depart": "13:00",
+"destination": "BOM",
+"flight_no": "SK197",
+"origin": "COK",
+"price": 12809,
+"seats_left": 34
+},
+{
+"cabin": "economy",
+"day": 5,
+"depart": "06:00",
+"destination": "DEL",
+"flight_no": "SK198",
+"origin": "BOM",
+"price": 10106,
+"seats_left": 34
+},
+{
+"cabin": "basic_economy",
+"day": 45,
+"depart": "18:45",
+"destination": "PNQ",
+"flight_no": "SK199",
+"origin": "HYD",
+"price": 12782,
+"seats_left": 16
+},
+{
+"cabin": "economy",
+"day": 27,
+"depart": "05:30",
+"destination": "COK",
+"flight_no": "SK200",
+"origin": "DEL",
+"price": 6619,
+"seats_left": 9
+},
+{
+"cabin": "business",
+"day": 8,
+"depart": "13:30",
+"destination": "HYD",
+"flight_no": "SK201",
+"origin": "CCU",
+"price": 7651,
+"seats_left": 31
+},
+{
+"cabin": "economy",
+"day": 43,
+"depart": "11:15",
+"destination": "COK",
+"flight_no": "SK202",
+"origin": "BLR",
+"price": 8887,
+"seats_left": 3
+},
+{
+"cabin": "business",
+"day": 4,
+"depart": "11:30",
+"destination": "MAA",
+"flight_no": "SK203",
+"origin": "HYD",
+"price": 9884,
+"seats_left": 9
+},
+{
+"cabin": "business",
+"day": 31,
+"depart": "18:30",
+"destination": "HYD",
+"flight_no": "SK204",
+"origin": "CCU",
+"price": 6867,
+"seats_left": 30
+},
+{
+"cabin": "economy",
+"day": 44,
+"depart": "05:45",
+"destination": "BLR",
+"flight_no": "SK205",
+"origin": "DEL",
+"price": 12079,
+"seats_left": 6
+},
+{
+"cabin": "basic_economy",
+"day": 44,
+"depart": "10:15",
+"destination": "CCU",
+"flight_no": "SK206",
+"origin": "PNQ",
+"price": 5261,
+"seats_left": 9
+},
+{
+"cabin": "basic_economy",
+"day": 16,
+"depart": "16:45",
+"destination": "BOM",
+"flight_no": "SK207",
+"origin": "CCU",
+"price": 13409,
+"seats_left": 30
+},
+{
+"cabin": "economy",
+"day": 24,
+"depart": "11:00",
+"destination": "GOI",
+"flight_no": "SK208",
+"origin": "BOM",
+"price": 14588,
+"seats_left": 17
+},
+{
+"cabin": "basic_economy",
+"day": 7,
+"depart": "14:45",
+"destination": "BOM",
+"flight_no": "SK209",
+"origin": "CCU",
+"price": 5099,
+"seats_left": 36
+},
+{
+"cabin": "basic_economy",
+"day": 33,
+"depart": "17:00",
+"destination": "COK",
+"flight_no": "SK210",
+"origin": "PNQ",
+"price": 12852,
+"seats_left": 29
+},
+{
+"cabin": "business",
+"day": 30,
+"depart": "07:15",
+"destination": "BLR",
+"flight_no": "SK211",
+"origin": "COK",
+"price": 5078,
+"seats_left": 7
+},
+{
+"cabin": "business",
+"day": 7,
+"depart": "17:00",
+"destination": "BOM",
+"flight_no": "SK212",
+"origin": "PNQ",
+"price": 7941,
+"seats_left": 33
+},
+{
+"cabin": "basic_economy",
+"day": 24,
+"depart": "17:45",
+"destination": "DEL",
+"flight_no": "SK213",
+"origin": "PNQ",
+"price": 9504,
+"seats_left": 9
+},
+{
+"cabin": "economy",
+"day": 11,
+"depart": "11:45",
+"destination": "COK",
+"flight_no": "SK214",
+"origin": "CCU",
+"price": 11700,
+"seats_left": 4
+},
+{
+"cabin": "business",
+"day": 15,
+"depart": "16:45",
+"destination": "BLR",
+"flight_no": "SK215",
+"origin": "PNQ",
+"price": 9098,
+"seats_left": 15
+},
+{
+"cabin": "business",
+"day": 45,
+"depart": "20:30",
+"destination": "HYD",
+"flight_no": "SK216",
+"origin": "GOI",
+"price": 5507,
+"seats_left": 1
+},
+{
+"cabin": "basic_economy",
+"day": 19,
+"depart": "13:30",
+"destination": "AMD",
+"flight_no": "SK217",
+"origin": "CCU",
+"price": 7200,
+"seats_left": 5
+},
+{
+"cabin": "basic_economy",
+"day": 15,
+"depart": "05:00",
+"destination": "COK",
+"flight_no": "SK218",
+"origin": "BLR",
+"price": 4040,
+"seats_left": 27
+},
+{
+"cabin": "economy",
+"day": 52,
+"depart": "15:30",
+"destination": "CCU",
+"flight_no": "SK219",
+"origin": "HYD",
+"price": 14490,
+"seats_left": 34
+},
+{
+"cabin": "business",
+"day": 60,
+"depart": "16:30",
+"destination": "BLR",
+"flight_no": "SK220",
+"origin": "AMD",
+"price": 14723,
+"seats_left": 14
+},
+{
+"cabin": "business",
+"day": 1,
+"depart": "21:45",
+"destination": "AMD",
+"flight_no": "SK221",
+"origin": "BOM",
+"price": 11395,
+"seats_left": 27
+},
+{
+"cabin": "basic_economy",
+"day": 55,
+"depart": "09:15",
+"destination": "PNQ",
+"flight_no": "SK222",
+"origin": "AMD",
+"price": 10405,
+"seats_left": 5
+},
+{
+"cabin": "business",
+"day": 10,
+"depart": "07:00",
+"destination": "BLR",
+"flight_no": "SK223",
+"origin": "DEL",
+"price": 11074,
+"seats_left": 26
+},
+{
+"cabin": "basic_economy",
+"day": 30,
+"depart": "21:00",
+"destination": "GOI",
+"flight_no": "SK224",
+"origin": "PNQ",
+"price": 13609,
+"seats_left": 37
+},
+{
+"cabin": "basic_economy",
+"day": 14,
+"depart": "17:30",
+"destination": "MAA",
+"flight_no": "SK225",
+"origin": "DEL",
+"price": 10907,
+"seats_left": 13
+},
+{
+"cabin": "economy",
+"day": 48,
+"depart": "17:15",
+"destination": "AMD",
+"flight_no": "SK226",
+"origin": "GOI",
+"price": 8127,
+"seats_left": 13
+},
+{
+"cabin": "economy",
+"day": 29,
+"depart": "13:30",
+"destination": "COK",
+"flight_no": "SK227",
+"origin": "HYD",
+"price": 14915,
+"seats_left": 12
+},
+{
+"cabin": "basic_economy",
+"day": 11,
+"depart": "15:00",
+"destination": "MAA",
+"flight_no": "SK228",
+"origin": "CCU",
+"price": 2786,
+"seats_left": 31
+},
+{
+"cabin": "basic_economy",
+"day": 26,
+"depart": "08:30",
+"destination": "MAA",
+"flight_no": "SK229",
+"origin": "COK",
+"price": 9220,
+"seats_left": 28
+},
+{
+"cabin": "economy",
+"day": 52,
+"depart": "05:45",
+"destination": "PNQ",
+"flight_no": "SK230",
+"origin": "GOI",
+"price": 4155,
+"seats_left": 23
+},
+{
+"cabin": "basic_economy",
+"day": 16,
+"depart": "07:15",
+"destination": "PNQ",
+"flight_no": "SK231",
+"origin": "BOM",
+"price": 8234,
+"seats_left": 38
+},
+{
+"cabin": "business",
+"day": 50,
+"depart": "19:00",
+"destination": "BOM",
+"flight_no": "SK232",
+"origin": "BLR",
+"price": 9910,
+"seats_left": 11
+},
+{
+"cabin": "business",
+"day": 42,
+"depart": "14:00",
+"destination": "DEL",
+"flight_no": "SK233",
+"origin": "COK",
+"price": 5007,
+"seats_left": 10
+},
+{
+"cabin": "business",
+"day": 34,
+"depart": "20:45",
+"destination": "COK",
+"flight_no": "SK234",
+"origin": "CCU",
+"price": 10544,
+"seats_left": 29
+},
+{
+"cabin": "basic_economy",
+"day": 44,
+"depart": "09:30",
+"destination": "MAA",
+"flight_no": "SK235",
+"origin": "BOM",
+"price": 3299,
+"seats_left": 38
+},
+{
+"cabin": "business",
+"day": 12,
+"depart": "16:30",
+"destination": "CCU",
+"flight_no": "SK236",
+"origin": "GOI",
+"price": 4860,
+"seats_left": 4
+},
+{
+"cabin": "economy",
+"day": 30,
+"depart": "20:30",
+"destination": "CCU",
+"flight_no": "SK237",
+"origin": "PNQ",
+"price": 4522,
+"seats_left": 28
+},
+{
+"cabin": "business",
+"day": 35,
+"depart": "22:45",
+"destination": "AMD",
+"flight_no": "SK238",
+"origin": "PNQ",
+"price": 7500,
+"seats_left": 1
+},
+{
+"cabin": "economy",
+"day": 51,
+"depart": "18:45",
+"destination": "GOI",
+"flight_no": "SK239",
+"origin": "PNQ",
+"price": 5849,
+"seats_left": 38
+},
+{
+"cabin": "economy",
+"day": 42,
+"depart": "10:00",
+"destination": "BLR",
+"flight_no": "SK240",
+"origin": "DEL",
+"price": 6300,
+"seats_left": 30
+},
+{
+"cabin": "basic_economy",
+"day": 55,
+"depart": "22:00",
+"destination": "PNQ",
+"flight_no": "SK241",
+"origin": "BOM",
+"price": 3319,
+"seats_left": 37
+},
+{
+"cabin": "basic_economy",
+"day": 3,
+"depart": "22:00",
+"destination": "MAA",
+"flight_no": "SK242",
+"origin": "COK",
+"price": 4819,
+"seats_left": 2
+},
+{
+"cabin": "economy",
+"day": 22,
+"depart": "09:30",
+"destination": "MAA",
+"flight_no": "SK243",
+"origin": "BLR",
+"price": 9673,
+"seats_left": 3
+},
+{
+"cabin": "business",
+"day": 10,
+"depart": "11:15",
+"destination": "HYD",
+"flight_no": "SK244",
+"origin": "AMD",
+"price": 5516,
+"seats_left": 38
+},
+{
+"cabin": "business",
+"day": 60,
+"depart": "06:45",
+"destination": "MAA",
+"flight_no": "SK245",
+"origin": "PNQ",
+"price": 8133,
+"seats_left": 24
+},
+{
+"cabin": "economy",
+"day": 6,
+"depart": "18:15",
+"destination": "CCU",
+"flight_no": "SK246",
+"origin": "HYD",
+"price": 13200,
+"seats_left": 8
+},
+{
+"cabin": "economy",
+"day": 54,
+"depart": "07:45",
+"destination": "DEL",
+"flight_no": "SK247",
+"origin": "AMD",
+"price": 8414,
+"seats_left": 16
+},
+{
+"cabin": "economy",
+"day": 12,
+"depart": "17:45",
+"destination": "COK",
+"flight_no": "SK248",
+"origin": "PNQ",
+"price": 4698,
+"seats_left": 25
+},
+{
+"cabin": "basic_economy",
+"day": 51,
+"depart": "08:30",
+"destination": "HYD",
+"flight_no": "SK249",
+"origin": "MAA",
+"price": 13185,
+"seats_left": 35
+},
+{
+"cabin": "basic_economy",
+"day": 60,
+"depart": "15:15",
+"destination": "GOI",
+"flight_no": "SK250",
+"origin": "PNQ",
+"price": 7566,
+"seats_left": 33
+},
+{
+"cabin": "economy",
+"day": 33,
+"depart": "15:15",
+"destination": "AMD",
+"flight_no": "SK251",
+"origin": "BLR",
+"price": 4649,
+"seats_left": 5
+},
+{
+"cabin": "business",
+"day": 51,
+"depart": "05:45",
+"destination": "HYD",
+"flight_no": "SK252",
+"origin": "BLR",
+"price": 13197,
+"seats_left": 22
+},
+{
+"cabin": "economy",
+"day": 1,
+"depart": "22:30",
+"destination": "BLR",
+"flight_no": "SK253",
+"origin": "PNQ",
+"price": 3455,
+"seats_left": 0
+},
+{
+"cabin": "economy",
+"day": 36,
+"depart": "09:15",
+"destination": "DEL",
+"flight_no": "SK254",
+"origin": "BLR",
+"price": 10198,
+"seats_left": 12
+},
+{
+"cabin": "business",
+"day": 35,
+"depart": "19:00",
+"destination": "BLR",
+"flight_no": "SK255",
+"origin": "GOI",
+"price": 6516,
+"seats_left": 26
+},
+{
+"cabin": "business",
+"day": 13,
+"depart": "21:15",
+"destination": "CCU",
+"flight_no": "SK256",
+"origin": "HYD",
+"price": 7268,
+"seats_left": 16
+},
+{
+"cabin": "business",
+"day": 36,
+"depart": "19:30",
+"destination": "HYD",
+"flight_no": "SK257",
+"origin": "AMD",
+"price": 13823,
+"seats_left": 19
+},
+{
+"cabin": "economy",
+"day": 7,
+"depart": "22:00",
+"destination": "PNQ",
+"flight_no": "SK258",
+"origin": "BOM",
+"price": 9610,
+"seats_left": 20
+},
+{
+"cabin": "business",
+"day": 27,
+"depart": "15:00",
+"destination": "COK",
+"flight_no": "SK259",
+"origin": "GOI",
+"price": 8482,
+"seats_left": 31
+},
+{
+"cabin": "basic_economy",
+"day": 39,
+"depart": "17:30",
+"destination": "CCU",
+"flight_no": "SK260",
+"origin": "HYD",
+"price": 9924,
+"seats_left": 33
+},
+{
+"cabin": "economy",
+"day": 24,
+"depart": "09:30",
+"destination": "DEL",
+"flight_no": "SK261",
+"origin": "CCU",
+"price": 12259,
+"seats_left": 7
+},
+{
+"cabin": "basic_economy",
+"day": 19,
+"depart": "08:00",
+"destination": "MAA",
+"flight_no": "SK262",
+"origin": "HYD",
+"price": 7323,
+"seats_left": 24
+},
+{
+"cabin": "economy",
+"day": 12,
+"depart": "06:30",
+"destination": "COK",
+"flight_no": "SK263",
+"origin": "GOI",
+"price": 9456,
+"seats_left": 14
+},
+{
+"cabin": "economy",
+"day": 3,
+"depart": "12:30",
+"destination": "GOI",
+"flight_no": "SK264",
+"origin": "AMD",
+"price": 3305,
+"seats_left": 13
+},
+{
+"cabin": "business",
+"day": 35,
+"depart": "19:15",
+"destination": "AMD",
+"flight_no": "SK265",
+"origin": "BLR",
+"price": 8283,
+"seats_left": 17
+},
+{
+"cabin": "business",
+"day": 51,
+"depart": "08:00",
+"destination": "HYD",
+"flight_no": "SK266",
+"origin": "AMD",
+"price": 14491,
+"seats_left": 1
+},
+{
+"cabin": "business",
+"day": 5,
+"depart": "22:45",
+"destination": "CCU",
+"flight_no": "SK267",
+"origin": "PNQ",
+"price": 11653,
+"seats_left": 29
+},
+{
+"cabin": "business",
+"day": 34,
+"depart": "11:15",
+"destination": "HYD",
+"flight_no": "SK268",
+"origin": "BLR",
+"price": 14993,
+"seats_left": 3
+},
+{
+"cabin": "business",
+"day": 15,
+"depart": "17:30",
+"destination": "DEL",
+"flight_no": "SK269",
+"origin": "COK",
+"price": 9827,
+"seats_left": 25
+},
+{
+"cabin": "business",
+"day": 58,
+"depart": "07:30",
+"destination": "CCU",
+"flight_no": "SK270",
+"origin": "DEL",
+"price": 6109,
+"seats_left": 33
+},
+{
+"cabin": "business",
+"day": 26,
+"depart": "17:15",
+"destination": "GOI",
+"flight_no": "SK271",
+"origin": "BLR",
+"price": 13386,
+"seats_left": 23
+},
+{
+"cabin": "basic_economy",
+"day": 25,
+"depart": "20:45",
+"destination": "PNQ",
+"flight_no": "SK272",
+"origin": "MAA",
+"price": 14191,
+"seats_left": 28
+},
+{
+"cabin": "basic_economy",
+"day": 4,
+"depart": "17:30",
+"destination": "GOI",
+"flight_no": "SK273",
+"origin": "BOM",
+"price": 12194,
+"seats_left": 34
+},
+{
+"cabin": "basic_economy",
+"day": 7,
+"depart": "14:45",
+"destination": "CCU",
+"flight_no": "SK274",
+"origin": "MAA",
+"price": 3898,
+"seats_left": 19
+},
+{
+"cabin": "business",
+"day": 27,
+"depart": "06:45",
+"destination": "MAA",
+"flight_no": "SK275",
+"origin": "AMD",
+"price": 8923,
+"seats_left": 22
+},
+{
+"cabin": "economy",
+"day": 13,
+"depart": "22:30",
+"destination": "PNQ",
+"flight_no": "SK276",
+"origin": "BLR",
+"price": 13204,
+"seats_left": 11
+},
+{
+"cabin": "business",
+"day": 51,
+"depart": "11:30",
+"destination": "HYD",
+"flight_no": "SK277",
+"origin": "COK",
+"price": 11969,
+"seats_left": 0
+},
+{
+"cabin": "economy",
+"day": 60,
+"depart": "20:30",
+"destination": "AMD",
+"flight_no": "SK278",
+"origin": "MAA",
+"price": 11179,
+"seats_left": 15
+},
+{
+"cabin": "basic_economy",
+"day": 10,
+"depart": "06:15",
+"destination": "COK",
+"flight_no": "SK279",
+"origin": "BLR",
+"price": 14991,
+"seats_left": 24
+},
+{
+"cabin": "economy",
+"day": 37,
+"depart": "21:30",
+"destination": "COK",
+"flight_no": "SK280",
+"origin": "CCU",
+"price": 12129,
+"seats_left": 18
+},
+{
+"cabin": "business",
+"day": 45,
+"depart": "13:00",
+"destination": "BOM",
+"flight_no": "SK281",
+"origin": "COK",
+"price": 5163,
+"seats_left": 17
+},
+{
+"cabin": "economy",
+"day": 29,
+"depart": "09:30",
+"destination": "CCU",
+"flight_no": "SK282",
+"origin": "AMD",
+"price": 8690,
+"seats_left": 33
+},
+{
+"cabin": "basic_economy",
+"day": 36,
+"depart": "18:30",
+"destination": "GOI",
+"flight_no": "SK283",
+"origin": "PNQ",
+"price": 6707,
+"seats_left": 18
+},
+{
+"cabin": "business",
+"day": 4,
+"depart": "16:30",
+"destination": "DEL",
+"flight_no": "SK284",
+"origin": "AMD",
+"price": 8308,
+"seats_left": 18
+},
+{
+"cabin": "basic_economy",
+"day": 11,
+"depart": "19:30",
+"destination": "MAA",
+"flight_no": "SK285",
+"origin": "COK",
+"price": 2967,
+"seats_left": 11
+},
+{
+"cabin": "basic_economy",
+"day": 4,
+"depart": "19:30",
+"destination": "GOI",
+"flight_no": "SK286",
+"origin": "CCU",
+"price": 4314,
+"seats_left": 25
+},
+{
+"cabin": "economy",
+"day": 44,
+"depart": "22:00",
+"destination": "HYD",
+"flight_no": "SK287",
+"origin": "AMD",
+"price": 7842,
+"seats_left": 38
+},
+{
+"cabin": "business",
+"day": 34,
+"depart": "17:30",
+"destination": "AMD",
+"flight_no": "SK288",
+"origin": "DEL",
+"price": 14840,
+"seats_left": 11
+},
+{
+"cabin": "basic_economy",
+"day": 54,
+"depart": "21:30",
+"destination": "BLR",
+"flight_no": "SK289",
+"origin": "COK",
+"price": 8417,
+"seats_left": 36
+},
+{
+"cabin": "business",
+"day": 1,
+"depart": "05:30",
+"destination": "BLR",
+"flight_no": "SK290",
+"origin": "BOM",
+"price": 7831,
+"seats_left": 32
+},
+{
+"cabin": "economy",
+"day": 9,
+"depart": "20:45",
+"destination": "PNQ",
+"flight_no": "SK291",
+"origin": "MAA",
+"price": 14209,
+"seats_left": 33
+},
+{
+"cabin": "business",
+"day": 33,
+"depart": "19:30",
+"destination": "BLR",
+"flight_no": "SK292",
+"origin": "AMD",
+"price": 12354,
+"seats_left": 26
+},
+{
+"cabin": "basic_economy",
+"day": 32,
+"depart": "05:45",
+"destination": "BLR",
+"flight_no": "SK293",
+"origin": "COK",
+"price": 13934,
+"seats_left": 34
+},
+{
+"cabin": "basic_economy",
+"day": 17,
+"depart": "17:00",
+"destination": "GOI",
+"flight_no": "SK294",
+"origin": "DEL",
+"price": 14256,
+"seats_left": 9
+},
+{
+"cabin": "economy",
+"day": 53,
+"depart": "13:15",
+"destination": "MAA",
+"flight_no": "SK295",
+"origin": "AMD",
+"price": 6919,
+"seats_left": 5
+},
+{
+"cabin": "business",
+"day": 33,
+"depart": "15:30",
+"destination": "HYD",
+"flight_no": "SK296",
+"origin": "AMD",
+"price": 13833,
+"seats_left": 25
+},
+{
+"cabin": "economy",
+"day": 7,
+"depart": "08:00",
+"destination": "HYD",
+"flight_no": "SK297",
+"origin": "PNQ",
+"price": 11101,
+"seats_left": 32
+},
+{
+"cabin": "basic_economy",
+"day": 35,
+"depart": "09:30",
+"destination": "HYD",
+"flight_no": "SK298",
+"origin": "BOM",
+"price": 7913,
+"seats_left": 37
+},
+{
+"cabin": "basic_economy",
+"day": 10,
+"depart": "21:15",
+"destination": "DEL",
+"flight_no": "SK299",
+"origin": "COK",
+"price": 12347,
+"seats_left": 15
+},
+{
+"cabin": "business",
+"day": 25,
+"depart": "16:45",
+"destination": "GOI",
+"flight_no": "SK300",
+"origin": "PNQ",
+"price": 14705,
+"seats_left": 8
+},
+{
+"cabin": "business",
+"day": 47,
+"depart": "18:00",
+"destination": "PNQ",
+"flight_no": "SK301",
+"origin": "GOI",
+"price": 12645,
+"seats_left": 12
+},
+{
+"cabin": "business",
+"day": 19,
+"depart": "15:45",
+"destination": "CCU",
+"flight_no": "SK302",
+"origin": "BLR",
+"price": 12206,
+"seats_left": 1
+},
+{
+"cabin": "economy",
+"day": 48,
+"depart": "18:15",
+"destination": "BOM",
+"flight_no": "SK303",
+"origin": "DEL",
+"price": 8099,
+"seats_left": 27
+},
+{
+"cabin": "business",
+"day": 52,
+"depart": "17:00",
+"destination": "CCU",
+"flight_no": "SK304",
+"origin": "AMD",
+"price": 8981,
+"seats_left": 35
+},
+{
+"cabin": "economy",
+"day": 38,
+"depart": "11:45",
+"destination": "COK",
+"flight_no": "SK305",
+"origin": "HYD",
+"price": 5925,
+"seats_left": 2
+},
+{
+"cabin": "basic_economy",
+"day": 60,
+"depart": "18:30",
+"destination": "MAA",
+"flight_no": "SK306",
+"origin": "BLR",
+"price": 5372,
+"seats_left": 4
+},
+{
+"cabin": "basic_economy",
+"day": 42,
+"depart": "15:30",
+"destination": "GOI",
+"flight_no": "SK307",
+"origin": "BLR",
+"price": 14622,
+"seats_left": 25
+},
+{
+"cabin": "business",
+"day": 21,
+"depart": "18:30",
+"destination": "CCU",
+"flight_no": "SK308",
+"origin": "HYD",
+"price": 4338,
+"seats_left": 38
+},
+{
+"cabin": "business",
+"day": 46,
+"depart": "11:15",
+"destination": "BOM",
+"flight_no": "SK309",
+"origin": "HYD",
+"price": 7814,
+"seats_left": 32
+},
+{
+"cabin": "basic_economy",
+"day": 28,
+"depart": "17:45",
+"destination": "HYD",
+"flight_no": "SK310",
+"origin": "PNQ",
+"price": 5790,
+"seats_left": 1
+},
+{
+"cabin": "economy",
+"day": 24,
+"depart": "17:45",
+"destination": "AMD",
+"flight_no": "SK311",
+"origin": "PNQ",
+"price": 9045,
+"seats_left": 37
+},
+{
+"cabin": "economy",
+"day": 37,
+"depart": "21:15",
+"destination": "BLR",
+"flight_no": "SK312",
+"origin": "CCU",
+"price": 14238,
+"seats_left": 0
+},
+{
+"cabin": "basic_economy",
+"day": 3,
+"depart": "17:45",
+"destination": "AMD",
+"flight_no": "SK313",
+"origin": "BOM",
+"price": 12519,
+"seats_left": 14
+},
+{
+"cabin": "business",
+"day": 17,
+"depart": "22:30",
+"destination": "CCU",
+"flight_no": "SK314",
+"origin": "BLR",
+"price": 3791,
+"seats_left": 0
+},
+{
+"cabin": "economy",
+"day": 4,
+"depart": "22:15",
+"destination": "CCU",
+"flight_no": "SK315",
+"origin": "PNQ",
+"price": 5958,
+"seats_left": 34
+},
+{
+"cabin": "business",
+"day": 7,
+"depart": "05:45",
+"destination": "PNQ",
+"flight_no": "SK316",
+"origin": "MAA",
+"price": 4185,
+"seats_left": 34
+},
+{
+"cabin": "business",
+"day": 10,
+"depart": "14:00",
+"destination": "MAA",
+"flight_no": "SK317",
+"origin": "CCU",
+"price": 13439,
+"seats_left": 20
+},
+{
+"cabin": "basic_economy",
+"day": 48,
+"depart": "08:00",
+"destination": "DEL",
+"flight_no": "SK318",
+"origin": "BLR",
+"price": 11482,
+"seats_left": 12
+},
+{
+"cabin": "economy",
+"day": 42,
+"depart": "20:00",
+"destination": "BOM",
+"flight_no": "SK319",
+"origin": "HYD",
+"price": 13565,
+"seats_left": 39
+},
+{
+"cabin": "business",
+"day": 26,
+"depart": "13:15",
+"destination": "MAA",
+"flight_no": "SK320",
+"origin": "AMD",
+"price": 10862,
+"seats_left": 13
+},
+{
+"cabin": "basic_economy",
+"day": 32,
+"depart": "20:30",
+"destination": "MAA",
+"flight_no": "SK321",
+"origin": "HYD",
+"price": 14292,
+"seats_left": 32
+},
+{
+"cabin": "basic_economy",
+"day": 48,
+"depart": "21:30",
+"destination": "BOM",
+"flight_no": "SK322",
+"origin": "HYD",
+"price": 5404,
+"seats_left": 37
+},
+{
+"cabin": "economy",
+"day": 39,
+"depart": "05:00",
+"destination": "HYD",
+"flight_no": "SK323",
+"origin": "COK",
+"price": 10251,
+"seats_left": 32
+},
+{
+"cabin": "business",
+"day": 25,
+"depart": "16:00",
+"destination": "BOM",
+"flight_no": "SK324",
+"origin": "BLR",
+"price": 14307,
+"seats_left": 25
+},
+{
+"cabin": "business",
+"day": 51,
+"depart": "07:30",
+"destination": "AMD",
+"flight_no": "SK325",
+"origin": "BLR",
+"price": 5193,
+"seats_left": 10
+},
+{
+"cabin": "basic_economy",
+"day": 6,
+"depart": "21:00",
+"destination": "BLR",
+"flight_no": "SK326",
+"origin": "GOI",
+"price": 13745,
+"seats_left": 2
+},
+{
+"cabin": "business",
+"day": 29,
+"depart": "18:30",
+"destination": "BLR",
+"flight_no": "SK327",
+"origin": "DEL",
+"price": 3317,
+"seats_left": 36
+},
+{
+"cabin": "economy",
+"day": 49,
+"depart": "10:00",
+"destination": "BLR",
+"flight_no": "SK328",
+"origin": "BOM",
+"price": 11287,
+"seats_left": 26
+},
+{
+"cabin": "economy",
+"day": 4,
+"depart": "08:00",
+"destination": "HYD",
+"flight_no": "SK329",
+"origin": "GOI",
+"price": 4993,
+"seats_left": 34
+},
+{
+"cabin": "business",
+"day": 16,
+"depart": "14:15",
+"destination": "BOM",
+"flight_no": "SK330",
+"origin": "PNQ",
+"price": 13249,
+"seats_left": 23
+},
+{
+"cabin": "basic_economy",
+"day": 48,
+"depart": "05:45",
+"destination": "CCU",
+"flight_no": "SK331",
+"origin": "PNQ",
+"price": 9915,
+"seats_left": 3
+},
+{
+"cabin": "economy",
+"day": 36,
+"depart": "16:15",
+"destination": "COK",
+"flight_no": "SK332",
+"origin": "BOM",
+"price": 12063,
+"seats_left": 36
+},
+{
+"cabin": "business",
+"day": 40,
+"depart": "18:30",
+"destination": "PNQ",
+"flight_no": "SK333",
+"origin": "HYD",
+"price": 10686,
+"seats_left": 35
+},
+{
+"cabin": "economy",
+"day": 5,
+"depart": "22:15",
+"destination": "DEL",
+"flight_no": "SK334",
+"origin": "CCU",
+"price": 5296,
+"seats_left": 20
+},
+{
+"cabin": "basic_economy",
+"day": 18,
+"depart": "05:45",
+"destination": "AMD",
+"flight_no": "SK335",
+"origin": "COK",
+"price": 10197,
+"seats_left": 5
+},
+{
+"cabin": "basic_economy",
+"day": 9,
+"depart": "17:30",
+"destination": "COK",
+"flight_no": "SK336",
+"origin": "AMD",
+"price": 14817,
+"seats_left": 29
+},
+{
+"cabin": "economy",
+"day": 28,
+"depart": "19:00",
+"destination": "BOM",
+"flight_no": "SK337",
+"origin": "MAA",
+"price": 3410,
+"seats_left": 3
+},
+{
+"cabin": "business",
+"day": 4,
+"depart": "11:45",
+"destination": "AMD",
+"flight_no": "SK338",
+"origin": "CCU",
+"price": 6425,
+"seats_left": 39
+},
+{
+"cabin": "economy",
+"day": 29,
+"depart": "17:00",
+"destination": "HYD",
+"flight_no": "SK339",
+"origin": "CCU",
+"price": 14458,
+"seats_left": 30
+},
+{
+"cabin": "economy",
+"day": 58,
+"depart": "06:30",
+"destination": "DEL",
+"flight_no": "SK340",
+"origin": "AMD",
+"price": 9703,
+"seats_left": 0
+},
+{
+"cabin": "economy",
+"day": 53,
+"depart": "06:15",
+"destination": "MAA",
+"flight_no": "SK341",
+"origin": "COK",
+"price": 9369,
+"seats_left": 2
+},
+{
+"cabin": "economy",
+"day": 27,
+"depart": "20:30",
+"destination": "HYD",
+"flight_no": "SK342",
+"origin": "MAA",
+"price": 6344,
+"seats_left": 9
+},
+{
+"cabin": "basic_economy",
+"day": 46,
+"depart": "21:00",
+"destination": "MAA",
+"flight_no": "SK343",
+"origin": "PNQ",
+"price": 13395,
+"seats_left": 16
+},
+{
+"cabin": "business",
+"day": 16,
+"depart": "20:15",
+"destination": "AMD",
+"flight_no": "SK344",
+"origin": "MAA",
+"price": 4570,
+"seats_left": 2
+},
+{
+"cabin": "basic_economy",
+"day": 23,
+"depart": "11:45",
+"destination": "HYD",
+"flight_no": "SK345",
+"origin": "COK",
+"price": 11741,
+"seats_left": 12
+},
+{
+"cabin": "economy",
+"day": 52,
+"depart": "15:30",
+"destination": "AMD",
+"flight_no": "SK346",
+"origin": "DEL",
+"price": 12294,
+"seats_left": 3
+},
+{
+"cabin": "basic_economy",
+"day": 34,
+"depart": "11:15",
+"destination": "BLR",
+"flight_no": "SK347",
+"origin": "MAA",
+"price": 8736,
+"seats_left": 38
+},
+{
+"cabin": "basic_economy",
+"day": 45,
+"depart": "11:30",
+"destination": "PNQ",
+"flight_no": "SK348",
+"origin": "BLR",
+"price": 14411,
+"seats_left": 37
+},
+{
+"cabin": "basic_economy",
+"day": 39,
+"depart": "07:45",
+"destination": "PNQ",
+"flight_no": "SK349",
+"origin": "CCU",
+"price": 8269,
+"seats_left": 36
+},
+{
+"cabin": "economy",
+"day": 51,
+"depart": "21:30",
+"destination": "PNQ",
+"flight_no": "SK350",
+"origin": "AMD",
+"price": 6390,
+"seats_left": 19
+},
+{
+"cabin": "business",
+"day": 58,
+"depart": "06:15",
+"destination": "AMD",
+"flight_no": "SK351",
+"origin": "HYD",
+"price": 2510,
+"seats_left": 30
+},
+{
+"cabin": "basic_economy",
+"day": 36,
+"depart": "17:15",
+"destination": "GOI",
+"flight_no": "SK352",
+"origin": "DEL",
+"price": 6217,
+"seats_left": 37
+},
+{
+"cabin": "basic_economy",
+"day": 49,
+"depart": "19:15",
+"destination": "DEL",
+"flight_no": "SK353",
+"origin": "GOI",
+"price": 8091,
+"seats_left": 37
+},
+{
+"cabin": "business",
+"day": 53,
+"depart": "19:30",
+"destination": "BLR",
+"flight_no": "SK354",
+"origin": "AMD",
+"price": 8852,
+"seats_left": 35
+},
+{
+"cabin": "economy",
+"day": 39,
+"depart": "22:15",
+"destination": "CCU",
+"flight_no": "SK355",
+"origin": "BOM",
+"price": 7453,
+"seats_left": 6
+},
+{
+"cabin": "economy",
+"day": 32,
+"depart": "09:15",
+"destination": "CCU",
+"flight_no": "SK356",
+"origin": "DEL",
+"price": 10265,
+"seats_left": 25
+},
+{
+"cabin": "business",
+"day": 7,
+"depart": "16:45",
+"destination": "MAA",
+"flight_no": "SK357",
+"origin": "GOI",
+"price": 13316,
+"seats_left": 1
+},
+{
+"cabin": "business",
+"day": 46,
+"depart": "15:15",
+"destination": "MAA",
+"flight_no": "SK358",
+"origin": "DEL",
+"price": 13324,
+"seats_left": 19
+},
+{
+"cabin": "economy",
+"day": 7,
+"depart": "19:30",
+"destination": "CCU",
+"flight_no": "SK359",
+"origin": "PNQ",
+"price": 13135,
+"seats_left": 7
+},
+{
+"cabin": "economy",
+"day": 39,
+"depart": "17:00",
+"destination": "DEL",
+"flight_no": "SK360",
+"origin": "BLR",
+"price": 9039,
+"seats_left": 16
+},
+{
+"cabin": "basic_economy",
+"day": 31,
+"depart": "05:15",
+"destination": "BOM",
+"flight_no": "SK361",
+"origin": "GOI",
+"price": 4722,
+"seats_left": 25
+},
+{
+"cabin": "economy",
+"day": 60,
+"depart": "11:00",
+"destination": "GOI",
+"flight_no": "SK362",
+"origin": "DEL",
+"price": 7993,
+"seats_left": 27
+},
+{
+"cabin": "economy",
+"day": 45,
+"depart": "22:45",
+"destination": "HYD",
+"flight_no": "SK363",
+"origin": "CCU",
+"price": 2576,
+"seats_left": 0
+},
+{
+"cabin": "economy",
+"day": 38,
+"depart": "08:00",
+"destination": "DEL",
+"flight_no": "SK364",
+"origin": "PNQ",
+"price": 4565,
+"seats_left": 10
+},
+{
+"cabin": "economy",
+"day": 6,
+"depart": "14:30",
+"destination": "HYD",
+"flight_no": "SK365",
+"origin": "MAA",
+"price": 14842,
+"seats_left": 15
+},
+{
+"cabin": "economy",
+"day": 16,
+"depart": "08:30",
+"destination": "AMD",
+"flight_no": "SK366",
+"origin": "DEL",
+"price": 5562,
+"seats_left": 17
+},
+{
+"cabin": "economy",
+"day": 43,
+"depart": "07:15",
+"destination": "DEL",
+"flight_no": "SK367",
+"origin": "BLR",
+"price": 8385,
+"seats_left": 3
+},
+{
+"cabin": "economy",
+"day": 42,
+"depart": "08:30",
+"destination": "AMD",
+"flight_no": "SK368",
+"origin": "BLR",
+"price": 7451,
+"seats_left": 1
+},
+{
+"cabin": "economy",
+"day": 26,
+"depart": "18:30",
+"destination": "DEL",
+"flight_no": "SK369",
+"origin": "MAA",
+"price": 4551,
+"seats_left": 6
+},
+{
+"cabin": "business",
+"day": 2,
+"depart": "07:30",
+"destination": "MAA",
+"flight_no": "SK370",
+"origin": "AMD",
+"price": 2676,
+"seats_left": 7
+},
+{
+"cabin": "economy",
+"day": 57,
+"depart": "09:30",
+"destination": "AMD",
+"flight_no": "SK371",
+"origin": "CCU",
+"price": 4651,
+"seats_left": 37
+},
+{
+"cabin": "economy",
+"day": 55,
+"depart": "19:45",
+"destination": "COK",
+"flight_no": "SK372",
+"origin": "CCU",
+"price": 6728,
+"seats_left": 2
+},
+{
+"cabin": "basic_economy",
+"day": 19,
+"depart": "19:45",
+"destination": "BLR",
+"flight_no": "SK373",
+"origin": "CCU",
+"price": 4225,
+"seats_left": 35
+},
+{
+"cabin": "economy",
+"day": 23,
+"depart": "22:30",
+"destination": "COK",
+"flight_no": "SK374",
+"origin": "DEL",
+"price": 7151,
+"seats_left": 35
+},
+{
+"cabin": "business",
+"day": 19,
+"depart": "17:15",
+"destination": "GOI",
+"flight_no": "SK375",
+"origin": "PNQ",
+"price": 10049,
+"seats_left": 30
+},
+{
+"cabin": "economy",
+"day": 37,
+"depart": "20:00",
+"destination": "MAA",
+"flight_no": "SK376",
+"origin": "DEL",
+"price": 12753,
+"seats_left": 27
+},
+{
+"cabin": "business",
+"day": 55,
+"depart": "09:15",
+"destination": "CCU",
+"flight_no": "SK377",
+"origin": "HYD",
+"price": 7059,
+"seats_left": 20
+},
+{
+"cabin": "economy",
+"day": 17,
+"depart": "05:45",
+"destination": "BLR",
+"flight_no": "SK378",
+"origin": "BOM",
+"price": 13120,
+"seats_left": 32
+},
+{
+"cabin": "basic_economy",
+"day": 19,
+"depart": "16:45",
+"destination": "BLR",
+"flight_no": "SK379",
+"origin": "CCU",
+"price": 7214,
+"seats_left": 33
+},
+{
+"cabin": "business",
+"day": 59,
+"depart": "06:15",
+"destination": "COK",
+"flight_no": "SK380",
+"origin": "BOM",
+"price": 4079,
+"seats_left": 29
+},
+{
+"cabin": "basic_economy",
+"day": 44,
+"depart": "16:30",
+"destination": "MAA",
+"flight_no": "SK381",
+"origin": "BLR",
+"price": 11988,
+"seats_left": 31
+},
+{
+"cabin": "economy",
+"day": 37,
+"depart": "10:00",
+"destination": "CCU",
+"flight_no": "SK382",
+"origin": "HYD",
+"price": 8182,
+"seats_left": 22
+},
+{
+"cabin": "basic_economy",
+"day": 46,
+"depart": "09:15",
+"destination": "BOM",
+"flight_no": "SK383",
+"origin": "PNQ",
+"price": 6569,
+"seats_left": 9
+},
+{
+"cabin": "business",
+"day": 60,
+"depart": "14:15",
+"destination": "MAA",
+"flight_no": "SK384",
+"origin": "AMD",
+"price": 7607,
+"seats_left": 31
+},
+{
+"cabin": "business",
+"day": 24,
+"depart": "22:45",
+"destination": "AMD",
+"flight_no": "SK385",
+"origin": "DEL",
+"price": 12024,
+"seats_left": 4
+},
+{
+"cabin": "business",
+"day": 59,
+"depart": "06:30",
+"destination": "HYD",
+"flight_no": "SK386",
+"origin": "AMD",
+"price": 12357,
+"seats_left": 5
+},
+{
+"cabin": "business",
+"day": 4,
+"depart": "11:45",
+"destination": "GOI",
+"flight_no": "SK387",
+"origin": "BOM",
+"price": 14955,
+"seats_left": 6
+},
+{
+"cabin": "business",
+"day": 49,
+"depart": "20:30",
+"destination": "BLR",
+"flight_no": "SK388",
+"origin": "HYD",
+"price": 6629,
+"seats_left": 13
+},
+{
+"cabin": "business",
+"day": 38,
+"depart": "20:45",
+"destination": "GOI",
+"flight_no": "SK389",
+"origin": "AMD",
+"price": 11991,
+"seats_left": 10
+},
+{
+"cabin": "business",
+"day": 58,
+"depart": "08:30",
+"destination": "DEL",
+"flight_no": "SK390",
+"origin": "MAA",
+"price": 8006,
+"seats_left": 24
+},
+{
+"cabin": "business",
+"day": 27,
+"depart": "19:15",
+"destination": "PNQ",
+"flight_no": "SK391",
+"origin": "HYD",
+"price": 14220,
+"seats_left": 2
+},
+{
+"cabin": "economy",
+"day": 56,
+"depart": "16:45",
+"destination": "PNQ",
+"flight_no": "SK392",
+"origin": "BOM",
+"price": 5816,
+"seats_left": 0
+},
+{
+"cabin": "basic_economy",
+"day": 47,
+"depart": "15:15",
+"destination": "CCU",
+"flight_no": "SK393",
+"origin": "BLR",
+"price": 3131,
+"seats_left": 30
+},
+{
+"cabin": "business",
+"day": 57,
+"depart": "21:45",
+"destination": "MAA",
+"flight_no": "SK394",
+"origin": "GOI",
+"price": 8846,
+"seats_left": 10
+},
+{
+"cabin": "business",
+"day": 48,
+"depart": "07:00",
+"destination": "HYD",
+"flight_no": "SK395",
+"origin": "COK",
+"price": 9822,
+"seats_left": 28
+},
+{
+"cabin": "basic_economy",
+"day": 46,
+"depart": "14:15",
+"destination": "HYD",
+"flight_no": "SK396",
+"origin": "GOI",
+"price": 4828,
+"seats_left": 24
+},
+{
+"cabin": "economy",
+"day": 38,
+"depart": "05:00",
+"destination": "MAA",
+"flight_no": "SK397",
+"origin": "PNQ",
+"price": 11325,
+"seats_left": 8
+},
+{
+"cabin": "basic_economy",
+"day": 2,
+"depart": "21:45",
+"destination": "HYD",
+"flight_no": "SK398",
+"origin": "CCU",
+"price": 13749,
+"seats_left": 10
+},
+{
+"cabin": "economy",
+"day": 7,
+"depart": "21:30",
+"destination": "DEL",
+"flight_no": "SK399",
+"origin": "COK",
+"price": 12037,
+"seats_left": 27
+},
+{
+"cabin": "basic_economy",
+"day": 5,
+"depart": "11:30",
+"destination": "MAA",
+"flight_no": "SK400",
+"origin": "HYD",
+"price": 10683,
+"seats_left": 1
+},
+{
+"cabin": "business",
+"day": 33,
+"depart": "20:30",
+"destination": "DEL",
+"flight_no": "SK401",
+"origin": "BOM",
+"price": 10579,
+"seats_left": 12
+},
+{
+"cabin": "business",
+"day": 2,
+"depart": "17:15",
+"destination": "HYD",
+"flight_no": "SK402",
+"origin": "MAA",
+"price": 13066,
+"seats_left": 8
+},
+{
+"cabin": "economy",
+"day": 42,
+"depart": "21:15",
+"destination": "DEL",
+"flight_no": "SK403",
+"origin": "BOM",
+"price": 12788,
+"seats_left": 2
+},
+{
+"cabin": "basic_economy",
+"day": 7,
+"depart": "17:00",
+"destination": "HYD",
+"flight_no": "SK404",
+"origin": "MAA",
+"price": 8817,
+"seats_left": 20
+},
+{
+"cabin": "basic_economy",
+"day": 46,
+"depart": "17:00",
+"destination": "COK",
+"flight_no": "SK405",
+"origin": "CCU",
+"price": 13132,
+"seats_left": 20
+},
+{
+"cabin": "basic_economy",
+"day": 42,
+"depart": "14:30",
+"destination": "AMD",
+"flight_no": "SK406",
+"origin": "CCU",
+"price": 9929,
+"seats_left": 16
+},
+{
+"cabin": "economy",
+"day": 42,
+"depart": "18:45",
+"destination": "DEL",
+"flight_no": "SK407",
+"origin": "CCU",
+"price": 11093,
+"seats_left": 21
+},
+{
+"cabin": "economy",
+"day": 12,
+"depart": "12:45",
+"destination": "HYD",
+"flight_no": "SK408",
+"origin": "AMD",
+"price": 5965,
+"seats_left": 10
+},
+{
+"cabin": "basic_economy",
+"day": 18,
+"depart": "15:15",
+"destination": "MAA",
+"flight_no": "SK409",
+"origin": "GOI",
+"price": 5519,
+"seats_left": 8
+},
+{
+"cabin": "business",
+"day": 5,
+"depart": "21:30",
+"destination": "PNQ",
+"flight_no": "SK410",
+"origin": "DEL",
+"price": 13813,
+"seats_left": 13
+},
+{
+"cabin": "basic_economy",
+"day": 43,
+"depart": "22:45",
+"destination": "MAA",
+"flight_no": "SK411",
+"origin": "GOI",
+"price": 9204,
+"seats_left": 16
+},
+{
+"cabin": "business",
+"day": 17,
+"depart": "12:00",
+"destination": "MAA",
+"flight_no": "SK412",
+"origin": "CCU",
+"price": 10811,
+"seats_left": 24
+},
+{
+"cabin": "basic_economy",
+"day": 13,
+"depart": "21:30",
+"destination": "DEL",
+"flight_no": "SK413",
+"origin": "HYD",
+"price": 3906,
+"seats_left": 10
+},
+{
+"cabin": "basic_economy",
+"day": 38,
+"depart": "22:45",
+"destination": "DEL",
+"flight_no": "SK414",
+"origin": "GOI",
+"price": 9947,
+"seats_left": 9
+},
+{
+"cabin": "economy",
+"day": 51,
+"depart": "18:15",
+"destination": "BLR",
+"flight_no": "SK415",
+"origin": "BOM",
+"price": 10307,
+"seats_left": 5
+},
+{
+"cabin": "economy",
+"day": 58,
+"depart": "08:15",
+"destination": "BLR",
+"flight_no": "SK416",
+"origin": "CCU",
+"price": 4203,
+"seats_left": 13
+},
+{
+"cabin": "basic_economy",
+"day": 49,
+"depart": "20:00",
+"destination": "BOM",
+"flight_no": "SK417",
+"origin": "HYD",
+"price": 3581,
+"seats_left": 8
+},
+{
+"cabin": "economy",
+"day": 39,
+"depart": "10:45",
+"destination": "BLR",
+"flight_no": "SK418",
+"origin": "GOI",
+"price": 9980,
+"seats_left": 8
+},
+{
+"cabin": "basic_economy",
+"day": 29,
+"depart": "07:15",
+"destination": "MAA",
+"flight_no": "SK419",
+"origin": "HYD",
+"price": 6233,
+"seats_left": 27
+},
+{
+"cabin": "economy",
+"day": 42,
+"depart": "09:15",
+"destination": "HYD",
+"flight_no": "SK420",
+"origin": "PNQ",
+"price": 13570,
+"seats_left": 14
+},
+{
+"cabin": "business",
+"day": 6,
+"depart": "10:15",
+"destination": "GOI",
+"flight_no": "SK421",
+"origin": "MAA",
+"price": 6807,
+"seats_left": 11
+},
+{
+"cabin": "economy",
+"day": 45,
+"depart": "11:30",
+"destination": "PNQ",
+"flight_no": "SK422",
+"origin": "CCU",
+"price": 11527,
+"seats_left": 29
+},
+{
+"cabin": "business",
+"day": 21,
+"depart": "21:45",
+"destination": "HYD",
+"flight_no": "SK423",
+"origin": "AMD",
+"price": 3904,
+"seats_left": 21
+},
+{
+"cabin": "economy",
+"day": 49,
+"depart": "09:00",
+"destination": "MAA",
+"flight_no": "SK424",
+"origin": "GOI",
+"price": 11553,
+"seats_left": 37
+},
+{
+"cabin": "business",
+"day": 55,
+"depart": "08:15",
+"destination": "CCU",
+"flight_no": "SK425",
+"origin": "PNQ",
+"price": 5459,
+"seats_left": 15
+},
+{
+"cabin": "economy",
+"day": 23,
+"depart": "10:00",
+"destination": "MAA",
+"flight_no": "SK426",
+"origin": "DEL",
+"price": 12314,
+"seats_left": 22
+},
+{
+"cabin": "basic_economy",
+"day": 60,
+"depart": "06:15",
+"destination": "AMD",
+"flight_no": "SK427",
+"origin": "CCU",
+"price": 3772,
+"seats_left": 29
+},
+{
+"cabin": "economy",
+"day": 38,
+"depart": "15:00",
+"destination": "HYD",
+"flight_no": "SK428",
+"origin": "BLR",
+"price": 5123,
+"seats_left": 2
+},
+{
+"cabin": "economy",
+"day": 12,
+"depart": "12:00",
+"destination": "COK",
+"flight_no": "SK429",
+"origin": "AMD",
+"price": 10481,
+"seats_left": 13
+},
+{
+"cabin": "basic_economy",
+"day": 17,
+"depart": "05:15",
+"destination": "GOI",
+"flight_no": "SK430",
+"origin": "MAA",
+"price": 4940,
+"seats_left": 32
+},
+{
+"cabin": "business",
+"day": 37,
+"depart": "14:15",
+"destination": "BLR",
+"flight_no": "SK431",
+"origin": "DEL",
+"price": 11946,
+"seats_left": 16
+},
+{
+"cabin": "economy",
+"day": 24,
+"depart": "17:30",
+"destination": "CCU",
+"flight_no": "SK432",
+"origin": "HYD",
+"price": 12537,
+"seats_left": 17
+},
+{
+"cabin": "basic_economy",
+"day": 21,
+"depart": "17:00",
+"destination": "GOI",
+"flight_no": "SK433",
+"origin": "PNQ",
+"price": 5118,
+"seats_left": 4
+},
+{
+"cabin": "basic_economy",
+"day": 12,
+"depart": "12:30",
+"destination": "HYD",
+"flight_no": "SK434",
+"origin": "DEL",
+"price": 14744,
+"seats_left": 4
+},
+{
+"cabin": "business",
+"day": 39,
+"depart": "11:15",
+"destination": "DEL",
+"flight_no": "SK435",
+"origin": "GOI",
+"price": 11847,
+"seats_left": 18
+},
+{
+"cabin": "economy",
+"day": 18,
+"depart": "15:30",
+"destination": "CCU",
+"flight_no": "SK436",
+"origin": "AMD",
+"price": 6502,
+"seats_left": 3
+},
+{
+"cabin": "basic_economy",
+"day": 55,
+"depart": "07:30",
+"destination": "BLR",
+"flight_no": "SK437",
+"origin": "PNQ",
+"price": 12011,
+"seats_left": 6
+},
+{
+"cabin": "economy",
+"day": 39,
+"depart": "07:15",
+"destination": "HYD",
+"flight_no": "SK438",
+"origin": "PNQ",
+"price": 7913,
+"seats_left": 31
+},
+{
+"cabin": "business",
+"day": 44,
+"depart": "17:45",
+"destination": "AMD",
+"flight_no": "SK439",
+"origin": "HYD",
+"price": 4058,
+"seats_left": 26
+},
+{
+"cabin": "basic_economy",
+"day": 8,
+"depart": "16:00",
+"destination": "BOM",
+"flight_no": "SK440",
+"origin": "COK",
+"price": 6610,
+"seats_left": 4
+},
+{
+"cabin": "economy",
+"day": 54,
+"depart": "13:15",
+"destination": "MAA",
+"flight_no": "SK441",
+"origin": "COK",
+"price": 3041,
+"seats_left": 29
+},
+{
+"cabin": "basic_economy",
+"day": 27,
+"depart": "21:30",
+"destination": "DEL",
+"flight_no": "SK442",
+"origin": "MAA",
+"price": 10866,
+"seats_left": 28
+},
+{
+"cabin": "business",
+"day": 50,
+"depart": "08:30",
+"destination": "COK",
+"flight_no": "SK443",
+"origin": "GOI",
+"price": 11874,
+"seats_left": 27
+},
+{
+"cabin": "business",
+"day": 26,
+"depart": "17:30",
+"destination": "COK",
+"flight_no": "SK444",
+"origin": "BOM",
+"price": 6207,
+"seats_left": 8
+},
+{
+"cabin": "business",
+"day": 51,
+"depart": "08:45",
+"destination": "COK",
+"flight_no": "SK445",
+"origin": "HYD",
+"price": 4639,
+"seats_left": 39
+},
+{
+"cabin": "basic_economy",
+"day": 43,
+"depart": "15:00",
+"destination": "BLR",
+"flight_no": "SK446",
+"origin": "COK",
+"price": 8376,
+"seats_left": 9
+},
+{
+"cabin": "economy",
+"day": 1,
+"depart": "08:30",
+"destination": "BOM",
+"flight_no": "SK447",
+"origin": "AMD",
+"price": 6878,
+"seats_left": 11
+},
+{
+"cabin": "basic_economy",
+"day": 45,
+"depart": "10:30",
+"destination": "AMD",
+"flight_no": "SK448",
+"origin": "BLR",
+"price": 9905,
+"seats_left": 17
+},
+{
+"cabin": "business",
+"day": 51,
+"depart": "20:30",
+"destination": "DEL",
+"flight_no": "SK449",
+"origin": "BLR",
+"price": 3470,
+"seats_left": 25
+},
+{
+"cabin": "business",
+"day": 17,
+"depart": "06:45",
+"destination": "CCU",
+"flight_no": "SK450",
+"origin": "MAA",
+"price": 13207,
+"seats_left": 10
+},
+{
+"cabin": "economy",
+"day": 57,
+"depart": "19:15",
+"destination": "MAA",
+"flight_no": "SK451",
+"origin": "BOM",
+"price": 7837,
+"seats_left": 4
+},
+{
+"cabin": "business",
+"day": 26,
+"depart": "15:15",
+"destination": "BOM",
+"flight_no": "SK452",
+"origin": "CCU",
+"price": 10016,
+"seats_left": 12
+},
+{
+"cabin": "basic_economy",
+"day": 3,
+"depart": "12:00",
+"destination": "PNQ",
+"flight_no": "SK453",
+"origin": "DEL",
+"price": 10626,
+"seats_left": 28
+},
+{
+"cabin": "business",
+"day": 20,
+"depart": "21:15",
+"destination": "PNQ",
+"flight_no": "SK454",
+"origin": "BOM",
+"price": 12549,
+"seats_left": 11
+},
+{
+"cabin": "business",
+"day": 42,
+"depart": "14:00",
+"destination": "HYD",
+"flight_no": "SK455",
+"origin": "MAA",
+"price": 8273,
+"seats_left": 34
+},
+{
+"cabin": "economy",
+"day": 1,
+"depart": "09:15",
+"destination": "BOM",
+"flight_no": "SK456",
+"origin": "MAA",
+"price": 12198,
+"seats_left": 3
+},
+{
+"cabin": "economy",
+"day": 28,
+"depart": "21:30",
+"destination": "CCU",
+"flight_no": "SK457",
+"origin": "PNQ",
+"price": 13344,
+"seats_left": 25
+},
+{
+"cabin": "economy",
+"day": 24,
+"depart": "14:15",
+"destination": "COK",
+"flight_no": "SK458",
+"origin": "MAA",
+"price": 3370,
+"seats_left": 23
+},
+{
+"cabin": "business",
+"day": 1,
+"depart": "11:45",
+"destination": "BOM",
+"flight_no": "SK459",
+"origin": "AMD",
+"price": 4086,
+"seats_left": 34
+},
+{
+"cabin": "basic_economy",
+"day": 57,
+"depart": "19:30",
+"destination": "GOI",
+"flight_no": "SK460",
+"origin": "BOM",
+"price": 14680,
+"seats_left": 4
+},
+{
+"cabin": "business",
+"day": 19,
+"depart": "20:15",
+"destination": "PNQ",
+"flight_no": "SK461",
+"origin": "DEL",
+"price": 4157,
+"seats_left": 18
+},
+{
+"cabin": "basic_economy",
+"day": 43,
+"depart": "09:00",
+"destination": "PNQ",
+"flight_no": "SK462",
+"origin": "BLR",
+"price": 2542,
+"seats_left": 16
+},
+{
+"cabin": "economy",
+"day": 44,
+"depart": "09:30",
+"destination": "DEL",
+"flight_no": "SK463",
+"origin": "CCU",
+"price": 12565,
+"seats_left": 12
+},
+{
+"cabin": "business",
+"day": 53,
+"depart": "08:00",
+"destination": "DEL",
+"flight_no": "SK464",
+"origin": "GOI",
+"price": 3448,
+"seats_left": 11
+},
+{
+"cabin": "business",
+"day": 47,
+"depart": "14:45",
+"destination": "GOI",
+"flight_no": "SK465",
+"origin": "BOM",
+"price": 14075,
+"seats_left": 10
+},
+{
+"cabin": "basic_economy",
+"day": 60,
+"depart": "14:15",
+"destination": "BOM",
+"flight_no": "SK466",
+"origin": "GOI",
+"price": 9321,
+"seats_left": 11
+},
+{
+"cabin": "basic_economy",
+"day": 11,
+"depart": "18:00",
+"destination": "CCU",
+"flight_no": "SK467",
+"origin": "GOI",
+"price": 10221,
+"seats_left": 7
+},
+{
+"cabin": "basic_economy",
+"day": 39,
+"depart": "17:45",
+"destination": "CCU",
+"flight_no": "SK468",
+"origin": "MAA",
+"price": 2974,
+"seats_left": 38
+},
+{
+"cabin": "economy",
+"day": 26,
+"depart": "08:00",
+"destination": "COK",
+"flight_no": "SK469",
+"origin": "BOM",
+"price": 12073,
+"seats_left": 18
+},
+{
+"cabin": "basic_economy",
+"day": 23,
+"depart": "10:45",
+"destination": "HYD",
+"flight_no": "SK470",
+"origin": "AMD",
+"price": 7452,
+"seats_left": 37
+},
+{
+"cabin": "economy",
+"day": 58,
+"depart": "16:15",
+"destination": "CCU",
+"flight_no": "SK471",
+"origin": "HYD",
+"price": 12271,
+"seats_left": 5
+},
+{
+"cabin": "business",
+"day": 43,
+"depart": "16:15",
+"destination": "PNQ",
+"flight_no": "SK472",
+"origin": "GOI",
+"price": 4978,
+"seats_left": 5
+},
+{
+"cabin": "economy",
+"day": 31,
+"depart": "20:15",
+"destination": "DEL",
+"flight_no": "SK473",
+"origin": "MAA",
+"price": 10420,
+"seats_left": 14
+},
+{
+"cabin": "business",
+"day": 34,
+"depart": "19:30",
+"destination": "PNQ",
+"flight_no": "SK474",
+"origin": "BOM",
+"price": 3462,
+"seats_left": 25
+},
+{
+"cabin": "business",
+"day": 42,
+"depart": "14:00",
+"destination": "GOI",
+"flight_no": "SK475",
+"origin": "COK",
+"price": 5635,
+"seats_left": 11
+},
+{
+"cabin": "business",
+"day": 10,
+"depart": "09:00",
+"destination": "COK",
+"flight_no": "SK476",
+"origin": "GOI",
+"price": 13352,
+"seats_left": 10
+},
+{
+"cabin": "economy",
+"day": 32,
+"depart": "08:30",
+"destination": "BLR",
+"flight_no": "SK477",
+"origin": "AMD",
+"price": 3806,
+"seats_left": 15
+},
+{
+"cabin": "economy",
+"day": 51,
+"depart": "20:45",
+"destination": "DEL",
+"flight_no": "SK478",
+"origin": "BOM",
+"price": 3310,
+"seats_left": 34
+},
+{
+"cabin": "economy",
+"day": 25,
+"depart": "07:45",
+"destination": "AMD",
+"flight_no": "SK479",
+"origin": "BOM",
+"price": 6864,
+"seats_left": 6
+},
+{
+"cabin": "economy",
+"day": 26,
+"depart": "20:30",
+"destination": "BOM",
+"flight_no": "SK480",
+"origin": "DEL",
+"price": 14821,
+"seats_left": 11
+},
+{
+"cabin": "business",
+"day": 46,
+"depart": "06:45",
+"destination": "GOI",
+"flight_no": "SK481",
+"origin": "DEL",
+"price": 9339,
+"seats_left": 14
+},
+{
+"cabin": "basic_economy",
+"day": 36,
+"depart": "09:00",
+"destination": "HYD",
+"flight_no": "SK482",
+"origin": "GOI",
+"price": 8785,
+"seats_left": 17
+},
+{
+"cabin": "economy",
+"day": 38,
+"depart": "18:45",
+"destination": "CCU",
+"flight_no": "SK483",
+"origin": "HYD",
+"price": 8171,
+"seats_left": 32
+},
+{
+"cabin": "basic_economy",
+"day": 12,
+"depart": "15:15",
+"destination": "CCU",
+"flight_no": "SK484",
+"origin": "AMD",
+"price": 9211,
+"seats_left": 4
+},
+{
+"cabin": "basic_economy",
+"day": 44,
+"depart": "10:30",
+"destination": "BLR",
+"flight_no": "SK485",
+"origin": "HYD",
+"price": 4600,
+"seats_left": 26
+},
+{
+"cabin": "economy",
+"day": 39,
+"depart": "18:30",
+"destination": "BOM",
+"flight_no": "SK486",
+"origin": "PNQ",
+"price": 4044,
+"seats_left": 13
+},
+{
+"cabin": "business",
+"day": 55,
+"depart": "21:15",
+"destination": "HYD",
+"flight_no": "SK487",
+"origin": "DEL",
+"price": 13842,
+"seats_left": 12
+},
+{
+"cabin": "economy",
+"day": 13,
+"depart": "18:30",
+"destination": "AMD",
+"flight_no": "SK488",
+"origin": "BLR",
+"price": 12835,
+"seats_left": 11
+},
+{
+"cabin": "economy",
+"day": 28,
+"depart": "16:15",
+"destination": "BOM",
+"flight_no": "SK489",
+"origin": "AMD",
+"price": 13159,
+"seats_left": 22
+},
+{
+"cabin": "business",
+"day": 22,
+"depart": "17:15",
+"destination": "PNQ",
+"flight_no": "SK490",
+"origin": "HYD",
+"price": 8999,
+"seats_left": 15
+},
+{
+"cabin": "economy",
+"day": 55,
+"depart": "14:15",
+"destination": "COK",
+"flight_no": "SK491",
+"origin": "BOM",
+"price": 8045,
+"seats_left": 14
+},
+{
+"cabin": "economy",
+"day": 30,
+"depart": "15:45",
+"destination": "CCU",
+"flight_no": "SK492",
+"origin": "MAA",
+"price": 3256,
+"seats_left": 16
+},
+{
+"cabin": "business",
+"day": 5,
+"depart": "18:30",
+"destination": "PNQ",
+"flight_no": "SK493",
+"origin": "COK",
+"price": 11608,
+"seats_left": 30
+},
+{
+"cabin": "basic_economy",
+"day": 49,
+"depart": "10:45",
+"destination": "AMD",
+"flight_no": "SK494",
+"origin": "CCU",
+"price": 7453,
+"seats_left": 39
+},
+{
+"cabin": "basic_economy",
+"day": 18,
+"depart": "17:15",
+"destination": "CCU",
+"flight_no": "SK495",
+"origin": "BLR",
+"price": 10240,
+"seats_left": 14
+},
+{
+"cabin": "business",
+"day": 17,
+"depart": "20:45",
+"destination": "PNQ",
+"flight_no": "SK496",
+"origin": "GOI",
+"price": 5972,
+"seats_left": 34
+},
+{
+"cabin": "economy",
+"day": 16,
+"depart": "13:00",
+"destination": "GOI",
+"flight_no": "SK497",
+"origin": "DEL",
+"price": 7259,
+"seats_left": 25
+},
+{
+"cabin": "business",
+"day": 34,
+"depart": "17:30",
+"destination": "DEL",
+"flight_no": "SK498",
+"origin": "CCU",
+"price": 11158,
+"seats_left": 21
+},
+{
+"cabin": "basic_economy",
+"day": 30,
+"depart": "11:15",
+"destination": "CCU",
+"flight_no": "SK499",
+"origin": "COK",
+"price": 14845,
+"seats_left": 39
+},
+{
+"cabin": "basic_economy",
+"day": 26,
+"depart": "13:30",
+"destination": "COK",
+"flight_no": "SK500",
+"origin": "PNQ",
+"price": 3604,
+"seats_left": 6
+},
+{
+"cabin": "basic_economy",
+"day": 17,
+"depart": "16:00",
+"destination": "HYD",
+"flight_no": "SK501",
+"origin": "AMD",
+"price": 14598,
+"seats_left": 19
+},
+{
+"cabin": "basic_economy",
+"day": 24,
+"depart": "17:15",
+"destination": "PNQ",
+"flight_no": "SK502",
+"origin": "BLR",
+"price": 10386,
+"seats_left": 11
+},
+{
+"cabin": "basic_economy",
+"day": 5,
+"depart": "14:00",
+"destination": "PNQ",
+"flight_no": "SK503",
+"origin": "CCU",
+"price": 5154,
+"seats_left": 28
+},
+{
+"cabin": "basic_economy",
+"day": 28,
+"depart": "16:00",
+"destination": "COK",
+"flight_no": "SK504",
+"origin": "GOI",
+"price": 13970,
+"seats_left": 23
+},
+{
+"cabin": "business",
+"day": 37,
+"depart": "14:30",
+"destination": "MAA",
+"flight_no": "SK505",
+"origin": "GOI",
+"price": 9869,
+"seats_left": 28
+},
+{
+"cabin": "economy",
+"day": 1,
+"depart": "14:15",
+"destination": "COK",
+"flight_no": "SK506",
+"origin": "BLR",
+"price": 14689,
+"seats_left": 29
+},
+{
+"cabin": "basic_economy",
+"day": 12,
+"depart": "06:00",
+"destination": "HYD",
+"flight_no": "SK507",
+"origin": "MAA",
+"price": 9330,
+"seats_left": 26
+},
+{
+"cabin": "economy",
+"day": 9,
+"depart": "06:45",
+"destination": "PNQ",
+"flight_no": "SK508",
+"origin": "COK",
+"price": 11744,
+"seats_left": 0
+},
+{
+"cabin": "economy",
+"day": 36,
+"depart": "11:00",
+"destination": "CCU",
+"flight_no": "SK509",
+"origin": "DEL",
+"price": 11796,
+"seats_left": 38
+},
+{
+"cabin": "business",
+"day": 54,
+"depart": "21:15",
+"destination": "DEL",
+"flight_no": "SK510",
+"origin": "HYD",
+"price": 14191,
+"seats_left": 15
+},
+{
+"cabin": "basic_economy",
+"day": 3,
+"depart": "14:00",
+"destination": "CCU",
+"flight_no": "SK511",
+"origin": "BLR",
+"price": 7011,
+"seats_left": 20
+},
+{
+"cabin": "basic_economy",
+"day": 38,
+"depart": "08:45",
+"destination": "BLR",
+"flight_no": "SK512",
+"origin": "AMD",
+"price": 9820,
+"seats_left": 33
+},
+{
+"cabin": "basic_economy",
+"day": 60,
+"depart": "11:30",
+"destination": "COK",
+"flight_no": "SK513",
+"origin": "BOM",
+"price": 14578,
+"seats_left": 33
+},
+{
+"cabin": "business",
+"day": 55,
+"depart": "22:15",
+"destination": "COK",
+"flight_no": "SK514",
+"origin": "GOI",
+"price": 10430,
+"seats_left": 7
+},
+{
+"cabin": "economy",
+"day": 34,
+"depart": "21:45",
+"destination": "AMD",
+"flight_no": "SK515",
+"origin": "GOI",
+"price": 4136,
+"seats_left": 12
+},
+{
+"cabin": "business",
+"day": 10,
+"depart": "12:15",
+"destination": "HYD",
+"flight_no": "SK516",
+"origin": "DEL",
+"price": 6651,
+"seats_left": 19
+},
+{
+"cabin": "business",
+"day": 34,
+"depart": "20:45",
+"destination": "BOM",
+"flight_no": "SK517",
+"origin": "AMD",
+"price": 12335,
+"seats_left": 1
+},
+{
+"cabin": "economy",
+"day": 58,
+"depart": "12:15",
+"destination": "COK",
+"flight_no": "SK518",
+"origin": "MAA",
+"price": 13537,
+"seats_left": 12
+},
+{
+"cabin": "economy",
+"day": 17,
+"depart": "19:15",
+"destination": "COK",
+"flight_no": "SK519",
+"origin": "GOI",
+"price": 7197,
+"seats_left": 37
+},
+{
+"cabin": "basic_economy",
+"day": 39,
+"depart": "09:15",
+"destination": "CCU",
+"flight_no": "SK520",
+"origin": "BLR",
+"price": 3638,
+"seats_left": 25
+},
+{
+"cabin": "basic_economy",
+"day": 37,
+"depart": "17:45",
+"destination": "CCU",
+"flight_no": "SK521",
+"origin": "DEL",
+"price": 5406,
+"seats_left": 36
+},
+{
+"cabin": "economy",
+"day": 46,
+"depart": "05:45",
+"destination": "COK",
+"flight_no": "SK522",
+"origin": "BOM",
+"price": 6851,
+"seats_left": 15
+},
+{
+"cabin": "business",
+"day": 43,
+"depart": "05:15",
+"destination": "BLR",
+"flight_no": "SK523",
+"origin": "DEL",
+"price": 6167,
+"seats_left": 5
+},
+{
+"cabin": "basic_economy",
+"day": 41,
+"depart": "11:30",
+"destination": "AMD",
+"flight_no": "SK524",
+"origin": "BLR",
+"price": 2871,
+"seats_left": 18
+},
+{
+"cabin": "business",
+"day": 46,
+"depart": "21:45",
+"destination": "BOM",
+"flight_no": "SK525",
+"origin": "GOI",
+"price": 4894,
+"seats_left": 37
+},
+{
+"cabin": "economy",
+"day": 46,
+"depart": "15:15",
+"destination": "HYD",
+"flight_no": "SK526",
+"origin": "MAA",
+"price": 3030,
+"seats_left": 9
+},
+{
+"cabin": "basic_economy",
+"day": 22,
+"depart": "11:15",
+"destination": "PNQ",
+"flight_no": "SK527",
+"origin": "GOI",
+"price": 10762,
+"seats_left": 38
+},
+{
+"cabin": "business",
+"day": 27,
+"depart": "11:15",
+"destination": "GOI",
+"flight_no": "SK528",
+"origin": "BLR",
+"price": 5171,
+"seats_left": 13
+},
+{
+"cabin": "business",
+"day": 36,
+"depart": "19:30",
+"destination": "MAA",
+"flight_no": "SK529",
+"origin": "GOI",
+"price": 8974,
+"seats_left": 3
+},
+{
+"cabin": "business",
+"day": 48,
+"depart": "22:00",
+"destination": "AMD",
+"flight_no": "SK530",
+"origin": "HYD",
+"price": 4251,
+"seats_left": 31
+},
+{
+"cabin": "economy",
+"day": 3,
+"depart": "11:15",
+"destination": "BOM",
+"flight_no": "SK531",
+"origin": "COK",
+"price": 5920,
+"seats_left": 17
+},
+{
+"cabin": "basic_economy",
+"day": 3,
+"depart": "18:45",
+"destination": "MAA",
+"flight_no": "SK532",
+"origin": "HYD",
+"price": 5309,
+"seats_left": 37
+},
+{
+"cabin": "economy",
+"day": 38,
+"depart": "11:00",
+"destination": "HYD",
+"flight_no": "SK533",
+"origin": "BLR",
+"price": 8145,
+"seats_left": 6
+},
+{
+"cabin": "economy",
+"day": 15,
+"depart": "16:30",
+"destination": "HYD",
+"flight_no": "SK534",
+"origin": "COK",
+"price": 4178,
+"seats_left": 35
+},
+{
+"cabin": "economy",
+"day": 5,
+"depart": "10:15",
+"destination": "CCU",
+"flight_no": "SK535",
+"origin": "COK",
+"price": 10148,
+"seats_left": 21
+},
+{
+"cabin": "economy",
+"day": 25,
+"depart": "09:00",
+"destination": "CCU",
+"flight_no": "SK536",
+"origin": "BOM",
+"price": 6199,
+"seats_left": 34
+},
+{
+"cabin": "basic_economy",
+"day": 28,
+"depart": "06:45",
+"destination": "CCU",
+"flight_no": "SK537",
+"origin": "BOM",
+"price": 10670,
+"seats_left": 38
+},
+{
+"cabin": "basic_economy",
+"day": 37,
+"depart": "21:00",
+"destination": "CCU",
+"flight_no": "SK538",
+"origin": "AMD",
+"price": 12809,
+"seats_left": 1
+},
+{
+"cabin": "business",
+"day": 41,
+"depart": "16:45",
+"destination": "PNQ",
+"flight_no": "SK539",
+"origin": "COK",
+"price": 5435,
+"seats_left": 33
+},
+{
+"cabin": "economy",
+"day": 40,
+"depart": "11:30",
+"destination": "AMD",
+"flight_no": "SK540",
+"origin": "MAA",
+"price": 6765,
+"seats_left": 16
+},
+{
+"cabin": "basic_economy",
+"day": 1,
+"depart": "19:15",
+"destination": "BLR",
+"flight_no": "SK541",
+"origin": "PNQ",
+"price": 3519,
+"seats_left": 0
+},
+{
+"cabin": "basic_economy",
+"day": 30,
+"depart": "05:15",
+"destination": "DEL",
+"flight_no": "SK542",
+"origin": "MAA",
+"price": 10501,
+"seats_left": 31
+},
+{
+"cabin": "basic_economy",
+"day": 9,
+"depart": "08:45",
+"destination": "GOI",
+"flight_no": "SK543",
+"origin": "BLR",
+"price": 4115,
+"seats_left": 8
+},
+{
+"cabin": "economy",
+"day": 13,
+"depart": "19:15",
+"destination": "COK",
+"flight_no": "SK544",
+"origin": "CCU",
+"price": 3880,
+"seats_left": 8
+},
+{
+"cabin": "basic_economy",
+"day": 41,
+"depart": "22:00",
+"destination": "CCU",
+"flight_no": "SK545",
+"origin": "HYD",
+"price": 5135,
+"seats_left": 13
+},
+{
+"cabin": "economy",
+"day": 18,
+"depart": "05:45",
+"destination": "MAA",
+"flight_no": "SK546",
+"origin": "AMD",
+"price": 12613,
+"seats_left": 0
+},
+{
+"cabin": "business",
+"day": 43,
+"depart": "19:30",
+"destination": "DEL",
+"flight_no": "SK547",
+"origin": "MAA",
+"price": 3963,
+"seats_left": 34
+},
+{
+"cabin": "basic_economy",
+"day": 26,
+"depart": "19:30",
+"destination": "COK",
+"flight_no": "SK548",
+"origin": "AMD",
+"price": 2714,
+"seats_left": 21
+},
+{
+"cabin": "economy",
+"day": 23,
+"depart": "14:00",
+"destination": "COK",
+"flight_no": "SK549",
+"origin": "MAA",
+"price": 7500,
+"seats_left": 18
+},
+{
+"cabin": "basic_economy",
+"day": 47,
+"depart": "06:00",
+"destination": "DEL",
+"flight_no": "SK550",
+"origin": "BOM",
+"price": 5924,
+"seats_left": 31
+},
+{
+"cabin": "business",
+"day": 37,
+"depart": "17:15",
+"destination": "PNQ",
+"flight_no": "SK551",
+"origin": "BLR",
+"price": 5524,
+"seats_left": 25
+},
+{
+"cabin": "economy",
+"day": 40,
+"depart": "11:30",
+"destination": "MAA",
+"flight_no": "SK552",
+"origin": "PNQ",
+"price": 11097,
+"seats_left": 1
+},
+{
+"cabin": "business",
+"day": 57,
+"depart": "12:00",
+"destination": "CCU",
+"flight_no": "SK553",
+"origin": "HYD",
+"price": 13569,
+"seats_left": 4
+},
+{
+"cabin": "business",
+"day": 30,
+"depart": "07:00",
+"destination": "CCU",
+"flight_no": "SK554",
+"origin": "GOI",
+"price": 11312,
+"seats_left": 28
+},
+{
+"cabin": "business",
+"day": 10,
+"depart": "10:15",
+"destination": "GOI",
+"flight_no": "SK555",
+"origin": "CCU",
+"price": 9210,
+"seats_left": 30
+},
+{
+"cabin": "economy",
+"day": 9,
+"depart": "06:15",
+"destination": "BOM",
+"flight_no": "SK556",
+"origin": "DEL",
+"price": 3069,
+"seats_left": 9
+},
+{
+"cabin": "business",
+"day": 60,
+"depart": "12:30",
+"destination": "AMD",
+"flight_no": "SK557",
+"origin": "PNQ",
+"price": 6147,
+"seats_left": 24
+},
+{
+"cabin": "economy",
+"day": 10,
+"depart": "09:00",
+"destination": "PNQ",
+"flight_no": "SK558",
+"origin": "BOM",
+"price": 10353,
+"seats_left": 17
+},
+{
+"cabin": "basic_economy",
+"day": 9,
+"depart": "20:45",
+"destination": "DEL",
+"flight_no": "SK559",
+"origin": "CCU",
+"price": 11444,
+"seats_left": 6
+},
+{
+"cabin": "basic_economy",
+"day": 28,
+"depart": "22:15",
+"destination": "MAA",
+"flight_no": "SK560",
+"origin": "COK",
+"price": 4479,
+"seats_left": 15
+},
+{
+"cabin": "economy",
+"day": 24,
+"depart": "06:45",
+"destination": "COK",
+"flight_no": "SK561",
+"origin": "HYD",
+"price": 13896,
+"seats_left": 27
+},
+{
+"cabin": "basic_economy",
+"day": 60,
+"depart": "06:15",
+"destination": "GOI",
+"flight_no": "SK562",
+"origin": "COK",
+"price": 7796,
+"seats_left": 32
+},
+{
+"cabin": "economy",
+"day": 21,
+"depart": "19:15",
+"destination": "HYD",
+"flight_no": "SK563",
+"origin": "CCU",
+"price": 6211,
+"seats_left": 22
+},
+{
+"cabin": "economy",
+"day": 30,
+"depart": "13:00",
+"destination": "HYD",
+"flight_no": "SK564",
+"origin": "PNQ",
+"price": 3801,
+"seats_left": 32
+},
+{
+"cabin": "basic_economy",
+"day": 48,
+"depart": "18:15",
+"destination": "DEL",
+"flight_no": "SK565",
+"origin": "CCU",
+"price": 7570,
+"seats_left": 19
+},
+{
+"cabin": "economy",
+"day": 46,
+"depart": "15:00",
+"destination": "BOM",
+"flight_no": "SK566",
+"origin": "PNQ",
+"price": 13964,
+"seats_left": 30
+},
+{
+"cabin": "economy",
+"day": 45,
+"depart": "11:15",
+"destination": "HYD",
+"flight_no": "SK567",
+"origin": "DEL",
+"price": 9946,
+"seats_left": 3
+},
+{
+"cabin": "business",
+"day": 16,
+"depart": "07:30",
+"destination": "AMD",
+"flight_no": "SK568",
+"origin": "GOI",
+"price": 9983,
+"seats_left": 12
+},
+{
+"cabin": "economy",
+"day": 30,
+"depart": "06:15",
+"destination": "AMD",
+"flight_no": "SK569",
+"origin": "HYD",
+"price": 8529,
+"seats_left": 17
+},
+{
+"cabin": "business",
+"day": 24,
+"depart": "10:30",
+"destination": "HYD",
+"flight_no": "SK570",
+"origin": "COK",
+"price": 12132,
+"seats_left": 3
+},
+{
+"cabin": "business",
+"day": 2,
+"depart": "06:00",
+"destination": "BLR",
+"flight_no": "SK571",
+"origin": "GOI",
+"price": 12777,
+"seats_left": 24
+},
+{
+"cabin": "economy",
+"day": 9,
+"depart": "13:30",
+"destination": "BLR",
+"flight_no": "SK572",
+"origin": "MAA",
+"price": 8675,
+"seats_left": 30
+},
+{
+"cabin": "business",
+"day": 41,
+"depart": "08:30",
+"destination": "PNQ",
+"flight_no": "SK573",
+"origin": "MAA",
+"price": 6335,
+"seats_left": 0
+},
+{
+"cabin": "business",
+"day": 15,
+"depart": "10:45",
+"destination": "DEL",
+"flight_no": "SK574",
+"origin": "PNQ",
+"price": 4657,
+"seats_left": 30
+},
+{
+"cabin": "basic_economy",
+"day": 16,
+"depart": "18:45",
+"destination": "BLR",
+"flight_no": "SK575",
+"origin": "DEL",
+"price": 7662,
+"seats_left": 0
+},
+{
+"cabin": "basic_economy",
+"day": 3,
+"depart": "09:30",
+"destination": "PNQ",
+"flight_no": "SK576",
+"origin": "CCU",
+"price": 11943,
+"seats_left": 11
+},
+{
+"cabin": "business",
+"day": 23,
+"depart": "22:00",
+"destination": "GOI",
+"flight_no": "SK577",
+"origin": "DEL",
+"price": 6609,
+"seats_left": 10
+},
+{
+"cabin": "business",
+"day": 33,
+"depart": "13:15",
+"destination": "CCU",
+"flight_no": "SK578",
+"origin": "BLR",
+"price": 14935,
+"seats_left": 37
+},
+{
+"cabin": "economy",
+"day": 7,
+"depart": "15:30",
+"destination": "CCU",
+"flight_no": "SK579",
+"origin": "AMD",
+"price": 4466,
+"seats_left": 12
+},
+{
+"cabin": "basic_economy",
+"day": 60,
+"depart": "13:45",
+"destination": "MAA",
+"flight_no": "SK580",
+"origin": "BLR",
+"price": 12053,
+"seats_left": 22
+},
+{
+"cabin": "business",
+"day": 28,
+"depart": "21:00",
+"destination": "AMD",
+"flight_no": "SK581",
+"origin": "DEL",
+"price": 14803,
+"seats_left": 31
+},
+{
+"cabin": "economy",
+"day": 3,
+"depart": "08:15",
+"destination": "MAA",
+"flight_no": "SK582",
+"origin": "BOM",
+"price": 14987,
+"seats_left": 39
+},
+{
+"cabin": "economy",
+"day": 43,
+"depart": "11:15",
+"destination": "BOM",
+"flight_no": "SK583",
+"origin": "AMD",
+"price": 7641,
+"seats_left": 2
+},
+{
+"cabin": "economy",
+"day": 30,
+"depart": "15:45",
+"destination": "DEL",
+"flight_no": "SK584",
+"origin": "HYD",
+"price": 7879,
+"seats_left": 26
+},
+{
+"cabin": "basic_economy",
+"day": 53,
+"depart": "10:15",
+"destination": "MAA",
+"flight_no": "SK585",
+"origin": "CCU",
+"price": 14900,
+"seats_left": 31
+},
+{
+"cabin": "economy",
+"day": 6,
+"depart": "05:30",
+"destination": "GOI",
+"flight_no": "SK586",
+"origin": "HYD",
+"price": 9312,
+"seats_left": 37
+},
+{
+"cabin": "business",
+"day": 56,
+"depart": "19:15",
+"destination": "DEL",
+"flight_no": "SK587",
+"origin": "BLR",
+"price": 5361,
+"seats_left": 19
+},
+{
+"cabin": "economy",
+"day": 23,
+"depart": "20:15",
+"destination": "GOI",
+"flight_no": "SK588",
+"origin": "DEL",
+"price": 6352,
+"seats_left": 16
+},
+{
+"cabin": "basic_economy",
+"day": 8,
+"depart": "22:00",
+"destination": "BOM",
+"flight_no": "SK589",
+"origin": "DEL",
+"price": 14851,
+"seats_left": 15
+},
+{
+"cabin": "business",
+"day": 18,
+"depart": "21:30",
+"destination": "BLR",
+"flight_no": "SK590",
+"origin": "HYD",
+"price": 11010,
+"seats_left": 27
+},
+{
+"cabin": "business",
+"day": 11,
+"depart": "12:00",
+"destination": "COK",
+"flight_no": "SK591",
+"origin": "GOI",
+"price": 14289,
+"seats_left": 23
+},
+{
+"cabin": "economy",
+"day": 3,
+"depart": "18:45",
+"destination": "BLR",
+"flight_no": "SK592",
+"origin": "AMD",
+"price": 4174,
+"seats_left": 28
+},
+{
+"cabin": "basic_economy",
+"day": 19,
+"depart": "18:45",
+"destination": "PNQ",
+"flight_no": "SK593",
+"origin": "GOI",
+"price": 13107,
+"seats_left": 19
+},
+{
+"cabin": "economy",
+"day": 55,
+"depart": "19:30",
+"destination": "BOM",
+"flight_no": "SK594",
+"origin": "BLR",
+"price": 11901,
+"seats_left": 15
+},
+{
+"cabin": "economy",
+"day": 18,
+"depart": "20:45",
+"destination": "BLR",
+"flight_no": "SK595",
+"origin": "HYD",
+"price": 12985,
+"seats_left": 15
+},
+{
+"cabin": "business",
+"day": 10,
+"depart": "08:45",
+"destination": "AMD",
+"flight_no": "SK596",
+"origin": "BOM",
+"price": 7991,
+"seats_left": 37
+},
+{
+"cabin": "economy",
+"day": 3,
+"depart": "18:30",
+"destination": "GOI",
+"flight_no": "SK597",
+"origin": "BOM",
+"price": 7773,
+"seats_left": 34
+},
+{
+"cabin": "basic_economy",
+"day": 54,
+"depart": "21:30",
+"destination": "BLR",
+"flight_no": "SK598",
+"origin": "HYD",
+"price": 9744,
+"seats_left": 31
+},
+{
+"cabin": "basic_economy",
+"day": 60,
+"depart": "21:15",
+"destination": "DEL",
+"flight_no": "SK599",
+"origin": "AMD",
+"price": 8984,
+"seats_left": 16
+},
+{
+"cabin": "business",
+"day": 36,
+"depart": "10:45",
+"destination": "AMD",
+"flight_no": "SK600",
+"origin": "DEL",
+"price": 3686,
+"seats_left": 38
+},
+{
+"cabin": "business",
+"day": 48,
+"depart": "20:00",
+"destination": "GOI",
+"flight_no": "SK601",
+"origin": "BOM",
+"price": 12658,
+"seats_left": 11
+},
+{
+"cabin": "business",
+"day": 13,
+"depart": "10:30",
+"destination": "DEL",
+"flight_no": "SK602",
+"origin": "BLR",
+"price": 4614,
+"seats_left": 24
+},
+{
+"cabin": "basic_economy",
+"day": 18,
+"depart": "08:30",
+"destination": "AMD",
+"flight_no": "SK603",
+"origin": "HYD",
+"price": 10987,
+"seats_left": 6
+},
+{
+"cabin": "business",
+"day": 52,
+"depart": "09:45",
+"destination": "BLR",
+"flight_no": "SK604",
+"origin": "DEL",
+"price": 11132,
+"seats_left": 30
+},
+{
+"cabin": "business",
+"day": 53,
+"depart": "10:45",
+"destination": "GOI",
+"flight_no": "SK605",
+"origin": "COK",
+"price": 6805,
+"seats_left": 13
+},
+{
+"cabin": "business",
+"day": 29,
+"depart": "22:00",
+"destination": "MAA",
+"flight_no": "SK606",
+"origin": "BLR",
+"price": 6386,
+"seats_left": 32
+},
+{
+"cabin": "business",
+"day": 34,
+"depart": "12:00",
+"destination": "DEL",
+"flight_no": "SK607",
+"origin": "COK",
+"price": 7076,
+"seats_left": 19
+},
+{
+"cabin": "basic_economy",
+"day": 3,
+"depart": "17:30",
+"destination": "BOM",
+"flight_no": "SK608",
+"origin": "BLR",
+"price": 12405,
+"seats_left": 22
+},
+{
+"cabin": "economy",
+"day": 11,
+"depart": "19:15",
+"destination": "BOM",
+"flight_no": "SK609",
+"origin": "BLR",
+"price": 11694,
+"seats_left": 29
+},
+{
+"cabin": "business",
+"day": 16,
+"depart": "22:15",
+"destination": "GOI",
+"flight_no": "SK610",
+"origin": "HYD",
+"price": 13997,
+"seats_left": 15
+},
+{
+"cabin": "basic_economy",
+"day": 15,
+"depart": "22:00",
+"destination": "GOI",
+"flight_no": "SK611",
+"origin": "COK",
+"price": 2852,
+"seats_left": 33
+},
+{
+"cabin": "basic_economy",
+"day": 25,
+"depart": "08:15",
+"destination": "PNQ",
+"flight_no": "SK612",
+"origin": "AMD",
+"price": 4814,
+"seats_left": 3
+},
+{
+"cabin": "business",
+"day": 18,
+"depart": "07:45",
+"destination": "DEL",
+"flight_no": "SK613",
+"origin": "MAA",
+"price": 14122,
+"seats_left": 38
+},
+{
+"cabin": "basic_economy",
+"day": 29,
+"depart": "14:45",
+"destination": "DEL",
+"flight_no": "SK614",
+"origin": "BLR",
+"price": 11842,
+"seats_left": 35
+},
+{
+"cabin": "business",
+"day": 24,
+"depart": "05:45",
+"destination": "AMD",
+"flight_no": "SK615",
+"origin": "BLR",
+"price": 5316,
+"seats_left": 31
+},
+{
+"cabin": "economy",
+"day": 13,
+"depart": "16:30",
+"destination": "HYD",
+"flight_no": "SK616",
+"origin": "CCU",
+"price": 4919,
+"seats_left": 23
+},
+{
+"cabin": "business",
+"day": 11,
+"depart": "17:30",
+"destination": "CCU",
+"flight_no": "SK617",
+"origin": "GOI",
+"price": 9510,
+"seats_left": 15
+},
+{
+"cabin": "basic_economy",
+"day": 35,
+"depart": "17:00",
+"destination": "PNQ",
+"flight_no": "SK618",
+"origin": "COK",
+"price": 4099,
+"seats_left": 21
+},
+{
+"cabin": "business",
+"day": 58,
+"depart": "12:30",
+"destination": "BLR",
+"flight_no": "SK619",
+"origin": "MAA",
+"price": 10965,
+"seats_left": 24
+},
+{
+"cabin": "economy",
+"day": 37,
+"depart": "16:45",
+"destination": "GOI",
+"flight_no": "SK620",
+"origin": "COK",
+"price": 12473,
+"seats_left": 16
+},
+{
+"cabin": "economy",
+"day": 45,
+"depart": "13:45",
+"destination": "BLR",
+"flight_no": "SK621",
+"origin": "DEL",
+"price": 5393,
+"seats_left": 38
+},
+{
+"cabin": "economy",
+"day": 37,
+"depart": "17:15",
+"destination": "BOM",
+"flight_no": "SK622",
+"origin": "MAA",
+"price": 5335,
+"seats_left": 7
+},
+{
+"cabin": "economy",
+"day": 46,
+"depart": "09:30",
+"destination": "CCU",
+"flight_no": "SK623",
+"origin": "MAA",
+"price": 5989,
+"seats_left": 38
+},
+{
+"cabin": "basic_economy",
+"day": 26,
+"depart": "08:30",
+"destination": "DEL",
+"flight_no": "SK624",
+"origin": "BLR",
+"price": 3502,
+"seats_left": 32
+},
+{
+"cabin": "basic_economy",
+"day": 14,
+"depart": "09:15",
+"destination": "BOM",
+"flight_no": "SK625",
+"origin": "DEL",
+"price": 3052,
+"seats_left": 14
+},
+{
+"cabin": "basic_economy",
+"day": 28,
+"depart": "12:15",
+"destination": "DEL",
+"flight_no": "SK626",
+"origin": "AMD",
+"price": 10266,
+"seats_left": 10
+},
+{
+"cabin": "business",
+"day": 27,
+"depart": "18:45",
+"destination": "HYD",
+"flight_no": "SK627",
+"origin": "BLR",
+"price": 5053,
+"seats_left": 1
+},
+{
+"cabin": "basic_economy",
+"day": 51,
+"depart": "06:45",
+"destination": "BLR",
+"flight_no": "SK628",
+"origin": "PNQ",
+"price": 6756,
+"seats_left": 7
+},
+{
+"cabin": "basic_economy",
+"day": 31,
+"depart": "09:15",
+"destination": "DEL",
+"flight_no": "SK629",
+"origin": "PNQ",
+"price": 9450,
+"seats_left": 38
+},
+{
+"cabin": "basic_economy",
+"day": 45,
+"depart": "10:30",
+"destination": "PNQ",
+"flight_no": "SK630",
+"origin": "COK",
+"price": 10133,
+"seats_left": 1
+},
+{
+"cabin": "economy",
+"day": 38,
+"depart": "14:15",
+"destination": "DEL",
+"flight_no": "SK631",
+"origin": "MAA",
+"price": 14792,
+"seats_left": 12
+},
+{
+"cabin": "basic_economy",
+"day": 17,
+"depart": "22:15",
+"destination": "BOM",
+"flight_no": "SK632",
+"origin": "BLR",
+"price": 6801,
+"seats_left": 31
+},
+{
+"cabin": "basic_economy",
+"day": 5,
+"depart": "10:45",
+"destination": "BOM",
+"flight_no": "SK633",
+"origin": "MAA",
+"price": 7975,
+"seats_left": 35
+},
+{
+"cabin": "business",
+"day": 54,
+"depart": "18:00",
+"destination": "HYD",
+"flight_no": "SK634",
+"origin": "MAA",
+"price": 10927,
+"seats_left": 3
+},
+{
+"cabin": "economy",
+"day": 22,
+"depart": "09:15",
+"destination": "PNQ",
+"flight_no": "SK635",
+"origin": "HYD",
+"price": 12267,
+"seats_left": 19
+},
+{
+"cabin": "business",
+"day": 13,
+"depart": "05:00",
+"destination": "BOM",
+"flight_no": "SK636",
+"origin": "AMD",
+"price": 12222,
+"seats_left": 1
+},
+{
+"cabin": "business",
+"day": 20,
+"depart": "08:00",
+"destination": "MAA",
+"flight_no": "SK637",
+"origin": "GOI",
+"price": 11002,
+"seats_left": 23
+},
+{
+"cabin": "basic_economy",
+"day": 52,
+"depart": "15:30",
+"destination": "HYD",
+"flight_no": "SK638",
+"origin": "BLR",
+"price": 2880,
+"seats_left": 33
+},
+{
+"cabin": "economy",
+"day": 54,
+"depart": "20:15",
+"destination": "PNQ",
+"flight_no": "SK639",
+"origin": "DEL",
+"price": 4489,
+"seats_left": 20
+},
+{
+"cabin": "basic_economy",
+"day": 42,
+"depart": "21:45",
+"destination": "MAA",
+"flight_no": "SK640",
+"origin": "CCU",
+"price": 2704,
+"seats_left": 28
+},
+{
+"cabin": "basic_economy",
+"day": 13,
+"depart": "08:45",
+"destination": "COK",
+"flight_no": "SK641",
+"origin": "HYD",
+"price": 11395,
+"seats_left": 18
+},
+{
+"cabin": "business",
+"day": 8,
+"depart": "21:00",
+"destination": "CCU",
+"flight_no": "SK642",
+"origin": "DEL",
+"price": 5549,
+"seats_left": 9
+},
+{
+"cabin": "basic_economy",
+"day": 31,
+"depart": "10:45",
+"destination": "COK",
+"flight_no": "SK643",
+"origin": "CCU",
+"price": 7271,
+"seats_left": 15
+},
+{
+"cabin": "business",
+"day": 10,
+"depart": "11:00",
+"destination": "HYD",
+"flight_no": "SK644",
+"origin": "GOI",
+"price": 11549,
+"seats_left": 20
+},
+{
+"cabin": "basic_economy",
+"day": 45,
+"depart": "10:00",
+"destination": "DEL",
+"flight_no": "SK645",
+"origin": "BLR",
+"price": 4677,
+"seats_left": 15
+},
+{
+"cabin": "business",
+"day": 22,
+"depart": "06:45",
+"destination": "CCU",
+"flight_no": "SK646",
+"origin": "GOI",
+"price": 7742,
+"seats_left": 37
+},
+{
+"cabin": "basic_economy",
+"day": 56,
+"depart": "11:30",
+"destination": "PNQ",
+"flight_no": "SK647",
+"origin": "CCU",
+"price": 9047,
+"seats_left": 35
+},
+{
+"cabin": "basic_economy",
+"day": 27,
+"depart": "09:30",
+"destination": "BOM",
+"flight_no": "SK648",
+"origin": "CCU",
+"price": 11313,
+"seats_left": 29
+},
+{
+"cabin": "basic_economy",
+"day": 6,
+"depart": "22:30",
+"destination": "BOM",
+"flight_no": "SK649",
+"origin": "MAA",
+"price": 7457,
+"seats_left": 11
+},
+{
+"cabin": "business",
+"day": 47,
+"depart": "05:00",
+"destination": "COK",
+"flight_no": "SK650",
+"origin": "DEL",
+"price": 13818,
+"seats_left": 19
+},
+{
+"cabin": "basic_economy",
+"day": 52,
+"depart": "21:45",
+"destination": "COK",
+"flight_no": "SK651",
+"origin": "BOM",
+"price": 9229,
+"seats_left": 0
+},
+{
+"cabin": "business",
+"day": 36,
+"depart": "12:15",
+"destination": "BLR",
+"flight_no": "SK652",
+"origin": "AMD",
+"price": 7856,
+"seats_left": 33
+},
+{
+"cabin": "basic_economy",
+"day": 46,
+"depart": "11:45",
+"destination": "GOI",
+"flight_no": "SK653",
+"origin": "MAA",
+"price": 11818,
+"seats_left": 23
+},
+{
+"cabin": "basic_economy",
+"day": 16,
+"depart": "15:00",
+"destination": "DEL",
+"flight_no": "SK654",
+"origin": "BOM",
+"price": 14498,
+"seats_left": 30
+},
+{
+"cabin": "basic_economy",
+"day": 53,
+"depart": "21:45",
+"destination": "DEL",
+"flight_no": "SK655",
+"origin": "MAA",
+"price": 7806,
+"seats_left": 29
+},
+{
+"cabin": "business",
+"day": 18,
+"depart": "22:15",
+"destination": "DEL",
+"flight_no": "SK656",
+"origin": "BOM",
+"price": 6233,
+"seats_left": 25
+},
+{
+"cabin": "business",
+"day": 20,
+"depart": "07:45",
+"destination": "BOM",
+"flight_no": "SK657",
+"origin": "AMD",
+"price": 8991,
+"seats_left": 22
+},
+{
+"cabin": "basic_economy",
+"day": 9,
+"depart": "11:30",
+"destination": "BLR",
+"flight_no": "SK658",
+"origin": "AMD",
+"price": 4969,
+"seats_left": 33
+},
+{
+"cabin": "basic_economy",
+"day": 44,
+"depart": "07:00",
+"destination": "DEL",
+"flight_no": "SK659",
+"origin": "AMD",
+"price": 3319,
+"seats_left": 13
+},
+{
+"cabin": "business",
+"day": 10,
+"depart": "06:30",
+"destination": "AMD",
+"flight_no": "SK660",
+"origin": "MAA",
+"price": 13158,
+"seats_left": 5
+},
+{
+"cabin": "basic_economy",
+"day": 48,
+"depart": "15:45",
+"destination": "MAA",
+"flight_no": "SK661",
+"origin": "HYD",
+"price": 5245,
+"seats_left": 18
+},
+{
+"cabin": "basic_economy",
+"day": 27,
+"depart": "12:00",
+"destination": "PNQ",
+"flight_no": "SK662",
+"origin": "DEL",
+"price": 6925,
+"seats_left": 31
+},
+{
+"cabin": "business",
+"day": 31,
+"depart": "08:00",
+"destination": "PNQ",
+"flight_no": "SK663",
+"origin": "BOM",
+"price": 3357,
+"seats_left": 38
+},
+{
+"cabin": "business",
+"day": 40,
+"depart": "14:00",
+"destination": "AMD",
+"flight_no": "SK664",
+"origin": "CCU",
+"price": 4608,
+"seats_left": 0
+},
+{
+"cabin": "economy",
+"day": 57,
+"depart": "20:15",
+"destination": "GOI",
+"flight_no": "SK665",
+"origin": "CCU",
+"price": 9776,
+"seats_left": 15
+},
+{
+"cabin": "basic_economy",
+"day": 40,
+"depart": "11:30",
+"destination": "MAA",
+"flight_no": "SK666",
+"origin": "BOM",
+"price": 11789,
+"seats_left": 22
+},
+{
+"cabin": "economy",
+"day": 46,
+"depart": "07:45",
+"destination": "BLR",
+"flight_no": "SK667",
+"origin": "PNQ",
+"price": 8308,
+"seats_left": 23
+},
+{
+"cabin": "basic_economy",
+"day": 38,
+"depart": "11:45",
+"destination": "BOM",
+"flight_no": "SK668",
+"origin": "MAA",
+"price": 5857,
+"seats_left": 38
+},
+{
+"cabin": "economy",
+"day": 54,
+"depart": "18:15",
+"destination": "BLR",
+"flight_no": "SK669",
+"origin": "HYD",
+"price": 9730,
+"seats_left": 6
+},
+{
+"cabin": "business",
+"day": 23,
+"depart": "16:30",
+"destination": "BOM",
+"flight_no": "SK670",
+"origin": "GOI",
+"price": 12908,
+"seats_left": 20
+},
+{
+"cabin": "basic_economy",
+"day": 30,
+"depart": "13:15",
+"destination": "PNQ",
+"flight_no": "SK671",
+"origin": "GOI",
+"price": 3934,
+"seats_left": 34
+},
+{
+"cabin": "business",
+"day": 43,
+"depart": "10:00",
+"destination": "HYD",
+"flight_no": "SK672",
+"origin": "PNQ",
+"price": 8706,
+"seats_left": 5
+},
+{
+"cabin": "business",
+"day": 32,
+"depart": "14:45",
+"destination": "PNQ",
+"flight_no": "SK673",
+"origin": "HYD",
+"price": 9030,
+"seats_left": 5
+},
+{
+"cabin": "basic_economy",
+"day": 57,
+"depart": "17:30",
+"destination": "AMD",
+"flight_no": "SK674",
+"origin": "CCU",
+"price": 7969,
+"seats_left": 34
+},
+{
+"cabin": "business",
+"day": 10,
+"depart": "19:45",
+"destination": "HYD",
+"flight_no": "SK675",
+"origin": "BLR",
+"price": 13631,
+"seats_left": 2
+},
+{
+"cabin": "economy",
+"day": 42,
+"depart": "10:45",
+"destination": "COK",
+"flight_no": "SK676",
+"origin": "MAA",
+"price": 8076,
+"seats_left": 28
+},
+{
+"cabin": "business",
+"day": 12,
+"depart": "13:00",
+"destination": "CCU",
+"flight_no": "SK677",
+"origin": "BLR",
+"price": 3749,
+"seats_left": 14
+},
+{
+"cabin": "basic_economy",
+"day": 58,
+"depart": "13:15",
+"destination": "COK",
+"flight_no": "SK678",
+"origin": "BLR",
+"price": 6062,
+"seats_left": 13
+},
+{
+"cabin": "basic_economy",
+"day": 3,
+"depart": "13:45",
+"destination": "GOI",
+"flight_no": "SK679",
+"origin": "MAA",
+"price": 7487,
+"seats_left": 19
+},
+{
+"cabin": "economy",
+"day": 11,
+"depart": "13:45",
+"destination": "BLR",
+"flight_no": "SK680",
+"origin": "BOM",
+"price": 14466,
+"seats_left": 35
+},
+{
+"cabin": "economy",
+"day": 22,
+"depart": "13:15",
+"destination": "CCU",
+"flight_no": "SK681",
+"origin": "HYD",
+"price": 3102,
+"seats_left": 9
+},
+{
+"cabin": "basic_economy",
+"day": 28,
+"depart": "10:30",
+"destination": "DEL",
+"flight_no": "SK682",
+"origin": "AMD",
+"price": 2805,
+"seats_left": 28
+},
+{
+"cabin": "economy",
+"day": 58,
+"depart": "08:30",
+"destination": "GOI",
+"flight_no": "SK683",
+"origin": "BLR",
+"price": 13099,
+"seats_left": 10
+},
+{
+"cabin": "basic_economy",
+"day": 50,
+"depart": "07:30",
+"destination": "PNQ",
+"flight_no": "SK684",
+"origin": "AMD",
+"price": 12870,
+"seats_left": 20
+},
+{
+"cabin": "basic_economy",
+"day": 42,
+"depart": "18:00",
+"destination": "DEL",
+"flight_no": "SK685",
+"origin": "PNQ",
+"price": 10551,
+"seats_left": 11
+},
+{
+"cabin": "business",
+"day": 6,
+"depart": "10:30",
+"destination": "CCU",
+"flight_no": "SK686",
+"origin": "PNQ",
+"price": 10951,
+"seats_left": 14
+},
+{
+"cabin": "business",
+"day": 49,
+"depart": "10:45",
+"destination": "PNQ",
+"flight_no": "SK687",
+"origin": "DEL",
+"price": 9583,
+"seats_left": 19
+},
+{
+"cabin": "basic_economy",
+"day": 60,
+"depart": "08:30",
+"destination": "CCU",
+"flight_no": "SK688",
+"origin": "COK",
+"price": 14593,
+"seats_left": 21
+},
+{
+"cabin": "economy",
+"day": 52,
+"depart": "08:30",
+"destination": "HYD",
+"flight_no": "SK689",
+"origin": "BOM",
+"price": 3406,
+"seats_left": 18
+},
+{
+"cabin": "business",
+"day": 35,
+"depart": "11:30",
+"destination": "MAA",
+"flight_no": "SK690",
+"origin": "AMD",
+"price": 8496,
+"seats_left": 7
+},
+{
+"cabin": "economy",
+"day": 14,
+"depart": "21:15",
+"destination": "CCU",
+"flight_no": "SK691",
+"origin": "PNQ",
+"price": 7175,
+"seats_left": 9
+},
+{
+"cabin": "business",
+"day": 12,
+"depart": "13:00",
+"destination": "MAA",
+"flight_no": "SK692",
+"origin": "CCU",
+"price": 6569,
+"seats_left": 21
+},
+{
+"cabin": "business",
+"day": 7,
+"depart": "09:30",
+"destination": "BOM",
+"flight_no": "SK693",
+"origin": "AMD",
+"price": 2920,
+"seats_left": 17
+},
+{
+"cabin": "business",
+"day": 22,
+"depart": "16:15",
+"destination": "MAA",
+"flight_no": "SK694",
+"origin": "PNQ",
+"price": 11260,
+"seats_left": 22
+},
+{
+"cabin": "business",
+"day": 4,
+"depart": "16:15",
+"destination": "CCU",
+"flight_no": "SK695",
+"origin": "DEL",
+"price": 12877,
+"seats_left": 34
+},
+{
+"cabin": "economy",
+"day": 7,
+"depart": "11:45",
+"destination": "BLR",
+"flight_no": "SK696",
+"origin": "GOI",
+"price": 10130,
+"seats_left": 18
+},
+{
+"cabin": "economy",
+"day": 46,
+"depart": "11:00",
+"destination": "BLR",
+"flight_no": "SK697",
+"origin": "DEL",
+"price": 3369,
+"seats_left": 28
+},
+{
+"cabin": "basic_economy",
+"day": 35,
+"depart": "09:30",
+"destination": "CCU",
+"flight_no": "SK698",
+"origin": "GOI",
+"price": 4676,
+"seats_left": 2
+},
+{
+"cabin": "economy",
+"day": 39,
+"depart": "12:00",
+"destination": "BOM",
+"flight_no": "SK699",
+"origin": "COK",
+"price": 12286,
+"seats_left": 18
+}
+]

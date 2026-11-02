@@ -1,8 +1,11 @@
-# Local test cluster: 1 control-plane + 2 workers.
+# Local test cluster "skypiea": 1 control-plane + 1 worker (the laptop is shared with model
+# training). Local registry localhost:5001 is wired up by deploy/kind/up.sh (official kind
+# recipe; node images from kind v0.27+ already read /etc/containerd/certs.d).
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
 name: skypiea
 nodes:
   - role: control-plane
   - role: worker
-  - role: worker
+    labels:
+      skypiea.io/pool: tools

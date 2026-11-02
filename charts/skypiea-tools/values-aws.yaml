@@ -1,0 +1,5 @@
+# registry is the ECR registry host from Terraform; `make deploy-aws` passes
+# --set registry=$(terraform -chdir=infra/aws output -raw ecr_registry)/
+registry: "ECR_REGISTRY_SET_BY_MAKE/"
+imagePullSecrets:
+  - name: ecr-pull    # refreshed every 6 h by a systemd timer on the VM (user_data)

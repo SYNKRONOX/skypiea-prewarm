@@ -1,0 +1,4 @@
+-r requirements-light.txt
+numpy==2.5.4
+scikit-learn==1.9.1
+joblib==1.6.0

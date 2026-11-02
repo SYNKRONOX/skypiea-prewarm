@@ -1,0 +1,79 @@
+{{- if .Values.e0Probe.enabled }}
+{{- $ctx := dict "root" $ "name" "e0-probe" }}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: e0-probe
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "skypiea.labels" $ctx | nindent 4 }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: e0-probe
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "skypiea.labels" $ctx | nindent 4 }}
+rules:
+  - apiGroups: [apps]
+    resources: [deployments, deployments/scale]
+    verbs: [get, list, patch, update]
+  - apiGroups: [""]
+    resources: [pods, events]
+    verbs: [get, list, watch]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: e0-probe
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "skypiea.labels" $ctx | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: e0-probe
+subjects:
+  - kind: ServiceAccount
+    name: e0-probe
+    namespace: {{ .Release.Namespace }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: e0-probe
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "skypiea.labels" $ctx | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      skypiea.io/tool: e0-probe
+  template:
+    metadata:
+      labels:
+        {{- include "skypiea.labels" $ctx | nindent 8 }}
+    spec:
+      serviceAccountName: e0-probe
+      terminationGracePeriodSeconds: 1
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: probe
+          image: {{ include "skypiea.image" $ctx }}
+          imagePullPolicy: IfNotPresent
+          resources:
+            {{- toYaml .Values.e0Probe.resources | nindent 12 }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: [ALL]}
+{{- end }}

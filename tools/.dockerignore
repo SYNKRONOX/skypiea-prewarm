@@ -1,0 +1,8 @@
+**/__pycache__
+**/*.pyc
+**/model.joblib
+*.md
+*.sh
+*.py
+!__init__.py
+.dockerignore

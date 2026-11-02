@@ -1,0 +1,66 @@
+#!/bin/bash
+# Skypiea k3s node bootstrap (cloud-init user_data, runs once as root on first boot).
+set -euxo pipefail
+exec > >(tee -a /var/log/skypiea-bootstrap.log) 2>&1
+
+export DEBIAN_FRONTEND=noninteractive
+snap install aws-cli --classic   # for ECR tokens via the instance role (no keys on disk)
+
+# --- k3s (pinned). The API cert always carries the DNS SAN "kubernetes"; the laptop
+# kubeconfig sets tls-server-name: kubernetes, so a new public IP after stop/start is fine.
+curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION='${k3s_version}' sh -s - server \
+  --disable traefik --disable servicelb --disable metrics-server \
+  --write-kubeconfig-mode 600 \
+  --node-label skypiea.io/pool=tools
+
+until k3s kubectl get nodes 2>/dev/null | grep -q ' Ready'; do sleep 2; done
+
+# --- ECR pull secret refresher: ECR tokens expire after 12 h; refresh every 6 h.
+cat > /usr/local/bin/skypiea-ecr-refresh <<'SCRIPT'
+#!/bin/bash
+# Re-creates secret skypiea-tools/ecr-pull from a fresh ECR token. The token is piped
+# straight into kubectl; it is never printed or written to disk.
+set -euo pipefail
+NS=skypiea-tools
+k3s kubectl get ns "$NS" >/dev/null 2>&1 || k3s kubectl create ns "$NS"
+k3s kubectl label ns "$NS" app.kubernetes.io/part-of=skypiea --overwrite >/dev/null
+/snap/bin/aws ecr get-login-password --region '${region}' | \
+  python3 -c 'import base64, json, sys
+tok = sys.stdin.read().strip()
+auth = base64.b64encode(("AWS:" + tok).encode()).decode()
+print(json.dumps({"auths": {sys.argv[1]: {"auth": auth}}}))' '${ecr_host}' | \
+  k3s kubectl -n "$NS" create secret generic ecr-pull \
+    --type=kubernetes.io/dockerconfigjson --from-file=.dockerconfigjson=/dev/stdin \
+    --dry-run=client -o yaml | k3s kubectl apply -f - >/dev/null
+echo "ecr-pull refreshed at $(date -Is)"
+SCRIPT
+chmod 0755 /usr/local/bin/skypiea-ecr-refresh
+
+cat > /etc/systemd/system/skypiea-ecr-refresh.service <<'UNIT'
+[Unit]
+Description=Refresh the ECR image pull secret for skypiea-tools
+After=k3s.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/skypiea-ecr-refresh
+UNIT
+
+cat > /etc/systemd/system/skypiea-ecr-refresh.timer <<'UNIT'
+[Unit]
+Description=Refresh the ECR pull secret every 6 hours (tokens expire after 12 h)
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=6h
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+UNIT
+
+systemctl daemon-reload
+systemctl enable --now skypiea-ecr-refresh.timer
+systemctl start skypiea-ecr-refresh.service
+touch /var/lib/skypiea-bootstrap-done

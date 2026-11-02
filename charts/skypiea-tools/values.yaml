@@ -1,0 +1,59 @@
+# Defaults shared by kind and AWS. values-kind.yaml / values-aws.yaml set ONLY the registry
+# and the pull secret. The tool list mirrors tools/tool_map.yaml (checked by
+# tests/test_chart_matches_tool_map.py).
+
+# Prefix for image names, with trailing slash: "<registry>/" -> <registry>/skypiea/<tool>:<tag>
+registry: ""
+imageTag: latest          # set by make: --set imageTag=$(tools/image_tag.sh)
+imagePullSecrets: []
+
+replicas: 0               # tools sit at zero; the Skypiea controller scales them
+defaultServiceMs: 20
+
+readinessProbe:
+  periodSeconds: 1
+  failureThreshold: 60
+  timeoutSeconds: 1
+
+# Sized so ALL 16 tools at 1 replica fit on one 2 vCPU / 8 GiB node (k3s on m7i-flex.large)
+# with headroom for 3 copies of 3 heavy tools:
+#   requests 16 pods: 9x(50m,96Mi) + 4x(50m,192Mi) + 3x(75m,256Mi) = 875m, 2400Mi
+#   +6 heavy copies:                                       + 450m, 1536Mi  => 1325m, 3936Mi
+# On the 2 vCPU VM, heavy tools starting together compete for CPU (see docs/infra.md).
+# CPU limit is one full core so startup (CPU-bound imports) is not artificially throttled.
+resources:
+  light:
+    requests: {cpu: 50m, memory: 96Mi}
+    limits: {cpu: "1", memory: 192Mi}
+  medium:
+    requests: {cpu: 50m, memory: 192Mi}
+    limits: {cpu: "1", memory: 384Mi}
+  heavy:
+    requests: {cpu: 75m, memory: 256Mi}
+    limits: {cpu: "1", memory: 512Mi}
+
+tools:
+  user_lookup: {tier: light}
+  order_lookup: {tier: medium}
+  product_lookup: {tier: medium}
+  order_update: {tier: light}
+  refund_issue: {tier: light}
+  policy_check: {tier: heavy}
+  promo_code_lookup: {tier: light}
+  travel_booking: {tier: medium}
+  read_file: {tier: light}
+  edit_file: {tier: light}
+  format_diff: {tier: light}
+  search: {tier: medium}
+  shell: {tier: light}
+  run_tests: {tier: heavy}
+  post_comment: {tier: light}
+  generic_fallback: {tier: heavy}
+
+# Long-running in-cluster client used by E0 (experiments/e0_cold_start.py) so that the first
+# MCP call is measured from inside the cluster.
+e0Probe:
+  enabled: false
+  resources:
+    requests: {cpu: 50m, memory: 128Mi}
+    limits: {cpu: "1", memory: 256Mi}

@@ -1,0 +1,92 @@
+[
+{
+"policy_id": "REFUND-1",
+"text": "Delivered items can be returned within 30 days for a full refund to the original payment method.",
+"topic": "refund"
+},
+{
+"policy_id": "REFUND-2",
+"text": "Refunds for gift cards are not allowed; items paid by gift card are refunded as store credit.",
+"topic": "refund"
+},
+{
+"policy_id": "REFUND-3",
+"text": "Opened electronics are refundable within 15 days minus a 10 percent restocking fee.",
+"topic": "refund"
+},
+{
+"policy_id": "REFUND-4",
+"text": "Refunds are issued within 5 business days after the returned item is received.",
+"topic": "refund"
+},
+{
+"policy_id": "EXCHANGE-1",
+"text": "Delivered items can be exchanged once for an item of the same product type.",
+"topic": "exchange"
+},
+{
+"policy_id": "EXCHANGE-2",
+"text": "Exchanges with a price difference charge or refund the difference to the payment method.",
+"topic": "exchange"
+},
+{
+"policy_id": "EXCHANGE-3",
+"text": "Clothing can be exchanged for a different size within 45 days.",
+"topic": "exchange"
+},
+{
+"policy_id": "CANCELLATION-1",
+"text": "Pending orders can be cancelled in full; partially shipped orders cannot be cancelled.",
+"topic": "cancellation"
+},
+{
+"policy_id": "CANCELLATION-2",
+"text": "Cancellation reasons must be either no longer needed or ordered by mistake.",
+"topic": "cancellation"
+},
+{
+"policy_id": "CANCELLATION-3",
+"text": "Flights can be cancelled within 24 hours of booking for a full refund.",
+"topic": "cancellation"
+},
+{
+"policy_id": "MODIFICATION-1",
+"text": "Pending orders can have items, address or payment modified once.",
+"topic": "modification"
+},
+{
+"policy_id": "MODIFICATION-2",
+"text": "Reservations in basic economy cannot be modified.",
+"topic": "modification"
+},
+{
+"policy_id": "MODIFICATION-3",
+"text": "Baggage can be added to a reservation but never removed.",
+"topic": "modification"
+},
+{
+"policy_id": "PROMO-1",
+"text": "Only one promo code may be applied per order.",
+"topic": "promo"
+},
+{
+"policy_id": "PROMO-2",
+"text": "Promo codes cannot be applied to orders that are already delivered.",
+"topic": "promo"
+},
+{
+"policy_id": "PROMO-3",
+"text": "Expired promo codes are never honoured, even on request.",
+"topic": "promo"
+},
+{
+"policy_id": "ESCALATION-1",
+"text": "Transfer to a human agent only when the request is outside policy and the user insists.",
+"topic": "escalation"
+},
+{
+"policy_id": "ESCALATION-2",
+"text": "Never disclose another user's personal data; verify identity before any change.",
+"topic": "escalation"
+}
+]

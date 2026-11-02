@@ -1,0 +1,282 @@
+[
+{
+"category": "toys",
+"code": "SKY60271",
+"expires_day": 377,
+"min_total": 50,
+"percent_off": 25
+},
+{
+"category": "beauty",
+"code": "SKY32862",
+"expires_day": 395,
+"min_total": 50,
+"percent_off": 5
+},
+{
+"category": "clothing",
+"code": "SKY18692",
+"expires_day": 104,
+"min_total": 100,
+"percent_off": 20
+},
+{
+"category": "any",
+"code": "SKY61244",
+"expires_day": 93,
+"min_total": 100,
+"percent_off": 25
+},
+{
+"category": "any",
+"code": "SKY68988",
+"expires_day": 158,
+"min_total": 200,
+"percent_off": 5
+},
+{
+"category": "any",
+"code": "SKY99249",
+"expires_day": 371,
+"min_total": 50,
+"percent_off": 15
+},
+{
+"category": "clothing",
+"code": "SKY80306",
+"expires_day": 334,
+"min_total": 100,
+"percent_off": 10
+},
+{
+"category": "home",
+"code": "SKY12303",
+"expires_day": 298,
+"min_total": 100,
+"percent_off": 10
+},
+{
+"category": "beauty",
+"code": "SKY39559",
+"expires_day": 65,
+"min_total": 200,
+"percent_off": 10
+},
+{
+"category": "clothing",
+"code": "SKY09885",
+"expires_day": 49,
+"min_total": 200,
+"percent_off": 5
+},
+{
+"category": "any",
+"code": "SKY21981",
+"expires_day": 147,
+"min_total": 0,
+"percent_off": 25
+},
+{
+"category": "home",
+"code": "SKY09518",
+"expires_day": 249,
+"min_total": 0,
+"percent_off": 25
+},
+{
+"category": "sports",
+"code": "SKY96243",
+"expires_day": 103,
+"min_total": 100,
+"percent_off": 10
+},
+{
+"category": "clothing",
+"code": "SKY18753",
+"expires_day": 110,
+"min_total": 100,
+"percent_off": 10
+},
+{
+"category": "electronics",
+"code": "SKY16142",
+"expires_day": 356,
+"min_total": 50,
+"percent_off": 10
+},
+{
+"category": "books",
+"code": "SKY37840",
+"expires_day": 13,
+"min_total": 100,
+"percent_off": 25
+},
+{
+"category": "clothing",
+"code": "SKY18982",
+"expires_day": 264,
+"min_total": 50,
+"percent_off": 5
+},
+{
+"category": "any",
+"code": "SKY46191",
+"expires_day": 250,
+"min_total": 100,
+"percent_off": 15
+},
+{
+"category": "electronics",
+"code": "SKY77400",
+"expires_day": 107,
+"min_total": 0,
+"percent_off": 15
+},
+{
+"category": "any",
+"code": "SKY64475",
+"expires_day": 248,
+"min_total": 50,
+"percent_off": 15
+},
+{
+"category": "books",
+"code": "SKY91252",
+"expires_day": 96,
+"min_total": 100,
+"percent_off": 20
+},
+{
+"category": "home",
+"code": "SKY06257",
+"expires_day": 274,
+"min_total": 50,
+"percent_off": 25
+},
+{
+"category": "sports",
+"code": "SKY04474",
+"expires_day": 295,
+"min_total": 100,
+"percent_off": 10
+},
+{
+"category": "garden",
+"code": "SKY27507",
+"expires_day": 116,
+"min_total": 50,
+"percent_off": 10
+},
+{
+"category": "any",
+"code": "SKY35606",
+"expires_day": 188,
+"min_total": 0,
+"percent_off": 20
+},
+{
+"category": "books",
+"code": "SKY68685",
+"expires_day": 15,
+"min_total": 100,
+"percent_off": 20
+},
+{
+"category": "books",
+"code": "SKY80573",
+"expires_day": 272,
+"min_total": 50,
+"percent_off": 10
+},
+{
+"category": "books",
+"code": "SKY16656",
+"expires_day": 340,
+"min_total": 100,
+"percent_off": 10
+},
+{
+"category": "books",
+"code": "SKY26574",
+"expires_day": 173,
+"min_total": 0,
+"percent_off": 15
+},
+{
+"category": "sports",
+"code": "SKY42835",
+"expires_day": 364,
+"min_total": 0,
+"percent_off": 20
+},
+{
+"category": "any",
+"code": "SKY51194",
+"expires_day": 220,
+"min_total": 200,
+"percent_off": 20
+},
+{
+"category": "beauty",
+"code": "SKY97624",
+"expires_day": 310,
+"min_total": 100,
+"percent_off": 20
+},
+{
+"category": "clothing",
+"code": "SKY01214",
+"expires_day": 34,
+"min_total": 200,
+"percent_off": 10
+},
+{
+"category": "electronics",
+"code": "SKY66742",
+"expires_day": 18,
+"min_total": 0,
+"percent_off": 25
+},
+{
+"category": "books",
+"code": "SKY87736",
+"expires_day": 181,
+"min_total": 50,
+"percent_off": 20
+},
+{
+"category": "electronics",
+"code": "SKY37321",
+"expires_day": 223,
+"min_total": 100,
+"percent_off": 10
+},
+{
+"category": "any",
+"code": "SKY50782",
+"expires_day": 210,
+"min_total": 100,
+"percent_off": 20
+},
+{
+"category": "home",
+"code": "SKY55208",
+"expires_day": 258,
+"min_total": 200,
+"percent_off": 20
+},
+{
+"category": "any",
+"code": "SKY72800",
+"expires_day": 98,
+"min_total": 50,
+"percent_off": 20
+},
+{
+"category": "beauty",
+"code": "SKY62146",
+"expires_day": 5,
+"min_total": 0,
+"percent_off": 15
+}
+]

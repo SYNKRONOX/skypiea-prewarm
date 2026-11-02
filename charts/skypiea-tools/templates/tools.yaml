@@ -1,0 +1,75 @@
+{{- range $name, $tool := .Values.tools }}
+{{- $ctx := dict "root" $ "name" $name }}
+{{- $k8s := include "skypiea.k8sName" $name }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $k8s }}
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    {{- include "skypiea.labels" $ctx | nindent 4 }}
+    skypiea.io/tier: {{ $tool.tier }}
+spec:
+  replicas: {{ $.Values.replicas }}
+  revisionHistoryLimit: 2
+  selector:
+    matchLabels:
+      skypiea.io/tool: {{ $name }}
+  template:
+    metadata:
+      labels:
+        {{- include "skypiea.labels" $ctx | nindent 8 }}
+        skypiea.io/tier: {{ $tool.tier }}
+    spec:
+      automountServiceAccountToken: false
+      enableServiceLinks: false
+      terminationGracePeriodSeconds: 2
+      {{- with $.Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: tool
+          image: {{ include "skypiea.image" $ctx }}
+          imagePullPolicy: IfNotPresent
+          ports:
+            - {name: http, containerPort: 8080}
+          env:
+            - {name: SKYPIEA_SERVICE_MS, value: {{ $.Values.defaultServiceMs | quote }}}
+          readinessProbe:
+            httpGet: {path: /healthz, port: http}
+            initialDelaySeconds: 0
+            periodSeconds: {{ $.Values.readinessProbe.periodSeconds }}
+            failureThreshold: {{ $.Values.readinessProbe.failureThreshold }}
+            timeoutSeconds: {{ $.Values.readinessProbe.timeoutSeconds }}
+          resources:
+            {{- toYaml (index $.Values.resources $tool.tier) | nindent 12 }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: [ALL]}
+          volumeMounts:
+            - {name: tmp, mountPath: /tmp}
+      volumes:
+        - name: tmp
+          emptyDir: {sizeLimit: 64Mi}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $k8s }}
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    {{- include "skypiea.labels" $ctx | nindent 4 }}
+spec:
+  selector:
+    skypiea.io/tool: {{ $name }}
+  ports:
+    - {name: http, port: 80, targetPort: http}
+{{- end }}

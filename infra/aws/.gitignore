@@ -1,0 +1,13 @@
+# Terraform state and local files: NEVER commit (state can contain sensitive values).
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+crash.log
+*.tfplan
+tfplan
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
