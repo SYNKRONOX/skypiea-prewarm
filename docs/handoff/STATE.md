@@ -59,18 +59,29 @@ n=100, plus `--parallel 3` n=10.
 - Replicas (commit `96c3b80`): the controller owns them. The chart creates Deployments at 0
   and `helm upgrade` keeps the live count (Helm `lookup`); verified on kind.
 
-## Next: gateway + controller
+## Gateway + controller (Task B): done, functional on kind
 
-- Gateway/shaper: route class -> server via `tools/tool_map.yaml` (`tools.common.toolmap.load()
-  .server_for(cls)`, Service name = server with `_` -> `-`, port 80, path `/mcp`); hold calls up
-  to 150 ms when a pod is about to be Ready.
-- Controller (kopf): scale the plain Deployments (label `skypiea.io/tool=<server>`) between
-  0 and N. Replica ownership is settled (see above).
-- Blocked on the spec: the user's earlier gateway/controller prompt is not in this session.
-- Readiness probe: `/healthz`, period 1 s, failure threshold 60. E0 shows the Ready -> Service
-  routing lag is part of the cold start.
+Commits `71fd418` (code + tests), `f82e66b` (chart `skypiea`, platform image, replay check),
+`60fc6d7`, `47fe884`, `fe8d46e`, `18a711f` (fixes found on kind + docs). Design:
+`docs/gateway_controller.md`; draft contract for the model window: `docs/predictor_contract.md`.
+
+- `helm install skypiea charts/skypiea` (`make deploy-kind`): 16 tools at 0 + controller (kopf),
+  gateway, predictor placeholder; all ClusterIP; namespaced least-privilege RBAC.
+- Gateway: POST /mcp, sessions, class -> server, 150 ms hold, cold path, direct-to-pod routing,
+  predictor off the critical path with FR-4 fallback, NFR-6 purge, metrics.
+- Controller: TTL + 5 s purge from last use, in-flight floor, 5 s dwell, caps 3/tool and 20
+  total, idempotent, rebuild from annotations; HTTP API /v1/warm, /v1/inflight.
+- Tests: 109 passing (unit + failure injection + official MCP client end to end).
+- Kind: Scenario A + B under all 6 policies pass the functional checks; live injection
+  (predictor dead, controller restart, stuck Pending) behaves as designed. Not results.
+- Stubbed: predictor policies are placeholders (`gateway/predictor_stub.py`) until the model
+  branch's `predictors/policies.py` + service are merged; the real service plugs in via
+  `platform.predictor.url` with no gateway change.
+- E0 must run without the controller: `make deploy-kind-e0` / AWS `PLATFORM=false`.
 
 ## Open decisions for the user
 
 - Whether light tools need heavier, more realistic startup (decide after E0).
-- Root Makefile: add `include mk/infra.mk`; README still says kind has 2 workers (now 1).
+- Root Makefile: add `include mk/infra.mk`; README still says kind has 2 workers (now 1),
+  and references `charts/skypiea-tools` / `make deploy` (now `charts/skypiea`, `make deploy-kind`).
+- Confirm the predictor contract v1 with the model window (docs/predictor_contract.md).
