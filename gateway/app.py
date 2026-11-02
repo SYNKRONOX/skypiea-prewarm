@@ -62,6 +62,7 @@ class GatewayConfig:
     session_idle_s: float = 600.0
     purge_interval_s: float = 10.0
     inflight_report_s: float = 1.0
+    connect_retry_s: float = 3.0
     gateway_id: str = field(default_factory=lambda: uuid.uuid4().hex[:8])
 
 
@@ -92,6 +93,8 @@ class Metrics:
         self.not_ready = Counter("skypiea_gateway_not_ready_total",
                                  "Calls failed because no pod became Ready in time", ["tool"],
                                  registry=r)
+        self.connect_retries = Counter("skypiea_gateway_connect_retries_total",
+                                       "Upstream connect retries", ["tool"], registry=r)
         self.sessions = Gauge("skypiea_gateway_sessions", "Live sessions", registry=r)
 
 
@@ -244,18 +247,25 @@ class Gateway:
         return result, info
 
     async def _forward(self, route, fwd: dict[str, Any], headers: dict[str, str]) -> dict[str, Any]:
-        for attempt in range(2):
+        """Send to a ready pod address (EndpointSlice) if known, else to the Service. On a
+        refused/reset connection (pod just went away, or Service not programmed yet) retry with
+        a short backoff for up to connect_retry_s."""
+        deadline = self.clock() + self.cfg.connect_retry_s
+        delay = 0.025
+        while True:
+            addr = self.tracker.pick(route.server)
+            url = f"http://{addr}/mcp" if addr else route.url
             try:
-                r = await self.http.post(route.url, json=fwd, timeout=self.cfg.upstream_timeout_s,
+                r = await self.http.post(url, json=fwd, timeout=self.cfg.upstream_timeout_s,
                                          headers=headers)
                 return r.json()
-            except (httpx.ConnectError, httpx.RemoteProtocolError):
-                # the pod we were routed to went away between Ready and connect: wait, retry
-                if attempt == 0 and await self.tracker.wait_ready(route.server,
-                                                                  self.cfg.cold_timeout_s):
-                    continue
-                raise
-        raise RuntimeError("unreachable")
+            except (httpx.ConnectError, httpx.RemoteProtocolError, httpx.ConnectTimeout):
+                if self.clock() + delay > deadline:
+                    raise
+                self.metrics.connect_retries.labels(route.tool_class).inc()
+                await asyncio.sleep(delay)
+                delay = min(delay * 2, 0.4)
+                await self.tracker.wait_ready(route.server, max(0.0, deadline - self.clock()))
 
     # ---------------- HTTP surface ----------------
     def tools_list(self) -> dict[str, Any]:

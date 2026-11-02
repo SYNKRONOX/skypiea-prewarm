@@ -164,7 +164,9 @@ def main() -> int:
             port_forward(a.context, a.namespace, "skypiea-predictor", 80) as pred:
         for pol in policies:
             waited = wait_all_zero(ctl, 300)
-            r = httpx.post(f"{pred}/admin/policy", json={"name": pol, "params": {}}, timeout=5)
+            params = {"ttl_s": 90} if pol == "always_warm" else {}
+            r = httpx.post(f"{pred}/admin/policy", json={"name": pol, "params": params},
+                           timeout=5)
             r.raise_for_status()
             if pol == "always_warm":   # the baseline's standing pool: one pod per tool
                 for s in httpx.get(f"{ctl}/v1/state", timeout=5).json():

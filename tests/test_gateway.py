@@ -342,3 +342,48 @@ def test_in_process_client_wraps_stub():
         await post(gw, call("read_file"))
         assert ctrl.warms == [("read_file", 1, 7, "predict:stub-keep_alive")]
     asyncio.run(go())
+
+
+def test_forwards_to_ready_pod_address_not_the_service():
+    async def go():
+        gw, _, tracker, seen = make()
+        tracker.set_ready("run_tests", 2, ["10.0.0.5:8080", "10.0.0.6:8080"])
+        await post(gw, call("run_tests", 1))
+        await post(gw, call("run_tests", 2))
+        assert {u for u, _, _ in seen} == {"http://10.0.0.5:8080/mcp", "http://10.0.0.6:8080/mcp"}
+    asyncio.run(go())
+
+
+def test_refused_connections_are_retried_until_routable():
+    """Kind run: the pod was Ready but the Service did not route yet -> connection refused.
+    The gateway must retry with backoff instead of failing the call."""
+    async def go():
+        attempts = []
+
+        def flaky(req: httpx.Request) -> httpx.Response:
+            attempts.append(1)
+            if len(attempts) < 3:
+                raise httpx.ConnectError("connection refused")
+            body = json.loads(req.content)
+            return httpx.Response(200, json={"jsonrpc": "2.0", "id": body["id"], "result": {
+                "content": [], "isError": False}})
+
+        gw, _, _, _ = make(ready={"shell": 1})
+        gw.http = httpx.AsyncClient(transport=httpx.MockTransport(flaky))
+        r = await post(gw, call("shell"))
+        assert "result" in r.json() and len(attempts) == 3
+        assert counter(gw.metrics, "skypiea_gateway_connect_retries_total", tool="shell") == 2
+    asyncio.run(go())
+
+
+def test_connect_failures_give_up_after_connect_retry_s():
+    async def go():
+        def dead(req: httpx.Request) -> httpx.Response:
+            raise httpx.ConnectError("refused")
+
+        gw, _, _, _ = make(ready={"shell": 1}, connect_retry_s=0.2)
+        gw.http = httpx.AsyncClient(transport=httpx.MockTransport(dead))
+        r = await post(gw, call("shell"))
+        assert r.json()["error"]["code"] == -32002
+        assert gw.inflight["shell"] == 0
+    asyncio.run(go())
