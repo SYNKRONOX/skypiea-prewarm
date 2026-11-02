@@ -156,7 +156,9 @@ class ControllerService:
     # ---------------- HTTP ----------------
     def state(self) -> dict:
         now = self.clock()
-        return {name: {"live": st.live, "ready": st.ready, "copies": st.copies,
+        purge = self.pool.cfg.purge_s
+        return {name: {"live": st.live, "ready": st.ready,
+                       "copies": st.copies if now < st.warm_until + purge else 0,
                        "warm_for_s": round(max(0.0, st.warm_until - now), 2),
                        "inflight": self.pool.inflight(name, now)}
                 for name, st in self.pool.s.items()}

@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import time
+from collections import deque
 from dataclasses import dataclass, field
+from typing import Any
 
 from gateway.contract import HistoryItem, OracleHint
 
@@ -18,6 +20,10 @@ class Session:
     inflight: int = 0
     batch_id: int = -1
     ended_at: float | None = None
+    # introspection (skypiea trace / explain): metadata only, purged with the session
+    calls: list[dict[str, Any]] = field(default_factory=list)
+    decisions: deque = field(default_factory=lambda: deque(maxlen=50))
+    last_warm: set[str] = field(default_factory=set)  # classes warmed by the latest decision
 
     def start_call(self) -> int:
         """Calls that overlap an in-flight call of the same session share its batch."""

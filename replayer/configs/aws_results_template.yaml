@@ -1,0 +1,11 @@
+# RESULTS run on AWS: real think gaps and service times (scales must be 1).
+mode: results
+sessions_path: ~/skypiea-model/data/processed/tracelab/calls.parquet
+n_sessions: 50
+split: test
+seed: 0
+arrival: {mode: poisson, rate_per_s: 0.1}
+gap_scale: 1.0
+service_scale: 1.0
+policy: {name: scale_to_zero}
+out: results/replay/{run_id}.csv

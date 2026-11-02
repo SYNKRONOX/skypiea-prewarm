@@ -157,27 +157,33 @@ class Gateway:
         self._inflight_dirty.set()
 
     # ---------------- predictor (off the critical path) ----------------
-    async def _predict(self, sid: str, req: DecideRequest) -> None:
+    async def _predict(self, session, req: DecideRequest) -> None:
         if self.predictor is None:
             return
         t0 = self.clock()
+        entry = {"after_call": len(req.history) - 1, "t_ms": round(req.now_ms, 1)}
         try:
             resp = await asyncio.wait_for(self.predictor.decide(req), self.cfg.predictor_timeout_s)
-        except TimeoutError:
-            self.metrics.pred_errors.labels("timeout").inc()
-            return
-        except ContractError as e:
-            self.metrics.pred_errors.labels("contract").inc()
-            log.warning("predictor answer off-contract: %s", e)
-            return
-        except (httpx.HTTPError, ValueError, OSError) as e:
-            self.metrics.pred_errors.labels(type(e).__name__).inc()
-            return
-        except Exception as e:  # never let the predictor hurt the gateway
-            self.metrics.pred_errors.labels("other").inc()
-            log.warning("predictor failed: %r", e)
+        except Exception as e:  # never let the predictor hurt the gateway (FR-4)
+            reason = {TimeoutError: "timeout", ContractError: "contract"}.get(
+                type(e), type(e).__name__ if isinstance(e, (httpx.HTTPError, ValueError,
+                                                            OSError)) else "other")
+            self.metrics.pred_errors.labels(reason).inc()
+            if reason in ("contract", "other"):
+                log.warning("predictor %s: %r", reason, e)
+            session.last_warm = set()
+            session.decisions.append({**entry, "outcome": f"error:{reason}",
+                                      "detail": str(e)[:200]})
             return
         self.metrics.pred_latency.observe(self.clock() - t0)
+        session.last_warm = {d.tool_class for d in resp.decisions if d.warm and d.copies > 0}
+        session.decisions.append({
+            **entry, "outcome": "ok", "model_version": resp.model_version,
+            "latency_ms": resp.latency_ms,
+            "ranked": [{"tool_class": r.tool_class, "p": r.p} for r in resp.ranked[:5]],
+            "decisions": [{"tool_class": d.tool_class, "warm": d.warm, "copies": d.copies,
+                           "start_in_ms": d.start_in_ms, "ttl_s": d.ttl_s, "prob": d.prob}
+                          for d in resp.decisions]})
         for d in resp.decisions:
             if d.warm and d.copies > 0:
                 self._spawn(self._warm_later(d.tool_class, d.copies, d.ttl_s, d.start_in_ms,
@@ -200,6 +206,7 @@ class Gateway:
         route = self.router.resolve(name)
         session = self.sessions.get(sid)
         t_arrive = self.clock()
+        predicted = route.tool_class in session.last_warm
         batch = session.start_call()
         self._inflight_delta(route.server, +1)
         cold, held_ms, info = False, 0.0, {}
@@ -234,16 +241,22 @@ class Gateway:
             self._inflight_delta(route.server, -1)
         t_end = self.clock()
         self.metrics.calls.labels(route.tool_class, str(cold).lower()).inc()
-        self.metrics.added.labels(route.tool_class).observe(max(0.0, t_end - t_arrive
-                                                                - upstream_s))
+        added_ms = max(0.0, t_end - t_arrive - upstream_s) * 1000.0
+        self.metrics.added.labels(route.tool_class).observe(added_ms / 1000.0)
         is_err = "error" in result or bool((result.get("result") or {}).get("isError"))
+        session.calls.append({
+            "i": len(session.calls), "tool_class": route.tool_class, "server": route.server,
+            "batch_id": batch, "t_start_ms": round((t_arrive - session.created) * 1e3, 1),
+            "t_end_ms": round((t_end - session.created) * 1e3, 1), "cold": cold,
+            "held_ms": round(held_ms, 1), "added_ms": round(added_ms, 1),
+            "predicted": predicted, "ok": not is_err})
         session.history.append(HistoryItem(route.tool_class, (t_arrive - session.created) * 1e3,
                                            (t_end - session.created) * 1e3, is_err, batch))
         req = DecideRequest(sid, (t_end - session.created) * 1e3, list(session.history),
                             list(session.oracle))
-        self._spawn(self._predict(sid, req))
+        self._spawn(self._predict(session, req))
         info = {"cold": cold, "held_ms": round(held_ms, 1), "tool_class": route.tool_class,
-                "server": route.server}
+                "server": route.server, "added_ms": round(added_ms, 1), "predicted": predicted}
         return result, info
 
     async def _forward(self, route, fwd: dict[str, Any], headers: dict[str, str]) -> dict[str, Any]:
@@ -311,6 +324,8 @@ class Gateway:
                 hdr["X-Skypiea-Cold"] = "1" if info.get("cold") else "0"
                 if "held_ms" in info:
                     hdr["X-Skypiea-Held-Ms"] = str(info["held_ms"])
+                    hdr["X-Skypiea-Added-Ms"] = str(info["added_ms"])
+                    hdr["X-Skypiea-Predicted"] = "1" if info["predicted"] else "0"
             return JSONResponse(result, headers=hdr)
         if method == "tools/list":
             return JSONResponse({"jsonrpc": "2.0", "id": body["id"], "result": self.tools_list()},
@@ -319,6 +334,21 @@ class Gateway:
             return JSONResponse({"jsonrpc": "2.0", "id": body["id"],
                                  "result": {"resultType": "complete"}}, headers=hdr)
         return _rpc_error(body.get("id"), -32601, f"method not supported: {method}")
+
+    async def list_sessions(self, _: Request) -> Response:
+        return JSONResponse({"sessions": [
+            {"session_id": k, "calls": len(v.calls), "ended": v.ended_at is not None}
+            for k, v in self.sessions._s.items()]})
+
+    async def get_session(self, request: Request) -> Response:
+        """Calls and recent predictor decisions of one session (metadata only). Available until
+        the session is purged (NFR-6)."""
+        s = self.sessions._s.get(request.path_params["sid"])
+        if s is None:
+            return JSONResponse({"error": "unknown or purged session"}, status_code=404)
+        return JSONResponse({"session_id": s.session_id, "ended": s.ended_at is not None,
+                             "inflight": s.inflight, "calls": s.calls,
+                             "decisions": list(s.decisions)})
 
     async def healthz(self, _: Request) -> Response:
         return JSONResponse({"status": "ok", "sessions": len(self.sessions)})
@@ -342,4 +372,6 @@ class Gateway:
             HttpRoute("/mcp", self.mcp, methods=["POST", "DELETE"]),
             HttpRoute("/healthz", self.healthz, methods=["GET"]),
             HttpRoute("/metrics", self.metrics_ep, methods=["GET"]),
+            HttpRoute("/v1/sessions", self.list_sessions, methods=["GET"]),
+            HttpRoute("/v1/sessions/{sid}", self.get_session, methods=["GET"]),
         ], lifespan=lifespan)
