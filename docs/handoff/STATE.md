@@ -50,14 +50,23 @@ wait; pull time recovered from the kubelet event in report mode.
 Next for E0: AWS (Terraform plan/apply only after the user confirms the account), n=30 then
 n=100, plus `--parallel 3` n=10.
 
+## Simulator input and replica ownership
+
+- `configs/cold_start.yaml` (commit `c21a567`): generated from the E0 kind CSVs by
+  `python -m experiments.e0_write_cold_start --env kind`; `environment: kind`, marked "lower
+  bound; replace with AWS". Schema: `docs/cold_start_schema.md`. A test checks that the file
+  equals the generator output. E0 run settings now live in `experiments/e0_config.yaml`.
+- Replicas (commit `96c3b80`): the controller owns them. The chart creates Deployments at 0
+  and `helm upgrade` keeps the live count (Helm `lookup`); verified on kind.
+
 ## Next: gateway + controller
 
 - Gateway/shaper: route class -> server via `tools/tool_map.yaml` (`tools.common.toolmap.load()
   .server_for(cls)`, Service name = server with `_` -> `-`, port 80, path `/mcp`); hold calls up
   to 150 ms when a pod is about to be Ready.
 - Controller (kopf): scale the plain Deployments (label `skypiea.io/tool=<server>`) between
-  0 and N. The chart sets `replicas: 0`, so a `helm upgrade` resets replicas to 0; the controller
-  must own the replica count (or the chart must drop `replicas`) before both run together.
+  0 and N. Replica ownership is settled (see above).
+- Blocked on the spec: the user's earlier gateway/controller prompt is not in this session.
 - Readiness probe: `/healthz`, period 1 s, failure threshold 60. E0 shows the Ready -> Service
   routing lag is part of the cold start.
 
