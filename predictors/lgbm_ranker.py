@@ -15,7 +15,8 @@ rows from TRAIN whose base-model features are computed out-of-fold (group k-fold
 ranker never sees in-sample n-gram scores; early stopping uses VAL rows (disjoint groups),
 whose features come from base models fitted on all of train. An isotonic regression fitted
 on VAL maps raw scores to calibrated in-next-batch probabilities; it is stored as JSON
-breakpoints and applied with ``np.interp``.
+breakpoints and applied with ``np.interp``; ties between its flat steps are broken by the
+raw score, so calibration never reorders candidates.
 
 Two outputs from the same calibrated scores c_j:
   (a) ranked: q_j = c_j / sum(c), over candidates incl. ``<end>`` (sums to <= 1);
@@ -57,6 +58,7 @@ FEATURES = [
     "last_service_ms", "step", "t_since_start_ms", "cand_freq", "cand_recency",
     "cand_is_last", "ngram_rank", "node",
 ]
+TIE_EPS = 1e-6  # see LGBMRanker._calibrate
 GAP_LEVEL = {"pair": 3.0, "next": 2.0, "global": 1.0, "none": 0.0}
 
 
@@ -306,12 +308,23 @@ class LGBMRanker(NextToolModel):
         return np.asarray(self.booster.predict(x, num_iteration=self.best_iteration),
                           dtype=float)
 
+    def _calibrate(self, raw: np.ndarray) -> np.ndarray:
+        """Calibrated scores, ties broken by the raw score.
+
+        Isotonic regression is a step function, so distinct raw scores can share one
+        calibrated value; without the tie-break their order would fall back to tool names.
+        The convex mix keeps values in [0, 1] and moves them by at most ``TIE_EPS``.
+        """
+        if not self.calibrated:
+            return raw
+        return (1.0 - TIE_EPS) * self.calibrator(raw) + TIE_EPS * raw
+
     def scores(self, ctx: Context) -> dict[str, float]:
         """Calibrated (or raw, if ``calibrated=False``) P(candidate in the next batch)."""
         assert self.base is not None
         cands, x = self.rows(self.base, ctx)
         raw = self._raw(x)
-        s = self.calibrator(raw) if self.calibrated else raw
+        s = self._calibrate(raw)
         return {c: float(min(1.0, max(0.0, v))) for c, v in zip(cands, s, strict=True)}
 
     def ranked(self, ctx: Context) -> dict[str, float]:
@@ -330,7 +343,7 @@ class LGBMRanker(NextToolModel):
         assert self.base is not None
         built = [self.rows(self.base, c) for c in ctxs]
         raw = self._raw(np.vstack([x for _, x in built]))
-        s = self.calibrator(raw) if self.calibrated else raw
+        s = self._calibrate(raw)
         out, i = [], 0
         for cands, x in built:
             vals = s[i:i + len(x)]

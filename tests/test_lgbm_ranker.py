@@ -115,6 +115,17 @@ def test_uncalibrated_mode_and_feature_importance(fitted: tuple[LGBMRanker, list
     assert len(imp) == 15 and {f for f, _ in imp} <= set(FEATURES)
 
 
+def test_calibration_never_reorders_candidates(fitted: tuple[LGBMRanker, list]) -> None:
+    r, te = fitted
+    raw = LGBMRanker(r.cfg, calibrated=False)
+    raw.__dict__.update({k: v for k, v in r.__dict__.items() if k != "calibrated"})
+    for ctx in _contexts(te):
+        a, b = r.scores(ctx), raw.scores(ctx)
+        order = sorted(b, key=lambda t: (-b[t], t))
+        assert sorted(a, key=lambda t: (-a[t], t)) == order
+        assert ev.top_n(r.predict(ctx), 3) == ev.top_n(raw.predict(ctx), 3)
+
+
 def test_latency_on_sample(fitted: tuple[LGBMRanker, list]) -> None:
     r, te = fitted
     ts = []
