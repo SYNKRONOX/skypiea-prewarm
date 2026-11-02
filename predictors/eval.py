@@ -270,7 +270,8 @@ def latency(model: NextToolModel, test: Sequence[Episode], n: int = LATENCY_SAMP
 
 def model_config(model: NextToolModel) -> dict[str, Any]:
     cfg: dict[str, Any] = {}
-    for attr in ("alpha", "weights", "min_count", "min_support", "edge_label"):
+    for attr in ("alpha", "weights", "min_count", "min_support", "edge_label",
+                 "best_iteration", "val_ece"):
         if hasattr(model, attr):
             v = getattr(model, attr)
             cfg[attr] = list(v) if isinstance(v, tuple) else v
@@ -279,9 +280,17 @@ def model_config(model: NextToolModel) -> dict[str, Any]:
 
 def evaluate(model: NextToolModel, source: str, split: str = "fixed",
              vocab: str | None = None, *, root: Path = PROCESSED, n_boot: int | None = None,
-             write: bool = True, csv_path: Path = CSV_PATH) -> dict[str, Any]:
-    """Fit a fresh copy of ``model`` on the split's train part and score its test part."""
+             write: bool = True, csv_path: Path = CSV_PATH,
+             test_source: str | None = None) -> dict[str, Any]:
+    """Fit a fresh copy of ``model`` on the split's train part and score its test part.
+
+    With ``test_source`` (cross-source), train and val come from ``source`` and the test set
+    is ``test_source``'s test split (same split spec); both must share ``vocab``. Results are
+    recorded with source "<source>-><test_source>".
+    """
     train, val, test = split_groups(source, split, root, vocab)
+    if test_source is not None:
+        test = split_groups(test_source, split, root, vocab)[2]
     if not train or not test:
         raise ValueError(f"{source} {split}: empty train or test")
     m = copy.deepcopy(model)
@@ -301,7 +310,8 @@ def evaluate(model: NextToolModel, source: str, split: str = "fixed",
     boot = n_boot if n_boot is not None else (N_BOOT if split == "fixed" else 0)
     res["ci"] = group_bootstrap(rec, len(groups), boot)
     res["config"] = model_config(m)
-    res["model"], res["source"], res["vocab"], res["split"] = m.name, source, vocab, split
+    res["model"], res["vocab"], res["split"] = m.name, vocab, split
+    res["source"] = source if test_source is None else f"{source}->{test_source}"
     if write:
         _write(res, csv_path)
     return res

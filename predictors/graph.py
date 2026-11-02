@@ -30,7 +30,7 @@ top-1 accuracy on a clean validation set drops by at most ``max_val_drop``; othe
 base graph is kept and the reason reported.
 
 All tables are plain dicts filled in ``fit`` or ``load`` and never written afterwards, so one
-instance can be shared by concurrent requests. Serialisation is JSON (no pickle).
+instance can be shared by concurrent requests. Serialisation is JSON only.
 """
 
 from __future__ import annotations
