@@ -73,7 +73,8 @@ class Episode:
     """A session prepared for modelling.
 
     ``batches`` lists, per non-empty batch, its (start, end) slice into ``events``;
-    ``nodes[i]`` is the workflow node visible before non-empty batch ``i``.
+    ``nodes[i]`` is the workflow node visible before non-empty batch ``i``; the last entry
+    (the end decision point) is the node of the last call.
     """
 
     session_id: str
@@ -113,10 +114,12 @@ def to_episode(s: Session) -> Episode:
     nodes: list[str | None] = []
     errors_before: list[bool] = []
     node: str | None = None
+    node_at_last_call: str | None = None
     prev_error = False
     for b in s.batches:
         if b.calls:
             nodes.append(node)
+            node_at_last_call = b.node if b.node is not None else node
             errors_before.append(prev_error)
             lo = len(events)
             for c in sorted(b.calls, key=lambda c: c.tool):
@@ -126,8 +129,9 @@ def to_episode(s: Session) -> Episode:
             prev_error = any(c.error for c in b.calls)
         if b.node is not None:
             node = b.node
-    # The end decision point sees the last node too.
-    nodes.append(node)
+    # The end decision point is what a request right after the last call would carry: the
+    # node of that call. Node-only steps after it (e.g. notify_user) send no request.
+    nodes.append(node_at_last_call)
     return Episode(s.session_id, s.source, s.group, s.has_timing, tuple(events), spans,
                    nodes, errors_before)
 

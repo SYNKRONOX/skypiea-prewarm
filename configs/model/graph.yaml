@@ -1,0 +1,12 @@
+# TransitionGraph parameters (predictors/graph.py). Read by TransitionGraph.from_config().
+# per_session_cap: max count of any (context -> target) pair from one session. To be
+# re-measured after E0 on full TraceLab (3 vs 5 vs none); raise it if 3 costs > 1 point top-1.
+min_support: 3
+per_session_cap: 3        # null = no cap
+max_events: 2000
+max_order: 3
+max_gap_ms: 3600000       # think gaps clipped to [0, 1 h] before winsorising
+# rebuild() from logged traces
+rebuild:
+  max_new_share: 0.5      # logged sessions together weigh at most this x base sessions
+  max_val_drop: 0.01      # reject the rebuilt graph if val top-1 drops by more

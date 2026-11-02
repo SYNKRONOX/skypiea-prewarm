@@ -43,7 +43,7 @@ def test_node_only_batches_set_the_node() -> None:
         Batch(2, 2.0, "notify_user", [])])
     ep = to_episode(s)
     assert ep.context(0).node == "classify_intent"
-    assert ep.context(1).node == "notify_user"  # end point
+    assert ep.context(1).node == "lookup_order"  # end point: node of the last call
 
 
 def test_markov_and_majority_on_toy_data() -> None:
