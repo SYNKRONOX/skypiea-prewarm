@@ -110,6 +110,23 @@ class Target:
             msgs.append(f"{node}:{'deleted' if p.returncode == 0 else 'absent'}")
         return ";".join(msgs)
 
+    def rmi_all_tools(self, keep: str) -> int:
+        """Remove every skypiea image (any tag, incl. old probe images) from every schedulable
+        node except `keep` (the running probe image). Returns how many images were removed."""
+        n = 0
+        for node in self.schedulable_nodes():
+            p = self.node_cmd(node, ["crictl", "images", "-o", "json"])
+            if p.returncode != 0:
+                raise RuntimeError(f"crictl images on {node} failed: {p.stderr.strip()}")
+            for img in json.loads(p.stdout).get("images", []):
+                tags = [t for t in img.get("repoTags") or [] if "/skypiea/" in t]
+                if tags and keep not in tags:
+                    r = self.node_cmd(node, ["crictl", "rmi", img["id"]])
+                    if r.returncode != 0:
+                        raise RuntimeError(f"crictl rmi {tags} on {node}: {r.stderr.strip()}")
+                    n += 1
+        return n
+
     def stats(self) -> dict:
         """Load on the machine that runs the node(s): the laptop for kind, the VM for AWS."""
         if self.name == "kind":
@@ -162,18 +179,20 @@ RUN_FIELDS = (["target", "pull_source", "parallel", "round", "group", "tool", "t
               + [f"{p}_ms" for p in PHASES] + ["total_ms", "warm_median_ms", "warm_p95_ms",
               "app_startup_ms", "pull_incl_wait_ms", "t_scale_ack", "t_pod_seen",
               "t_scheduled", "t_pod_ip", "t_proc_start", "t_running_observed", "t_health_ok",
-              "t_ready", "t_first_ok", "first_call_attempts", "health_rtt_ms", "scale_down_ms",
+              "t_ready", "t_first_ok", "first_call_attempts", "tcp_gate_fails", "attempt_log",
+              "health_rtt_ms", "scale_down_ms",
               "pull_event", "warnings", "error"])
 
 
-def run_group(tgt: Target, tools: list[str], mode: str, image_of: dict, cfg: dict) -> list[dict]:
+def run_group(tgt: Target, tools: list[str], mode: str, probe_image: str,
+              cfg: dict) -> list[dict]:
     """One timed run of 1..K tools scaled up at the same moment. Returns one dict per tool."""
     rmi = {t: "" for t in tools}
     if mode == "uncached":
         # Remove EVERY tool image, not only this tool's: tools of a tier share their dependency
         # layers, so a leftover sibling image would keep most layers cached.
-        removed = [tgt.rmi(img) for img in sorted(set(image_of.values()))]
-        rmi = {t: f"all {len(removed)} tool images removed" for t in tools}
+        removed = tgt.rmi_all_tools(keep=probe_image)
+        rmi = {t: f"removed {removed} tool images (all tags)" for t in tools}
     args = ["exec", "deploy/e0-probe", "--", "python", "/app/probe.py", "run",
             "--namespace", tgt.ns, "--warm", str(cfg["warm_calls"]),
             "--service-ms", str(cfg["service_ms"]), "--timeout", str(cfg["run_timeout_s"])]
@@ -389,6 +408,8 @@ def main() -> None:
         image_of = {d["metadata"]["labels"]["skypiea.io/tool"]:
                     d["spec"]["template"]["spec"]["containers"][0]["image"] for d in deploys
                     if d["metadata"]["name"] != "e0-probe"}
+        probe_image = next(d["spec"]["template"]["spec"]["containers"][0]["image"]
+                           for d in deploys if d["metadata"]["name"] == "e0-probe")
         missing = [t for t in tools if t not in image_of]
         if missing:
             sys.exit(f"not deployed: {missing}")
@@ -419,7 +440,7 @@ def main() -> None:
                 for gi, group in enumerate(groups_for_round(order, a.parallel)):
                     for mode in modes:
                         st = tgt.wait_quiet(a.require_quiet)
-                        results = run_group(tgt, group, mode, image_of, cfg)
+                        results = run_group(tgt, group, mode, probe_image, cfg)
                         for tool, r in zip(group, results, strict=True):
                             ph = phases(r)
                             row = {**{k: r.get(k) for k in RUN_FIELDS}, **st, **{

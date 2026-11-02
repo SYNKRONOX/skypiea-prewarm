@@ -17,6 +17,7 @@ import argparse
 import asyncio
 import json
 import re
+import socket
 import statistics
 import sys
 import threading
@@ -39,7 +40,8 @@ class Run:
         self.timeout_s = timeout_s
         self.k8s_name = tool.replace("_", "-")
         self.selector = f"skypiea.io/tool={tool}"
-        self.url = f"http://{self.k8s_name}.{ns}.svc.cluster.local/mcp"
+        self.svc_host = f"{self.k8s_name}.{ns}.svc.cluster.local"
+        self.url = f"http://{self.svc_host}/mcp"
         self.core = client.CoreV1Api()
         self.apps = client.AppsV1Api()
         self.t0 = 0.0
@@ -122,20 +124,40 @@ class Run:
             raise RuntimeError(res.content[0].text if res.content else "tool error")
         return (time.monotonic() - t) * 1000.0
 
+    def tcp_open(self, timeout: float = 0.1) -> bool:
+        """Can we open a TCP connection to the Service right now? A SYN sent while the Service
+        has no ready endpoint may be dropped (not refused); without this gate one MCP attempt
+        would sit in SYN retransmits for seconds and inflate first_call."""
+        try:
+            with socket.create_connection((self.svc_host, 80), timeout=timeout):
+                return True
+        except OSError:
+            return False
+
     async def first_and_warm(self) -> None:
-        attempts, last_err = 0, ""
+        attempts, gate_fails, last_err = 0, 0, ""
+        log: list[list] = []  # [t_start_ms, duration_ms, outcome] per MCP attempt
         deadline = time.monotonic() + self.timeout_s
         while time.monotonic() < deadline:
+            if not await asyncio.to_thread(self.tcp_open):
+                gate_fails += 1
+                await asyncio.sleep(0.01)
+                continue
             attempts += 1
+            t_a = self.now()
             try:
                 ms = await asyncio.wait_for(self.call_once(), timeout=5)
+                log.append([t_a, round(self.now() - t_a, 1), "ok"])
                 self.mark("t_first_ok")
                 self.r["first_call_attempt_ms"] = round(ms, 2)
                 break
             except Exception as e:  # not routable yet: refused / reset / timeout / 503
+                log.append([t_a, round(self.now() - t_a, 1), type(e).__name__])
                 last_err = f"{type(e).__name__}: {e}"[:200]
-                await asyncio.sleep(0.02)
+                await asyncio.sleep(0.01)
         self.r["first_call_attempts"] = attempts
+        self.r["tcp_gate_fails"] = gate_fails
+        self.r["attempt_log"] = log[-10:]
         if "t_first_ok" not in self.r:
             self.r["error"] = f"no successful call within {self.timeout_s}s; last: {last_err}"
             return
