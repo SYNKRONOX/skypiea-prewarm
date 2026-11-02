@@ -3,6 +3,12 @@ contract validation and the placeholder policies. All timings here are functiona
 
 from __future__ import annotations
 
+import pytest  # noqa: E402
+
+pytest.importorskip("httpx", reason="pip install -r requirements-infra.txt")
+pytest.importorskip("starlette", reason="pip install -r requirements-infra.txt")
+pytest.importorskip("prometheus_client", reason="pip install -r requirements-infra.txt")
+
 import asyncio
 import json
 

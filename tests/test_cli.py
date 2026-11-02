@@ -2,6 +2,11 @@
 
 from __future__ import annotations
 
+import pytest  # noqa: E402
+
+pytest.importorskip("click", reason="pip install -r requirements-infra.txt")
+pytest.importorskip("kubernetes", reason="pip install -r requirements-infra.txt")
+
 import json
 
 import pytest

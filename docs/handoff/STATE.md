@@ -107,3 +107,6 @@ Commits `a8567cc` (replayer, CLI, gateway session introspection), `0b24053` (mon
 
 - Whether light tools need heavier, more realistic startup (decide after E0).
 - Confirm the predictor contract v1 with the model window (docs/predictor_contract.md).
+- CI (.github/workflows, not changed on this branch) installs only pytest ruff numpy pandas
+  pyarrow pyyaml: the gateway/controller/replayer/CLI/MCP tests skip there (importorskip).
+  To run them in CI, add `pip install -r requirements-infra.txt` and a helm binary.
