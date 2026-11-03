@@ -119,6 +119,11 @@ aws-start:               ## start the VM again (kubeconfig is unchanged: it poin
 	aws ec2 start-instances --region $(AWS_REGION) --instance-ids $$($(TF) output -raw instance_id) \
 	  --query 'StartingInstances[0].CurrentState.Name' --output text
 	aws ec2 wait instance-running --region $(AWS_REGION) --instance-ids $$($(TF) output -raw instance_id)
+	@id=$$($(TF) output -raw instance_id); for i in $$(seq 1 30); do \
+	  st=$$(aws ssm describe-instance-information --region $(AWS_REGION) \
+	    --filters Key=InstanceIds,Values=$$id --query 'InstanceInformationList[0].PingStatus' --output text); \
+	  [ "$$st" = Online ] && { echo "SSM agent online (new public IP does not matter: SSM targets $$id)"; exit 0; }; \
+	  sleep 10; done; echo "SSM agent not online after 5 min" >&2; exit 1
 
 aws-destroy:             ## empty the bucket and ECR, then terraform destroy EVERYTHING (asks first)
 	@echo "Back up results first: aws s3 sync s3://$$($(TF) output -raw bucket_name) ./aws-backup"

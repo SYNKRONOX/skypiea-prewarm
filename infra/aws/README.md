@@ -55,6 +55,6 @@ written at apply (`make aws-reminder REMIND_H=<hours>` writes a new one).
 
 ```bash
 make aws-stop       # pause: only the 20 GB volume is billed (about $0.06/day)
-make aws-start      # resume (kubeconfig unchanged)
+make aws-start      # resume; cached images kept on EBS; new public IP, SSM/kubeconfig unaffected
 make aws-destroy    # back up results; type "destroy skypiea"; empties bucket + ECR, then destroys all
 ```

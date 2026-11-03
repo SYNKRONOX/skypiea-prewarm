@@ -60,8 +60,11 @@ DNS (the VPC resolver) and time sync (169.254.169.123) are link-local, and secur
 don't filter them. Terraform removes the "allow all" egress rule that AWS adds to a new
 security group, so 443 is the only path out. Nothing on the VM uses apt, so port 80 is closed.
 
-**The outbound rule's peer is `0.0.0.0/0` (open question 1).** This is egress only, but it
-literally matches "no rule open to 0.0.0.0/0". Removing it would take:
+**The one deliberate exception: outbound TCP 443 to `0.0.0.0/0`** (accepted 2026-11-03).
+It is outbound only, and nothing can connect in. It is needed because the k3s install
+(get.k3s.io, GitHub releases), ECR (API and S3-hosted layers) and SSM are public HTTPS
+endpoints with no fixed address list. Every other rule follows "nothing open to 0.0.0.0/0".
+The alternative, not taken, would need:
 - 4 VPC interface endpoints (`ecr.api`, `ecr.dkr`, `ssm`, `ssmmessages`), each billed at
   **$0.013 per hour** in Mumbai (VPC price list, 2026-11-03), which adds $0.052/h, about
   +48%;
@@ -69,7 +72,7 @@ literally matches "no rule open to 0.0.0.0/0". Removing it would take:
 - an air-gapped k3s install: binary, images and the ECR credential helper staged in our
   bucket from the laptop.
 
-None of that is in this plan.
+Not taken: it adds cost and an offline install path for no gain in inbound exposure.
 
 **Reaching the gateway for the demo.** The gateway, Grafana and Prometheus are ClusterIP
 Services, with no NodePort and no LoadBalancer. `make aws-tunnel` opens an SSM port-forward
@@ -184,8 +187,16 @@ An auto-stop would kill long E0 runs, so there is none. Instead:
    "Skypiea AWS: run make aws-destroy", with an alert at the start. Import it into your
    calendar. `make aws-reminder REMIND_H=24` writes a new one, for example before a long E0
    run. The file is written outside the repo.
-3. `make aws-stop` pauses the VM: storage stays billed at $0.06/day. `make aws-destroy` ends
-   all charges.
+3. **Overnight: `make aws-stop`** (EC2 stop, never destroy). Only the 20 GB volume stays
+   billed, about $0.06/day. The cached images, the k3s state and the deployed chart stay on
+   the EBS volume. **`make aws-start`** boots the VM again:
+   - k3s restarts the pods, and the ECR pull secret refreshes 2 min after boot.
+   - The public IPv4 **changes** on every start, because it is auto-assigned and not an
+     Elastic IP.
+   - **SSM does not care.** Sessions target the instance id, and the agent connects outbound.
+     The kubeconfig points at the local tunnel (`127.0.0.1:16443`), so `make aws-tunnel` and
+     everything else work unchanged. No IP appears anywhere in our config.
+4. `make aws-destroy` ends all charges.
 
 ## How images get from the laptop to ECR
 
@@ -205,14 +216,18 @@ VM, in the repo or in Terraform state.
 
 ## How E0 and the controller run on the node
 
-The VM is a single-node k3s, version `v1.37.1+k3s1`, pinned. It is the current `v1.37`/latest
-channel; `stable` is v1.36.5. traefik, servicelb and metrics-server are disabled. The same
+The VM is a single-node k3s, version `v1.37.1+k3s1`, pinned to match kind (1.37). It is the
+`v1.37`/latest channel. If it misbehaves, the fallback is the `stable` channel (v1.36.5,
+`-var k3s_version=v1.36.5+k3s1`), and that switch will be reported. traefik, servicelb and metrics-server are disabled. The same
 Helm chart runs as on kind (`charts/skypiea`, `values-aws.yaml`).
 
 Laptop prerequisites:
 - aws CLI v2.
-- `session-manager-plugin`. It is not installed yet. I can extract the official `.deb` into
-  `~/.local` without sudo after you approve.
+- `session-manager-plugin` 1.2.896.0, installed without sudo:
+  - source: `https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_64bit/session-manager-plugin.deb`
+    (4,065,612 bytes; the MD5 matches the S3 ETag `360e2daed08675dc57d9f95314f0dbb8`);
+  - extracted with `dpkg-deb -x` into `~/.local/lib/sessionmanagerplugin`, linked from
+    `~/.local/bin`.
 
 ```bash
 make aws-apply                    # the reviewed tfplan only; writes the destroy reminder
@@ -247,8 +262,12 @@ Controller, after E0:
 Other access:
 - `make aws-shell` opens an interactive SSM shell on the VM, for logs
   (`/var/log/skypiea-bootstrap.log`) and `df -h`.
-- `make aws-stop` / `make aws-start` stop and start the VM. The kubeconfig doesn't change,
-  because it points at the tunnel and not at the public IP.
+- `make aws-stop` / `make aws-start` stop and start the VM (see "Cost guard" above). The
+  kubeconfig doesn't change, because it points at the tunnel and not at the public IP.
+
+Load tests: the functional Scenario A/B replay and a 20-50 concurrent-session test run on
+this 2-vCPU node. **NFR-4 (500 concurrent sessions) is covered by the simulator, not by
+this node.** We do not claim 500 sessions on 2 vCPUs.
 
 ## Teardown: `make aws-destroy`
 
@@ -265,14 +284,12 @@ Other access:
 Afterwards, delete the calendar event and check the console (EC2, EBS volumes, ECR, S3, IAM
 role `skypiea-node`).
 
-## Open questions
+## Decisions (2026-11-03)
 
-1. **Egress 443 to `0.0.0.0/0`**: accept it (outbound only, no inbound at all), or pay about
-   +$0.052/h for 4 VPC interface endpoints plus an air-gapped k3s install?
-2. **Operator permissions**: attach `infra/aws/operator-policy.json` as a customer-managed
-   policy to `skypiea-terraform`, or tell me which of it you already have.
-3. **Reminder default**: 8 h after apply. Change `REMIND_H` if you want a different default.
-4. **S3 versioning is off** to keep teardown simple; results are also synced to the laptop.
-   Turn it on?
-5. **k3s `v1.37.1+k3s1`** is the latest-channel release; `stable` is v1.36.5. Keep 1.37 to
-   match kind (kubectl v1.37.2, kind node v1.37.0)?
+1. Outbound 443 to `0.0.0.0/0`: accepted as the one deliberate exception (see Security group).
+2. The operator policy `infra/aws/operator-policy.json` is being attached by the user as a customer-managed
+   policy, replacing the broad ones; plan re-run after "policy attached".
+3. The calendar reminder defaults to 8 h after apply; `make aws-stop` overnight.
+4. S3 versioning stays off.
+5. k3s v1.37.1 stays, to match kind; fall back to stable if it misbehaves.
+6. session-manager-plugin is installed in `~/.local` (above).
