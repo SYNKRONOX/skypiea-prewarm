@@ -281,6 +281,22 @@ this node.** We do not claim 500 sessions on 2 vCPUs.
    id masked); the list should be empty.
 6. It deletes `~/.kube/skypiea-aws`.
 
+**Terraform state.** It lives only on this laptop, in
+`~/skypiea-infra/infra/aws/terraform.tfstate` (plus `terraform.tfstate.backup`). It is
+git-ignored, never committed and never uploaded. It contains resource ids and the account id,
+but no keys. **If it is lost**, `make aws-destroy` cannot work, and teardown has to start from
+the tag listing instead:
+
+```bash
+aws resourcegroupstaggingapi get-resources --region ap-south-1 \
+  --tag-filters Key=project,Values=skypiea --query 'ResourceTagMappingList[].ResourceARN'
+```
+
+Then delete each listed resource by hand: instance, security group, ECR repositories,
+bucket. Then delete the IAM role and instance profile `skypiea-node` by name, because IAM is
+global and `tag:GetResources` doesn't list it per region. Back the state file up (outside git)
+if the laptop is at risk.
+
 Afterwards, delete the calendar event and check the console (EC2, EBS volumes, ECR, S3, IAM
 role `skypiea-node`).
 
