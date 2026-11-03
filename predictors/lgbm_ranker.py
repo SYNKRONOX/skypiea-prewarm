@@ -2,7 +2,7 @@
 
     r = LGBMRanker.from_config().fit(train, val)
     r.ranked(ctx)        # FR-1: distribution over next tools incl. "<end>", sums to <= 1
-    r.batch_probs(ctx)   # calibrated P(tool in the next batch), may sum above 1
+    r.batch_probs(ctx)   # P(tool in the next batch), may sum above 1
     r.save(folder); LGBMRanker.load(folder)
 
 Candidates per decision point: the interpolated n-gram's top-20, unioned with the top-5 of
@@ -13,12 +13,13 @@ in ``FEATURES``; the label is 1 if the candidate is in the next batch (``<end>``
 ends). LightGBM (binary objective, fixed seed, ``num_threads`` from config) is trained on
 rows from TRAIN whose base-model features are computed out-of-fold (group k-fold), so the
 ranker never sees in-sample n-gram scores; early stopping uses VAL rows (disjoint groups),
-whose features come from base models fitted on all of train. An isotonic regression fitted
-on VAL maps raw scores to calibrated in-next-batch probabilities; it is stored as JSON
-breakpoints and applied with ``np.interp``; ties between its flat steps are broken by the
-raw score, so calibration never reorders candidates.
+whose features come from base models fitted on all of train. An isotonic regression is always
+fitted on VAL and stored as JSON breakpoints; config ``calibration`` decides whether it is
+applied (``isotonic``) or the raw LightGBM scores are used (``none``, the default). When
+applied (``np.interp``), ties between its flat steps are broken by the raw score, so
+calibration never reorders candidates.
 
-Two outputs from the same calibrated scores c_j:
+Two outputs from the same scores c_j:
   (a) ranked: q_j = c_j / sum(c), over candidates incl. ``<end>`` (sums to <= 1);
   (b) batch_probs: c_j itself (marginal, may sum above 1), for provisioning decisions.
 Horizons k > 1 are not modelled by the ranker; ``predict(ctx, k)`` uses the n-gram there.
@@ -49,6 +50,7 @@ from predictors.workflow import START
 
 CONFIG = Path(__file__).resolve().parent.parent / "configs" / "model" / "ranker.yaml"
 SCHEMA_VERSION = 1
+CALIBRATIONS = ("none", "isotonic")
 MISSING = -1.0  # numeric features; categorical codes: unseen = n, "no value" = n + 1
 CAT_FEATURES = ["cand", "last1", "last2", "last3", "last4", "last5", "node"]
 FEATURES = [
@@ -116,8 +118,9 @@ class _Base:
         self.graph, self.ngram, self.blend = graph, ngram, blend
 
     @classmethod
-    def fit(cls, train: Sequence[Episode], val: Sequence[Episode]) -> _Base:
-        g = TransitionGraph.from_config().fit(train)
+    def fit(cls, train: Sequence[Episode], val: Sequence[Episode],
+            graph_overrides: dict[str, Any] | None = None) -> _Base:
+        g = TransitionGraph.from_config(**(graph_overrides or {})).fit(train)
         return cls(g, GraphNgram(g).fit(train, val), GraphPriorBlend(g).fit(train, val))
 
     @classmethod
@@ -133,9 +136,12 @@ class _Base:
 class LGBMRanker(NextToolModel):
     name = "lgbm_ranker"
 
-    def __init__(self, cfg: dict[str, Any] | None = None, calibrated: bool = True) -> None:
+    def __init__(self, cfg: dict[str, Any] | None = None,
+                 calibration: str | None = None) -> None:
         self.cfg = cfg if cfg is not None else yaml.safe_load(CONFIG.read_text())
-        self.calibrated = calibrated
+        self.calibration = calibration or str(self.cfg.get("calibration", "none"))
+        if self.calibration not in CALIBRATIONS:
+            raise ValueError(f"calibration must be one of {CALIBRATIONS}")
         self.base: _Base | None = None
         self.booster: lgb.Booster | None = None
         self.calibrator = Calibrator()
@@ -265,13 +271,13 @@ class LGBMRanker(NextToolModel):
                    if fold_of[ep.session_id] == f]
             if not fit_eps or not pts:
                 continue
-            x, y, g = self._dataset(_Base.fit(fit_eps, val), pts)
+            x, y, g = self._dataset(_Base.fit(fit_eps, val, cfg.get("graph")), pts)
             xs.append(x)
             ys.append(y)
             gs.append(g + (gs[-1].max() + 1 if gs else 0))
         x_tr, y_tr = np.vstack(xs), np.concatenate(ys)
 
-        self.base = _Base.fit(train, val)
+        self.base = _Base.fit(train, val, cfg.get("graph"))
         vpts = [(ep.context(i), self._truth(ep, i))
                 for ep, i in self._points(val, int(cfg["max_val_points"]), seed + 1)]
         x_va, y_va, _ = self._dataset(self.base, vpts)
@@ -315,12 +321,12 @@ class LGBMRanker(NextToolModel):
         calibrated value; without the tie-break their order would fall back to tool names.
         The convex mix keeps values in [0, 1] and moves them by at most ``TIE_EPS``.
         """
-        if not self.calibrated:
+        if self.calibration == "none":
             return raw
         return (1.0 - TIE_EPS) * self.calibrator(raw) + TIE_EPS * raw
 
     def scores(self, ctx: Context) -> dict[str, float]:
-        """Calibrated (or raw, if ``calibrated=False``) P(candidate in the next batch)."""
+        """P(candidate in the next batch): raw, or isotonic if ``calibration="isotonic"``."""
         assert self.base is not None
         cands, x = self.rows(self.base, ctx)
         raw = self._raw(x)
@@ -354,6 +360,24 @@ class LGBMRanker(NextToolModel):
 
     def batch_probs(self, ctx: Context) -> dict[str, float]:
         return {t: p for t, p in self.scores(ctx).items() if t != END}
+
+    def batch_probs_many(self, ctxs: Sequence[Context], chunk: int = 2000
+                         ) -> list[dict[str, float]]:
+        """``batch_probs`` for many contexts, one booster call per chunk."""
+        assert self.base is not None
+        out: list[dict[str, float]] = []
+        for lo in range(0, len(ctxs), chunk):
+            built = [self.rows(self.base, c) for c in ctxs[lo:lo + chunk]]
+            if not built:
+                continue
+            s = self._calibrate(self._raw(np.vstack([x for _, x in built])))
+            i = 0
+            for cands, x in built:
+                vals = s[i:i + len(x)]
+                i += len(x)
+                out.append({c: float(min(1.0, max(0.0, v)))
+                            for c, v in zip(cands, vals, strict=True) if c != END})
+        return out
 
     def feature_importance(self, top: int = 15) -> list[tuple[str, float]]:
         assert self.booster is not None

@@ -211,9 +211,9 @@ class TransitionGraph(NextToolModel):
         self.sanitize_stats: dict[str, int] = {}
 
     @classmethod
-    def from_config(cls, path: Path = CONFIG) -> TransitionGraph:
-        """Unfitted graph with the parameters in configs/model/graph.yaml."""
-        cfg = yaml.safe_load(path.read_text(encoding="utf-8"))
+    def from_config(cls, path: Path = CONFIG, **overrides: Any) -> TransitionGraph:
+        """Unfitted graph with the parameters in configs/model/graph.yaml (and ``overrides``)."""
+        cfg = {**yaml.safe_load(path.read_text(encoding="utf-8")), **overrides}
         return cls(**{k: cfg[k] for k in ("min_support", "per_session_cap", "max_events",
                                           "max_order", "max_gap_ms") if k in cfg})
 

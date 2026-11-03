@@ -1,6 +1,6 @@
 # Prediction engine: state of work (branch feat/model)
 
-Last updated: 2026-11-02 (after Phase 4 full runs). Local commits only; nothing pushed or merged.
+Last updated: 2026-11-03 (Phase 4 decisions applied, cap measured, Phases 5-6 done). Local commits only; nothing pushed or merged.
 
 ## Commits
 
@@ -118,14 +118,30 @@ Last updated: 2026-11-02 (after Phase 4 full runs). Local commits only; nothing 
   contract `docs/predictor_contract.md` (feat/infra 18a711f), and proposals P1-P8 (not
   applied). The service (Phase 9) will conform to the contract exactly: `POST /decide`.
 
+## 2026-11-03: user decisions applied, cap, Phases 5-6
+
+- Calibration: raw scores by default (`calibration: none|isotonic` in ranker.yaml); Phase 4
+  runner scores the other mode from the same fitted model; report states VAL cannot choose.
+- Contract decisions P1-P8 written to docs/model.md (for the infra window to apply).
+- Cap: `predictors/cap_sweep.py`, `results/p4_cap.md`: cap 3 costs <= 0.9 pt (n-gram fixed
+  only; GKF 0.0; ranker 0.1) -> keep 3.
+- Phase 5: `predictors/decide.py`, `predictors/ladder.py`, `predictors/cold_start.py`
+  (reads the infra file by path), configs decide/pricing/sim.yaml.
+- Phase 6: `sim/offline.py`, `sim/figures.py`; results/sim_offline.csv, sim_hideable.csv,
+  sim_report.md, sim_pareto.png, tau_curve.png. Run with
+  `--cold-start ~/skypiea-infra/configs/cold_start.yaml` until the file exists on this branch.
+- Bugs found and fixed: (1) a decision's short TTL replaced the 30 s after-use TTL; (2) the
+  oracle counted a still-busy pod as available (test added).
+- Headline: predictive policy does not beat fixed keep-alive on TraceLab/Copilot; prewarm
+  precision 7.5% at tau 0.6 on TraceLab. Timing rule vs start-now not chosen; to be chosen
+  on VAL. The tau2 diagnosis of the timing rule was looked at on TEST (disclosed).
+
 ## Next
 
-1. (Waiting for the user's go after the Phase 4 report.) Per-session cap measurement on full
-   TraceLab (cap 3 vs 5 vs none); raise the cap if 3 costs more than 1 point of top-1.
-2. Phase 5 decisions, then Phase 6 sim on full data with `configs/cold_start.yaml` (E0 kind,
-   committed on feat/infra c21a567, a lower bound). The sim report must add a hideable
-   fraction per source and tool class (think gap > cold start, cached and uncached) and the
-   cold rate split by hideable / non-hideable.
+1. Waiting for the user on the Phase 6 STOP: which rule to pursue, whether to diagnose the
+   low prewarm precision (copies quantile) on VAL, the cold-latency value for the cost-based
+   threshold, and the after-use TTL question for the contract.
+2. Then Phase 7 (optional GRU) or Phase 8+.
 
 ## Rules for the next session (from the user)
 
@@ -151,5 +167,4 @@ Last updated: 2026-11-02 (after Phase 4 full runs). Local commits only; nothing 
 - Stop at each STOP point and wait. No more poisoning guards beyond what the red-team needs.
 - Run with `.venv/bin/python` (PYTHONPATH=$PWD for scripts). Phase 4 runner:
   `python -m predictors.phase4 [--report]`; log in data/processed/_staging/.
-- Status now: Phase 4 reported; waiting for the user's go on step 2 (cap measurement) and
-  the raw-vs-isotonic decision.
+- Status now: Phase 6 reported (STOP); waiting for the user.

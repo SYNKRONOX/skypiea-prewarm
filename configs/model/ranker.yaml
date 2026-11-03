@@ -7,6 +7,11 @@ candidates:
 oof_folds: 3              # group folds for out-of-fold base-model features on train
 max_train_points: 60000   # decision points sampled (seeded) for LightGBM training
 max_val_points: 30000     # decision points for early stopping and calibration
+# graph: {per_session_cap: 5}   # optional overrides of configs/model/graph.yaml (experiments)
+# none: ship raw LightGBM scores (default; raw is already calibrated on TEST, Phase 4).
+# isotonic: apply the VAL-fitted isotonic map. The map is always fitted and saved, and the
+# Phase 4 runner reports TEST ECE both ways; VAL cannot choose, since isotonic is fitted on it.
+calibration: none         # none | isotonic
 lgbm:
   objective: binary
   learning_rate: 0.05

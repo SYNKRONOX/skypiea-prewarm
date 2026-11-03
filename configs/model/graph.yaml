@@ -1,6 +1,7 @@
 # TransitionGraph parameters (predictors/graph.py). Read by TransitionGraph.from_config().
-# per_session_cap: max count of any (context -> target) pair from one session. To be
-# re-measured after E0 on full TraceLab (3 vs 5 vs none); raise it if 3 costs > 1 point top-1.
+# per_session_cap: max count of any (context -> target) pair from one session. Measured on
+# full TraceLab (predictors/cap_sweep.py, results/p4_cap.csv): cap 3 vs none costs at most
+# 0.9 pt top-1 (n-gram, fixed split; 0.0 GKF; ranker 0.1), under the 1-point rule -> keep 3.
 min_support: 3
 per_session_cap: 3        # null = no cap
 max_events: 2000

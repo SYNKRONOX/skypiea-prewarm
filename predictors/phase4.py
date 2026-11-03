@@ -5,9 +5,11 @@
     python -m predictors.phase4 --report                       # markdown tables from the CSVs
 
 Per (source, split) the baselines and the ranker go through ``predictors.eval.evaluate``
-(rows in results/p1_accuracy.csv). The fitted ranker is then scored a second time with its
-isotonic calibrator switched off (model name ``lgbm_ranker_raw``), so the TEST-set ECE before
-and after calibration comes from one fitted model. On the fixed split two more CSVs are
+(rows in results/p1_accuracy.csv). ``lgbm_ranker`` is scored in the configured
+``calibration`` mode (default ``none``: raw scores); the same fitted model is then scored in
+the other mode (``lgbm_ranker_isotonic`` or ``lgbm_ranker_raw``), so the TEST-set ECE with and
+without isotonic comes from one fitted model. VAL cannot choose between them: the isotonic
+map is fitted on VAL, so its VAL ECE is in-sample. On the fixed split two more CSVs are
 written, each row carrying the ranker config and the git commit:
 
 - results/p4_ranker.csv: per-candidate (in-next-batch) ECE on TEST before/after
@@ -93,9 +95,10 @@ def run_one(source: str, vocab: str | None, split: str,
     res = evaluate(LGBMRanker.from_config(), source, split, vocab, test_source=test_source)
     print(_line(res), flush=True)
     r: LGBMRanker = res["fitted"]
-    raw = copy.copy(r)
-    raw.calibrated, raw.name = False, "lgbm_ranker_raw"
-    print(_line(evaluate(raw, source, split, vocab, test_source=test_source, refit=False)),
+    alt = copy.copy(r)
+    alt.calibration = "isotonic" if r.calibration == "none" else "none"
+    alt.name = "lgbm_ranker_isotonic" if alt.calibration == "isotonic" else "lgbm_ranker_raw"
+    print(_line(evaluate(alt, source, split, vocab, test_source=test_source, refit=False)),
           flush=True)
     if split != "fixed" or test_source is not None:
         return
@@ -142,6 +145,21 @@ def report() -> str:
         v, lo, hi = r.iloc[0][["value", "ci_lo", "ci_hi"]]
         return f"{v:.3f} [{lo:.2f},{hi:.2f}]" if ci and not pd.isna(lo) else f"{v:.3f}"
 
+    def mode(src: str, voc: str, calibration: str, metric: str) -> str:
+        """Latest fixed-split value of the ranker scored with ``calibration`` (none|isotonic).
+
+        ``lgbm_ranker`` rows carry their mode in the config; rows from before the switch
+        have none recorded and were isotonic.
+        """
+        r = fx[(fx.source == src) & (fx.vocab == voc) & (fx.metric == metric)
+               & fx.model.isin(["lgbm_ranker", "lgbm_ranker_raw", "lgbm_ranker_isotonic"])]
+        def m(row: pd.Series) -> str:
+            if row.model != "lgbm_ranker":
+                return "none" if row.model == "lgbm_ranker_raw" else "isotonic"
+            return str(json.loads(row.config or "{}").get("calibration", "isotonic"))
+        r = r[r.apply(m, axis=1) == calibration] if len(r) else r
+        return "-" if r.empty else f"{r.sort_values('time').iloc[-1].value:.3f}"
+
     def gk(src: str, voc: str, model: str) -> str:
         r = gkf[(gkf.source == src) & (gkf.vocab == voc) & (gkf.model == model)
                 & (gkf.metric == "top1_k1")]
@@ -161,8 +179,12 @@ def report() -> str:
                    f"{cell(src, v, 'lgbm_ranker', 'top3_k1', False)} | "
                    f"{gk(src, v, 'ngram')} | {gk(src, v, 'lgbm_ranker')} |")
     out.append("")
-    out.append("| Source | top-1 ECE raw -> cal | NLL raw -> cal | row ECE test raw -> cal "
-               "| row ECE val (cal, in-sample) | p99 ms ranker | p99 ms n-gram |")
+    out.append("Shipped: raw scores (`calibration: none`). TEST ECE is shown both ways; VAL "
+               "cannot choose, because the isotonic map is fitted on VAL (its VAL ECE is "
+               "in-sample).")
+    out.append("")
+    out.append("| Source | top-1 ECE raw -> iso | NLL raw -> iso | row ECE test raw -> iso "
+               "| row ECE val (iso, in-sample) | p99 ms ranker | p99 ms n-gram |")
     out.append("|---|---|---|---|---|---|---|")
     rk = pd.read_csv(RANKER_CSV, dtype={"vocab": str}, keep_default_na=False) \
         if RANKER_CSV.exists() else pd.DataFrame()
@@ -173,10 +195,10 @@ def report() -> str:
                    f"{float(e.test_row_ece_cal.iloc[0]):.4f}" if len(e) else "-")
         val_ece = f"{float(e.val_row_ece_cal.iloc[0]):.4f}" if len(e) else "-"
         out.append(
-            f"| {src} {voc or ''} | {cell(src, v, 'lgbm_ranker_raw', 'ece', False)} -> "
-            f"{cell(src, v, 'lgbm_ranker', 'ece', False)} | "
-            f"{cell(src, v, 'lgbm_ranker_raw', 'nll_k1', False)} -> "
-            f"{cell(src, v, 'lgbm_ranker', 'nll_k1', False)} | {row_ece} | {val_ece} | "
+            f"| {src} {voc or ''} | {mode(src, v, 'none', 'ece')} -> "
+            f"{mode(src, v, 'isotonic', 'ece')} | "
+            f"{mode(src, v, 'none', 'nll_k1')} -> "
+            f"{mode(src, v, 'isotonic', 'nll_k1')} | {row_ece} | {val_ece} | "
             f"{cell(src, v, 'lgbm_ranker', 'p99_ms', False)} | "
             f"{cell(src, v, 'ngram', 'p99_ms', False)} |")
     return "\n".join(out)

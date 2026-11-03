@@ -271,7 +271,7 @@ def latency(model: NextToolModel, test: Sequence[Episode], n: int = LATENCY_SAMP
 def model_config(model: NextToolModel) -> dict[str, Any]:
     cfg: dict[str, Any] = {}
     for attr in ("alpha", "weights", "min_count", "min_support", "edge_label",
-                 "best_iteration", "val_ece"):
+                 "best_iteration", "val_ece", "calibration"):
         if hasattr(model, attr):
             v = getattr(model, attr)
             cfg[attr] = list(v) if isinstance(v, tuple) else v

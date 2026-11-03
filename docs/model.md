@@ -1,7 +1,74 @@
 # Prediction engine (branch feat/model)
 
-Work in progress; the full write-up is Phase 12. This file currently holds the predictor service
-contract alignment.
+Work in progress; the full write-up is Phase 12. This file holds the calibration and cap
+decisions, the warm-decision rules (Phase 5), the offline-simulation definitions (Phase 6) and
+the predictor service contract alignment.
+
+## Calibration (decided 2026-11-03)
+
+The ranker ships **raw LightGBM scores** (`configs/model/ranker.yaml`, `calibration: none`).
+`calibration: isotonic` applies the VAL-fitted isotonic map instead; the map is always fitted
+and saved (`calibrator.json`) so either mode can be served. `python -m predictors.phase4`
+reports TEST-set ECE both ways from one fitted model (`results/p4_report.md`). VAL cannot
+choose between them: the isotonic map is fitted on VAL, so its VAL ECE is in-sample (0.000).
+On TEST, raw row ECE is .002-.004 on the real sources and isotonic makes it slightly worse
+there; isotonic helps only on tau2 and synthetic A. Calibration never reorders candidates, so
+top-1/top-3 are identical in both modes.
+
+## Per-session cap (decided 2026-11-03)
+
+`per_session_cap` stays at **3** (`configs/model/graph.yaml`). Measured on full TraceLab
+native, fixed split and 5-fold GKF (`python -m predictors.cap_sweep`, `results/p4_cap.md`):
+cap 3 vs no cap costs at most 0.9 pt top-1 (graph n-gram, fixed split only; 0.0 under GKF;
+ranker 0.1 pt), below the 1-point rule.
+
+## Warm decisions (Phase 5, `predictors/decide.py`)
+
+Parameters: `configs/model/decide.yaml`; cold starts: the infra cold-start file, loaded by path
+(`predictors/cold_start.py`; no cold-start number lives in code; tool classes map to servers
+by the file's `classes` lists, unlisted classes to its `fallback`). Prices and per-tier CPU:
+`configs/model/pricing.yaml` (assumptions).
+
+- Probabilities: the fail-open ladder (`predictors/ladder.py`) ranker -> n-gram -> majority
+  -> none; a rung that raises, returns invalid values or exceeds the 40 ms budget (checked on
+  return) is skipped and `degraded=true`.
+- Abstain (`mode="prior"`, no decisions): last tool unseen in train, or max in-next-batch
+  probability < `min_conf` (0.3). All rungs failing: `mode="none"`. Both mean the cold path.
+- Threshold: fixed `tau` (0.6), or cost-based tau_j = c_idle*E[idle] / (c_idle*E[idle] +
+  C_cold) clamped to [0.2, 0.95], with E[idle] = the decision's TTL and C_cold = cold-start
+  compute + `cold_latency_usd_per_s` x cold seconds. With the latency value at 0 (compute
+  only) tau_j is close to TTL / (TTL + cold start), about 0.9 for a 30 s TTL.
+- Copies: smallest n with P(count <= n | tool in batch) >= 0.9, capped at min(3, 10).
+- Timing: start_in_ms = max(0, gap_p50 - cold_p95 - margin); TTL from Ready until the p90
+  arrival, clamped to [5 s, 600 s]; 30 s without timing data.
+- Per server (contract P7): copies max, start_in min, ttl max. Operator caps
+  (`apply_caps`): 3 pods per server, 20 in total, an optional ramp budget; when a cap binds,
+  pods go to the highest prob x cold-start ms.
+
+## Offline simulation (Phase 6, `sim/offline.py`)
+
+Definitions are in the module docstring; the key modelling choices are: pods are per (session,
+server), never shared across sessions; decisions are made at the end of each batch (no
+request before the first call); a call that finds its pod still starting waits for it (FR-9
+hold); a decision's TTL holds a prewarmed pod until its first use, then the controller
+default (30 s) applies; "hideable" = not in the first batch and think gap >= the server's
+median cold start.
+
+Results (`results/sim_report.md`, figures `results/sim_pareto.png`, `results/tau_curve.png`;
+cold starts from the E0 kind file, a lower bound): **on TraceLab and Copilot the predictive
+policy does not beat fixed keep-alive.** At tau 0.6 it adds 2.0 (TraceLab) / 1.7 (Copilot)
+points of warm calls over keep-alive 30 s, for 43% / 9% more idle pod-seconds, while
+keep-alive 60 s gets 66.3% warm on TraceLab at 29k idle pod-s per 1,000 calls against our
+60.5% at 26k. At tau 0.3 it reaches 70.0% warm (TraceLab, cached) at 59k; keep-alive 300 s
+gets 80.2% at 90k. Its points lie on or above (worse than) the keep-alive curve. 94% (TraceLab, cached) / 82% (Copilot) / 78% (tau2) of calls are
+hideable; the oracle warms exactly those. Prewarm precision is low on TraceLab (7.5% of
+prewarmed pods used at tau 0.6). The timing rule (start at p50, TTL to p90) loses to "start
+now, 30 s TTL" on tau2; neither rule has been chosen yet, and the choice should be made on
+VAL.
+
+Open contract question for the infra session: the sim assumes a decision's `ttl_s` covers a
+prewarmed pod only until its first use, after which the controller default (30 s) applies.
+The contract does not say which TTL governs a pod after it has been used.
 
 ## Predictor service contract: alignment with docs/predictor_contract.md (draft v1)
 
@@ -74,3 +141,20 @@ model_version, latency_ms}`. The table lists every field where the original mode
   batches. Proposal: the gateway assigns batch ids by the client request that carried the
   calls when possible, and by overlap only as a fallback. The contract should say which one
   applies.
+
+### Decisions on the proposals (user, 2026-11-03)
+
+This list goes to the infra session as written; the infra window applies it to
+`docs/predictor_contract.md` and the gateway. The service (Phase 9) implements the decided
+form.
+
+| # | Decision | What the contract will say |
+|---|---|---|
+| P1 | open (no decision yet) | unchanged; one predictor per deployment until decided |
+| P2 | accept | the gateway sends `session_id` as an opaque hash (first 32 hex characters of the sha256 of the MCP session id); format `^[A-Za-z0-9_.-]{1,64}$` |
+| P3 | accept | the gateway sends at most the last 200 calls plus `history_total: int` (calls so far) |
+| P4 | no change | `ttl_s` stays an integer or null; the service always sends an explicit value |
+| P5 | no change | `now_ms` stays; the service validates it and does not use it as a feature |
+| P6 | accept | optional response fields `mode` (`ranker` \| `ngram` \| `majority` \| `prior` \| `none`), `degraded` (bool), `truncated` (bool) |
+| P7 | accept | the controller merges decisions per server: `copies` = max, `ttl_s` = max, `start_in_ms` = min |
+| P8 | accept, modified | batch ids come from an explicit `X-Skypiea-Batch` header when the client sends one; otherwise the gateway groups calls that overlapped in time. The contract states this order |

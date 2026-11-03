@@ -12,7 +12,9 @@ Top-1 at k=1, fixed split, 95% group-bootstrap CI; GKF = mean ± sd over 5 folds
 | synthetic_random_walk  | 0.614 [0.60,0.63] | 0.613 [0.60,0.62] | 0.614 [0.60,0.63] | 0.614 [0.60,0.63] | 0.949 | 0.622 ± 0.004 | 0.621 ± 0.002 |
 | tracelab->copilot_2026 coding_common | 0.428 [0.41,0.45] | 0.436 [0.42,0.46] | 0.437 [0.42,0.46] | 0.458 [0.44,0.48] | 0.872 | - | - |
 
-| Source | top-1 ECE raw -> cal | NLL raw -> cal | row ECE test raw -> cal | row ECE val (cal, in-sample) | p99 ms ranker | p99 ms n-gram |
+Shipped: raw scores (`calibration: none`). TEST ECE is shown both ways; VAL cannot choose, because the isotonic map is fitted on VAL (its VAL ECE is in-sample).
+
+| Source | top-1 ECE raw -> iso | NLL raw -> iso | row ECE test raw -> iso | row ECE val (iso, in-sample) | p99 ms ranker | p99 ms n-gram |
 |---|---|---|---|---|---|---|
 | tracelab  | 0.045 -> 0.057 | 1.345 -> 1.348 | 0.0028 -> 0.0039 | 0.0000 | 3.492 | 0.064 |
 | tracelab coding_common | 0.029 -> 0.022 | 1.168 -> 1.168 | 0.0031 -> 0.0055 | 0.0000 | 6.394 | 0.030 |

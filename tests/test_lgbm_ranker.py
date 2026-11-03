@@ -105,20 +105,27 @@ def test_training_is_deterministic(tmp_path: Path) -> None:
         assert (tmp_path / "a" / f).read_bytes() == (tmp_path / "b" / f).read_bytes(), f
 
 
-def test_uncalibrated_mode_and_feature_importance(fitted: tuple[LGBMRanker, list]) -> None:
+def _isotonic(r: LGBMRanker) -> LGBMRanker:
+    iso = LGBMRanker(r.cfg, calibration="isotonic")
+    iso.__dict__.update({k: v for k, v in r.__dict__.items() if k != "calibration"})
+    return iso
+
+
+def test_calibration_modes_and_feature_importance(fitted: tuple[LGBMRanker, list]) -> None:
     r, te = fitted
-    raw = LGBMRanker(r.cfg, calibrated=False)
-    raw.__dict__.update({k: v for k, v in r.__dict__.items() if k != "calibrated"})
+    assert r.calibration == "none"  # shipped default: raw scores
+    iso = _isotonic(r)
     ctx = _contexts(te)[3]
-    assert raw.scores(ctx) != r.scores(ctx)
+    assert iso.scores(ctx) != r.scores(ctx)
+    with pytest.raises(ValueError):
+        LGBMRanker(r.cfg, calibration="platt")
     imp = r.feature_importance(15)
     assert len(imp) == 15 and {f for f, _ in imp} <= set(FEATURES)
 
 
 def test_calibration_never_reorders_candidates(fitted: tuple[LGBMRanker, list]) -> None:
     r, te = fitted
-    raw = LGBMRanker(r.cfg, calibrated=False)
-    raw.__dict__.update({k: v for k, v in r.__dict__.items() if k != "calibrated"})
+    r, raw = _isotonic(r), r
     for ctx in _contexts(te):
         a, b = r.scores(ctx), raw.scores(ctx)
         order = sorted(b, key=lambda t: (-b[t], t))

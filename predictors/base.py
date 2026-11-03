@@ -13,17 +13,33 @@ from dataclasses import dataclass
 
 from predictors.data import END, Context, Episode
 
-__all__ = ["END", "Context", "Episode", "NextToolModel", "Policy", "Predictor",
-           "ThresholdPolicy", "WarmDecision"]
+__all__ = ["END", "Context", "ContextPolicy", "Decision", "Episode", "NextToolModel", "Policy",
+           "Predictor", "ThresholdPolicy", "WarmDecision"]
 
 
 @dataclass(frozen=True)
 class WarmDecision:
-    """Ask the controller to have ``copies`` pods ready in ``start_in_ms``."""
+    """Ask the controller to have ``copies`` pods ready in ``start_in_ms`` and to keep an
+    unused pod for ``ttl_ms`` (FR-3)."""
 
     copies: int
     start_in_ms: float
     prob: float
+    ttl_ms: float = 30_000.0
+
+
+@dataclass(frozen=True)
+class Decision:
+    """What a ``ContextPolicy`` returns for one request.
+
+    ``warm`` maps tool class -> decision; empty means the normal cold path (FR-4).
+    ``mode`` is the rung that answered (``ranker`` | ``ngram`` | ``majority``), ``prior``
+    when it abstained, or ``none`` when every rung failed.
+    """
+
+    warm: dict[str, WarmDecision]
+    mode: str
+    degraded: bool = False
 
 
 class Predictor(ABC):
@@ -44,8 +60,16 @@ class Predictor(ABC):
         return [t for t, _ in ranked[:k]]
 
 
+class ContextPolicy(ABC):
+    """Decides which tools to warm at a decision point (the service and the simulator)."""
+
+    @abstractmethod
+    def decide(self, ctx: Context) -> Decision:
+        """Warm decisions for the next batch after ``ctx``."""
+
+
 class Policy(ABC):
-    """Decides which tools to warm given the history so far."""
+    """Decides which tools to warm given the history so far (string-history predictors)."""
 
     @abstractmethod
     def decide(self, history: Sequence[str]) -> dict[str, WarmDecision]:
