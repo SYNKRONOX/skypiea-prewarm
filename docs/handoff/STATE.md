@@ -126,3 +126,30 @@ Last updated: 2026-11-02 (after Phase 4 full runs). Local commits only; nothing 
    committed on feat/infra c21a567, a lower bound). The sim report must add a hideable
    fraction per source and tool class (think gap > cold start, cached and uncached) and the
    cold rate split by hideable / non-hideable.
+
+## Rules for the next session (from the user)
+
+- Worktree `~/skypiea-model`, branch `feat/model` only; local commits, never push or merge.
+  Git has no identity configured: reuse the last commit's author with `git -c user.name=...
+  -c user.email=...`; never change git config; never print the author email.
+- Only create or modify: predictors/, traces/, sim/, services/predictor/, configs/{tool_classes,
+  vocab,model}/, data/samples/, models/README.md, tests/, tools_audit/, mk/model.mk,
+  requirements-model.txt, docs/{model,benchmark_protocol,model_readme_section,redteam}.md,
+  docs/handoff/. Never edit README.md, the root Makefile, requirements.txt, tools/, deploy/,
+  infra/, controller/, shaper/, configs/cold_start.yaml (infra session owns those, in
+  `~/skypiea-infra` on feat/infra).
+- Before each commit: ruff + pytest pass; nothing from data/raw or data/processed, no .venv,
+  caches or model binaries; ask before committing any file over 1 MB; grep for secrets/emails
+  and never print them; no PDFs except the plan; no chat exports.
+- Data privacy: never store command or prompt text; no string over 64 chars; no pickle,
+  joblib, eval, exec, os.system or shell=True in services/ and predictors/.
+- Science: train on train, tune on val, report on test; fixed seeds; every results CSV
+  records config and git commit; never invent numbers; never tune to hit a published number;
+  same error twice -> stop and show the user.
+- Compute: `nice -n 10`, LightGBM num_threads 4, single process; the laptop is shared with
+  Docker and a kind cluster.
+- Stop at each STOP point and wait. No more poisoning guards beyond what the red-team needs.
+- Run with `.venv/bin/python` (PYTHONPATH=$PWD for scripts). Phase 4 runner:
+  `python -m predictors.phase4 [--report]`; log in data/processed/_staging/.
+- Status now: Phase 4 reported; waiting for the user's go on step 2 (cap measurement) and
+  the raw-vs-isotonic decision.
