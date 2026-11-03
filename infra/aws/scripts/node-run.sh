@@ -11,13 +11,21 @@ REGION="${AWS_REGION:-ap-south-1}"
 TAG="SKYPIEA$RANDOM$RANDOM"
 # The session prints banners around the output and always exits 0, so the command's output is
 # framed with markers and its exit code is passed back on the end marker.
-# The command travels base64-encoded, so no quoting survives into the remote shell.
+# AWS-StartNonInteractiveCommand does not run the command through a shell (it splits it into
+# argv, honouring quotes), so the payload is an explicit bash -c '...'. The user's command
+# travels base64-encoded inside it (no quotes, no spaces), so no quoting reaches the VM.
 B64=$(printf '%s' "$1" | base64 -w0)
-INNER="echo ${TAG}_BEGIN; echo $B64 | base64 -d | sudo -n bash 2>&1; echo ${TAG}_END \$?"
+INNER="bash -c 'echo ${TAG}_BEGIN; echo $B64 | base64 -d | sudo -n bash 2>&1; echo ${TAG}_END \$?'"
 PARAMS=$(python3 -c 'import json,sys; print(json.dumps({"command": [sys.argv[1]]}))' "$INNER")
+# session-manager-plugin ends the session with "Cannot perform start session: EOF" as soon as
+# its stdin hits EOF, so stdin is held open by a sleep that is killed afterwards.
+exec 3< <(sleep 3600)
+HOLD=$!
 OUT=$(aws ssm start-session --region "$REGION" --target "$ID" \
-        --document-name AWS-StartNonInteractiveCommand --parameters "$PARAMS" 2>&1) || {
-  echo "ssm start-session failed: $OUT" >&2; exit 125; }
+        --document-name AWS-StartNonInteractiveCommand --parameters "$PARAMS" 2>&1 <&3) || {
+  kill "$HOLD" 2>/dev/null; echo "ssm start-session failed: $OUT" >&2; exit 125; }
+kill "$HOLD" 2>/dev/null || true
+exec 3<&-
 printf '%s\n' "$OUT" | tr -d '\r' | python3 -c '
 import sys
 tag = sys.argv[1]

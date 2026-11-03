@@ -86,7 +86,11 @@ aws-shell:               ## interactive root-capable shell on the VM over SSM (n
 aws-kubeconfig:          ## fetch kubeconfig over SSM -> ~/.kube/skypiea-aws (outside the repo)
 	KUBECONFIG_OUT=$(AWS_KUBECONFIG) infra/aws/scripts/get-k3s-config.sh
 
-push-images-aws:         ## docker login to ECR (token via the CLI), push all images, docker logout
+push-images-aws:         ## copy all images kind registry -> ECR (infra/aws/scripts/push_ecr.py; run push-images-kind first)
+	$(PY) infra/aws/scripts/push_ecr.py --registry $$($(TF) output -raw ecr_registry) --region $(AWS_REGION) \
+	  --tag $(IMAGE_TAG) --images $(IMAGES)
+
+push-images-aws-docker:  ## fallback: docker login + docker push (slow here via Docker Desktop's proxy)
 	@REG=$$($(TF) output -raw ecr_registry); \
 	aws ecr get-login-password --region $(AWS_REGION) | \
 	  docker login --username AWS --password-stdin $$REG >/dev/null && echo "logged in to $$REG"; \
