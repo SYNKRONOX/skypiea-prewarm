@@ -6,8 +6,8 @@ exec > >(tee -a /var/log/skypiea-bootstrap.log) 2>&1
 export DEBIAN_FRONTEND=noninteractive
 snap install aws-cli --classic   # for ECR tokens via the instance role (no keys on disk)
 
-# --- k3s (pinned). The API cert always carries the DNS SAN "kubernetes"; the laptop
-# kubeconfig sets tls-server-name: kubernetes, so a new public IP after stop/start is fine.
+# --- k3s (pinned). The API (6443) is reachable only through an SSM port-forward from the
+# laptop (no inbound security-group rule); the laptop kubeconfig points at 127.0.0.1.
 curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION='${k3s_version}' sh -s - server \
   --disable traefik --disable servicelb --disable metrics-server \
   --write-kubeconfig-mode 600 \
@@ -60,40 +60,7 @@ Persistent=true
 WantedBy=timers.target
 UNIT
 
-# --- cost guard: power off (= STOP, see instance_initiated_shutdown_behavior) after the max
-# uptime. The limit is read at every check, so `make aws-extend H=<hours>` can raise it.
-mkdir -p /etc/skypiea
-echo '${max_uptime_hours}' > /etc/skypiea/max-uptime-hours
-cat > /usr/local/bin/skypiea-uptime-guard <<'SCRIPT'
-#!/bin/bash
-set -euo pipefail
-max_h=$(cat /etc/skypiea/max-uptime-hours 2>/dev/null || echo 12)
-up_s=$(cut -d. -f1 /proc/uptime)
-if [ "$up_s" -ge $(( max_h * 3600 )) ]; then
-  logger -t skypiea "uptime $up_s s >= $max_h h: powering off (instance stops)"
-  systemctl poweroff
-fi
-SCRIPT
-chmod 0755 /usr/local/bin/skypiea-uptime-guard
-cat > /etc/systemd/system/skypiea-uptime-guard.service <<'UNIT'
-[Unit]
-Description=Skypiea cost guard: stop the VM after its max uptime
-[Service]
-Type=oneshot
-ExecStart=/usr/local/bin/skypiea-uptime-guard
-UNIT
-cat > /etc/systemd/system/skypiea-uptime-guard.timer <<'UNIT'
-[Unit]
-Description=Check the Skypiea max-uptime cost guard every 5 minutes
-[Timer]
-OnBootSec=5min
-OnUnitActiveSec=5min
-[Install]
-WantedBy=timers.target
-UNIT
-
 systemctl daemon-reload
 systemctl enable --now skypiea-ecr-refresh.timer
-systemctl enable --now skypiea-uptime-guard.timer
 systemctl start skypiea-ecr-refresh.service
 touch /var/lib/skypiea-bootstrap-done

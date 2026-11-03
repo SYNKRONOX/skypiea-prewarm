@@ -1,9 +1,10 @@
 # Skypiea infra targets: tool images, kind, AWS (Terraform + k3s + ECR), E0.
 # Included from the root Makefile:   include mk/infra.mk
 .PHONY: build-images measure-startup infra-test cluster-kind cluster-kind-down push-images-kind \
-        deploy-kind e0-kind aws-ip aws-plan aws-apply aws-up aws-kubeconfig push-images-aws \
-        deploy-aws e0-aws aws-stop aws-start aws-destroy infra-check \
-        e0-kind-parallel e0-aws-parallel tool-map-coverage deploy-kind-e0 kind-integration grafana-kind aws-extend
+        deploy-kind e0-kind aws-plan aws-apply aws-kubeconfig push-images-aws \
+        deploy-aws e0-aws aws-stop aws-start aws-destroy infra-check aws-tunnel aws-shell \
+        aws-reminder aws-gateway e0-kind-parallel e0-aws-parallel tool-map-coverage \
+        deploy-kind-e0 kind-integration grafana-kind
 
 PY          ?= $(if $(wildcard .venv/bin/python),.venv/bin/python,python3)
 IMAGE_TAG   ?= $(shell tools/image_tag.sh)
@@ -20,7 +21,7 @@ E0PROBE     ?= true
 TF           = terraform -chdir=infra/aws
 AWS_KUBECONFIG ?= $(HOME)/.kube/skypiea-aws
 AWS_REGION  ?= ap-south-1
-SSH_KEY     ?= $(HOME)/.ssh/skypiea-aws
+REMIND_H    ?= 8
 
 # ---------------- images ----------------
 build-images:            ## build all tool images + E0 probe, one at a time
@@ -59,30 +60,33 @@ e0-kind:
 	$(PY) -m experiments.e0_cold_start --target kind --n $(N) --modes cached,uncached --tools all
 
 # ---------------- AWS ----------------
-aws-ip:                  ## show the public IP that would be allowed in the security group
-	@infra/aws/scripts/my-ip.sh
-
-$(SSH_KEY):
-	ssh-keygen -t ed25519 -N '' -C skypiea-aws -f $(SSH_KEY)
-
-aws-plan: $(SSH_KEY)     ## terraform plan -> infra/aws/tfplan (MY_IP=a.b.c.d required)
-	@test -n "$(MY_IP)" || { echo "set MY_IP=<your public IP> (see: make aws-ip)"; exit 1; }
+# No SSH and no inbound port: shell, k3s API and the gateway demo all go through SSM Session
+# Manager (needs session-manager-plugin on the laptop). Run `make aws-tunnel` in its own
+# terminal before anything that uses kubectl/helm (deploy-aws, e0-aws, aws-gateway, skypiea CLI).
+aws-plan:                ## terraform init/validate/fmt-check + plan -> infra/aws/tfplan (never committed)
 	$(TF) init -input=false
-	$(TF) plan -input=false -var my_ip_cidr=$(MY_IP)/32 \
-	  -var ssh_public_key_path=$(SSH_KEY).pub -out tfplan
+	$(TF) validate
+	$(TF) fmt -check -recursive
+	$(TF) plan -input=false -out=tfplan
 
-aws-apply:               ## apply the saved plan exactly as reviewed
+aws-apply:               ## apply the saved, reviewed plan exactly; then write the destroy reminder
 	$(TF) apply -input=false tfplan
 	@rm -f infra/aws/tfplan
+	@infra/aws/scripts/destroy-reminder.sh $(REMIND_H)
 
-aws-up: aws-plan         ## plan, then terraform asks for confirmation before applying
-	$(TF) apply tfplan
-	@rm -f infra/aws/tfplan
+aws-reminder:            ## calendar file reminding you to destroy, REMIND_H hours from now (default 8)
+	@infra/aws/scripts/destroy-reminder.sh $(REMIND_H)
 
-aws-kubeconfig:          ## fetch kubeconfig over SSH -> ~/.kube/skypiea-aws (not in the repo)
-	SSH_KEY=$(SSH_KEY) KUBECONFIG_OUT=$(AWS_KUBECONFIG) infra/aws/scripts/get-k3s-config.sh
+aws-tunnel:              ## SSM port-forward 127.0.0.1:16443 -> k3s API (foreground; own terminal)
+	infra/aws/scripts/tunnel.sh
 
-push-images-aws:         ## docker login to ECR, push all images, docker logout
+aws-shell:               ## interactive root-capable shell on the VM over SSM (no SSH)
+	aws ssm start-session --region $(AWS_REGION) --target $$($(TF) output -raw instance_id)
+
+aws-kubeconfig:          ## fetch kubeconfig over SSM -> ~/.kube/skypiea-aws (outside the repo)
+	KUBECONFIG_OUT=$(AWS_KUBECONFIG) infra/aws/scripts/get-k3s-config.sh
+
+push-images-aws:         ## docker login to ECR (token via the CLI), push all images, docker logout
 	@REG=$$($(TF) output -raw ecr_registry); \
 	aws ecr get-login-password --region $(AWS_REGION) | \
 	  docker login --username AWS --password-stdin $$REG >/dev/null && echo "logged in to $$REG"; \
@@ -92,7 +96,7 @@ push-images-aws:         ## docker login to ECR, push all images, docker logout
 	done; \
 	docker logout $$REG >/dev/null
 
-deploy-aws:              ## helm install the tools chart on the k3s VM (all tools at 0)
+deploy-aws:              ## helm install the chart on k3s (all tools at 0); needs aws-tunnel
 	helm upgrade --install skypiea $(CHART) --kubeconfig $(AWS_KUBECONFIG) \
 	  -n $(NS) --create-namespace -f $(CHART)/values-aws.yaml \
 	  --set registry=$$($(TF) output -raw ecr_registry)/ \
@@ -100,27 +104,33 @@ deploy-aws:              ## helm install the tools chart on the k3s VM (all tool
 	  --set monitoring.enabled=$(PLATFORM) --set e0Probe.enabled=$(E0PROBE) --wait
 	kubectl --kubeconfig $(AWS_KUBECONFIG) -n $(NS) get deploy
 
-e0-aws:
+e0-aws:                  ## E0 on AWS (needs aws-tunnel; image removal goes over SSM)
 	$(PY) -m experiments.e0_cold_start --target aws --n $(N) --modes cached,uncached \
-	  --tools all --kubeconfig $(AWS_KUBECONFIG) --ssh-key $(SSH_KEY)
+	  --tools all --kubeconfig $(AWS_KUBECONFIG)
+
+aws-gateway:             ## demo: gateway on http://127.0.0.1:8080/mcp (laptop loopback only); needs aws-tunnel
+	kubectl --kubeconfig $(AWS_KUBECONFIG) -n $(NS) port-forward --address 127.0.0.1 svc/skypiea-gateway 8080:80
 
 aws-stop:                ## stop the VM (keeps disk, ECR, S3; EBS storage still billed)
 	aws ec2 stop-instances --region $(AWS_REGION) --instance-ids $$($(TF) output -raw instance_id) \
 	  --query 'StoppingInstances[0].CurrentState.Name' --output text
 
-aws-start:               ## start the VM and refresh the kubeconfig (public IP changes)
+aws-start:               ## start the VM again (kubeconfig is unchanged: it points at the tunnel)
 	aws ec2 start-instances --region $(AWS_REGION) --instance-ids $$($(TF) output -raw instance_id) \
 	  --query 'StartingInstances[0].CurrentState.Name' --output text
 	aws ec2 wait instance-running --region $(AWS_REGION) --instance-ids $$($(TF) output -raw instance_id)
-	$(TF) apply -refresh-only -auto-approve -input=false -var my_ip_cidr=$$(infra/aws/scripts/my-ip.sh)/32 \
-	  -var ssh_public_key_path=$(SSH_KEY).pub >/dev/null
-	$(MAKE) aws-kubeconfig
 
-aws-destroy:             ## destroy EVERYTHING in infra/aws (asks for confirmation)
-	@read -r -p "Destroy all Skypiea AWS resources (VM, ECR images, bucket)? Type 'destroy skypiea': " a; \
+aws-destroy:             ## empty the bucket and ECR, then terraform destroy EVERYTHING (asks first)
+	@echo "Back up results first: aws s3 sync s3://$$($(TF) output -raw bucket_name) ./aws-backup"
+	@read -r -p "Delete ALL Skypiea AWS resources, bucket contents and images? Type 'destroy skypiea': " a; \
 	  [ "$$a" = "destroy skypiea" ] || { echo aborted; exit 1; }
-	$(TF) destroy -input=false -auto-approve -var my_ip_cidr=$$(infra/aws/scripts/my-ip.sh)/32 \
-	  -var ssh_public_key_path=$(SSH_KEY).pub
+	infra/aws/scripts/empty-for-destroy.sh
+	$(TF) destroy -input=false -auto-approve
+	@echo "Check: no resource tagged project=skypiea left in $(AWS_REGION):"
+	@aws resourcegroupstaggingapi get-resources --region $(AWS_REGION) \
+	  --tag-filters Key=project,Values=skypiea --query 'ResourceTagMappingList[].ResourceARN' --output text \
+	  | sed -E 's/[0-9]{12}/<account>/g' || true
+	@rm -f $(AWS_KUBECONFIG)
 
 # ---------------- checks ----------------
 infra-check:             ## lint, tests, sizes, and no secrets tracked
@@ -135,7 +145,7 @@ e0-kind-parallel:        ## E0 with 3 tools scaled up at the same moment (n=10)
 
 e0-aws-parallel:
 	$(PY) -m experiments.e0_cold_start --target aws --n 10 --parallel 3 \
-	  --kubeconfig $(AWS_KUBECONFIG) --ssh-key $(SSH_KEY)
+	  --kubeconfig $(AWS_KUBECONFIG)
 
 tool-map-coverage:       ## traffic share per server per scenario (needs data/processed)
 	$(PY) tools/tool_map_coverage.py
@@ -145,8 +155,3 @@ kind-integration:        ## replay Scenario A and B through the gateway under ea
 
 grafana-kind:            ## open Grafana on http://127.0.0.1:3000 (anonymous viewer)
 	kubectl --context $(KIND_CTX) -n $(NS) port-forward svc/skypiea-grafana 3000:3000
-
-aws-extend:              ## raise the VM's max-uptime cost guard to H hours (no instance replacement)
-	@test -n "$(H)" || { echo "usage: make aws-extend H=<hours>"; exit 1; }
-	ssh -o BatchMode=yes -i $(SSH_KEY) ubuntu@$$($(TF) output -raw instance_ip) \
-	  "echo $(H) | sudo tee /etc/skypiea/max-uptime-hours >/dev/null && uptime -p"

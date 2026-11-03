@@ -99,7 +99,7 @@ arrive. The simulator runs the same policy code offline. Details:
 | [`tools/`](tools/) | 16 MCP tool servers and images; `tools/tool_map.yaml` (class -> server) | Ch. Dhanunjaya |
 | [`charts/skypiea/`](charts/skypiea/) | Helm chart: tools, gateway, controller, predictor placeholder, Prometheus + Grafana | Ch. Dhanunjaya |
 | [`deploy/`](deploy/) | kind cluster + local registry, platform image | Ch. Dhanunjaya |
-| [`infra/aws/`](infra/aws/) | Terraform: EC2 k3s, ECR, S3, cost guards | Ch. Dhanunjaya |
+| [`infra/aws/`](infra/aws/) | Terraform: EC2 k3s (SSM only, no inbound ports), ECR, S3 | Ch. Dhanunjaya |
 | [`experiments/`](experiments/) | Experiment runner and YAML configs | All |
 | [`results/`](results/), [`report/`](report/) | Experiment outputs and final report | All |
 | [`tests/`](tests/) | Unit tests | All |
@@ -179,9 +179,9 @@ make kind-integration   # functional check: Scenario A + B through the gateway, 
 
 ### 4b. AWS (EC2 + k3s)
 
-Read [`docs/aws_plan.md`](docs/aws_plan.md) first (resources, cost, cost guards, teardown),
-then follow [`infra/aws/README.md`](infra/aws/README.md). Stop the VM every day:
-`make aws-stop`.
+Read [`docs/aws_plan.md`](docs/aws_plan.md) first (resources, cost, security, teardown), then
+follow [`infra/aws/README.md`](infra/aws/README.md). There is no automatic stop (it would break
+E0): `make aws-apply` writes a calendar reminder, and `make aws-destroy` removes everything.
 
 ### 5. Run an experiment
 
@@ -229,7 +229,7 @@ make e1
 - [ ] Markov features, LightGBM re-ranker, GRU check
 - [x] Gateway (shaper), controller, replayer, `skypiea` CLI, Grafana dashboard
 - [ ] Baselines and simulator
-- [ ] AWS k3s cloud run (Terraform ready, not applied)
+- [ ] AWS k3s cloud run (Terraform planned: 50 to add; not applied)
 - [ ] E1 to E5 and final report
 
 ---

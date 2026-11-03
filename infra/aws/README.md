@@ -1,72 +1,60 @@
-# AWS cloud run (Terraform + k3s + ECR)
+# AWS cloud run (Terraform + k3s + ECR, SSM only)
 
-Full pre-apply review (all 53 resources, prices with sources, security groups, cost guards,
-teardown): [`docs/aws_plan.md`](../../docs/aws_plan.md).
+Full review of the plan: [`docs/aws_plan.md`](../../docs/aws_plan.md). It covers the 50
+resources, prices with sources, security group, IAM, disk sizing, E0 and teardown.
 
-One EC2 VM in **ap-south-1** running single-node [k3s](https://k3s.io/), with the same Helm
-chart as the local kind cluster (`charts/skypiea`, `values-aws.yaml`). Everything is
-tagged `project=skypiea`. State is **local** (`infra/aws/terraform.tfstate`, git-ignored).
+One EC2 `m7i-flex.large` in **ap-south-1** runs single-node [k3s](https://k3s.io/), with the
+same Helm chart as kind (`charts/skypiea`, `values-aws.yaml`). The setup:
+- **No inbound port at all.** Shell, the k3s API and the gateway demo go through SSM Session
+  Manager. There is no SSH and no key pair.
+- Outbound is TCP 443 only.
+- IMDSv2 is required, and the root volume is a 20 GB encrypted gp3.
+- The instance role is least privilege: pull from our ECR repos, read/write our bucket, the
+  SSM agent.
+- Everything is tagged `project=skypiea`.
+- State is **local** and git-ignored; so is `tfplan`.
 
-## What gets created
+## Prerequisites (laptop)
 
-| Resource | Details |
-|---|---|
-| EC2 instance `skypiea-node` | `m7i-flex.large` (2 vCPU, 8 GiB), Ubuntu 24.04 LTS, 30 GB gp3 encrypted root, IMDSv2 only |
-| Security group `skypiea-node` | Inbound **22** and **6443** from your IP (`/32`) only; nothing inbound from `0.0.0.0/0`. Outbound only TCP 443 and 80 (ECR/S3/AWS APIs/k3s install; apt) |
-| Key pair `skypiea-aws` | From `~/.ssh/skypiea-aws.pub` (created by `make aws-plan` if missing) |
-| IAM role + instance profile `skypiea-node` | `AmazonEC2ContainerRegistryReadOnly` + read/write on the one bucket only |
-| ECR repositories `skypiea/<tool>` | One per tool in `tools/tool_map.yaml` + `skypiea/e0-probe`. Lifecycle: keep the last 3 images |
-| S3 bucket `skypiea-<random>` | Models and results. All public access blocked, versioning on, SSE-S3 |
-| CloudWatch alarm `skypiea-node-idle-stop` | Cost guard: stops the VM after 60 min below 5% CPU |
-
-`user_data` installs k3s (pinned `v1.37.1+k3s1`, traefik/servicelb/metrics-server disabled)
-and a systemd timer `skypiea-ecr-refresh.timer` that re-creates the `skypiea-tools/ecr-pull`
-image pull secret every 6 h (ECR tokens expire after 12 h). The token comes from the instance
-role; no AWS keys are ever stored on the VM, in the repo or in Terraform state.
+- aws CLI v2 with a working profile: `aws sts get-caller-identity`.
+- Your IAM user needs `operator-policy.json`, attached as a customer-managed policy.
+- `session-manager-plugin`, for `aws ssm start-session`.
+- docker, helm, kubectl.
 
 ## Usage
 
 ```bash
-aws sts get-caller-identity                  # must work first
-aws ec2 describe-instance-types --region ap-south-1 \
-  --filters Name=free-tier-eligible,Values=true --query 'InstanceTypes[].InstanceType'
-make aws-ip                                  # your public IP; check it
-make aws-plan MY_IP=<a.b.c.d>                # review the plan
-make aws-apply                               # apply exactly that plan
-make build-images push-images-aws            # build + push to ECR
-make aws-kubeconfig                          # -> ~/.kube/skypiea-aws (outside the repo)
-make deploy-aws                              # helm install, all tools at 0 replicas
-make e0-aws N=30                             # E0 on AWS
+make aws-plan                    # init, validate, fmt -check, plan -out=tfplan; review it
+make aws-apply                   # apply exactly that plan; writes ~/skypiea-aws-destroy-reminder.ics
+make aws-tunnel                  # own terminal: 127.0.0.1:16443 -> k3s API over SSM
+make aws-kubeconfig              # over SSM -> ~/.kube/skypiea-aws (outside the repo)
+make build-images push-images-aws
+make deploy-aws                  # E0 layout: tools at 0 + e0-probe, no controller/monitoring
+make e0-aws N=30                 # E0 on AWS; then N=100 and e0-aws-parallel
+make deploy-aws PLATFORM=true E0PROBE=false   # controller, gateway, monitoring
+make aws-gateway                 # demo: http://127.0.0.1:8080/mcp (laptop loopback only)
+make aws-shell                   # interactive SSM shell on the VM
 ```
 
-Always pass the kubeconfig explicitly: `kubectl --kubeconfig ~/.kube/skypiea-aws ...`.
-The kubeconfig sets `tls-server-name: kubernetes` (a SAN that is always in the k3s cert), so it
-keeps working when the public IP changes after a stop/start; `make aws-start` rewrites the IP.
-If **your** IP changes, re-run `make aws-plan MY_IP=<new> && make aws-apply` to update the
-security group.
+Always pass the kubeconfig explicitly: `kubectl --kubeconfig ~/.kube/skypiea-aws ...`. It
+points at the tunnel (`https://127.0.0.1:16443`), so it survives a stop/start (the public IP
+changes) unchanged.
 
-## Cost notes (check the AWS console; prices change)
+Scripts in `scripts/`:
+- `node-run.sh`: one root command on the VM over SSM, with its exit code.
+- `tunnel.sh`
+- `get-k3s-config.sh`
+- `empty-for-destroy.sh`
+- `destroy-reminder.sh`
 
-- `m7i-flex.large` is free-tier eligible on newer accounts (credit-based free plan). We confirm
-  that with `describe-instance-types` before creating anything. Outside the free tier it is
-  billed per second while **running**.
-- The 30 GB gp3 volume is billed while it exists, **including while the VM is stopped**.
-- The public IPv4 address is billed per hour while the instance is running.
-- ECR storage (about 15 images × ≤3 versions) and S3 are cents per month at this size. Data
-  transfer from ECR to EC2 in the same region is free.
+## Cost and teardown
 
-## Stop, start, destroy
-
-Two automatic cost guards: the VM stops after 60 min of idle CPU (CloudWatch alarm) and powers
-itself off (= stop) after 12 h of uptime (`make aws-extend H=<hours>` raises the limit on the
-VM for long runs).
+About **$0.108/h, $2.60/day** while running (sources in `docs/aws_plan.md`). There is
+deliberately **no auto-stop**, because it would break long E0 runs. Use the calendar reminder
+written at apply (`make aws-reminder REMIND_H=<hours>` writes a new one).
 
 ```bash
-make aws-stop       # stop the VM at the end of every day (disk, ECR, S3 kept)
-make aws-start      # start it again and refresh ~/.kube/skypiea-aws
-make aws-destroy    # deletes everything; asks you to type "destroy skypiea"
+make aws-stop       # pause: only the 20 GB volume is billed (about $0.06/day)
+make aws-start      # resume (kubeconfig unchanged)
+make aws-destroy    # back up results; type "destroy skypiea"; empties bucket + ECR, then destroys all
 ```
-
-The bucket is **not** force-deleted by default: if it holds objects, `aws-destroy` stops at the
-bucket. Download what you need first (`aws s3 sync s3://<bucket> ./backup`), then empty it or
-run with `-var bucket_force_destroy=true` once.

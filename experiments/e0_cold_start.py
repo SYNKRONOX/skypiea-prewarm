@@ -5,7 +5,7 @@
 
 Per tool (or group of --parallel tools), mode and repetition (order shuffled per round, seed 0):
   uncached: delete ALL tool images from every schedulable node (kind: docker exec <node>
-            crictl rmi; aws: ssh <vm> sudo k3s crictl rmi) so the pod must pull every layer
+            crictl rmi; aws: k3s crictl rmi over SSM) so the pod must pull every layer
             (tool images share base and dependency layers; the probe uses another base);
   cached:   image already on the node (a tool's uncached run goes first in each round, so the
             image is present; the kubelet event confirms which case actually happened -> mode_ok).
@@ -48,6 +48,7 @@ import json
 import os
 import random
 import re
+import shlex
 import subprocess
 import sys
 import time
@@ -81,10 +82,9 @@ class Target:
         else:
             kc = os.path.expanduser(args.kubeconfig or cfg["aws"]["kubeconfig"])
             self.kubectl = ["kubectl", "--kubeconfig", kc]
-            self.ssh_host = args.ssh_host or self._tf_output("instance_ip")
-            self.ssh = ["ssh", "-o", "BatchMode=yes", "-o", "StrictHostKeyChecking=accept-new",
-                        "-i", os.path.expanduser(args.ssh_key or cfg["aws"]["ssh_key"]),
-                        f"{cfg['aws']['ssh_user']}@{self.ssh_host}"]
+            # No SSH: node commands go through SSM Session Manager (infra/aws/scripts/node-run.sh)
+            self.node_run = str(ROOT / "infra" / "aws" / "scripts" / "node-run.sh")
+            self.instance_id = args.instance_id or self._tf_output("instance_id")
 
     @staticmethod
     def _tf_output(key: str) -> str:
@@ -101,7 +101,17 @@ class Target:
     def node_cmd(self, node: str, cmd: list[str]) -> subprocess.CompletedProcess:
         if self.name == "kind":
             return sh(["docker", "exec", node, *cmd], check=False)
-        return sh([*self.ssh, "sudo", "k3s", *cmd], check=False)  # single-node k3s
+        return self._ssm(" ".join(shlex.quote(c) for c in ["k3s", *cmd]))  # single-node k3s
+
+    def _ssm(self, command: str, check: bool = False) -> subprocess.CompletedProcess:
+        env = {**os.environ, "SKYPIEA_INSTANCE_ID": self.instance_id}
+        p = subprocess.run([self.node_run, command], capture_output=True, text=True, env=env,
+                           timeout=300)
+        if p.returncode == 125:   # SSM itself failed (not the command): never silently ignore
+            raise RuntimeError(f"SSM node command failed: {p.stderr.strip()}")
+        if check and p.returncode != 0:
+            raise RuntimeError(f"node command {command!r} exited {p.returncode}: {p.stdout}")
+        return p
 
     def rmi(self, image: str) -> str:
         msgs = []
@@ -122,13 +132,18 @@ class Target:
             p = self.node_cmd(node, ["crictl", "images", "-o", "json"])
             if p.returncode != 0:
                 raise RuntimeError(f"crictl images on {node} failed: {p.stderr.strip()}")
+            ids, names = [], []
             for img in json.loads(p.stdout).get("images", []):
                 tags = [t for t in img.get("repoTags") or [] if "/skypiea/" in t]
                 if tags and keep not in tags:
-                    r = self.node_cmd(node, ["crictl", "rmi", img["id"]])
-                    if r.returncode != 0:
-                        raise RuntimeError(f"crictl rmi {tags} on {node}: {r.stderr.strip()}")
-                    n += 1
+                    ids.append(img["id"])
+                    names += tags
+            if ids:  # one call per node (on AWS every node command is an SSM session)
+                r = self.node_cmd(node, ["crictl", "--timeout", "120s", "rmi", *ids])
+                if r.returncode != 0:
+                    raise RuntimeError(f"crictl rmi {names} on {node}: "
+                                       f"{(r.stderr or r.stdout).strip()}")
+                n += len(ids)
         return n
 
     def stats(self) -> dict:
@@ -140,9 +155,9 @@ class Target:
             return {"load1": round(os.getloadavg()[0], 2), "cpus": os.cpu_count(),
                     "mem_avail_mb": int(mem["MemAvailable"]) // 1024,
                     "running_containers": len(running)}
-        p = sh([*self.ssh, "nproc; cut -d' ' -f1 /proc/loadavg; "
-                "awk '/MemAvailable/{print int($2/1024)}' /proc/meminfo; "
-                "sudo k3s crictl ps -q | wc -l"], check=True)
+        p = self._ssm("nproc; cut -d' ' -f1 /proc/loadavg; "
+                      "awk '/MemAvailable/{print int($2/1024)}' /proc/meminfo; "
+                      "k3s crictl ps -q | wc -l", check=True)
         cpus, load1, mem, running = p.stdout.split()
         return {"load1": float(load1), "cpus": int(cpus), "mem_avail_mb": int(mem),
                 "running_containers": int(running)}
@@ -399,8 +414,7 @@ def main() -> None:
                     help=f"wait up to {QUIET_WAIT_S}s for load1 <= {QUIET_FRACTION:.0%} of "
                          "cores before each run; flag the run noisy otherwise")
     ap.add_argument("--kubeconfig")
-    ap.add_argument("--ssh-host")
-    ap.add_argument("--ssh-key")
+    ap.add_argument("--instance-id", help="aws: SSM target (default: terraform output)")
     ap.add_argument("--append", action="store_true",
                     help="append to the existing runs CSV instead of starting a new one")
     ap.add_argument("--report-only", action="store_true",

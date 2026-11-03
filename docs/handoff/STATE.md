@@ -95,10 +95,20 @@ Commits `a8567cc` (replayer, CLI, gateway session introspection), `0b24053` (mon
   Grafana dashboard provisioned (cold rate, prewarm hit rate, p50/p99 added latency, hold,
   warm pool, idle pods/pod-seconds, predictor latency/errors, scale events). Checked on kind:
   3/3 targets up, dashboard served, Grafana -> Prometheus query works. Grafana needed 512Mi.
-- `docs/aws_plan.md`: 53 resources, SG (ingress /32 only; egress 443/80 explained), prices
-  from AWS price lists (about $0.110/h running, $2.74/month stopped), cost guards (idle-stop
-  alarm, 12 h max-uptime power-off = stop, `make aws-extend H=`), teardown. Not planned or
-  applied.
+- AWS (2026-11-03): `terraform plan -out=tfplan` ran with the user's credentials:
+  **Plan: 50 to add, 0 to change, 0 to destroy**. NOT applied (waiting for "APPLY").
+  The redesign:
+  - SSM Session Manager only: no inbound rule, no SSH or key pair; egress is TCP 443 only.
+  - Least-privilege inline IAM: ECR pull on skypiea/*, S3 rw on our bucket, minimal SSM.
+  - IMDSv2; 20 GB encrypted gp3, sized from measured images (peak about 10.7 GB < 85% GC
+    threshold).
+  - Bucket: private, SSE-S3, TLS-only.
+  - No auto-stop (it breaks E0): calendar reminder at apply instead.
+  - `make aws-destroy` empties bucket + ECR, then destroys.
+
+  E0 node commands go over SSM (`infra/aws/scripts/node-run.sh`). The operator IAM policy the
+  user must attach is `infra/aws/operator-policy.json`. Prices and open questions are in
+  `docs/aws_plan.md`: about $0.108/h, $2.60/day.
 - Root: Makefile includes `mk/infra.mk` (`make cluster/deploy/clean-cluster` now kind + helm);
   README layout, setup (kind + AWS), quick reference, roadmap, docs links updated;
   `deploy/k8s/` and `infra/azure/` removed.

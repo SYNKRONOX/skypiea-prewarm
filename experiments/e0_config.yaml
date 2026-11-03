@@ -11,5 +11,3 @@ kind:
   cluster: skypiea
 aws:
   kubeconfig: ~/.kube/skypiea-aws
-  ssh_user: ubuntu
-  ssh_key: ~/.ssh/skypiea-aws
