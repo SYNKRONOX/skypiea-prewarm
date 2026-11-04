@@ -2,6 +2,7 @@
 # Functional Scenario A/B replay on AWS as a Kubernetes Job INSIDE the cluster, so nothing on the
 # laptop holds a connection while it runs (gateway/replay_check.py --in-cluster). Short calls only:
 #   replay-job.sh start [POLICIES]   export sessions, upload Job + ConfigMap to S3, apply on the node
+#   CHECK=concurrent N=40 replay-job.sh start [POLICIES]   N sessions at once (gateway/concurrent_check.py)
 #   replay-job.sh status             job state + last log lines (one short SSM call)
 #   replay-job.sh logs  OUT          full log to OUT (outside results/: functional, not results)
 # The Job uses the platform image the gateway runs, with the CURRENT replay_check.py mounted from
@@ -17,16 +18,24 @@ BUCKET=$($TF output -raw bucket_name)
 NODE_RUN=infra/aws/scripts/node-run.sh
 case "${1:-}" in
 start)
-  POL="${2:-scale_to_zero,always_warm,keep_alive,markov1}"
+  CHECK="${CHECK:-replay}"
   T=$(mktemp -d); trap 'rm -rf "$T"' EXIT
-  "$PY" -m gateway.replay_check --export-sessions "$T/sessions.json" >/dev/null
-  "$PY" - "$T" "$NS" "$POL" <<'PY'
+  if [ "$CHECK" = concurrent ]; then
+    POL="${2:-scale_to_zero,markov1}"
+    "$PY" -m gateway.concurrent_check --export-sessions "$T/sessions.json" --n "${N:-40}"
+  else
+    POL="${2:-scale_to_zero,always_warm,keep_alive,markov1}"
+    "$PY" -m gateway.replay_check --export-sessions "$T/sessions.json" >/dev/null
+  fi
+  "$PY" - "$T" "$NS" "$POL" "$CHECK" <<'PY'
 import json, pathlib, sys
-t, ns, pol = pathlib.Path(sys.argv[1]), sys.argv[2], sys.argv[3]
+t, ns, pol, check = pathlib.Path(sys.argv[1]), sys.argv[2], sys.argv[3], sys.argv[4]
+script = {"replay": "gateway/replay_check.py", "concurrent": "gateway/concurrent_check.py"}[check]
+extra = ["--in-cluster"] if check == "replay" else []
 lab = {"app.kubernetes.io/part-of": "skypiea", "app.kubernetes.io/name": "skypiea-replay"}
 cm = {"apiVersion": "v1", "kind": "ConfigMap",
       "metadata": {"name": "skypiea-replay", "namespace": ns, "labels": lab},
-      "data": {"replay_check.py": pathlib.Path("gateway/replay_check.py").read_text(),
+      "data": {"check.py": pathlib.Path(script).read_text(),
                "sessions.json": (t / "sessions.json").read_text()}}
 job = {"apiVersion": "batch/v1", "kind": "Job",
        "metadata": {"name": "skypiea-replay", "namespace": ns, "labels": lab},
@@ -39,7 +48,7 @@ job = {"apiVersion": "batch/v1", "kind": "Job",
                                         "seccompProfile": {"type": "RuntimeDefault"}},
                     "containers": [{
                         "name": "replay", "image": "@IMAGE@", "imagePullPolicy": "IfNotPresent",
-                        "command": ["python", "/work/replay_check.py", "--in-cluster",
+                        "command": ["python", "/work/check.py", *extra,
                                     "--namespace", ns, "--sessions-json", "/work/sessions.json",
                                     "--policies", pol],
                         "env": [{"name": "PYTHONUNBUFFERED", "value": "1"}],

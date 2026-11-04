@@ -313,6 +313,35 @@ Other access:
 - `make aws-stop` / `make aws-start` stop and start the VM (see "Cost guard" above). The
   kubeconfig doesn't change, because it points at the tunnel and not at the public IP.
 
+**Functional checks on AWS (2026-11-04; checks, not results).** None of them holds a laptop
+connection while it runs:
+- **Replay and concurrent checks:** they run as an in-cluster Job (`replay-job.sh`, which
+  starts `gateway/replay_check.py --in-cluster` or `gateway/concurrent_check.py`).
+- **Metrics and Grafana:** checked through the API-server service proxy in one SSM call
+  (`platform-check.sh`).
+- **Helm and the `skypiea` CLI:** run through `with-tunnel.sh`, which brings the tunnel up for
+  one command (capped at 120 s) and tears it down again.
+
+| check | platform `a8567cc` | platform `b652e6b` (scale-up limit 2) |
+|---|---|---|
+| Scenario A+B, scale_to_zero: all ok, every call cold, no predictive warm | PASS | PASS |
+| always_warm: all ok, no call cold | PASS | PASS; its 16-tool standing pool queued 14 scale-ups |
+| keep_alive 30 s: all ok, the controller got predictive warms | PASS | PASS |
+| markov1 stand-in: all ok, the controller got predictive warms | PASS | PASS |
+| all tools back at 0 afterwards | PASS (34 s) | PASS (34 s) |
+| 40 concurrent sessions (20 A + 20 B, 127 calls), scale_to_zero and markov1 | not run | PASS: 127/127 ok each; at most 2 pods starting at once (about 275 polls of the controller's state); 1 queued and 1 dequeued per policy; 0 expired |
+| Prometheus targets, Skypiea metrics, Grafana 13.3.0 health | PASS | PASS |
+| Grafana dashboard panels returning data | 10/12 (no predictor errors; old controller has no queue metric) | queue panel added |
+| `skypiea status / policy / sessions / trace / explain` | PASS | not repeated |
+
+Notes on these checks:
+- **Image tags:** the tools stay on `a8567cc`. Platform `b652e6b` is the only new image: 0.6 MB
+  of new layers, copied with `push_ecr.py`, digest in `results/aws_image_digests.csv`. It also
+  carries the aws `configs/cold_start.yaml`, which the oracle and markov lead times read.
+- **Why keep_alive and markov1 calls were still cold:** think gaps are scaled ×0.2, so the
+  gaps (0.5–2.7 s) are shorter than a cold start (about 2.7 s cached). Predictive warms arrive
+  but cannot finish in time. This is a functional limit of the scaled check, not a result.
+
 Load tests: the functional Scenario A/B replay and a 20-50 concurrent-session test run on
 this 2-vCPU node. **NFR-4 (500 concurrent sessions) is covered by the simulator, not by
 this node.** We do not claim 500 sessions on 2 vCPUs.
