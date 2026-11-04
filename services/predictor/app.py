@@ -8,6 +8,10 @@ Environment:
 - ``ADMIN_TOKEN``: required in ``X-Admin-Token`` for /reload and /rollback (constant-time
   compare); unset disables both (403).
 - ``MODEL_ROOT``: local bundles may be reloaded only from folders under it (after realpath).
+- ``WORKERS``: uvicorn worker processes (default 1). With more than one, /reload and
+  /rollback answer 409 (each worker holds its own model; a reload would reach one of them)
+  and /metrics covers the worker that answers the scrape; scale with replicas instead, or
+  roll the pods to change the model.
 - ``MODEL_URI_ALLOWLIST``: comma-separated ``s3://<bucket>/<prefix>`` entries that may be
   reloaded from (needs boto3 in the image; otherwise refused).
 
@@ -94,13 +98,15 @@ class Settings:
     admin_token: str | None
     model_root: str | None
     s3_allowlist: tuple[str, ...]
+    workers: int = 1
 
     @classmethod
     def from_env(cls) -> Settings:
         allow = tuple(x.strip() for x in os.environ.get("MODEL_URI_ALLOWLIST", "").split(",")
                       if x.strip())
         return cls(os.environ.get("MODEL_PATH"), os.environ.get("COLD_START_PATH"),
-                   os.environ.get("ADMIN_TOKEN") or None, os.environ.get("MODEL_ROOT"), allow)
+                   os.environ.get("ADMIN_TOKEN") or None, os.environ.get("MODEL_ROOT"), allow,
+                   int(os.environ.get("WORKERS", "1")))
 
 
 class State:
@@ -277,6 +283,10 @@ def make_app(settings: Settings | None = None) -> Starlette:
         if settings.admin_token is None:
             metrics.reloads.labels("disabled").inc()
             return JSONResponse({"error": "admin endpoints disabled"}, status_code=403)
+        if settings.workers > 1:  # a reload would reach one worker process only
+            metrics.reloads.labels("disabled").inc()
+            return JSONResponse({"error": "reload needs WORKERS=1; roll the pods instead"},
+                                status_code=409)
         got = request.headers.get("x-admin-token", "")
         if not hmac.compare_digest(got.encode("utf-8", "replace"),
                                    settings.admin_token.encode("utf-8")):

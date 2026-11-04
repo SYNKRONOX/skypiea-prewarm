@@ -18,9 +18,12 @@ import sys
 from collections.abc import Sequence
 from pathlib import Path
 
+import yaml
+
 from predictors.cold_start import ColdStarts
 from predictors.data import Episode
 from predictors.decide import CONFIG as DECIDE_CONFIG
+from predictors.decide import DecideConfig
 from predictors.eval import git_commit, split_groups
 from predictors.lgbm_ranker import LGBMRanker
 from services.predictor.engine import (
@@ -37,25 +40,32 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def export(source: str, vocab: str | None, out: Path, cold: ColdStarts,
-           version: str | None = None) -> Path:
+           version: str | None = None, profile: str | None = None) -> Path:
     train, val, _ = split_groups(source, "fixed", vocab=vocab)
     commit = git_commit()
-    return build(train, val, out / (version or f"lgbm-{source}-{commit[:12]}"), cold,
-                 source, vocab, commit)
+    name = version or f"lgbm-{profile or source}-{commit[:12]}"
+    return build(train, val, out / name, cold, source, vocab, commit, profile=profile)
 
 
 def build(train: Sequence[Episode], val: Sequence[Episode], folder: Path, cold: ColdStarts,
-          source: str, vocab: str | None = None, commit: str = "", decide: Path = DECIDE_CONFIG
-          ) -> Path:
+          source: str, vocab: str | None = None, commit: str = "", decide: Path = DECIDE_CONFIG,
+          profile: str | None = None) -> Path:
     """Fit the ranker and write a verified bundle to ``folder`` (its name is the version)."""
     ranker = LGBMRanker.from_config().fit(train, val)
     version = folder.name
     ranker.save(folder)
-    (folder / "decide.yaml").write_bytes(decide.read_bytes())
+    if profile is None:
+        (folder / "decide.yaml").write_bytes(decide.read_bytes())
+    else:  # the profile's resolved policy (configs/model/profiles.yaml over decide.yaml)
+        d = {k: list(v) if isinstance(v, tuple) else v
+             for k, v in DecideConfig.for_profile(profile, decide).__dict__.items()}
+        (folder / "decide.yaml").write_text(f"# profile: {profile}\n" + yaml.safe_dump(
+            d, sort_keys=True), encoding="utf-8")
     files = {n: (folder / n).read_bytes() for n in REQUIRED if n not in ("MANIFEST.json",
                                                                          "golden.json")}
     man = {"schema_version": BUNDLE_SCHEMA, "model_version": version, "source": source,
-           "vocab_map": vocab, "git_commit": commit, "vocabulary": sorted(ranker.vocab),
+           "vocab_map": vocab, "profile": profile, "git_commit": commit,
+           "vocabulary": sorted(ranker.vocab),
            "files": {}}
     # golden answers come from the bundle as loaded (same code path as the service)
     tmp = {**files, "golden.json": b"[]", "MANIFEST.json": b""}
@@ -79,9 +89,10 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--out", default=str(ROOT / "models"))
     p.add_argument("--cold-start", default=str(ROOT / "configs" / "cold_start.yaml"))
     p.add_argument("--version", default=None)
+    p.add_argument("--profile", default=None, help="policy profile (configs/model/profiles.yaml)")
     a = p.parse_args(argv)
     folder = export(a.source, a.vocab, Path(a.out), ColdStarts.load(Path(a.cold_start)),
-                    a.version)
+                    a.version, a.profile)
     print(f"wrote {folder}")
     return 0
 

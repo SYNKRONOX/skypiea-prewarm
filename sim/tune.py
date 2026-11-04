@@ -4,7 +4,7 @@
 
 Every number here is on the VAL split (sessions with timing), cached images; the test split
 is not read. Each step changes one part of the policy and keeps the others at the previous
-step's winner; every variant x threshold is written to results/sim_variants.csv, winners and
+step's winner; every variant x threshold is written to results/sim_variants.csv.gz, winners and
 losers alike.
 
 Objective (PRD NFR-3), used to pick every winner: over the threshold settings (fixed tau in
@@ -20,7 +20,8 @@ Steps (the order the user set):
      cold median), now (start now, 30 s TTL).
   c  keep-after-use replaces the 30 s keep-alive: 0, 2, 5, 10, 30 s under the contract rule
      (max(latest decision ttl, keep)), and 0, 2, 5, 10 s with the decision TTL holding the
-     pod only until its first use ("hold").
+     pod only until its first use ("hold"). Hold variants are run and reported but cannot
+     win: the controller implements the P-new max rule, not hold.
   a2, b2  a and b again under the step-c keep rule (with keep 30 s nothing may be feasible,
      and then a and b cannot be told apart). Ties keep the earlier (older) option.
   timing  spec rule vs start-now (and the b2 winner) under the a2/b2/c winners.
@@ -38,7 +39,7 @@ from pathlib import Path
 from typing import Any
 
 from predictors.cold_start import ColdStarts
-from predictors.decide import DecideConfig, load_pricing
+from predictors.decide import DecideConfig, load_pricing, load_profiles
 from predictors.eval import RESULTS, git_commit
 from sim.offline import (
     OLD,
@@ -54,7 +55,7 @@ from sim.offline import (
     run_specs,
 )
 
-VARIANTS_CSV = RESULTS / "sim_variants.csv"
+VARIANTS_CSV = RESULTS / "sim_variants.csv.gz"
 CHOICE_JSON = RESULTS / "sim_choice.json"
 MODE = "cached"
 
@@ -67,15 +68,15 @@ def thresholds(sim: dict[str, Any]) -> list[tuple[str, dict[str, Any]]]:
 
 class Tuner:
     def __init__(self, preps: list[Prepared], cold: ColdStarts, sim: dict[str, Any],
-                 base: DecideConfig) -> None:
-        self.preps, self.sim, self.base = preps, sim, base
+                 base: DecideConfig, profile: str = "") -> None:
+        self.preps, self.sim, self.base, self.profile = preps, sim, base, profile
         self.env = Env(cold, MODE, sim, load_pricing(), base)
         self.commit = git_commit()
         self.ratio = float(sim["nfr3_idle_ratio"])
         self.aw: dict[str, dict[str, Any]] = {}
         for prep in preps:
             rows = run_specs(prep, baseline_specs(sim, prep, self.env), self.env, sim,
-                             {"step": "baselines", "variant": ""})
+                             {"step": "baselines", "variant": "", "profile": profile})
             self.aw[prep.source] = next(r for r in rows if r["policy"] == "always_warm")
             self._write(rows, prep.source)
 
@@ -97,11 +98,13 @@ class Tuner:
         for prep in self.preps:
             specs = [ours_spec(f"{name}|{tl}", prep, self.env, self.base.with_(**cfg, **tk),
                                after_use) for tl, tk in thresholds(self.sim)]
-            rows = run_specs(prep, specs, self.env, self.sim, {"step": step, "variant": name})
+            rows = run_specs(prep, specs, self.env, self.sim, {"step": step, "variant": name,
+                                                             "profile": self.profile})
             self._write(rows, prep.source)
             for (tl, _), r in zip(thresholds(self.sim), rows, strict=True):
                 per.setdefault(tl, {})[prep.source] = r
         best: dict[str, Any] | None = None
+        best_any = -1.0  # best mean warm over all thresholds, feasible or not
         for tl, tk in thresholds(self.sim):
             rs = per[tl]
             worst = max(float(r["idle_over_always_warm"]) for r in rs.values())
@@ -113,16 +116,22 @@ class Tuner:
                                        "idle_pod_s_per_1k": float(r["idle_pod_s_per_1k"]),
                                        "idle_over_always_warm": float(r["idle_over_always_warm"])}
                                    for s, r in rs.items()}}
+            best_any = max(best_any, warm)
             if best is None or _key(cand) > _key(best):
                 best = cand
         assert best is not None
+        best["best_any_threshold_warm"] = best_any
+        best["budget_binding"] = best["feasible"] and best_any > best["mean_warm"] + 1e-9
         print(f"== {step} {name}: {_fmt(best)}", flush=True)
         return best
 
     def step(self, step: str, options: list[tuple[str, dict[str, Any], str]]
              ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
         scores = [self.variant(step, n, c, a) for n, c, a in options]
-        win = max(scores, key=_key)
+        for sc in scores:  # the controller implements the P-new max rule (or the 30 s default)
+            sc["shippable"] = sc["after_use"] == "contract" or \
+                float(sc["cfg"].get("keep_after_use_s", 30.0)) >= 30.0
+        win = max((sc for sc in scores if sc["shippable"]), key=_key)
         print(f"==== {step} winner: {_fmt(win)}", flush=True)
         return win, scores
 
@@ -133,23 +142,27 @@ def _key(c: dict[str, Any]) -> tuple[bool, float]:
 
 def _fmt(c: dict[str, Any]) -> str:
     return (f"{c['variant']} {c['threshold']} feasible={c['feasible']} "
-            f"mean_warm={c['mean_warm']:.2f} worst_ratio={c['worst_idle_ratio']:.3f}")
+            f"mean_warm={c['mean_warm']:.2f} worst_ratio={c['worst_idle_ratio']:.3f} "
+            f"binding={c.get('budget_binding')}")
 
 
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
     p.add_argument("--cold-start", default=None)
     p.add_argument("--sources", default="all")
+    p.add_argument("--profile", default=None, help="tune one profile on its sources' VAL")
     args = p.parse_args(argv)
     sim = load_config()
     path = Path(args.cold_start or sim["cold_start_path"])
     cold = ColdStarts.load(path if path.is_absolute() else ROOT / path)
     print(f"cold starts: {cold.path} ({cold.label}, sha256 {cold.sha256})", flush=True)
     want = None if args.sources == "all" else set(args.sources.split(","))
+    if args.profile is not None:
+        want = set(load_profiles()[args.profile]["sources"])
     preps = [prepare(s, cold, "val") for s in sim["sources"]
              if want is None or s["source"] in want]
     base = DecideConfig.load().with_(**OLD)
-    t = Tuner(preps, cold, sim, base)
+    t = Tuner(preps, cold, sim, base, args.profile or "")
     log: dict[str, Any] = {"split": "val", "cold_mode": MODE, "cold_start": cold.label,
                            "cold_start_sha256": cold.sha256, "git_commit": t.commit,
                            "objective": f"max mean warm % s.t. idle <= {t.ratio} x always-warm "
@@ -196,7 +209,11 @@ def main(argv: list[str] | None = None) -> int:
     log["chosen"] = {"decide": {**win["cfg"], **win["threshold_cfg"]},
                      "after_use": win["after_use"], "threshold": win["threshold"],
                      "feasible": win["feasible"], "mean_warm": win["mean_warm"]}
-    CHOICE_JSON.write_text(json.dumps(log, indent=1, sort_keys=True), encoding="utf-8")
+    log["chosen"]["budget_binding"] = win["budget_binding"]
+    log["chosen"]["best_any_threshold_warm"] = win["best_any_threshold_warm"]
+    log["profile"], log["sources"] = args.profile, [pr.source for pr in preps]
+    out = CHOICE_JSON if args.profile is None else RESULTS / f"sim_choice_{args.profile}.json"
+    out.write_text(json.dumps(log, indent=1, sort_keys=True), encoding="utf-8")
     print(json.dumps(log["chosen"], indent=1), flush=True)
     return 0
 

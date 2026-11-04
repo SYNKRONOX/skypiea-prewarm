@@ -23,7 +23,9 @@ COPY traces/ traces/
 COPY configs/model/ configs/model/
 COPY services/predictor/ services/predictor/
 COPY ${MODEL_DIR}/ /models/current/
-RUN python -m compileall -q predictors traces services \
+RUN apt-get update && apt-get install -y --no-install-recommends libgomp1 \
+ && rm -rf /var/lib/apt/lists/* \
+ && python -m compileall -q predictors traces services \
  && useradd --uid 10001 --no-create-home --shell /usr/sbin/nologin app \
  && rm -f /usr/bin/apt* /usr/bin/dpkg* /usr/bin/perl* /bin/bash /usr/bin/bash /bin/dash \
           /usr/bin/dash /bin/sh /usr/bin/sh

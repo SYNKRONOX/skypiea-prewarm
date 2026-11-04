@@ -1,0 +1,1017 @@
+{
+ "chosen": {
+  "after_use": "contract",
+  "best_any_threshold_warm": 69.7317,
+  "budget_binding": false,
+  "decide": {
+   "copies_quantile": 0.9,
+   "keep_after_use_s": 30.0,
+   "lambda_pod_s": 100.0,
+   "start_rule": "now",
+   "threshold": "cost"
+  },
+  "feasible": true,
+  "mean_warm": 69.7317,
+  "threshold": "lam100"
+ },
+ "cold_mode": "cached",
+ "cold_start": "kind: lower bound; replace with AWS (kind pulls from a registry on the same machine)",
+ "cold_start_sha256": "96d8a3d6952d",
+ "git_commit": "baaabda-dirty",
+ "objective": "max mean warm % s.t. idle <= 0.3 x always-warm on every source",
+ "profile": "coding",
+ "sources": [
+  "tracelab",
+  "copilot_2026"
+ ],
+ "split": "val",
+ "steps": {
+  "a2_copies": {
+   "all": [
+    {
+     "after_use": "contract",
+     "best_any_threshold_warm": 69.7317,
+     "budget_binding": false,
+     "cfg": {
+      "copies_quantile": 0.9,
+      "keep_after_use_s": 30.0,
+      "start_rule": "now"
+     },
+     "feasible": true,
+     "mean_warm": 69.7317,
+     "per_source": {
+      "copilot_2026": {
+       "idle_over_always_warm": 0.0593,
+       "idle_pod_s_per_1k": 46960.735,
+       "warm_pct": 69.7433
+      },
+      "tracelab": {
+       "idle_over_always_warm": 0.0243,
+       "idle_pod_s_per_1k": 60298.972,
+       "warm_pct": 69.7201
+      }
+     },
+     "threshold": "lam100",
+     "threshold_cfg": {
+      "lambda_pod_s": 100.0,
+      "threshold": "cost"
+     },
+     "variant": "copies=q0.9",
+     "worst_idle_ratio": 0.0593
+    },
+    {
+     "after_use": "contract",
+     "best_any_threshold_warm": 65.14195,
+     "budget_binding": false,
+     "cfg": {
+      "copies_quantile": 0.5,
+      "keep_after_use_s": 30.0,
+      "start_rule": "now"
+     },
+     "feasible": true,
+     "mean_warm": 65.14195,
+     "per_source": {
+      "copilot_2026": {
+       "idle_over_always_warm": 0.0439,
+       "idle_pod_s_per_1k": 34798.602,
+       "warm_pct": 67.225
+      },
+      "tracelab": {
+       "idle_over_always_warm": 0.0127,
+       "idle_pod_s_per_1k": 31561.12,
+       "warm_pct": 63.0589
+      }
+     },
+     "threshold": "lam100",
+     "threshold_cfg": {
+      "lambda_pod_s": 100.0,
+      "threshold": "cost"
+     },
+     "variant": "copies=q0.5",
+     "worst_idle_ratio": 0.0439
+    },
+    {
+     "after_use": "contract",
+     "best_any_threshold_warm": 65.02244999999999,
+     "budget_binding": false,
+     "cfg": {
+      "copies_quantile": 0.9,
+      "keep_after_use_s": 30.0,
+      "max_copies_per_tool": 1,
+      "start_rule": "now"
+     },
+     "feasible": true,
+     "mean_warm": 65.02244999999999,
+     "per_source": {
+      "copilot_2026": {
+       "idle_over_always_warm": 0.0439,
+       "idle_pod_s_per_1k": 34798.602,
+       "warm_pct": 67.225
+      },
+      "tracelab": {
+       "idle_over_always_warm": 0.0125,
+       "idle_pod_s_per_1k": 30970.482,
+       "warm_pct": 62.8199
+      }
+     },
+     "threshold": "lam100",
+     "threshold_cfg": {
+      "lambda_pod_s": 100.0,
+      "threshold": "cost"
+     },
+     "variant": "copies=one",
+     "worst_idle_ratio": 0.0439
+    }
+   ],
+   "winner": {
+    "after_use": "contract",
+    "best_any_threshold_warm": 69.7317,
+    "budget_binding": false,
+    "cfg": {
+     "copies_quantile": 0.9,
+     "keep_after_use_s": 30.0,
+     "start_rule": "now"
+    },
+    "feasible": true,
+    "mean_warm": 69.7317,
+    "per_source": {
+     "copilot_2026": {
+      "idle_over_always_warm": 0.0593,
+      "idle_pod_s_per_1k": 46960.735,
+      "warm_pct": 69.7433
+     },
+     "tracelab": {
+      "idle_over_always_warm": 0.0243,
+      "idle_pod_s_per_1k": 60298.972,
+      "warm_pct": 69.7201
+     }
+    },
+    "threshold": "lam100",
+    "threshold_cfg": {
+     "lambda_pod_s": 100.0,
+     "threshold": "cost"
+    },
+    "variant": "copies=q0.9",
+    "worst_idle_ratio": 0.0593
+   }
+  },
+  "a_copies": {
+   "all": [
+    {
+     "after_use": "pod",
+     "best_any_threshold_warm": 65.8835,
+     "budget_binding": false,
+     "cfg": {
+      "copies_quantile": 0.9
+     },
+     "feasible": true,
+     "mean_warm": 65.8835,
+     "per_source": {
+      "copilot_2026": {
+       "idle_over_always_warm": 0.089,
+       "idle_pod_s_per_1k": 70504.499,
+       "warm_pct": 66.3935
+      },
+      "tracelab": {
+       "idle_over_always_warm": 0.026,
+       "idle_pod_s_per_1k": 64451.384,
+       "warm_pct": 65.3735
+      }
+     },
+     "threshold": "tau0.3",
+     "threshold_cfg": {
+      "tau": 0.3,
+      "threshold": "fixed"
+     },
+     "variant": "copies=q0.9",
+     "worst_idle_ratio": 0.089
+    },
+    {
+     "after_use": "pod",
+     "best_any_threshold_warm": 62.1999,
+     "budget_binding": false,
+     "cfg": {
+      "copies_quantile": 0.5
+     },
+     "feasible": true,
+     "mean_warm": 62.1999,
+     "per_source": {
+      "copilot_2026": {
+       "idle_over_always_warm": 0.0582,
+       "idle_pod_s_per_1k": 46131.039,
+       "warm_pct": 64.2728
+      },
+      "tracelab": {
+       "idle_over_always_warm": 0.0134,
+       "idle_pod_s_per_1k": 33275.52,
+       "warm_pct": 60.127
+      }
+     },
+     "threshold": "tau0.3",
+     "threshold_cfg": {
+      "tau": 0.3,
+      "threshold": "fixed"
+     },
+     "variant": "copies=q0.5",
+     "worst_idle_ratio": 0.0582
+    },
+    {
+     "after_use": "pod",
+     "best_any_threshold_warm": 62.133,
+     "budget_binding": false,
+     "cfg": {
+      "max_copies_per_tool": 1
+     },
+     "feasible": true,
+     "mean_warm": 62.133,
+     "per_source": {
+      "copilot_2026": {
+       "idle_over_always_warm": 0.0582,
+       "idle_pod_s_per_1k": 46131.039,
+       "warm_pct": 64.2728
+      },
+      "tracelab": {
+       "idle_over_always_warm": 0.013,
+       "idle_pod_s_per_1k": 32206.145,
+       "warm_pct": 59.9932
+      }
+     },
+     "threshold": "tau0.3",
+     "threshold_cfg": {
+      "tau": 0.3,
+      "threshold": "fixed"
+     },
+     "variant": "copies=one",
+     "worst_idle_ratio": 0.0582
+    }
+   ],
+   "winner": {
+    "after_use": "pod",
+    "best_any_threshold_warm": 65.8835,
+    "budget_binding": false,
+    "cfg": {
+     "copies_quantile": 0.9
+    },
+    "feasible": true,
+    "mean_warm": 65.8835,
+    "per_source": {
+     "copilot_2026": {
+      "idle_over_always_warm": 0.089,
+      "idle_pod_s_per_1k": 70504.499,
+      "warm_pct": 66.3935
+     },
+     "tracelab": {
+      "idle_over_always_warm": 0.026,
+      "idle_pod_s_per_1k": 64451.384,
+      "warm_pct": 65.3735
+     }
+    },
+    "threshold": "tau0.3",
+    "threshold_cfg": {
+     "tau": 0.3,
+     "threshold": "fixed"
+    },
+    "variant": "copies=q0.9",
+    "worst_idle_ratio": 0.089
+   }
+  },
+  "b2_start": {
+   "all": [
+    {
+     "after_use": "contract",
+     "best_any_threshold_warm": 67.4293,
+     "budget_binding": false,
+     "cfg": {
+      "copies_quantile": 0.9,
+      "gap_stat": "p50",
+      "keep_after_use_s": 30.0,
+      "plan_stat": "p95_ms",
+      "start_rule": "timing"
+     },
+     "feasible": true,
+     "mean_warm": 67.4293,
+     "per_source": {
+      "copilot_2026": {
+       "idle_over_always_warm": 0.097,
+       "idle_pod_s_per_1k": 76815.631,
+       "warm_pct": 67.8997
+      },
+      "tracelab": {
+       "idle_over_always_warm": 0.0292,
+       "idle_pod_s_per_1k": 72297.299,
+       "warm_pct": 66.9589
+      }
+     },
+     "threshold": "tau0.3",
+     "threshold_cfg": {
+      "tau": 0.3,
+      "threshold": "fixed"
+     },
+     "variant": "start=spec",
+     "worst_idle_ratio": 0.097
+    },
+    {
+     "after_use": "contract",
+     "best_any_threshold_warm": 67.40035,
+     "budget_binding": false,
+     "cfg": {
+      "copies_quantile": 0.9,
+      "gap_stat": "p50",
+      "keep_after_use_s": 30.0,
+      "plan_stat": "median_ms",
+      "start_rule": "timing"
+     },
+     "feasible": true,
+     "mean_warm": 67.40035,
+     "per_source": {
+      "copilot_2026": {
+       "idle_over_always_warm": 0.097,
+       "idle_pod_s_per_1k": 76873.324,
+       "warm_pct": 67.7913
+      },
+      "tracelab": {
+       "idle_over_always_warm": 0.0292,
+       "idle_pod_s_per_1k": 72352.973,
+       "warm_pct": 67.0094
+      }
+     },
+     "threshold": "tau0.3",
+     "threshold_cfg": {
+      "tau": 0.3,
+      "threshold": "fixed"
+     },
+     "variant": "start=jit_p50",
+     "worst_idle_ratio": 0.097
+    },
+    {
+     "after_use": "contract",
+     "best_any_threshold_warm": 68.6529,
+     "budget_binding": false,
+     "cfg": {
+      "copies_quantile": 0.9,
+      "gap_stat": "p10",
+      "keep_after_use_s": 30.0,
+      "plan_stat": "median_ms",
+      "start_rule": "timing"
+     },
+     "feasible": true,
+     "mean_warm": 68.6529,
+     "per_source": {
+      "copilot_2026": {
+       "idle_over_always_warm": 0.0982,
+       "idle_pod_s_per_1k": 77762.565,
+       "warm_pct": 69.5385
+      },
+      "tracelab": {
+       "idle_over_always_warm": 0.0298,
+       "idle_pod_s_per_1k": 73916.674,
+       "warm_pct": 67.7673
+      }
+     },
+     "threshold": "tau0.3",
+     "threshold_cfg": {
+      "tau": 0.3,
+      "threshold": "fixed"
+     },
+     "variant": "start=jit_p10",
+     "worst_idle_ratio": 0.0982
+    },
+    {
+     "after_use": "contract",
+     "best_any_threshold_warm": 69.7317,
+     "budget_binding": false,
+     "cfg": {
+      "copies_quantile": 0.9,
+      "keep_after_use_s": 30.0,
+      "start_rule": "now"
+     },
+     "feasible": true,
+     "mean_warm": 69.7317,
+     "per_source": {
+      "copilot_2026": {
+       "idle_over_always_warm": 0.0593,
+       "idle_pod_s_per_1k": 46960.735,
+       "warm_pct": 69.7433
+      },
+      "tracelab": {
+       "idle_over_always_warm": 0.0243,
+       "idle_pod_s_per_1k": 60298.972,
+       "warm_pct": 69.7201
+      }
+     },
+     "threshold": "lam100",
+     "threshold_cfg": {
+      "lambda_pod_s": 100.0,
+      "threshold": "cost"
+     },
+     "variant": "start=now",
+     "worst_idle_ratio": 0.0593
+    }
+   ],
+   "winner": {
+    "after_use": "contract",
+    "best_any_threshold_warm": 69.7317,
+    "budget_binding": false,
+    "cfg": {
+     "copies_quantile": 0.9,
+     "keep_after_use_s": 30.0,
+     "start_rule": "now"
+    },
+    "feasible": true,
+    "mean_warm": 69.7317,
+    "per_source": {
+     "copilot_2026": {
+      "idle_over_always_warm": 0.0593,
+      "idle_pod_s_per_1k": 46960.735,
+      "warm_pct": 69.7433
+     },
+     "tracelab": {
+      "idle_over_always_warm": 0.0243,
+      "idle_pod_s_per_1k": 60298.972,
+      "warm_pct": 69.7201
+     }
+    },
+    "threshold": "lam100",
+    "threshold_cfg": {
+     "lambda_pod_s": 100.0,
+     "threshold": "cost"
+    },
+    "variant": "start=now",
+    "worst_idle_ratio": 0.0593
+   }
+  },
+  "b_start": {
+   "all": [
+    {
+     "after_use": "pod",
+     "best_any_threshold_warm": 65.8835,
+     "budget_binding": false,
+     "cfg": {
+      "copies_quantile": 0.9,
+      "gap_stat": "p50",
+      "plan_stat": "p95_ms",
+      "start_rule": "timing"
+     },
+     "feasible": true,
+     "mean_warm": 65.8835,
+     "per_source": {
+      "copilot_2026": {
+       "idle_over_always_warm": 0.089,
+       "idle_pod_s_per_1k": 70504.499,
+       "warm_pct": 66.3935
+      },
+      "tracelab": {
+       "idle_over_always_warm": 0.026,
+       "idle_pod_s_per_1k": 64451.384,
+       "warm_pct": 65.3735
+      }
+     },
+     "threshold": "tau0.3",
+     "threshold_cfg": {
+      "tau": 0.3,
+      "threshold": "fixed"
+     },
+     "variant": "start=spec",
+     "worst_idle_ratio": 0.089
+    },
+    {
+     "after_use": "pod",
+     "best_any_threshold_warm": 65.85935,
+     "budget_binding": false,
+     "cfg": {
+      "copies_quantile": 0.9,
+      "gap_stat": "p50",
+      "plan_stat": "median_ms",
+      "start_rule": "timing"
+     },
+     "feasible": true,
+     "mean_warm": 65.85935,
+     "per_source": {
+      "copilot_2026": {
+       "idle_over_always_warm": 0.0891,
+       "idle_pod_s_per_1k": 70572.719,
+       "warm_pct": 66.2851
+      },
+      "tracelab": {
+       "idle_over_always_warm": 0.026,
+       "idle_pod_s_per_1k": 64517.824,
+       "warm_pct": 65.4336
+      }
+     },
+     "threshold": "tau0.3",
+     "threshold_cfg": {
+      "tau": 0.3,
+      "threshold": "fixed"
+     },
+     "variant": "start=jit_p50",
+     "worst_idle_ratio": 0.0891
+    },
+    {
+     "after_use": "pod",
+     "best_any_threshold_warm": 67.037,
+     "budget_binding": false,
+     "cfg": {
+      "copies_quantile": 0.9,
+      "gap_stat": "p10",
+      "plan_stat": "median_ms",
+      "start_rule": "timing"
+     },
+     "feasible": true,
+     "mean_warm": 67.037,
+     "per_source": {
+      "copilot_2026": {
+       "idle_over_always_warm": 0.0897,
+       "idle_pod_s_per_1k": 71033.35,
+       "warm_pct": 68.0082
+      },
+      "tracelab": {
+       "idle_over_always_warm": 0.0265,
+       "idle_pod_s_per_1k": 65553.042,
+       "warm_pct": 66.0658
+      }
+     },
+     "threshold": "tau0.3",
+     "threshold_cfg": {
+      "tau": 0.3,
+      "threshold": "fixed"
+     },
+     "variant": "start=jit_p10",
+     "worst_idle_ratio": 0.0897
+    },
+    {
+     "after_use": "pod",
+     "best_any_threshold_warm": 69.7317,
+     "budget_binding": false,
+     "cfg": {
+      "copies_quantile": 0.9,
+      "start_rule": "now"
+     },
+     "feasible": true,
+     "mean_warm": 69.7317,
+     "per_source": {
+      "copilot_2026": {
+       "idle_over_always_warm": 0.0593,
+       "idle_pod_s_per_1k": 46960.735,
+       "warm_pct": 69.7433
+      },
+      "tracelab": {
+       "idle_over_always_warm": 0.0243,
+       "idle_pod_s_per_1k": 60298.972,
+       "warm_pct": 69.7201
+      }
+     },
+     "threshold": "lam100",
+     "threshold_cfg": {
+      "lambda_pod_s": 100.0,
+      "threshold": "cost"
+     },
+     "variant": "start=now",
+     "worst_idle_ratio": 0.0593
+    }
+   ],
+   "winner": {
+    "after_use": "pod",
+    "best_any_threshold_warm": 69.7317,
+    "budget_binding": false,
+    "cfg": {
+     "copies_quantile": 0.9,
+     "start_rule": "now"
+    },
+    "feasible": true,
+    "mean_warm": 69.7317,
+    "per_source": {
+     "copilot_2026": {
+      "idle_over_always_warm": 0.0593,
+      "idle_pod_s_per_1k": 46960.735,
+      "warm_pct": 69.7433
+     },
+     "tracelab": {
+      "idle_over_always_warm": 0.0243,
+      "idle_pod_s_per_1k": 60298.972,
+      "warm_pct": 69.7201
+     }
+    },
+    "threshold": "lam100",
+    "threshold_cfg": {
+     "lambda_pod_s": 100.0,
+     "threshold": "cost"
+    },
+    "variant": "start=now",
+    "worst_idle_ratio": 0.0593
+   }
+  },
+  "c_keep": {
+   "all": [
+    {
+     "after_use": "contract",
+     "best_any_threshold_warm": 69.5563,
+     "budget_binding": false,
+     "cfg": {
+      "copies_quantile": 0.9,
+      "keep_after_use_s": 0.0,
+      "start_rule": "now"
+     },
+     "feasible": true,
+     "mean_warm": 69.5563,
+     "per_source": {
+      "copilot_2026": {
+       "idle_over_always_warm": 0.059,
+       "idle_pod_s_per_1k": 46719.491,
+       "warm_pct": 69.5264
+      },
+      "tracelab": {
+       "idle_over_always_warm": 0.0243,
+       "idle_pod_s_per_1k": 60175.273,
+       "warm_pct": 69.5862
+      }
+     },
+     "threshold": "lam100",
+     "threshold_cfg": {
+      "lambda_pod_s": 100.0,
+      "threshold": "cost"
+     },
+     "variant": "keep=0s,contract",
+     "worst_idle_ratio": 0.059
+    },
+    {
+     "after_use": "contract",
+     "best_any_threshold_warm": 69.5786,
+     "budget_binding": false,
+     "cfg": {
+      "copies_quantile": 0.9,
+      "keep_after_use_s": 2.0,
+      "start_rule": "now"
+     },
+     "feasible": true,
+     "mean_warm": 69.5786,
+     "per_source": {
+      "copilot_2026": {
+       "idle_over_always_warm": 0.059,
+       "idle_pod_s_per_1k": 46739.312,
+       "warm_pct": 69.5505
+      },
+      "tracelab": {
+       "idle_over_always_warm": 0.0243,
+       "idle_pod_s_per_1k": 60186.252,
+       "warm_pct": 69.6067
+      }
+     },
+     "threshold": "lam100",
+     "threshold_cfg": {
+      "lambda_pod_s": 100.0,
+      "threshold": "cost"
+     },
+     "variant": "keep=2s,contract",
+     "worst_idle_ratio": 0.059
+    },
+    {
+     "after_use": "contract",
+     "best_any_threshold_warm": 69.60910000000001,
+     "budget_binding": false,
+     "cfg": {
+      "copies_quantile": 0.9,
+      "keep_after_use_s": 5.0,
+      "start_rule": "now"
+     },
+     "feasible": true,
+     "mean_warm": 69.60910000000001,
+     "per_source": {
+      "copilot_2026": {
+       "idle_over_always_warm": 0.059,
+       "idle_pod_s_per_1k": 46768.678,
+       "warm_pct": 69.5746
+      },
+      "tracelab": {
+       "idle_over_always_warm": 0.0243,
+       "idle_pod_s_per_1k": 60201.32,
+       "warm_pct": 69.6436
+      }
+     },
+     "threshold": "lam100",
+     "threshold_cfg": {
+      "lambda_pod_s": 100.0,
+      "threshold": "cost"
+     },
+     "variant": "keep=5s,contract",
+     "worst_idle_ratio": 0.059
+    },
+    {
+     "after_use": "contract",
+     "best_any_threshold_warm": 69.64155,
+     "budget_binding": false,
+     "cfg": {
+      "copies_quantile": 0.9,
+      "keep_after_use_s": 10.0,
+      "start_rule": "now"
+     },
+     "feasible": true,
+     "mean_warm": 69.64155,
+     "per_source": {
+      "copilot_2026": {
+       "idle_over_always_warm": 0.0591,
+       "idle_pod_s_per_1k": 46816.292,
+       "warm_pct": 69.6108
+      },
+      "tracelab": {
+       "idle_over_always_warm": 0.0243,
+       "idle_pod_s_per_1k": 60223.621,
+       "warm_pct": 69.6723
+      }
+     },
+     "threshold": "lam100",
+     "threshold_cfg": {
+      "lambda_pod_s": 100.0,
+      "threshold": "cost"
+     },
+     "variant": "keep=10s,contract",
+     "worst_idle_ratio": 0.0591
+    },
+    {
+     "after_use": "contract",
+     "best_any_threshold_warm": 69.7317,
+     "budget_binding": false,
+     "cfg": {
+      "copies_quantile": 0.9,
+      "keep_after_use_s": 30.0,
+      "start_rule": "now"
+     },
+     "feasible": true,
+     "mean_warm": 69.7317,
+     "per_source": {
+      "copilot_2026": {
+       "idle_over_always_warm": 0.0593,
+       "idle_pod_s_per_1k": 46960.735,
+       "warm_pct": 69.7433
+      },
+      "tracelab": {
+       "idle_over_always_warm": 0.0243,
+       "idle_pod_s_per_1k": 60298.972,
+       "warm_pct": 69.7201
+      }
+     },
+     "threshold": "lam100",
+     "threshold_cfg": {
+      "lambda_pod_s": 100.0,
+      "threshold": "cost"
+     },
+     "variant": "keep=30s,contract",
+     "worst_idle_ratio": 0.0593
+    },
+    {
+     "after_use": "pod",
+     "best_any_threshold_warm": 67.36609999999999,
+     "budget_binding": false,
+     "cfg": {
+      "copies_quantile": 0.9,
+      "keep_after_use_s": 0.0,
+      "start_rule": "now"
+     },
+     "feasible": true,
+     "mean_warm": 67.36609999999999,
+     "per_source": {
+      "copilot_2026": {
+       "idle_over_always_warm": 0.0558,
+       "idle_pod_s_per_1k": 44234.326,
+       "warm_pct": 66.5743
+      },
+      "tracelab": {
+       "idle_over_always_warm": 0.0229,
+       "idle_pod_s_per_1k": 56718.803,
+       "warm_pct": 68.1579
+      }
+     },
+     "threshold": "lam100",
+     "threshold_cfg": {
+      "lambda_pod_s": 100.0,
+      "threshold": "cost"
+     },
+     "variant": "keep=0s,hold",
+     "worst_idle_ratio": 0.0558
+    },
+    {
+     "after_use": "pod",
+     "best_any_threshold_warm": 67.6822,
+     "budget_binding": false,
+     "cfg": {
+      "copies_quantile": 0.9,
+      "keep_after_use_s": 2.0,
+      "start_rule": "now"
+     },
+     "feasible": true,
+     "mean_warm": 67.6822,
+     "per_source": {
+      "copilot_2026": {
+       "idle_over_always_warm": 0.0561,
+       "idle_pod_s_per_1k": 44448.086,
+       "warm_pct": 67.0563
+      },
+      "tracelab": {
+       "idle_over_always_warm": 0.023,
+       "idle_pod_s_per_1k": 56996.116,
+       "warm_pct": 68.3081
+      }
+     },
+     "threshold": "lam100",
+     "threshold_cfg": {
+      "lambda_pod_s": 100.0,
+      "threshold": "cost"
+     },
+     "variant": "keep=2s,hold",
+     "worst_idle_ratio": 0.0561
+    },
+    {
+     "after_use": "pod",
+     "best_any_threshold_warm": 68.19905,
+     "budget_binding": false,
+     "cfg": {
+      "copies_quantile": 0.9,
+      "keep_after_use_s": 5.0,
+      "start_rule": "now"
+     },
+     "feasible": true,
+     "mean_warm": 68.19905,
+     "per_source": {
+      "copilot_2026": {
+       "idle_over_always_warm": 0.0565,
+       "idle_pod_s_per_1k": 44748.233,
+       "warm_pct": 67.8033
+      },
+      "tracelab": {
+       "idle_over_always_warm": 0.0232,
+       "idle_pod_s_per_1k": 57376.313,
+       "warm_pct": 68.5948
+      }
+     },
+     "threshold": "lam100",
+     "threshold_cfg": {
+      "lambda_pod_s": 100.0,
+      "threshold": "cost"
+     },
+     "variant": "keep=5s,hold",
+     "worst_idle_ratio": 0.0565
+    },
+    {
+     "after_use": "pod",
+     "best_any_threshold_warm": 68.83565,
+     "budget_binding": false,
+     "cfg": {
+      "copies_quantile": 0.9,
+      "keep_after_use_s": 10.0,
+      "start_rule": "now"
+     },
+     "feasible": true,
+     "mean_warm": 68.83565,
+     "per_source": {
+      "copilot_2026": {
+       "idle_over_always_warm": 0.0571,
+       "idle_pod_s_per_1k": 45198.201,
+       "warm_pct": 68.6709
+      },
+      "tracelab": {
+       "idle_over_always_warm": 0.0234,
+       "idle_pod_s_per_1k": 57982.908,
+       "warm_pct": 69.0004
+      }
+     },
+     "threshold": "lam100",
+     "threshold_cfg": {
+      "lambda_pod_s": 100.0,
+      "threshold": "cost"
+     },
+     "variant": "keep=10s,hold",
+     "worst_idle_ratio": 0.0571
+    }
+   ],
+   "winner": {
+    "after_use": "contract",
+    "best_any_threshold_warm": 69.7317,
+    "budget_binding": false,
+    "cfg": {
+     "copies_quantile": 0.9,
+     "keep_after_use_s": 30.0,
+     "start_rule": "now"
+    },
+    "feasible": true,
+    "mean_warm": 69.7317,
+    "per_source": {
+     "copilot_2026": {
+      "idle_over_always_warm": 0.0593,
+      "idle_pod_s_per_1k": 46960.735,
+      "warm_pct": 69.7433
+     },
+     "tracelab": {
+      "idle_over_always_warm": 0.0243,
+      "idle_pod_s_per_1k": 60298.972,
+      "warm_pct": 69.7201
+     }
+    },
+    "threshold": "lam100",
+    "threshold_cfg": {
+     "lambda_pod_s": 100.0,
+     "threshold": "cost"
+    },
+    "variant": "keep=30s,contract",
+    "worst_idle_ratio": 0.0593
+   }
+  },
+  "timing": {
+   "all": [
+    {
+     "after_use": "contract",
+     "best_any_threshold_warm": 67.4293,
+     "budget_binding": false,
+     "cfg": {
+      "copies_quantile": 0.9,
+      "gap_stat": "p50",
+      "keep_after_use_s": 30.0,
+      "plan_stat": "p95_ms",
+      "start_rule": "timing"
+     },
+     "feasible": true,
+     "mean_warm": 67.4293,
+     "per_source": {
+      "copilot_2026": {
+       "idle_over_always_warm": 0.097,
+       "idle_pod_s_per_1k": 76815.631,
+       "warm_pct": 67.8997
+      },
+      "tracelab": {
+       "idle_over_always_warm": 0.0292,
+       "idle_pod_s_per_1k": 72297.299,
+       "warm_pct": 66.9589
+      }
+     },
+     "threshold": "tau0.3",
+     "threshold_cfg": {
+      "tau": 0.3,
+      "threshold": "fixed"
+     },
+     "variant": "start=spec",
+     "worst_idle_ratio": 0.097
+    },
+    {
+     "after_use": "contract",
+     "best_any_threshold_warm": 69.7317,
+     "budget_binding": false,
+     "cfg": {
+      "copies_quantile": 0.9,
+      "keep_after_use_s": 30.0,
+      "start_rule": "now"
+     },
+     "feasible": true,
+     "mean_warm": 69.7317,
+     "per_source": {
+      "copilot_2026": {
+       "idle_over_always_warm": 0.0593,
+       "idle_pod_s_per_1k": 46960.735,
+       "warm_pct": 69.7433
+      },
+      "tracelab": {
+       "idle_over_always_warm": 0.0243,
+       "idle_pod_s_per_1k": 60298.972,
+       "warm_pct": 69.7201
+      }
+     },
+     "threshold": "lam100",
+     "threshold_cfg": {
+      "lambda_pod_s": 100.0,
+      "threshold": "cost"
+     },
+     "variant": "start=now",
+     "worst_idle_ratio": 0.0593
+    }
+   ],
+   "winner": {
+    "after_use": "contract",
+    "best_any_threshold_warm": 69.7317,
+    "budget_binding": false,
+    "cfg": {
+     "copies_quantile": 0.9,
+     "keep_after_use_s": 30.0,
+     "start_rule": "now"
+    },
+    "feasible": true,
+    "mean_warm": 69.7317,
+    "per_source": {
+     "copilot_2026": {
+      "idle_over_always_warm": 0.0593,
+      "idle_pod_s_per_1k": 46960.735,
+      "warm_pct": 69.7433
+     },
+     "tracelab": {
+      "idle_over_always_warm": 0.0243,
+      "idle_pod_s_per_1k": 60298.972,
+      "warm_pct": 69.7201
+     }
+    },
+    "threshold": "lam100",
+    "threshold_cfg": {
+     "lambda_pod_s": 100.0,
+     "threshold": "cost"
+    },
+    "variant": "start=now",
+    "worst_idle_ratio": 0.0593
+   }
+  }
+ }
+}

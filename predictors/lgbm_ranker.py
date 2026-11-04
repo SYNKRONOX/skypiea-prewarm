@@ -40,7 +40,6 @@ from typing import Any
 import lightgbm as lgb
 import numpy as np
 import yaml
-from sklearn.isotonic import IsotonicRegression
 
 from predictors.base import NextToolModel
 from predictors.data import END, Context, Episode
@@ -85,6 +84,8 @@ class Calibrator:
 
     @classmethod
     def fit(cls, scores: np.ndarray, labels: np.ndarray) -> Calibrator:
+        from sklearn.isotonic import IsotonicRegression  # training only; not in the image
+
         iso = IsotonicRegression(y_min=0.0, y_max=1.0, out_of_bounds="clip").fit(scores, labels)
         return cls(iso.X_thresholds_.tolist(), iso.y_thresholds_.tolist())
 

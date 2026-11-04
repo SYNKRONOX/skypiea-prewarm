@@ -261,3 +261,29 @@ def test_sim_keep_after_use_contract_rule(cold: ColdStarts) -> None:
     kept = _run(Spec("ours", 2_000.0, 0.6, pol30, after_use="contract"), EP, cold)
     # read_file is named by every decision (ttl 30 s), so its pod is kept 30 s after use
     assert kept.warm == 1 and kept.added[2] == 0.0
+
+
+def test_markov_baseline_ignores_the_profile_threshold(cold: ColdStarts) -> None:
+    from sim.offline import baseline_specs
+
+    env = Env(cold, "cached", load_config(), load_pricing(),
+              DecideConfig.load(threshold="cost", lambda_pod_s=100.0))
+
+    class _P:
+        markov = None
+
+    mk = next(s for s in baseline_specs(load_config(), _P(), env) if s.name == "markov1_top1")
+    assert mk.policy.cfg.threshold == "fixed" and mk.policy.cfg.tau == 0.6
+
+
+def test_results_csv_gz_append_is_deterministic(tmp_path: Path) -> None:
+    from sim.offline import _append
+
+    p, q = tmp_path / "a.csv.gz", tmp_path / "b.csv.gz"
+    for f in (p, q):
+        _append(f, [{"a": 1}])
+        _append(f, [{"a": 2, "b": 3}])  # new column: rewritten with the union
+    assert p.read_bytes() == q.read_bytes()
+    import gzip
+
+    assert gzip.decompress(p.read_bytes()).decode() == "a,b\r\n1,\r\n2,3\r\n"

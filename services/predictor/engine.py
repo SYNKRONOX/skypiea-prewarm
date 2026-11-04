@@ -28,13 +28,13 @@ from typing import Any
 
 import yaml
 
-from predictors.base import NextToolModel
+from predictors.base import Decision, NextToolModel
 from predictors.cold_start import ColdStarts
 from predictors.data import END, Context, Episode
 from predictors.decide import DecideConfig, Decider
 from predictors.graph import TransitionGraph
 from predictors.ladder import Ladder
-from predictors.lgbm_ranker import LGBMRanker
+from predictors.lgbm_ranker import LGBMRanker, _fsum_normalise
 from services.predictor.schema import Parsed
 
 BUNDLE_SCHEMA = 1
@@ -46,6 +46,33 @@ END_OUT = "END"
 
 class BundleError(ValueError):
     """The bundle cannot be served; the message is safe to return (no file contents)."""
+
+
+class _ScoredOnce(NextToolModel):
+    """The ranker for ONE request: scores the candidates once and serves both the FR-1
+    distribution (``predict``) and the in-next-batch probabilities (``batch_probs``) from
+    them. Created per request, never shared, so there is no cache across requests."""
+
+    name = "ranker"
+
+    def __init__(self, ranker: LGBMRanker) -> None:
+        self.ranker = ranker
+        self._ctx: Context | None = None
+        self._scores: dict[str, float] = {}
+
+    def _get(self, ctx: Context) -> dict[str, float]:
+        if self._ctx is not ctx:
+            self._scores, self._ctx = self.ranker.scores(ctx), ctx
+        return self._scores
+
+    def fit(self, train: Sequence[Episode], val: Sequence[Episode]) -> _ScoredOnce:
+        return self
+
+    def predict(self, ctx: Context, k: int = 1) -> dict[str, float]:
+        return _fsum_normalise(self._get(ctx))  # exactly LGBMRanker.ranked
+
+    def batch_probs(self, ctx: Context) -> dict[str, float]:
+        return {t: p for t, p in self._get(ctx).items() if t != END}
 
 
 class GraphMajority(NextToolModel):
@@ -192,8 +219,20 @@ def _ranked(probs: Mapping[str, float]) -> list[dict[str, Any]]:
 def answer(b: Bundle, parsed: Parsed) -> dict[str, Any]:
     """The contract response for one parsed request (latency added by the caller)."""
     ctx = Context.of(parsed.events)
-    probs, rmode, rdeg = b.ladder.ranked(ctx)
-    d = b.decider.decide(ctx)
+    once = _ScoredOnce(b.ranker)
+    lad = Ladder([(n, once if n == "ranker" else m) for n, m in b.ladder.rungs],
+                 budget_ms=b.ladder.budget_ms)
+    probs, rmode, rdeg = lad.ranked(ctx)
+    # decisions come from the rung that answered ``ranked`` (or a later one), so a budget
+    # fallback never mixes ranker decisions with an n-gram distribution
+    names = [n for n, _ in lad.rungs]
+    if rmode not in names:
+        d = Decision({}, "none", True)
+    else:
+        rest = Ladder(lad.rungs[names.index(rmode):], budget_ms=lad.budget_ms)
+        d = Decider(rest, b.decider.graph, b.decider.cold, b.cfg).decide(ctx)
+        if rdeg and not d.degraded:
+            d = Decision(d.warm, d.mode, True)
     decisions = [{"tool_class": t, "warm": True, "copies": int(w.copies),
                   "start_in_ms": int(max(0, round(w.start_in_ms))),
                   "ttl_s": int(min(600, max(0, math.ceil(w.ttl_ms / 1000.0)))),

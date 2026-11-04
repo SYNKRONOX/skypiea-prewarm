@@ -1,0 +1,18 @@
+# Named warm-policy profiles (predictors/decide.py: DecideConfig.for_profile). Each profile is
+# a set of overrides on configs/model/decide.yaml, tuned by sim/tune.py --profile <name> on
+# the VAL split of its own sources only (rule: max mean warm % s.t. idle pod-seconds <= 30%
+# of always-warm on every source of the group). Sources without timestamps cannot be replayed
+# and do not take part in tuning (tau_bench: no t_offset_ms in the traces).
+# The decide blocks below are filled from results/sim_choice_<profile>.json.
+profiles:
+  coding:
+    sources: [tracelab, copilot_2026]
+    # VAL pick (results/sim_choice_coding.json): NFR-3 budget NOT binding (worst idle 5.9% of
+    # always-warm); lambda 100 is the end of the sweep
+    decide: {start_rule: now, copies_quantile: 0.9, keep_after_use_s: 30, threshold: cost,
+             lambda_pod_s: 100}
+  support:
+    sources: [tau_bench, tau2_bench]
+    # VAL pick (results/sim_choice_support.json), tau2 only: NFR-3 budget binding
+    decide: {start_rule: now, copies_quantile: 0.9, keep_after_use_s: 0, threshold: fixed,
+             tau: 0.4}

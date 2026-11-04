@@ -8,7 +8,7 @@ the test-split sessions with timing, so we can sweep thresholds, keep-alive time
 cheaply before running them on the cluster. It reports cold-start rate and idle pod-seconds
 (the E3 Pareto plot), cost per 1,000 calls, hideable fractions and the FR-2/FR-3/NFR-3 proxies.
 
-    nice -n 10 python -m sim.offline --cold-start PATH   # results/sim_offline.csv, sim_hideable.csv
+    nice -n 10 python -m sim.offline --cold-start PATH   # results/sim_offline.csv.gz, sim_hideable.csv
     python -m sim.figures                                # sim_pareto.png, tau_curve.png, sim_report.md
 
 Cold starts are read from the file at PATH at run time (default `cold_start_path` in

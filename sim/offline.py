@@ -48,6 +48,8 @@ from __future__ import annotations
 
 import argparse
 import csv
+import gzip
+import io
 import json
 import math
 import sys
@@ -65,14 +67,21 @@ from predictors.base import ContextPolicy, Decision, NextToolModel
 from predictors.baselines import Markov
 from predictors.cold_start import ColdStarts
 from predictors.data import Context, Episode
-from predictors.decide import DecideConfig, Decider, apply_caps, load_pricing, merge_by_server
+from predictors.decide import (
+    DecideConfig,
+    Decider,
+    apply_caps,
+    load_pricing,
+    merge_by_server,
+    profile_of,
+)
 from predictors.eval import RESULTS, git_commit, split_groups
 from predictors.ladder import Ladder
 from predictors.lgbm_ranker import LGBMRanker
 
 ROOT = Path(__file__).resolve().parent.parent
 CONFIG = ROOT / "configs" / "model" / "sim.yaml"
-CSV_PATH = RESULTS / "sim_offline.csv"
+CSV_PATH = RESULTS / "sim_offline.csv.gz"  # gzipped: the plain file is over 1 MB
 HIDE_CSV = RESULTS / "sim_hideable.csv"
 
 
@@ -136,6 +145,7 @@ class Stats:
     fr3_max_lag_ms: float = 0.0
     decisions: int = 0
     abstain: int = 0
+    calls_warm: list[bool] | None = None  # per-call outcome, in event order, if requested
     dec_servers: int = 0  # per-server warm decisions
     dec_already: int = 0  # ... whose server already had enough live pods (nothing started)
     dec_partial: int = 0  # ... that had some but not enough
@@ -234,6 +244,8 @@ def simulate(ep: Episode, spec: Spec, env: Env, servers: Sequence[str], st: Stat
             warm = wait <= 0.0
             st.calls += 1
             st.warm += warm
+            if st.calls_warm is not None:
+                st.calls_warm.append(warm)
             st.added.append(wait)
             all_warm &= warm
             hide = b > 0 and gap >= cms
@@ -392,7 +404,8 @@ def baseline_specs(sim: dict[str, Any], prep: Prepared, env: Env) -> list[Spec]:
     out = [Spec("scale_to_zero", 0.0), Spec("always_warm", rttl, always_warm=True)]
     out += [Spec(f"keep_alive_{k}", 1000.0 * k) for k in sim["keep_alive_s"]]
     mk = Decider(Ladder([("markov1", _Top1Ranked(prep.markov))]), None, env.cold,
-                 env.decide.with_(plan_mode=env.mode, tau=float(sim["markov_tau"]),
+                 env.decide.with_(plan_mode=env.mode, threshold="fixed",
+                                  tau=float(sim["markov_tau"]),
                                   min_conf=0.0, keep_after_use_s=rttl / 1000.0),
                  top1=True, timing=False, copies=False, prob="ranked")
     out.append(Spec("markov1_top1", rttl, float(sim["markov_tau"]), mk))
@@ -474,25 +487,30 @@ def _row(st: Stats, spec: Spec, base: dict[str, Any], price: float, purge_ms: fl
             "fr3_pass": st.fr3_max_lag_ms <= purge_ms}
 
 
+def _open(path: Path, mode: str) -> io.TextIOBase:
+    """Text file; ``.gz`` paths are gzip with no name and mtime 0: same rows, same bytes."""
+    if path.suffix == ".gz":
+        raw = path.open(mode + "b")
+        gz = gzip.GzipFile(filename="", mode=mode + "b", fileobj=raw, mtime=0)
+        gz.myfileobj = raw  # closed with the gzip stream
+        return io.TextIOWrapper(gz, newline="")
+    return path.open(mode, newline="")
+
+
 def _append(path: Path, rows: list[dict[str, Any]]) -> None:
-    """Append rows; if the columns changed, rewrite the file with the union of columns."""
+    """Append rows (``.csv`` or ``.csv.gz``); the file is rewritten with the union of columns."""
     if not rows:
         return
     path.parent.mkdir(parents=True, exist_ok=True)
     cols = list(dict.fromkeys(k for r in rows for k in r))
     old: list[dict[str, str]] = []
     if path.exists():
-        with path.open(newline="") as f:
+        with _open(path, "r") as f:
             r = csv.DictReader(f)
             have = list(r.fieldnames or [])
-            if have != cols:
-                old = list(r)
-                cols = have + [c for c in cols if c not in have]
-            else:
-                with path.open("a", newline="") as g:
-                    csv.DictWriter(g, fieldnames=cols, restval="").writerows(rows)
-                return
-    with path.open("w", newline="") as f:
+            old = list(r)
+        cols = have + [c for c in cols if c not in have]
+    with _open(path, "w") as f:
         w = csv.DictWriter(f, fieldnames=cols, restval="")
         w.writeheader()
         w.writerows(old)
@@ -550,6 +568,9 @@ def run_source(src: dict[str, Any], sim: dict[str, Any], cold: ColdStarts,
                pricing: dict[str, Any], dcfg: DecideConfig, csv_path: Path = CSV_PATH,
                hide_path: Path = HIDE_CSV, root: Path | None = None) -> list[dict[str, Any]]:
     prep = prepare(src, cold, "test", root)
+    profile = profile_of(prep.source)
+    if profile is not None:  # the source's profile is "ours_new" (configs/model/profiles.yaml)
+        dcfg = DecideConfig.for_profile(profile)
     commit = git_commit()
     cfg = json.dumps({"sim": sim, "decide": dcfg.__dict__, "ranker_calibration":
                       prep.ranker.calibration, "pricing_status": pricing.get("status")},
@@ -563,7 +584,7 @@ def run_source(src: dict[str, Any], sim: dict[str, Any], cold: ColdStarts,
                 "cold_start_sha256": cold.sha256}
         _append(hide_path, [{**r, "git_commit": commit}
                             for r in hideable_rows(prep.eps, env, base)])
-        rows = run_specs(prep, specs_for(sim, prep, env), env, sim)
+        rows = run_specs(prep, specs_for(sim, prep, env), env, sim, {"profile": profile or ""})
         nfr3(rows, next(r for r in rows if r["policy"] == "always_warm"))
         for r in rows:
             r["config"], r["git_commit"] = cfg, commit

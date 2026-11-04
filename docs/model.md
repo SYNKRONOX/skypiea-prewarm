@@ -68,7 +68,7 @@ precision 7.5% on TraceLab.
 ### Second pass: why prewarms go unused, tuned on VAL (2026-11-04)
 
 Runner `sim/tune.py`; every variant x threshold on VAL (cached images) is in
-`results/sim_variants.csv` (winners and losers), the steps and scores in
+`results/sim_variants.csv.gz` (winners and losers), the steps and scores in
 `results/sim_choice.json`. Objective (PRD NFR-3): over the thresholds (tau 0.3..0.9, lambda
 1, 3, 10, 30, 100) maximise the mean warm % over the three sources subject to idle
 pod-seconds <= 30% of always-warm **on every source**. tau2 binds: keep-alive 30 s alone

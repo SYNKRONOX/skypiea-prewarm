@@ -1,4 +1,4 @@
-"""Figures and markdown summary from results/sim_offline.csv (Phase 6).
+"""Figures and markdown summary from results/sim_offline.csv.gz (Phase 6).
 
     python -m sim.figures
 
@@ -173,7 +173,7 @@ def report(df: pd.DataFrame, label: str) -> str:
            "assumptions (configs/model/pricing.yaml). Definitions: sim/offline.py docstring. "
            "Test split. `ours_old_*`: the first-pass policy (copies q0.9, timing rule, 30 s "
            "after use); `ours_new*`: the policy val picked (configs/model/decide.yaml; "
-           "`ours_new` is its default). Variants tried on val: results/sim_variants.csv.", ""]
+           "`ours_new` is its default). Variants tried on val: results/sim_variants.csv.gz.", ""]
     beat_lines = ["## Does any of our points beat keep-alive? (test)", "",
                   "Margin = our warm % minus keep-alive's at the same idle pod-seconds "
                   "(log-linear between keep-alive 5 s ... 600 s; points outside that range are "

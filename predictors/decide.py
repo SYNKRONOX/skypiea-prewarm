@@ -54,6 +54,7 @@ from predictors.workflow import START
 ROOT = Path(__file__).resolve().parent.parent
 CONFIG = ROOT / "configs" / "model" / "decide.yaml"
 PRICING = ROOT / "configs" / "model" / "pricing.yaml"
+PROFILES = ROOT / "configs" / "model" / "profiles.yaml"
 CONTRACT_MAX_COPIES = 10
 
 
@@ -98,6 +99,26 @@ class DecideConfig:
 
     def with_(self, **kw: Any) -> DecideConfig:
         return replace(self, **kw)
+
+    @classmethod
+    def for_profile(cls, name: str, path: Path = CONFIG, profiles: Path = PROFILES
+                    ) -> DecideConfig:
+        """decide.yaml with the named profile's overrides (configs/model/profiles.yaml)."""
+        prof = load_profiles(profiles)
+        if name not in prof:
+            raise ValueError(f"unknown profile {name!r}")
+        return cls.load(path, **(prof[name].get("decide") or {}))
+
+
+def load_profiles(path: Path = PROFILES) -> dict[str, dict[str, Any]]:
+    return dict(yaml.safe_load(path.read_text(encoding="utf-8"))["profiles"])
+
+
+def profile_of(source: str, path: Path = PROFILES) -> str | None:
+    for name, p in load_profiles(path).items():
+        if source in p.get("sources", []):
+            return name
+    return None
 
 
 def load_pricing(path: Path = PRICING) -> dict[str, Any]:

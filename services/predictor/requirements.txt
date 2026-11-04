@@ -1,6 +1,7 @@
-# Runtime dependencies of the service image only (subset of requirements-model.txt).
+# Runtime dependencies of the service image only (subset of requirements-model.txt; resolved
+# against requirements.lock). Training-only packages (scikit-learn, pandas, pyarrow) are not
+# needed at serving time.
 numpy==2.5.4
-scikit-learn==1.9.1
 scipy==1.18.1
 lightgbm==4.7.0
 PyYAML==6.0.3
@@ -11,10 +12,4 @@ anyio==4.16.0
 h11==0.16.0
 click==8.5.0
 idna==3.20
-threadpoolctl==3.7.0
 typing_extensions==4.16.0
-# imported through predictors/ and traces/ (data loading helpers)
-pandas==3.1.0
-pyarrow==26.0.0
-python-dateutil==4.0.0
-tzdata==2026.6
