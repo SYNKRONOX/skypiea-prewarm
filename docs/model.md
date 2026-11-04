@@ -151,13 +151,44 @@ ms checks before an atomic swap), `/rollback`, `/healthz`, `/metrics`. Bundles:
 `models/README.md`. Dockerfile: same pinned base image as the platform image, non-root, no
 shells; **not built yet**.
 
-Load test (`services/predictor/loadtest.py`, one uvicorn worker, client on the same laptop,
-TraceLab bundle; results/loadtest.csv): 200 concurrent for 60 s: 0 errors, 413 req/s, client
-p50 305 ms / p99 3,470 ms, service compute p99 4.7 ms, RSS 247.7 -> 249.1 MB. 10 concurrent
-for 20 s: 949 req/s, p50 8.9 ms, p99 34.9 ms. **The p99 < 50 ms at 200 concurrent target is
-not met**: requests queue behind one worker (and the single-process Python client). Not yet
-tried: computing the ranker once per request (it runs twice: ranked + batch probabilities),
-more workers.
+Changes 2026-11-04: the ranker scores once per request (one booster call serves `ranked` and
+the decisions; golden answers unchanged); `WORKERS` uvicorn processes (with more than one,
+/reload and /rollback answer 409, because each worker holds its own model: change models by
+rolling the pods); training-only packages (scikit-learn, pandas, pyarrow) are not imported at
+serving time.
+
+Load test: see "Latency" in the results section below.
+
+### Image: build, push, run (for the infra window)
+
+    # feat/model worktree; bundle for the coding profile (not in git)
+    nice -n 10 .venv/bin/python -m services.predictor.export --source tracelab --profile coding \
+        --cold-start ~/skypiea-infra/configs/cold_start.yaml          # -> models/lgbm-coding-<commit>/
+    TAG=$(git rev-parse --short=12 HEAD)
+    docker build -f services/predictor/Dockerfile \
+        --build-arg MODEL_DIR=models/lgbm-coding-<commit> -t skypiea/predictor:$TAG .
+    # into the kind registry, then ECR (Window 1, feat/infra):
+    docker tag skypiea/predictor:$TAG localhost:5001/skypiea/predictor:$TAG
+    docker push localhost:5001/skypiea/predictor:$TAG
+    python infra/aws/scripts/push_ecr.py --registry <account>.dkr.ecr.ap-south-1.amazonaws.com \
+        --tag $TAG --images predictor          # needs the ECR repository skypiea/predictor
+
+Run: container port 8090; read-only root filesystem works; user 10001; no shell in the image.
+
+| Env | Value |
+|---|---|
+| `COLD_START_PATH` | mounted cold-start file, e.g. a ConfigMap of configs/cold_start.yaml at `/cold/cold_start.yaml` (required) |
+| `MODEL_PATH` | `/models/current` (baked in; default) |
+| `MODEL_ROOT` | `/models` (default); reloads only from folders under it |
+| `ADMIN_TOKEN` | from a Secret; unset disables /reload and /rollback |
+| `WORKERS` | 2 (load-tested); use 1 if /reload is needed, and scale with replicas |
+| `PORT` | 8090 (default) |
+
+Probes: readiness and liveness `GET /healthz` (503 until a model is loaded). Metrics: `GET
+/metrics` (Prometheus; annotate the pod with the metrics port). The gateway points
+`platform.predictor.url` at `http://<service>:8090`; the request/response is the contract
+plus `keep_after_use_s`, `mode`, `degraded`, `truncated`. Image size 527 MB (numpy, scipy and
+LightGBM are most of it).
 
 ## Predictor service contract: alignment with docs/predictor_contract.md (draft v1)
 

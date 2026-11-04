@@ -43,7 +43,8 @@ def export(source: str, vocab: str | None, out: Path, cold: ColdStarts,
            version: str | None = None, profile: str | None = None) -> Path:
     train, val, _ = split_groups(source, "fixed", vocab=vocab)
     commit = git_commit()
-    name = version or f"lgbm-{profile or source}-{commit[:12]}"
+    sha, dirty = commit.removesuffix("-dirty"), commit.endswith("-dirty")
+    name = version or f"lgbm-{profile or source}-{sha[:12]}{'-dirty' if dirty else ''}"
     return build(train, val, out / name, cold, source, vocab, commit, profile=profile)
 
 
