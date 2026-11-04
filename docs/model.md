@@ -34,13 +34,20 @@ by the file's `classes` lists, unlisted classes to its `fallback`). Prices and p
   return) is skipped and `degraded=true`.
 - Abstain (`mode="prior"`, no decisions): last tool unseen in train, or max in-next-batch
   probability < `min_conf` (0.3). All rungs failing: `mode="none"`. Both mean the cold path.
-- Threshold: fixed `tau` (0.6), or cost-based tau_j = c_idle*E[idle] / (c_idle*E[idle] +
-  C_cold) clamped to [0.2, 0.95], with E[idle] = the decision's TTL and C_cold = cold-start
-  compute + `cold_latency_usd_per_s` x cold seconds. With the latency value at 0 (compute
-  only) tau_j is close to TTL / (TTL + cold start), about 0.9 for a 30 s TTL.
-- Copies: smallest n with P(count <= n | tool in batch) >= 0.9, capped at min(3, 10).
-- Timing: start_in_ms = max(0, gap_p50 - cold_p95 - margin); TTL from Ready until the p90
-  arrival, clamped to [5 s, 600 s]; 30 s without timing data.
+- Threshold: fixed `tau`, or cost-based (`threshold: cost`) with the policy knob
+  `lambda_pod_s` = pod-seconds worth paying to save one second of cold start: warm j iff
+  p_j >= (cold_s + ttl_s) / (cold_s + ttl_s + lambda x cold_s), clamped to [0.05, 0.99]
+  (a wrong warm wastes the startup plus the hold; a right one saves lambda x cold_s). No
+  single value of a second of latency is assumed; lambda is swept (1, 3, 10, 30, 100) and the
+  default is picked on VAL by the PRD rule below.
+- Copies: smallest n with P(count <= n | tool in batch) >= `copies_quantile`, capped at
+  min(`max_copies_per_tool`, 10).
+- Start rule (`start_rule`): `timing` = start_in_ms = max(0, gap_<gap_stat> - cold_<plan_stat>
+  - margin), TTL from Ready until the p90 arrival, clamped to [5 s, 600 s], 30 s without
+  timing data (the spec rule is gap p50 and cold p95); `now` = start now, 30 s TTL.
+- `keep_after_use_s` (contract P-new): after a pod serves a call, the controller keeps it for
+  max(`ttl_s` of the latest decision naming its server, `keep_after_use_s`). Baselines keep
+  30 s; our policy may set it small.
 - Per server (contract P7): copies max, start_in min, ttl max. Operator caps
   (`apply_caps`): 3 pods per server, 20 in total, an optional ramp budget; when a cap binds,
   pods go to the highest prob x cold-start ms.
@@ -50,25 +57,107 @@ by the file's `classes` lists, unlisted classes to its `fallback`). Prices and p
 Definitions are in the module docstring; the key modelling choices are: pods are per (session,
 server), never shared across sessions; decisions are made at the end of each batch (no
 request before the first call); a call that finds its pod still starting waits for it (FR-9
-hold); a decision's TTL holds a prewarmed pod until its first use, then the controller
-default (30 s) applies; "hideable" = not in the first batch and think gap >= the server's
+hold); after a use the pod is kept for max(latest decision ttl for its server,
+`keep_after_use_s`) (P-new; the old policy used the decision TTL until first use, then 30 s); "hideable" = not in the first batch and think gap >= the server's
 median cold start.
 
-Results (`results/sim_report.md`, figures `results/sim_pareto.png`, `results/tau_curve.png`;
-cold starts from the E0 kind file, a lower bound): **on TraceLab and Copilot the predictive
-policy does not beat fixed keep-alive.** At tau 0.6 it adds 2.0 (TraceLab) / 1.7 (Copilot)
-points of warm calls over keep-alive 30 s, for 43% / 9% more idle pod-seconds, while
-keep-alive 60 s gets 66.3% warm on TraceLab at 29k idle pod-s per 1,000 calls against our
-60.5% at 26k. At tau 0.3 it reaches 70.0% warm (TraceLab, cached) at 59k; keep-alive 300 s
-gets 80.2% at 90k. Its points lie on or above (worse than) the keep-alive curve. 94% (TraceLab, cached) / 82% (Copilot) / 78% (tau2) of calls are
-hideable; the oracle warms exactly those. Prewarm precision is low on TraceLab (7.5% of
-prewarmed pods used at tau 0.6). The timing rule (start at p50, TTL to p90) loses to "start
-now, 30 s TTL" on tau2; neither rule has been chosen yet, and the choice should be made on
-VAL.
+First pass (2026-11-03, commit 7a684c0): on TraceLab and Copilot the policy (tau 0.6,
+copies q0.9, spec timing rule, 30 s after use) did not beat fixed keep-alive; prewarm
+precision 7.5% on TraceLab.
 
-Open contract question for the infra session: the sim assumes a decision's `ttl_s` covers a
-prewarmed pod only until its first use, after which the controller default (30 s) applies.
-The contract does not say which TTL governs a pod after it has been used.
+### Second pass: why prewarms go unused, tuned on VAL (2026-11-04)
+
+Runner `sim/tune.py`; every variant x threshold on VAL (cached images) is in
+`results/sim_variants.csv` (winners and losers), the steps and scores in
+`results/sim_choice.json`. Objective (PRD NFR-3): over the thresholds (tau 0.3..0.9, lambda
+1, 3, 10, 30, 100) maximise the mean warm % over the three sources subject to idle
+pod-seconds <= 30% of always-warm **on every source**. tau2 binds: keep-alive 30 s alone
+uses 36% of always-warm there, so with a 30 s keep after use no variant is feasible.
+
+| Step (VAL) | Variants | Best feasible: mean warm % (worst idle ratio) | Pick |
+|---|---|---|---|
+| a copies (30 s keep) | q0.9 / q0.5 / one | none feasible; all 53.2 (0.379) | tie -> q0.9 (kept old) |
+| b start (30 s keep) | spec / jit_p50 / jit_p10 / now | none feasible; all 53.2 (0.379) | tie -> spec |
+| c keep-after-use | contract rule 0/2/5/10/30 s: 61.2 / 61.2 / 61.3 / 60.3 / infeasible; hold-only 0/2/5/10 s: 56.4 / 57.8 / 58.8 / 60.4 | 61.3 (0.299) | 5 s, contract rule |
+| a2 copies (5 s keep) | q0.9 61.3 / q0.5 58.9 / one 58.9 | 61.3 | q0.9 |
+| b2 start (5 s keep) | spec 61.3 / jit_p50 61.3 / jit_p10 61.9 / now 61.2 | 61.9 (0.211) | jit_p10 |
+| timing (item 2) | spec 61.26 / now 61.15 / jit_p10 61.87 | 61.9 | jit_p10 |
+| threshold | best feasible setting of the winner | tau 0.3 | tau 0.3 (fixed) |
+
+Shipped (configs/model/decide.yaml): copies q0.9, start at the think gap's p10 minus the
+median cold start (TTL until the p90 arrival), `keep_after_use_s` 5, fixed tau 0.3. Item 2:
+between the two rules asked about, the spec rule beat "start now, 30 s TTL" on VAL by 0.1
+point; the shipped rule is a variant of the timing rule (p10 gap, median cold start). The
+NFR-3 rule picks a lower tau than FR-2's 0.6; FR-2 is still reported at the shipped tau.
+lambda 100 (the end of the sweep) won steps c and a2; the final pick is a fixed tau.
+
+Findings on the unused prewarms (TEST, cached; `results/sim_report.md`):
+- (a) copies: fewer copies saves little idle but loses more warm calls (VAL), so q0.9 stays.
+  Surplus copies are 51% of unused prewarms on TraceLab for the old policy, 34% for the new.
+- (b) start time: just-in-time at the p50 changes nothing; planning to the p10 gap helps.
+- (c) replacing the 30 s keep with 5 s is what makes the policy feasible under NFR-3.
+- (d) 72-82% of our per-server warm decisions (TraceLab, Copilot; old and shipped) name a server that already
+  has enough live pods, so they start nothing (they only extend a pod). Calls "about to be
+  made by another session" cannot occur in this sim: pods are per session (see below).
+- Prewarm precision rises from 7.5% to 16.9% on TraceLab (old tau 0.6 vs shipped).
+
+Results on TEST (cold starts: E0 kind file, a lower bound; idle pod-s per 1,000 calls):
+
+| Policy | TraceLab warm % | idle | Copilot warm % | idle | tau2 warm % | idle |
+|---|---|---|---|---|---|---|
+| keep-alive 30 s | 58.5 | 18,090 | 51.4 | 19,476 | 56.1 | 18,299 |
+| keep-alive 60 s | 66.3 | 29,220 | 60.1 | 32,478 | 60.5 | 30,531 |
+| Markov-1 top-1 | 58.5 | 18,100 | 51.1 | 19,502 | 66.4 | 19,742 |
+| ours, old (tau 0.6) | 60.5 | 25,804 | 53.1 | 21,280 | 58.8 | 18,758 |
+| ours, shipped | 69.0 | 62,874 | 68.2 | 77,920 | 46.8 | 11,031 |
+| oracle | 93.9 | 568 | 82.6 | 4,716 | 77.5 | 511 |
+
+**Against keep-alive** (warm % at the same idle, log-linear between keep-alive 5 s ... 600 s):
+- TraceLab: **no point of ours beats the keep-alive curve** (best -1.9 points; shipped
+  default -6.8). The predictive policy is not worth running on TraceLab-like traffic.
+- Copilot: 3 of 20 points beat it (best +5.5, lambda 100); the shipped default is -2.2.
+- tau2: 18 of 20 points beat it (best +7.2); the shipped default +3.6. Markov-1 top-1 (66.4%
+  at 19.7k) beats both our policy and keep-alive on tau2.
+The shipped default meets NFR-3 by a wide margin on TraceLab and Copilot (idle 3% / 12% of
+always-warm) because the tau2 constraint drove the choice; it spends idle where keep-alive
+spends it more efficiently on those two sources. A per-source default would do better; we
+did not tune one.
+
+**Disclosure.** While finding the first sim bug (2026-11-03) I looked at the tau2 TEST
+split once (timing rule vs start-now). No choice was made from it, and the test split was not
+used for any choice in this pass; all choices above are from VAL. The ranker uses VAL for
+early stopping and the n-gram weights, so VAL numbers are slightly optimistic for it.
+
+**Not modelled (per-session mode is the conservative case).** Pods are per (session,
+server); real deployments share one Deployment per tool server across sessions, which would
+help keep-alive and always-warm more than it is shown here and makes Scenario C (500
+sessions on one tool) meaningful only with sharing. The shared-pool ablation (Poisson session
+arrivals, concurrency 1/10/100/500, copies from fleet demand) was not built in this pass. The
+operator caps (20 pods in total, ramp limit) are applied per session in the sim, so they
+almost never bind.
+
+## Predictor service (Phase 9, `services/predictor/`, built 2026-11-04)
+
+Implements the contract as decided (v1 + P2, P3, P6, P7, P8, P-new): `POST /decide` reads
+`history[]` (last 200 used, `truncated`; > 1,000 items or a body > 256 KB -> 413), accepts
+`history_total`, ignores `oracle`; answers `ranked` (top 5, sum <= 1, `END`), `decisions`
+(warm entries plus up to 3 `warm=false, copies=0` candidates), `keep_after_use_s`,
+`model_version`, `mode`, `degraded`, `truncated`, `latency_ms`. HTTP 200 for any JSON body
+under the limits (bad session id, bad fields or a model failure -> no decisions, degraded);
+400 for malformed JSON. Inputs are repaired per `services/predictor/schema.py` and counted by
+field name only. `/reload` (admin token, constant-time compare; MODEL_ROOT paths or
+allowlisted s3:// only; hash, schema, vocabulary, golden-answer and 200-call warm-up p99 <= 50
+ms checks before an atomic swap), `/rollback`, `/healthz`, `/metrics`. Bundles:
+`models/README.md`. Dockerfile: same pinned base image as the platform image, non-root, no
+shells; **not built yet**.
+
+Load test (`services/predictor/loadtest.py`, one uvicorn worker, client on the same laptop,
+TraceLab bundle; results/loadtest.csv): 200 concurrent for 60 s: 0 errors, 413 req/s, client
+p50 305 ms / p99 3,470 ms, service compute p99 4.7 ms, RSS 247.7 -> 249.1 MB. 10 concurrent
+for 20 s: 949 req/s, p50 8.9 ms, p99 34.9 ms. **The p99 < 50 ms at 200 concurrent target is
+not met**: requests queue behind one worker (and the single-process Python client). Not yet
+tried: computing the ranker once per request (it runs twice: ranked + batch probabilities),
+more workers.
 
 ## Predictor service contract: alignment with docs/predictor_contract.md (draft v1)
 
@@ -158,3 +247,4 @@ form.
 | P6 | accept | optional response fields `mode` (`ranker` \| `ngram` \| `majority` \| `prior` \| `none`), `degraded` (bool), `truncated` (bool) |
 | P7 | accept | the controller merges decisions per server: `copies` = max, `ttl_s` = max, `start_in_ms` = min |
 | P8 | accept, modified | batch ids come from an explicit `X-Skypiea-Batch` header when the client sends one; otherwise the gateway groups calls that overlapped in time. The contract states this order |
+| P-new | user, 2026-11-04 | the response carries `keep_after_use_s: int >= 0` (top level). After a pod serves a call, the controller applies TTL = max(`ttl_s` from the latest decision for that server, `keep_after_use_s`). Absent = the controller default (30 s); keep-alive baselines keep 30 s; our policy may set it small |

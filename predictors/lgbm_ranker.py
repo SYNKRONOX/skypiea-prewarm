@@ -33,7 +33,7 @@ from __future__ import annotations
 import json
 import math
 import random
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
@@ -402,10 +402,17 @@ class LGBMRanker(NextToolModel):
                                                  + "\n", encoding="utf-8")
         self.base.graph.save(folder / "counts.json")
 
+    FILES = ("ranker.lgb", "calibrator.json", "ranker_meta.json", "counts.json")
+
     @classmethod
     def load(cls, folder: Path) -> LGBMRanker:
         """Load from the files written by ``save`` (JSON and LightGBM text only)."""
-        meta = json.loads((folder / "ranker_meta.json").read_text(encoding="utf-8"))
+        return cls.from_files({n: (folder / n).read_bytes() for n in cls.FILES})
+
+    @classmethod
+    def from_files(cls, files: Mapping[str, bytes]) -> LGBMRanker:
+        """Load from the bytes of the files ``save`` writes (no disk access)."""
+        meta = json.loads(files["ranker_meta.json"].decode("utf-8"))
         if meta.get("schema_version") != SCHEMA_VERSION or meta.get("features") != FEATURES:
             raise ValueError("ranker metadata does not match this code's features")
         r = cls(meta["config"])
@@ -414,10 +421,10 @@ class LGBMRanker(NextToolModel):
         r.best_iteration = int(meta["best_iteration"])
         r.mean_batch_size = float(meta["mean_batch_size"])
         r.val_ece = dict(meta.get("val_ece", {}))
-        r.booster = lgb.Booster(model_file=str(folder / "ranker.lgb"))
-        r.calibrator = Calibrator.from_dict(
-            json.loads((folder / "calibrator.json").read_text(encoding="utf-8")))
-        r.base = _Base.from_params(TransitionGraph.load(folder / "counts.json"), meta)
+        r.booster = lgb.Booster(model_str=files["ranker.lgb"].decode("utf-8"))
+        r.calibrator = Calibrator.from_dict(json.loads(files["calibrator.json"].decode("utf-8")))
+        r.base = _Base.from_params(
+            TransitionGraph.from_dict(json.loads(files["counts.json"].decode("utf-8"))), meta)
         return r
 
 

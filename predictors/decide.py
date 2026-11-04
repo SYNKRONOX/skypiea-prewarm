@@ -12,17 +12,24 @@ For each tool class j with in-next-batch probability p_j (the ladder's first hea
 - abstain (``mode="prior"``, no decisions) if the last tool was never seen in train or
   max_j p_j < ``min_conf``; every rung failing gives ``mode="none"``. Both mean the normal
   cold path (FR-4).
-- threshold: fixed ``tau``, or cost-based tau_j = c_idle*E[idle] / (c_idle*E[idle] + C_cold)
-  clamped to ``cost_tau_clamp``. c_idle = vCPU price x the pod's CPU request (per second);
-  E[idle] = the decision's TTL (a wrong warm idles until it expires); C_cold = the cold
-  start's compute (cold seconds x CPU x price) plus ``cold_latency_usd_per_s`` x cold seconds.
+- threshold: fixed ``tau``, or cost-based (``threshold: cost``) with the knob ``lambda_pod_s``
+  = pod-seconds worth paying to save one second of cold start. Warming j when it is not
+  called wastes the pod's startup plus its hold (cold_s + ttl_s pod-seconds); warming it when
+  it is called saves lambda x cold_s. Warm iff p_j >= tau_j = (cold_s + ttl_s) / (cold_s +
+  ttl_s + lambda x cold_s), clamped to ``cost_tau_clamp``. cold_s is the cold-start file's
+  median for ``plan_mode``; ttl_s the decision's TTL.
 - copies: smallest n with P(count <= n | j in the batch) >= ``copies_quantile`` (the graph's
   context-conditioned table when it has support), capped at min(``max_copies_per_tool``, 10).
-- timing: gaps are the graph's think-gap quantiles for (last tool -> j), measured from the end
-  of the previous batch, i.e. from the request. start_in_ms = max(0, gap_p50 - cold_plan -
-  margin); the TTL runs from the moment the pod is Ready and lasts until the p90 arrival:
-  ttl_ms = clamp(gap_p90 - start_in_ms - cold_plan, ttl_min, ttl_max), or ``ttl_default_ms``
-  without timing. cold_plan is the cold-start file's ``plan_stat`` for ``plan_mode``.
+- start rule (``start_rule``): ``timing`` (the spec rule): gaps are the graph's think-gap
+  quantiles for (last tool -> j), measured from the end of the previous batch, i.e. from the
+  request. start_in_ms = max(0, gap_<gap_stat> - cold_plan - margin); the TTL runs from the
+  moment the pod is Ready and lasts until the p90 arrival: ttl_ms = clamp(gap_p90 -
+  start_in_ms - cold_plan, ttl_min, ttl_max), or ``ttl_default_ms`` without timing. cold_plan
+  is the cold-start file's ``plan_stat`` for ``plan_mode``. ``now``: start_in 0, TTL
+  ``ttl_default_ms``.
+- ``keep_after_use_s`` is sent with every decision (contract P-new): after a pod serves a
+  call the controller keeps it for max(ttl_s of the latest decision naming its server,
+  keep_after_use_s).
 
 ``top1=True`` with ``timing=False, copies=False`` gives the SpecBox-style baseline (warm the
 single most likely tool now, one copy, default TTL).
@@ -54,7 +61,8 @@ CONTRACT_MAX_COPIES = 10
 class DecideConfig:
     threshold: str = "fixed"
     tau: float = 0.6
-    cost_tau_clamp: tuple[float, float] = (0.2, 0.95)
+    lambda_pod_s: float = 10.0
+    cost_tau_clamp: tuple[float, float] = (0.05, 0.99)
     min_conf: float = 0.3
     copies_quantile: float = 0.9
     max_copies_per_tool: int = 3
@@ -62,6 +70,9 @@ class DecideConfig:
     ttl_min_ms: float = 5_000.0
     ttl_max_ms: float = 600_000.0
     margin_ms: float = 0.0
+    start_rule: str = "timing"
+    gap_stat: str = "p50"
+    keep_after_use_s: float = 30.0
     plan_stat: str = "p95_ms"
     plan_mode: str = "cached"
     max_pods_per_tool: int = 3
@@ -81,6 +92,8 @@ class DecideConfig:
         cfg = cls(**d)
         if cfg.threshold not in ("fixed", "cost"):
             raise ValueError("threshold must be fixed or cost")
+        if cfg.start_rule not in ("timing", "now") or cfg.gap_stat not in ("p10", "p50"):
+            raise ValueError("start_rule must be timing or now; gap_stat p10 or p50")
         return cfg
 
     def with_(self, **kw: Any) -> DecideConfig:
@@ -115,8 +128,6 @@ class Decider(ContextPolicy):
                  cfg: DecideConfig, pricing: dict[str, Any] | None = None, *,
                  top1: bool = False, timing: bool = True, copies: bool = True,
                  prob: str = "batch") -> None:
-        if cfg.threshold == "cost" and pricing is None:
-            raise ValueError("the cost-based threshold needs pricing")
         self.ladder, self.graph, self.cold, self.cfg = ladder, graph, cold, cfg
         self.pricing = pricing
         self.top1, self.use_timing, self.use_copies, self.prob = top1, timing, copies, prob
@@ -155,13 +166,14 @@ class Decider(ContextPolicy):
     def timing(self, ctx: Context, tool: str) -> tuple[float, float]:
         """(start_in_ms, ttl_ms)."""
         c = self.cfg
-        if not self.use_timing or self.graph is None:
+        if not self.use_timing or c.start_rule == "now" or self.graph is None:
             return 0.0, c.ttl_default_ms
         tm = self.graph.timing(last_batch_tool(ctx), tool)
-        if tm.p50 is None or tm.p90 is None:
+        gap = tm.p10 if c.gap_stat == "p10" else tm.p50
+        if gap is None or tm.p90 is None:
             return 0.0, c.ttl_default_ms
         cold = self.cold_plan(tool)
-        start_in = max(0.0, tm.p50 - cold - c.margin_ms)
+        start_in = max(0.0, gap - cold - c.margin_ms)
         ttl = _clamp(tm.p90 - start_in - cold, c.ttl_min_ms, c.ttl_max_ms)
         return float(round(start_in)), float(math.ceil(ttl))
 
@@ -169,14 +181,10 @@ class Decider(ContextPolicy):
         c = self.cfg
         if c.threshold == "fixed":
             return c.tau
-        assert self.pricing is not None
-        price = float(self.pricing["vcpu_second_usd"])
-        cpu = float(self.pricing["cpu_request_cores"][self.cold.tier(tool)])
         cold_s = self.cold.ms(tool, c.plan_mode, "median_ms") / 1000.0
-        idle = price * cpu * (ttl_ms / 1000.0)
-        miss = cold_s * cpu * price + cold_s * float(self.pricing.get("cold_latency_usd_per_s",
-                                                                      0.0))
-        t = idle / (idle + miss) if idle + miss > 0 else c.cost_tau_clamp[1]
+        waste = cold_s + ttl_ms / 1000.0
+        gain = c.lambda_pod_s * cold_s
+        t = waste / (waste + gain) if waste + gain > 0 else c.cost_tau_clamp[1]
         return _clamp(t, *c.cost_tau_clamp)
 
     def copies(self, ctx: Context, tool: str) -> int:

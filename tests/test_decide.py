@@ -120,7 +120,8 @@ class _Graph:
 
 def _decider(cold: ColdStarts, probs: dict[str, float], graph: _Graph | None = None,
              **cfg: object) -> Decider:
-    c = DecideConfig.load(**cfg)
+    base = {"tau": 0.6, "gap_stat": "p50", "plan_stat": "p95_ms", "keep_after_use_s": 30}
+    c = DecideConfig.load(**{**base, **cfg})  # rules tested against fixed values
     return Decider(Ladder([("ranker", _Fixed(probs))]), graph or _Graph(), cold, c,
                    load_pricing())
 
@@ -148,13 +149,30 @@ def test_timing_copies_and_ttl_rules(cold: ColdStarts) -> None:
 
 
 def test_cost_based_threshold(cold: ColdStarts) -> None:
-    pol = _decider(cold, {"shell": 0.9}, threshold="cost")
-    # compute only: tau = ttl / (ttl + cold), clamped to [0.2, 0.95]
-    assert pol.tau("shell", 30_000.0) == pytest.approx(30 / 32)
-    assert pol.tau("shell", 600_000.0) == 0.95
-    pricing = {**load_pricing(), "cold_latency_usd_per_s": 1.0}
-    pol2 = Decider(pol.ladder, pol.graph, cold, pol.cfg, pricing)
-    assert pol2.tau("shell", 30_000.0) == 0.2
+    # tau = (cold + ttl) / (cold + ttl + lambda * cold); shell: cold 2 s, ttl 30 s
+    pol = _decider(cold, {"shell": 0.9}, threshold="cost", lambda_pod_s=10)
+    assert pol.tau("shell", 30_000.0) == pytest.approx(32 / 52)
+    assert _decider(cold, {}, threshold="cost", lambda_pod_s=1).tau("shell", 30_000.0) == \
+        pytest.approx(32 / 34)
+    assert _decider(cold, {}, threshold="cost", lambda_pod_s=1e6).tau("shell", 0.0) == 0.05
+    assert _decider(cold, {"shell": 0.7}, threshold="cost", lambda_pod_s=10).decide(CTX).warm
+    assert not _decider(cold, {"shell": 0.7}, threshold="cost", lambda_pod_s=1).decide(CTX).warm
+
+
+def test_start_rules_and_copies_rules(cold: ColdStarts) -> None:
+    g = _Graph(10_000.0, 20_000.0)
+    now = _decider(cold, {"shell": 0.9}, g, start_rule="now").decide(CTX).warm["shell"]
+    assert (now.start_in_ms, now.ttl_ms) == (0.0, 30_000.0)
+    jit = _decider(cold, {"shell": 0.9}, g, plan_stat="median_ms").decide(CTX).warm["shell"]
+    assert jit.start_in_ms == 10_000.0 - 2_000.0  # gap p50 minus the median cold start
+    p10 = _decider(cold, {"shell": 0.9}, g, gap_stat="p10").decide(CTX).warm["shell"]
+    assert p10.start_in_ms == 0.0  # the fixture's p10 is 1 ms
+    assert _decider(cold, {"shell": 0.9}, g, copies_quantile=0.5).decide(CTX).warm[
+        "shell"].copies == 1
+    assert _decider(cold, {"shell": 0.9}, g, max_copies_per_tool=1).decide(CTX).warm[
+        "shell"].copies == 1
+    with pytest.raises(ValueError):
+        DecideConfig.load(start_rule="later")
 
 
 def test_merge_by_server_and_caps(cold: ColdStarts) -> None:
@@ -232,3 +250,14 @@ def test_sim_oracle_does_not_count_a_busy_pod(cold: ColdStarts) -> None:
     ep = Episode("s", "test", "g", True, tuple(evs), [(0, 1), (1, 2), (2, 3)], [None] * 4)
     st = _run(Spec("oracle", 0.0, oracle=True), ep, cold)
     assert st.hide_calls == 1 and st.hide_cold == 0
+
+
+def test_sim_keep_after_use_contract_rule(cold: ColdStarts) -> None:
+    # read_file is called at 0 s and again at 10.5 s; the policy only ever predicts shell
+    pol = _decider(cold, {"shell": 0.9}, _Graph(None, None), keep_after_use_s=2)
+    short = _run(Spec("ours", 2_000.0, 0.6, pol, after_use="contract"), EP, cold)
+    assert short.warm == 1  # shell prewarmed; read_file's pod went 2 s after its use
+    pol30 = _decider(cold, {"read_file": 0.9}, _Graph(None, None), keep_after_use_s=2)
+    kept = _run(Spec("ours", 2_000.0, 0.6, pol30, after_use="contract"), EP, cold)
+    # read_file is named by every decision (ttl 30 s), so its pod is kept 30 s after use
+    assert kept.warm == 1 and kept.added[2] == 0.0

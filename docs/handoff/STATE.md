@@ -136,12 +136,31 @@ Last updated: 2026-11-03 (Phase 4 decisions applied, cap measured, Phases 5-6 do
   precision 7.5% at tau 0.6 on TraceLab. Timing rule vs start-now not chosen; to be chosen
   on VAL. The tau2 diagnosis of the timing rule was looked at on TEST (disclosed).
 
+## 2026-11-04: user decisions on Phase 6 applied; Phase 9 service started
+
+- VAL-only tuning (`sim/tune.py`, results/sim_variants.csv, sim_choice.json): steps a copies,
+  b start, c keep-after-use, a2/b2 again under c's winner, timing (spec vs now vs b2),
+  threshold (tau and lambda sweeps; NFR-3 rule: idle <= 30% of always-warm on every source).
+  Shipped in decide.yaml: copies q0.9, timing rule at gap p10 - cold median, keep_after_use
+  5 s (contract max rule), fixed tau 0.3. On VAL the spec rule beat start-now by 0.1 pt.
+- Cost threshold is now lambda_pod_s (pod-s per cold-start s); pricing.yaml lost
+  cold_latency_usd_per_s.
+- TEST: TraceLab no point beats keep-alive (shipped -6.8 pts); Copilot 3/20 points beat it,
+  shipped -2.2; tau2 18/20, shipped +3.6. Stated in docs/model.md.
+- Contract P-new (keep_after_use_s) written to docs/model.md for the infra window; tau2
+  TEST peek disclosed there. Shared-pool ablation NOT built (documented as not modelled).
+- Phase 9: services/predictor/ (schema, engine/bundles, app, export, loadtest, Dockerfile,
+  pinned requirements). Bundle: `python -m services.predictor.export --source tracelab
+  --cold-start ~/skypiea-infra/configs/cold_start.yaml` -> models/<version>/ (not committed).
+  Load test: 0 errors, but p99 3.5 s at 200 concurrent (one worker) -> NFR-1 proxy NOT met;
+  p99 35 ms at 10 concurrent. Docker image not built.
+
 ## Next
 
-1. Waiting for the user on the Phase 6 STOP: which rule to pursue, whether to diagnose the
-   low prewarm precision (copies quantile) on VAL, the cold-latency value for the cost-based
-   threshold, and the after-use TTL question for the contract.
-2. Then Phase 7 (optional GRU) or Phase 8+.
+1. Service latency at 200 concurrent: score the ranker once per request; workers; measure.
+2. Build the Docker image; then Phase 10 red-team suite (tests/redteam/, docs/redteam.md,
+   make targets in mk/model.mk) and Phase 11 review (STOP there).
+3. Optional: shared-pool sim ablation; per-source policy defaults.
 
 ## Rules for the next session (from the user)
 
@@ -167,4 +186,4 @@ Last updated: 2026-11-03 (Phase 4 decisions applied, cap measured, Phases 5-6 do
 - Stop at each STOP point and wait. No more poisoning guards beyond what the red-team needs.
 - Run with `.venv/bin/python` (PYTHONPATH=$PWD for scripts). Phase 4 runner:
   `python -m predictors.phase4 [--report]`; log in data/processed/_staging/.
-- Status now: Phase 6 reported (STOP); waiting for the user.
+- Status now: Phase 6 second pass done; Phase 9 service built, latency target open.

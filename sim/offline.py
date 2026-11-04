@@ -90,6 +90,8 @@ class Pod:
     used: bool = False
     last_use: float | None = None
     fixed_end: float | None = None  # always-warm pods: alive until the session ends
+    need_next: int = 0  # prewarm pods: calls of this server in the batch after the decision
+    t_next: float = math.inf  # prewarm pods: that batch's arrival
 
 
 @dataclass
@@ -102,6 +104,10 @@ class Spec:
     policy: ContextPolicy | None = None
     always_warm: bool = False
     oracle: bool = False
+    # after a use: "pod" keeps the pod's own TTL (reactive_ttl_ms; the old rule), "contract"
+    # applies max(ttl of the latest decision naming the server, reactive_ttl_ms) (P-new, with
+    # reactive_ttl_ms = keep_after_use)
+    after_use: str = "pod"
 
 
 @dataclass
@@ -130,6 +136,12 @@ class Stats:
     fr3_max_lag_ms: float = 0.0
     decisions: int = 0
     abstain: int = 0
+    dec_servers: int = 0  # per-server warm decisions
+    dec_already: int = 0  # ... whose server already had enough live pods (nothing started)
+    dec_partial: int = 0  # ... that had some but not enough
+    unused_wrong: int = 0  # prewarmed pods never used: server not in the next batch
+    unused_surplus: int = 0  # ... server in the next batch, but other pods served it
+    unused_expired: int = 0  # ... removed before the next batch arrived
 
 
 class Env:
@@ -184,6 +196,7 @@ def simulate(ep: Episode, spec: Spec, env: Env, servers: Sequence[str], st: Stat
         return live
 
     last: Decision | None = None
+    dec_ttl: dict[str, float] = {}  # ttl of the latest decision naming each server
     fr2_n = fr2_ok = 0
     for b, (lo, hi) in enumerate(ep.batches):
         t, _ = times[b]
@@ -215,7 +228,9 @@ def simulate(ep: Episode, spec: Spec, env: Env, servers: Sequence[str], st: Stat
             pod.busy_ms += svc
             pod.used, pod.last_use = True, serve + svc
             if pod.fixed_end is None:
-                pod.expire = max(pod.expire, serve + svc + pod.ttl)
+                ttl = (max(spec.reactive_ttl_ms, dec_ttl.get(s, 0.0))
+                       if spec.after_use == "contract" else pod.ttl)
+                pod.expire = max(pod.expire, serve + svc + ttl)
             warm = wait <= 0.0
             st.calls += 1
             st.warm += warm
@@ -256,7 +271,15 @@ def simulate(ep: Episode, spec: Spec, env: Env, servers: Sequence[str], st: Stat
             counts = {s: len(alive(s, d)) for s in per}
             total = sum(len(alive(s, d)) for s in list(pods))
             grant = apply_caps(per, counts, env.decide, cold, total_alive=total)
+            nxt = (Counter(cold.server(x) for x in ep.batch_tools(b + 1))
+                   if b + 1 < ep.n_batches else Counter())
+            t_nx = times[b + 1][0] if b + 1 < ep.n_batches else math.inf
             for s, wd in per.items():
+                dec_ttl[s] = wd.ttl_ms
+                want = min(wd.copies, env.decide.max_pods_per_tool)
+                st.dec_servers += 1
+                st.dec_already += counts[s] >= want
+                st.dec_partial += 0 < counts[s] < want
                 target = d + wd.start_in_ms + env.cold_ms(s)
                 for p in alive(s, d)[:wd.copies]:
                     if p.fixed_end is None:
@@ -265,7 +288,7 @@ def simulate(ep: Episode, spec: Spec, env: Env, servers: Sequence[str], st: Stat
                     start = d + wd.start_in_ms
                     ready = start + env.cold_ms(s)
                     pods[s].append(Pod(s, start, ready, ready + wd.ttl_ms, spec.reactive_ttl_ms,
-                                       True))
+                                       True, need_next=nxt[s], t_next=t_nx))
                     st.prewarm += 1
 
     for s in list(pods):
@@ -284,6 +307,13 @@ def simulate(ep: Episode, spec: Spec, env: Env, servers: Sequence[str], st: Stat
             st.unused_cpu_s += cpu_s
         if p.prewarm:
             st.prewarm_used += p.used
+            if not p.used and not spec.oracle:
+                if p.need_next == 0:
+                    st.unused_wrong += 1
+                elif p.expire < p.t_next:
+                    st.unused_expired += 1
+                else:
+                    st.unused_surplus += 1
         if p.fixed_end is None:  # expire = last use (or last refresh) + TTL
             st.fr3_max_lag_ms = max(st.fr3_max_lag_ms, end - p.expire)
     if fr2_n:
@@ -328,27 +358,77 @@ class _Top1Ranked(NextToolModel):
         return self.m.predict(ctx, k)
 
 
-def specs_for(source_cfg: dict[str, Any], sim: dict[str, Any], ranker: LGBMRanker,
-              markov: Markov, table: dict[tuple[int, int], dict[str, float]],
-              env: Env) -> list[Spec]:
-    cold, dcfg, rttl = env.cold, env.decide.with_(plan_mode=env.mode), float(
-        sim["reactive_ttl_ms"])
+@dataclass
+class Prepared:
+    """One source's replayed split with the models fitted on train (and val, see LGBMRanker)."""
+
+    source: str
+    vocab: str | None
+    split: str
+    eps: list[Episode]
+    ranker: LGBMRanker
+    markov: Markov
+    table: dict[tuple[int, int], dict[str, float]]
+    servers: list[str]
+
+
+def prepare(src: dict[str, Any], cold: ColdStarts, split: str = "test",
+            root: Path | None = None) -> Prepared:
+    source, vocab = src["source"], src.get("vocab")
+    kw = {"vocab": vocab} if root is None else {"vocab": vocab, "root": root}
+    train, val, test = split_groups(source, "fixed", **kw)
+    eps = [ep for ep in {"val": val, "test": test}[split] if ep.has_timing]
+    ranker = LGBMRanker.from_config().fit(train, val)
+    markov = Markov(1).fit(train, val)
+    ctxs = [ep.context(i) for ep in eps for i in range(1, ep.n_batches + 1)]
+    table = {(id(c.events), c.upto): p
+             for c, p in zip(ctxs, ranker.batch_probs_many(ctxs), strict=True)}
+    servers = sorted({cold.server(e.tool) for ep in train for e in ep.events})
+    return Prepared(source, vocab, split, eps, ranker, markov, table, servers)
+
+
+def baseline_specs(sim: dict[str, Any], prep: Prepared, env: Env) -> list[Spec]:
+    rttl = float(sim["reactive_ttl_ms"])
     out = [Spec("scale_to_zero", 0.0), Spec("always_warm", rttl, always_warm=True)]
     out += [Spec(f"keep_alive_{k}", 1000.0 * k) for k in sim["keep_alive_s"]]
-    mk = Decider(Ladder([("markov1", _Top1Ranked(markov))]), None, cold,
-                 dcfg.with_(tau=float(sim["markov_tau"]), min_conf=0.0), top1=True,
-                 timing=False, copies=False, prob="ranked")
+    mk = Decider(Ladder([("markov1", _Top1Ranked(prep.markov))]), None, env.cold,
+                 env.decide.with_(plan_mode=env.mode, tau=float(sim["markov_tau"]),
+                                  min_conf=0.0, keep_after_use_s=rttl / 1000.0),
+                 top1=True, timing=False, copies=False, prob="ranked")
     out.append(Spec("markov1_top1", rttl, float(sim["markov_tau"]), mk))
-    lad = Ladder([("ranker", Precomputed(table))])
-    g = ranker.base.graph if ranker.base is not None else None
+    return out
+
+
+def ours_spec(name: str, prep: Prepared, env: Env, cfg: DecideConfig, after_use: str = "contract"
+              ) -> Spec:
+    """Our policy with decision config ``cfg`` (keep-after-use = cfg.keep_after_use_s)."""
+    cfg = cfg.with_(plan_mode=env.mode)
+    g = prep.ranker.base.graph if prep.ranker.base is not None else None
+    pol = Decider(Ladder([("ranker", Precomputed(prep.table))]), g, env.cold, cfg, env.pricing)
+    return Spec(name, 1000.0 * cfg.keep_after_use_s,
+                cfg.tau if cfg.threshold == "fixed" else None, pol, after_use=after_use)
+
+
+OLD = {"start_rule": "timing", "gap_stat": "p50", "plan_stat": "p95_ms", "copies_quantile": 0.9,
+       "max_copies_per_tool": 3, "keep_after_use_s": 30.0, "threshold": "fixed"}
+
+
+def specs_for(sim: dict[str, Any], prep: Prepared, env: Env) -> list[Spec]:
+    """Baselines, our old policy (Phase 6 first pass), our shipped policy (decide.yaml) over
+    the tau and lambda sweeps plus its default, and the oracle."""
+    out = baseline_specs(sim, prep, env)
+    old = env.decide.with_(**OLD)
     for tau in sim["tau_sweep"]:
-        out.append(Spec(f"ours_tau{tau:.1f}", rttl, float(tau),
-                        Decider(lad, g, cold, dcfg.with_(tau=float(tau)), env.pricing)))
-        out.append(Spec(f"ours_now_tau{tau:.1f}", rttl, float(tau),
-                        Decider(lad, g, cold, dcfg.with_(tau=float(tau)), env.pricing,
-                                timing=False)))
-    out.append(Spec("ours_cost", rttl, None,
-                    Decider(lad, g, cold, dcfg.with_(threshold="cost"), env.pricing)))
+        out.append(ours_spec(f"ours_old_tau{tau:.1f}", prep, env, old.with_(tau=float(tau)),
+                             after_use="pod"))
+        out.append(ours_spec(f"ours_old_now_tau{tau:.1f}", prep, env,
+                             old.with_(tau=float(tau), start_rule="now"), after_use="pod"))
+        out.append(ours_spec(f"ours_new_tau{tau:.1f}", prep, env,
+                             env.decide.with_(threshold="fixed", tau=float(tau))))
+    for lam in sim["lambda_sweep"]:
+        out.append(ours_spec(f"ours_new_lam{lam:g}", prep, env,
+                             env.decide.with_(threshold="cost", lambda_pod_s=float(lam))))
+    out.append(ours_spec("ours_new", prep, env, env.decide))
     out.append(Spec("oracle", 0.0, oracle=True))
     return out
 
@@ -379,6 +459,13 @@ def _row(st: Stats, spec: Spec, base: dict[str, Any], price: float, purge_ms: fl
             "cold_pct_nonhideable": pct(st.nohide_cold, st.nohide_calls),
             "prewarm_pods": st.prewarm, "prewarm_used_pct": pct(st.prewarm_used, st.prewarm),
             "abstain_pct": pct(st.abstain, st.decisions),
+            "dec_servers": st.dec_servers,
+            "dec_already_warm_pct": pct(st.dec_already, st.dec_servers),
+            "dec_partial_pct": pct(st.dec_partial, st.dec_servers),
+            "unused_wrong_server_pct": pct(st.unused_wrong, st.prewarm),
+            "unused_surplus_copy_pct": pct(st.unused_surplus, st.prewarm),
+            "unused_expired_pct": pct(st.unused_expired, st.prewarm),
+            "idle_over_always_warm": "",
             "fr2_calls": st.fr2_calls, "fr2_call_ready_pct": pct(st.fr2_ready, st.fr2_calls),
             "fr2_sessions": st.fr2_sessions,
             "fr2_sessions_all_pct": pct(st.fr2_all, st.fr2_sessions),
@@ -388,14 +475,27 @@ def _row(st: Stats, spec: Spec, base: dict[str, Any], price: float, purge_ms: fl
 
 
 def _append(path: Path, rows: list[dict[str, Any]]) -> None:
+    """Append rows; if the columns changed, rewrite the file with the union of columns."""
     if not rows:
         return
     path.parent.mkdir(parents=True, exist_ok=True)
-    new = not path.exists()
-    with path.open("a", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=list(rows[0]))
-        if new:
-            w.writeheader()
+    cols = list(dict.fromkeys(k for r in rows for k in r))
+    old: list[dict[str, str]] = []
+    if path.exists():
+        with path.open(newline="") as f:
+            r = csv.DictReader(f)
+            have = list(r.fieldnames or [])
+            if have != cols:
+                old = list(r)
+                cols = have + [c for c in cols if c not in have]
+            else:
+                with path.open("a", newline="") as g:
+                    csv.DictWriter(g, fieldnames=cols, restval="").writerows(rows)
+                return
+    with path.open("w", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=cols, restval="")
+        w.writeheader()
+        w.writerows(old)
         w.writerows(rows)
 
 
@@ -418,51 +518,62 @@ def hideable_rows(test: Sequence[Episode], env: Env, base: dict[str, Any]
             for c in sorted(n, key=lambda c: (c != "ALL", c))]
 
 
+def run_specs(prep: Prepared, specs: Sequence[Spec], env: Env, sim: dict[str, Any],
+              extra: dict[str, Any] | None = None) -> list[dict[str, Any]]:
+    """One row per spec; NFR-3 ratios are filled in against the run's always_warm row."""
+    base = {"time": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"), "split": prep.split,
+            "source": prep.source, "vocab": prep.vocab or "", "cold_mode": env.mode,
+            "sessions": len(prep.eps), "cold_start_label": env.cold.label,
+            "cold_start_sha256": env.cold.sha256, **(extra or {})}
+    rows = []
+    for spec in specs:
+        st = Stats()
+        for ep in prep.eps:
+            simulate(ep, spec, env, prep.servers, st)
+        rows.append(_row(st, spec, base, float(env.pricing["vcpu_second_usd"]),
+                         float(sim["purge_ms"])))
+        dec = spec.policy.cfg.__dict__ if isinstance(spec.policy, Decider) else None
+        rows[-1]["decide"] = json.dumps(dec, sort_keys=True, default=list) if dec else ""
+        rows[-1]["after_use"] = spec.after_use if dec else ""
+    return rows
+
+
+def nfr3(rows: list[dict[str, Any]], aw: dict[str, Any]) -> None:
+    for r in rows:
+        r["nfr3_unused_over_always_warm"] = (
+            f"{float(r['unused_cpu_s']) / float(aw['cpu_s']):.4f}" if float(aw["cpu_s"]) else "")
+        a = float(aw["idle_pod_s_per_1k"])
+        r["idle_over_always_warm"] = f"{float(r['idle_pod_s_per_1k']) / a:.4f}" if a else ""
+
+
 def run_source(src: dict[str, Any], sim: dict[str, Any], cold: ColdStarts,
                pricing: dict[str, Any], dcfg: DecideConfig, csv_path: Path = CSV_PATH,
                hide_path: Path = HIDE_CSV, root: Path | None = None) -> list[dict[str, Any]]:
-    source, vocab = src["source"], src.get("vocab")
-    kw = {"vocab": vocab} if root is None else {"vocab": vocab, "root": root}
-    train, val, test = split_groups(source, "fixed", **kw)
-    test = [ep for ep in test if ep.has_timing]
-    ranker = LGBMRanker.from_config().fit(train, val)
-    markov = Markov(1).fit(train, val)
-    ctxs = [ep.context(i) for ep in test for i in range(1, ep.n_batches + 1)]
-    table = {(id(c.events), c.upto): p
-             for c, p in zip(ctxs, ranker.batch_probs_many(ctxs), strict=True)}
-    servers = sorted({cold.server(e.tool) for ep in train for e in ep.events})
-    commit, now = git_commit(), datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+    prep = prepare(src, cold, "test", root)
+    commit = git_commit()
     cfg = json.dumps({"sim": sim, "decide": dcfg.__dict__, "ranker_calibration":
-                      ranker.calibration, "pricing_status": pricing.get("status")},
+                      prep.ranker.calibration, "pricing_status": pricing.get("status")},
                      sort_keys=True, default=list)
-    rows: list[dict[str, Any]] = []
+    out: list[dict[str, Any]] = []
     for mode in sim["cold_modes"]:
         env = Env(cold, mode, sim, pricing, dcfg)
-        base = {"time": now, "source": source, "vocab": vocab or "", "cold_mode": mode,
-                "sessions": len(test), "cold_start_label": cold.label,
+        base = {"time": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                "source": prep.source, "vocab": prep.vocab or "", "cold_mode": mode,
+                "sessions": len(prep.eps), "cold_start_label": cold.label,
                 "cold_start_sha256": cold.sha256}
         _append(hide_path, [{**r, "git_commit": commit}
-                            for r in hideable_rows(test, env, base)])
-        for spec in specs_for(src, sim, ranker, markov, table, env):
-            st = Stats()
-            for ep in test:
-                simulate(ep, spec, env, servers, st)
-            rows.append(_row(st, spec, base, float(pricing["vcpu_second_usd"]),
-                             float(sim["purge_ms"])))
-        aw = next(r for r in rows if r["cold_mode"] == mode and r["policy"] == "always_warm")
+                            for r in hideable_rows(prep.eps, env, base)])
+        rows = run_specs(prep, specs_for(sim, prep, env), env, sim)
+        nfr3(rows, next(r for r in rows if r["policy"] == "always_warm"))
         for r in rows:
-            if r["cold_mode"] == mode:
-                r["nfr3_unused_over_always_warm"] = (
-                    f"{float(r['unused_cpu_s']) / float(aw['cpu_s']):.4f}"
-                    if float(aw["cpu_s"]) else "")
-                r["config"], r["git_commit"] = cfg, commit
-                print(f"{source:13s} {mode:8s} {r['policy']:15s} "
-                      f"warm {float(r['warm_pct']):6.2f}% "
-                      f"cold(hide) {r['cold_pct_hideable'] or '-':>8s} "
-                      f"idle/1k {float(r['idle_pod_s_per_1k']):10.1f} "
-                      f"$/1k {float(r['cost_usd_per_1k']):.3g}", flush=True)
-        _append(csv_path, [r for r in rows if r["cold_mode"] == mode])
-    return rows
+            r["config"], r["git_commit"] = cfg, commit
+            print(f"{prep.source:13s} {mode:8s} {r['policy']:18s} "
+                  f"warm {float(r['warm_pct']):6.2f}% "
+                  f"idle/1k {float(r['idle_pod_s_per_1k']):10.1f} "
+                  f"used {r['prewarm_used_pct'] or '-':>8s}", flush=True)
+        _append(csv_path, rows)
+        out += rows
+    return out
 
 
 def load_config(path: Path = CONFIG) -> dict[str, Any]:

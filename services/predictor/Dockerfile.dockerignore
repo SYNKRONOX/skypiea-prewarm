@@ -1,0 +1,7 @@
+**
+!predictors/
+!traces/
+!configs/model/
+!services/predictor/
+!models/
+**/__pycache__

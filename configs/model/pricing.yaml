@@ -8,6 +8,3 @@ cpu_request_cores:
   light: 0.05
   medium: 0.05
   heavy: 0.075
-# Value of one second of user-visible cold-start latency, used by the cost-based threshold.
-# 0 = compute cost only. Not a measured number; a decision for the user.
-cold_latency_usd_per_s: 0.0
