@@ -93,7 +93,8 @@ platform:
     # predictor, feat/model services/predictor; needs image.tag). Both run when image.tag is set.
     serve: stub
     # Real predictor: one image holds both bundles; profile selects one (P1, docs/model.md):
-    # support = Scenario A, coding = Scenario B. Its cold-start file is passed at deploy time:
+    # support = Scenario A, coding = Scenario B, prd = SYNTHETIC PRD A/B demo. Its cold-start
+    # file is passed at deploy time:
     #   --set-file platform.predictor.coldStartYaml=configs/cold_start.yaml
     image: {repository: skypiea/predictor, tag: ""}   # "" = not deployed
     profile: support

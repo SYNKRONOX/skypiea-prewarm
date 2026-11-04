@@ -21,8 +21,16 @@ import random
 from pathlib import Path
 
 DEFAULT_DATA = Path(os.path.expanduser("~/skypiea-model/data/processed"))
-SCEN = {"A": {"source": "tau2_bench", "profile": "support"},
-        "B": {"source": "tracelab", "profile": "coding"}}
+SETS = {
+    "real": {"A": {"source": "tau2_bench", "profile": "support"},
+             "B": {"source": "tracelab", "profile": "coding"}},
+    # SYNTHETIC (traces/generate_synthetic.py --type prd): PRD Scenario A/B graphs, profile prd
+    "prd": {"A": {"source": "synthetic_prd", "group": "syn_branching", "profile": "prd",
+                  "synthetic": True},
+            "B": {"source": "synthetic_prd", "group": "syn_deterministic", "profile": "prd",
+                  "synthetic": True}},
+}
+SCEN = SETS["real"]
 
 
 def _calls(g) -> list[dict]:
@@ -31,9 +39,13 @@ def _calls(g) -> list[dict]:
              "batch_id": int(r.batch_id)} for r in g.itertuples()]
 
 
-def _eligible(d, split: str, max_s: float | None) -> dict[str, list[dict]]:
+def _eligible(d, split: str, max_s: float | None,
+              group: str | None = None) -> dict[str, list[dict]]:
     out = {}
-    for sid, g in d[d["split"] == split].groupby("session_id", sort=True):
+    d = d[d["split"] == split]
+    if group:   # group ids are <prefix>_<n>
+        d = d[d["group"].str.replace(r"_\d+$", "", regex=True) == group]
+    for sid, g in d.groupby("session_id", sort=True):
         if not bool(g["has_timing"].all()):
             continue
         end_s = float((g["t_offset_ms"] + g["service_ms"]).max()) / 1000
@@ -43,16 +55,21 @@ def _eligible(d, split: str, max_s: float | None) -> dict[str, list[dict]]:
     return out
 
 
-def draw(data: Path, n: int, seed: int, max_s_b: float, n_train: int) -> tuple[dict, dict]:
+def draw(data: Path, n: int, seed: int, max_s_b: float, n_train: int,
+         which: str = "real") -> tuple[dict, dict]:
     import pandas as pd
 
-    calls, record = {}, {"seed": seed, "n": n, "scenarios": {}}
-    for scen, meta in SCEN.items():
+    calls, record = {}, {"set": which, "seed": seed, "n": n, "scenarios": {}}
+    if which == "prd":
+        record["SYNTHETIC"] = ("PRD scenario graphs, generated traces; not evidence about real "
+                               "workloads; never mixed with the real-trace runs")
+    for scen, meta in SETS[which].items():
         d = pd.read_parquet(data / meta["source"] / "calls.parquet")
-        max_s = max_s_b if scen == "B" else None
-        test = _eligible(d, "test", max_s)
+        # real: only TraceLab (B) needs the cap; prd: both, same cap (A max 2786 s, B 618309 s)
+        max_s = max_s_b if (scen == "B" or which == "prd") else None
+        test = _eligible(d, "test", max_s, meta.get("group"))
         ids = random.Random(seed).sample(sorted(test), n)
-        train = _eligible(d, "train", max_s)
+        train = _eligible(d, "train", max_s, meta.get("group"))
         tr_ids = sorted(train) if len(train) <= n_train else \
             random.Random(seed).sample(sorted(train), n_train)
         calls[scen] = {"sessions": {s: test[s] for s in ids},
@@ -75,10 +92,11 @@ def main() -> int:
     ap.add_argument("--seed", type=int, default=20261104)
     ap.add_argument("--max-s", type=float, default=600.0, help="Scenario B session length cap")
     ap.add_argument("--n-train", type=int, default=300, help="Markov-1 warm-up sessions (train)")
+    ap.add_argument("--set", default="real", choices=sorted(SETS))
     ap.add_argument("--out-calls", type=Path, required=True)
     ap.add_argument("--out-record", type=Path, required=True)
     a = ap.parse_args()
-    calls, record = draw(a.data, a.n, a.seed, a.max_s, a.n_train)
+    calls, record = draw(a.data, a.n, a.seed, a.max_s, a.n_train, a.set)
     a.out_calls.parent.mkdir(parents=True, exist_ok=True)
     a.out_calls.write_text(json.dumps(calls, separators=(",", ":")))
     a.out_record.write_text(json.dumps(record, indent=1) + "\n")

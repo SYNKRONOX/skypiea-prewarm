@@ -113,9 +113,11 @@ async def run(a) -> int:
     async with httpx.AsyncClient(timeout=300, limits=httpx.Limits(max_connections=200)) as c:
         for pol in a.policies.split(","):
             await wait_zero(c, ctl, 300)
-            (await c.post(f"{pred}/admin/policy", json={"name": pol, "params": {}})
-             ).raise_for_status()
+            if pol != "predictive":   # predictive = the real predictor (gateway serves the model)
+                (await c.post(f"{pred}/admin/policy", json={"name": pol, "params": {}})
+                 ).raise_for_status()
             m0 = (await c.get(f"{ctl}/metrics")).text
+            g0 = (await c.get(f"{gw}/metrics")).text
             stop, seen = asyncio.Event(), {"max_starting": 0, "max_queued": 0, "polls": 0,
                                            "poll_errors": 0}
             w = asyncio.create_task(watch(c, ctl, stop, seen))
@@ -126,9 +128,15 @@ async def run(a) -> int:
             stop.set()
             await w
             m1 = (await c.get(f"{ctl}/metrics")).text
+            g1 = (await c.get(f"{gw}/metrics")).text
             d = {k: metric(m1, k) - metric(m0, k) for k in (
                 "skypiea_scaleups_queued_total", "skypiea_scaleups_expired_in_queue_total",
-                "skypiea_scaleup_queue_wait_seconds_count", "skypiea_scale_refused_total")}
+                "skypiea_scaleup_queue_wait_seconds_count", "skypiea_scale_refused_total",
+                "skypiea_scale_errors_total")}
+            gd = {k: metric(g1, k) - metric(g0, k) for k in (
+                "skypiea_gateway_predictor_errors_total", "skypiea_gateway_prewarm_hits_total",
+                "skypiea_gateway_prewarm_misses_total", "skypiea_gateway_not_ready_total",
+                "skypiea_gateway_predictor_latency_seconds_count")}
             n_ok = sum(r["ok"] for r in rows)
             n_cold = sum(1 for r in rows if r["cold"])
             back = await wait_zero(c, ctl, 300)
@@ -138,7 +146,14 @@ async def run(a) -> int:
             print(f"   controller: queued {d['skypiea_scaleups_queued_total']:.0f}, "
                   f"dequeued {d['skypiea_scaleup_queue_wait_seconds_count']:.0f}, expired in "
                   f"queue {d['skypiea_scaleups_expired_in_queue_total']:.0f}, refused by caps "
-                  f"{d['skypiea_scale_refused_total']:.0f}; all tools at 0 after {back:.0f}s")
+                  f"{d['skypiea_scale_refused_total']:.0f}, scale errors "
+                  f"{d['skypiea_scale_errors_total']:.0f}; all tools at 0 after {back:.0f}s")
+            print(f"   gateway: predictor calls "
+                  f"{gd['skypiea_gateway_predictor_latency_seconds_count']:.0f}, predictor errors "
+                  f"{gd['skypiea_gateway_predictor_errors_total']:.0f}, prewarm hits "
+                  f"{gd['skypiea_gateway_prewarm_hits_total']:.0f}, misses "
+                  f"{gd['skypiea_gateway_prewarm_misses_total']:.0f}, not ready "
+                  f"{gd['skypiea_gateway_not_ready_total']:.0f}")
             for e in [r["err"] for r in rows if not r["ok"]][:5]:
                 print(f"   error: {e}")
             checks = {"all calls succeeded": n_ok == len(rows),
@@ -148,7 +163,8 @@ async def run(a) -> int:
                 print(f"   check: {k}: {'PASS' if v else 'FAIL'}")
                 if not v:
                     failures.append(f"{pol}: {k}")
-        await c.post(f"{pred}/admin/policy", json={"name": "scale_to_zero", "params": {}})
+        if "predictive" not in a.policies.split(","):
+            await c.post(f"{pred}/admin/policy", json={"name": "scale_to_zero", "params": {}})
     print("\nFAILURES: " + ("; ".join(failures) if failures else "none"))
     return 1 if failures else 0
 
@@ -161,10 +177,27 @@ def main() -> int:
     ap.add_argument("--gap-scale", type=float, default=0.2)
     ap.add_argument("--max-starting", type=int, default=2)
     ap.add_argument("--export-sessions", metavar="FILE")
+    ap.add_argument("--from-test", choices=["A", "B"],
+                    help="export N test sessions of that scenario's source (scenario_sessions "
+                         "draw) instead of the PRD synthetic ones; ids -> --record")
+    ap.add_argument("--record", help="where to write the drawn ids (with --from-test)")
     ap.add_argument("--n", type=int, default=40)
     ap.add_argument("--sessions-dir", default=os.path.expanduser(
         "~/skypiea-model/data/processed"))
     a = ap.parse_args()
+    if a.export_sessions and a.from_test:
+        from gateway.scenario_sessions import draw
+
+        calls, rec = draw(Path(a.sessions_dir), a.n, 20261105, 600.0, 0)
+        sess = list(calls[a.from_test]["sessions"].values())
+        Path(a.export_sessions).write_text(json.dumps({"A": [], "B": sess}))
+        r = rec["scenarios"][a.from_test]
+        r.pop("markov1_warmup", None)
+        Path(a.record).write_text(json.dumps({"seed": 20261105, "n": a.n, a.from_test: r},
+                                             indent=1) + "\n")
+        print(f"wrote {a.export_sessions}: {len(sess)} {r['source']} test sessions, "
+              f"{sum(len(x) for x in sess)} calls")
+        return 0
     if a.export_sessions:
         export(a.n, a.export_sessions, a.sessions_dir)
         return 0

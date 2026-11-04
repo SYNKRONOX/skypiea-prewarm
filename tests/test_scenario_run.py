@@ -60,7 +60,7 @@ def test_chart_real_predictor_values():
     assert _render("platform.predictor.serve=model").returncode != 0   # needs image.tag
     assert _render("platform.predictor.image.tag=x").returncode != 0   # needs the cold file
     cold = f"platform.predictor.coldStartYaml={ROOT / 'configs' / 'cold_start.yaml'}"
-    bad = _render("platform.predictor.image.tag=x", cold, "platform.predictor.profile=prd")
+    bad = _render("platform.predictor.image.tag=x", cold, "platform.predictor.profile=nope")
     assert bad.returncode != 0
     r = _render("platform.predictor.image.tag=x", cold, "platform.predictor.profile=coding",
                 "platform.predictor.serve=model")
@@ -69,3 +69,22 @@ def test_chart_real_predictor_values():
     assert "image: skypiea/predictor:x" in out.replace("localhost:5001/", "")
     assert '{name: PREDICTOR_PROFILE, value: "coding"}' in out
     assert "http://skypiea-model." in out and "readOnlyRootFilesystem: true" in out
+
+
+def test_report_keeps_failed_calls_and_policy_errors(tmp_path):
+    from gateway.scenario_report import parse
+
+    log = tmp_path / "a.log"
+    ok = {"policy": "p", "scenario": "A", "ok": True, "cold": True, "added_ms": 5.0}
+    bad = {**ok, "ok": False, "error": "boom"}
+    summ = {"scenario": "A", "policy": "p", "calls": 2, "ok": 1, "metrics":
+            {"skypiea_gateway_prewarm_hits_total": 3.0}, "setup": {}}
+    log.write_text("REAL-TIMING run: scenario A, 1 sessions\n"
+                   f"ROW {json.dumps(ok)}\nROW {json.dumps(bad)}\nPOLICY {json.dumps(summ)}\n"
+                   "POLICY_ERROR markov1: RuntimeError: x\n")
+    calls, rows = parse([log])
+    assert [c["ok"] for c in calls] == [True, False]
+    assert rows[0]["prewarm_hits"] == 3.0 and rows[0]["model_version"] == "stub"
+    assert rows[1] == {"dataset": "real", "scenario": "A", "policy": "markov1",
+                       "error": "RuntimeError: x", "log": "a.log"}
+    assert calls[0]["dataset"] == "real"     # old logs without the label are real-trace runs

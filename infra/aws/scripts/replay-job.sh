@@ -7,6 +7,7 @@
 #                                    REAL-TIMING run (gateway/scenario_run.py), sessions drawn by
 #                                    gateway/scenario_sessions.py into $SESSIONS
 #   CHECK=decide SCEN=A PROFILE=support replay-job.sh start   live /decide contract check
+#   SYNTHETIC PRD runs: SESSIONS=~/.cache/skypiea/scenario/prd_sessions.json DATASET=SYNTHETIC
 #   replay-job.sh status             job state + last log lines (one short SSM call)
 #   replay-job.sh logs  OUT          full log to OUT (outside results/: functional, not results)
 #   replay-job.sh fetch OUT          full log via S3 (large logs: node uploads, laptop downloads)
@@ -35,21 +36,27 @@ json.dump({sys.argv[2]: d[sys.argv[2]]}, open(sys.argv[3], "w"), separators=(","
 PY
   elif [ "$CHECK" = concurrent ]; then
     POL="${2:-scale_to_zero,markov1}"
-    "$PY" -m gateway.concurrent_check --export-sessions "$T/sessions.json" --n "${N:-40}"
+    if [ -n "${FROM_TEST:-}" ]; then   # test sessions of A|B's source (real predictor)
+      "$PY" -m gateway.concurrent_check --export-sessions "$T/sessions.json" --n "${N:-40}" \
+        --from-test "$FROM_TEST" --record "${RECORD:-results/concurrent_sessions.json}"
+    else
+      "$PY" -m gateway.concurrent_check --export-sessions "$T/sessions.json" --n "${N:-40}"
+    fi
   else
     POL="${2:-scale_to_zero,always_warm,keep_alive,markov1}"
     "$PY" -m gateway.replay_check --export-sessions "$T/sessions.json" >/dev/null
   fi
-  "$PY" - "$T" "$NS" "$POL" "$CHECK" "${SCEN:-}" "${PROFILE:-}" "${DEADLINE:-2700}" <<'PY'
+  "$PY" - "$T" "$NS" "$POL" "$CHECK" "${SCEN:-}" "${PROFILE:-}" "${DEADLINE:-2700}" "${DATASET:-real}" <<'PY'
 import json, pathlib, sys
 t, ns, pol, check, scen, profile = pathlib.Path(sys.argv[1]), *sys.argv[2:7]
-deadline = int(sys.argv[7])
+deadline, dataset = int(sys.argv[7]), sys.argv[8]
 script = {"replay": "gateway/replay_check.py", "concurrent": "gateway/concurrent_check.py",
           "scenario": "gateway/scenario_run.py", "decide": "gateway/decide_check.py"}[check]
 extra = ["--in-cluster"] if check in ("replay", "scenario") else []
 args = ["--namespace", ns, "--sessions-json", "/work/sessions.json", "--policies", pol]
 if check == "scenario":
-    extra += ["--scenario", scen] + (["--profile", profile] if profile else [])
+    extra += ["--scenario", scen, "--dataset", dataset] + (
+        ["--profile", profile] if profile else [])
 if check == "decide":
     extra, args = [], ["--url", f"http://skypiea-model.{ns}.svc:80", "--profile", profile,
                        "--sessions-json", "/work/sessions.json", "--scenario", scen]

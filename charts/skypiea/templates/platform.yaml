@@ -253,7 +253,7 @@ spec:
 {{- end }}
 {{- with $p.predictor.image.tag }}
 {{- if not $p.predictor.coldStartYaml }}{{ fail "platform.predictor.image.tag needs --set-file platform.predictor.coldStartYaml=configs/cold_start.yaml" }}{{ end }}
-{{- if not (has $p.predictor.profile (list "coding" "support")) }}{{ fail "platform.predictor.profile must be coding or support" }}{{ end }}
+{{- if not (has $p.predictor.profile (list "coding" "support" "prd")) }}{{ fail "platform.predictor.profile must be coding, support or prd (SYNTHETIC)" }}{{ end }}
 {{- $md := dict "root" $ "name" "skypiea-model" }}
 ---
 # ======================= real predictor (feat/model services/predictor) =======================

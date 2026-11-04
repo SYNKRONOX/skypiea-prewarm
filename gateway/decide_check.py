@@ -83,7 +83,7 @@ def run(url: str, profile: str, sessions: dict[str, list[dict]], timeout_ms: flo
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--url", required=True)
-    ap.add_argument("--profile", required=True, choices=["coding", "support"])
+    ap.add_argument("--profile", required=True, choices=["coding", "support", "prd"])
     ap.add_argument("--sessions-json", required=True)
     ap.add_argument("--scenario", required=True, choices=["A", "B"])
     ap.add_argument("--timeout-ms", type=float, default=300)

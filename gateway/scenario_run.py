@@ -101,6 +101,7 @@ class Runner:
                  started: float):
         self.gw, self.ctl, self.stub, self.model = gw, ctl, stub, model
         self.scenario, self.conc, self.t0 = scenario, conc, started
+        self.dataset = "real"
 
     async def snapshot(self, c: httpx.AsyncClient) -> dict[str, float]:
         m = metrics((await c.get(f"{self.ctl}/metrics")).text, CTL_METRICS)
@@ -134,7 +135,8 @@ class Runner:
                             "params": {"name": call["tool_class"], "_meta": META,
                                        "arguments": {"service_ms": int(call["service_ms"])}}}
                     t = time.monotonic()
-                    row = {"policy": pol, "scenario": self.scenario, "session": sid, "batch": b,
+                    row = {"dataset": self.dataset, "policy": pol, "scenario": self.scenario,
+                           "session": sid, "batch": b,
                            "tool_class": call["tool_class"], "gap_ms": round(gap, 1),
                            "service_ms": round(call["service_ms"], 1),
                            "t_s": round(t - self.t0, 3)}
@@ -234,7 +236,8 @@ class Runner:
         delta = {k: round(after[k] - before[k], 3) for k in before}
         ok = [r for r in rows if r["ok"]]
         added = [r["added_ms"] for r in ok]
-        summ = {"scenario": self.scenario, "policy": pol, "sessions": len(sessions),
+        summ = {"dataset": self.dataset, "scenario": self.scenario, "policy": pol,
+                "sessions": len(sessions),
                 "calls": len(rows), "ok": len(ok), "cold": sum(1 for r in ok if r["cold"]),
                 "cold_rate": round(sum(1 for r in ok if r["cold"]) / len(ok), 4) if ok else None,
                 "predicted_calls": sum(1 for r in ok if r["predicted"]),
@@ -261,6 +264,8 @@ def main() -> int:
     ap.add_argument("--profile", help="expected model profile (predictive)")
     ap.add_argument("--concurrency", type=int, default=5)
     ap.add_argument("--limit", type=int, default=0, help="first K sessions only (kind smoke)")
+    ap.add_argument("--dataset", default="real", choices=["real", "SYNTHETIC"],
+                    help="label on every row: SYNTHETIC for the prd profile on PRD sessions")
     a = ap.parse_args()
     ns = a.namespace
     if a.base:
@@ -279,9 +284,10 @@ def main() -> int:
     if bad or ("predictive" in pols and len(pols) > 1) or ("predictive" in pols and not a.profile):
         raise SystemExit(f"policies {pols}: predictive runs alone (gateway serves the model) "
                          f"and needs --profile; unknown: {bad}")
-    print(f"REAL-TIMING run: scenario {a.scenario}, {len(sessions)} sessions, "
+    print(f"REAL-TIMING run: scenario {a.scenario}, dataset {a.dataset}, {len(sessions)} sessions, "
           f"{a.concurrency} at once, unscaled gaps, policies {pols}", flush=True)
     r = Runner(gw, ctl, stub, model, a.scenario, a.concurrency, time.monotonic())
+    r.dataset = a.dataset
     failures = []
     for pol in pols:
         try:
