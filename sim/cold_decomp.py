@@ -103,12 +103,16 @@ def run(src: dict, sim: dict, cold: ColdStarts) -> list[dict]:
                                         if cold_ka[c] else ""),
                      "ka30_idle_per_1k": f"{sk.idle_ms / sk.calls:.1f}",
                      "ours_idle_per_1k": f"{so.idle_ms / so.calls:.1f}",
-                     "cold_start_label": cold.label, "cold_start_sha256": cold.sha256})
+                     "cold_start_label": cold.label, "cold_start_sha256": cold.sha256,
+                     "scaleup_cap": env.cap, "contention": env.contention})
     return rows
 
 
 def report(rows: list[dict]) -> str:
+    r0 = rows[0]
     out = ["# Cold calls left under keep-alive 30 s, by cause (test, cached images)", "",
+           f"Cold starts: {r0['cold_start_label']}; scale-up cap {r0['scaleup_cap']}, "
+           f"contention {r0['contention']}.", "",
            "| Source | Profile | cause | % of all calls (cold under KA30) | share ours warms | "
            "idle /1k: KA30 -> ours |", "|---|---|---|---|---|---|"]
     for r in rows:

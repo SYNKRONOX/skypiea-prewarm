@@ -1,6 +1,6 @@
 # Prediction engine: state of work (branch feat/model)
 
-Last updated: 2026-11-04 (policy frozen: profiles, service, red team; history rewrite for the >1 MB CSVs). Local commits only; nothing pushed or merged.
+Last updated: 2026-11-04 (P1 decided: one profile per deployment; AWS cold-start rerun with the scale-up cap). Local commits only; nothing pushed or merged.
 
 ## Commits
 
@@ -19,7 +19,10 @@ Last updated: 2026-11-04 (policy frozen: profiles, service, red team; history re
 | 91b09c0 | Profiles tuned on their own VAL, cold-call decomposition, service changes, red team (was 31f9f15) |
 | 8daff1d | Export naming; image build, push and run steps (was 69d7b94) |
 | 1a72c23 | Plain-language results, latency table (was bc78065) |
-| (this) | STATE: history rewrite, new bundle and image names |
+| ca2628f | STATE: history rewrite, new bundle and image names |
+| d84c894 | Sim: scale-up cap + parallel_3 contention, CDF data, multi-run; service: PREDICTOR_PROFILE, cold-file-aware golden check; make loadtest 1 worker |
+| aabdfd2 | Sim results: kind rerun (identical), AWS no cap, AWS cap 2 + parallel_3; figures per run, wait CDFs, kind vs AWS table; bundles lgbm-{coding,support}-aabdfd2 exported from here |
+| (this) | AWS cold-call decomposition; docs: results with AWS, image section for two profiles; STATE |
 
 ## Done
 
@@ -175,7 +178,7 @@ Last updated: 2026-11-04 (policy frozen: profiles, service, red team; history re
 - Service: one ranker pass per request; decisions follow the rung that answered ranked;
   image skypiea/predictor:1a72c2309441 (527 MB, non-root, no shells, read-only OK) with
   bundle models/lgbm-coding-1a72c23 (not committed; model files byte-identical to the
-  earlier lgbm-coding-69d7b94). Load test, 1 worker: open loop 75 / 150
+  earlier lgbm-coding-69d7b94; golden.json differs: it was exported with the AWS file). Load test, 1 worker: open loop 75 / 150
   req/s p99 13.3 / 15.9 ms. 2 workers add ~45 ms (cause not found) -> WORKERS=1, replicas.
 - Red team: tests/redteam (61 tests) + tools_audit/audit_no_persistence.py pass;
   docs/redteam.md. Phase 11 fresh-eyes review not done.
@@ -187,12 +190,39 @@ Last updated: 2026-11-04 (policy frozen: profiles, service, red team; history re
   name still record the old hashes; the code in each pair is identical apart from the gzip
   writer.
 
+## 2026-11-04 (last): P1, two bundles, AWS cold starts with the scale-up cap
+
+- P1 decided (user): no scenario field; one predictor per deployment, chart value
+  `predictor.profile` (coding | support) -> env `PREDICTOR_PROFILE`. Image
+  skypiea/predictor:aabdfd2a9a39 (527 MB) holds models/lgbm-coding-aabdfd2 and
+  models/lgbm-support-aabdfd2 (exported with the AWS file, sha256 00758310b4d6) at
+  /models/coding and /models/support; a bundle for another profile is refused at startup.
+  Smoke-tested both profiles through /decide (read-only, uid 10001; support golden request
+  answered identically; with the kind file mounted: served, `cold_start_matches_bundle:
+  false`). Scenario A = support, Scenario B = coding.
+- Bundles now record `cold_start_sha256`; with another cold-start file only the ranking part
+  of the golden answers is checked (decisions depend on cold starts). Found because the
+  1a72c23 bundle (AWS file) was refused with the kind file.
+- make loadtest: 1 worker (note kept: 2 workers added ~45 ms, cause unknown).
+- Sim: at most `max_concurrent_scale_ups` (2) starts at once per session's node, queue first
+  come first served; a start overlapping another takes the parallel_3 time. With cap 0 and
+  no contention the new sim reproduces all 222 kind rows. AWS + cap, TEST, equal idle vs
+  keep-alive: TraceLab -1.9 / -2.4 (was +1.2 / +2.2 on kind: conclusion changed, prediction
+  does not pay there), Copilot +2.4 / +1.9 (was +5.2 / +5.7), tau2 +15.7 / +18.2 (held).
+  Cause: the coding profile's many simultaneous starts queue (55% of its starts on TraceLab).
+  results/sim_kind_vs_aws.md, sim_added_cdf.png, sim_pareto.png (AWS + cap), *_kind copies.
+- Result rows from this run record `d84c894-dirty`: the dirt is the results files the run was
+  writing; the code is d84c894. The kind file used is infra c21a567:configs/cold_start.yaml.
+- Deleted (user): models/lgbm-coding-69d7b94/ and image 69d7b94fdd74. Still present: the
+  superseded bundle models/lgbm-coding-1a72c23 and image 1a72c2309441.
+
 ## Next
 
-1. User: decide on P1.
-2. Infra window: apply P-new and the contract decisions; push the image (docs/model.md
-   "Image: build, push, run"); mount the cold-start file.
-3. Phase 11 fresh-eyes review; shared-pool ablation if wanted; AWS cold-start file rerun.
+1. Infra window: chart value `predictor.profile` -> `PREDICTOR_PROFILE`; push
+   skypiea/predictor:aabdfd2a9a39 (docs/model.md "Image: build, push, run"); mount the AWS
+   cold-start file; apply P-new and the contract decisions.
+2. Open, not done: Phase 11 fresh-eyes review; shared-pool ablation; a coding profile tuned
+   with the cap (frozen for now); a cap-aware oracle.
 
 ## Rules for the next session (from the user)
 
