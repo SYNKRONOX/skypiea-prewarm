@@ -267,6 +267,26 @@ E0 runs **on the node**, unattended (see the incident below):
 - The controller and monitoring are **off** during E0, so nothing else competes for the 2
   vCPUs.
 
+**E0 results (run `e0-20261104T142408Z-a24e540`, commit `a24e540`, images `a8567cc`,
+m7i-flex.large, k3s v1.37.1+k3s1).** Every run succeeded on the first attempt: 320/320
+sequential, 360/360 parallel-3; 0 noisy sequential, 3 of 360 noisy parallel-3. Medians in ms,
+with total p95 in brackets; kind is the laptop (24 cores, local registry):
+
+| set | env | total (p95) | image_pull | container_start | app_init | readiness_lag | first_call |
+|---|---|---|---|---|---|---|---|
+| sequential cached | kind | 2544 (4219) | 0 | 548 | 1221 | 498 | 121 |
+| sequential cached | aws | 2734 (3779) | 0 | 512 | 1211 | 735 | 90 |
+| sequential uncached | kind | 4070 (6326) | 1587 | 543 | 1181 | 533 | 123 |
+| sequential uncached | aws | 5360 (8400) | 2723 | 524 | 1226 | 590 | 93 |
+| parallel-3 cached | kind | 2936 (4035) | 0 | 583 | 736 | 520 | 598 |
+| parallel-3 cached | aws | 5541 (6681) | 0 | 746 | 3672 | 456 | 206 |
+| parallel-3 uncached | kind | 4730 (6940) | 1863 | 574 | 771 | 552 | 715 |
+| parallel-3 uncached | aws | 9020 (13186) | 3464 | 729 | 3444 | 485 | 239 |
+
+Files: `results/e0_aws{,_p3}_{runs,summary}.csv`, `results/e0_aws{,_p3}.png`,
+`results/e0_aws_run_params.json`, `results/e0_aws_job.log`. The account id is masked in the
+image references.
+
 **Incident (2026-11-03):**
 1. The first E0 attempt drove the node from the laptop over an SSM tunnel and `kubectl exec`.
 2. Run 14 hung for about 3 h in `kubectl exec`, then failed with `i/o timeout`. The tunnel had

@@ -1,0 +1,1126 @@
+2026-11-04T14:24:12Z E0 sequential: start (attempt of the unit: systemd restarts resume)
+  r0 format_diff        uncached  a1 total=4578.28 pull=2471.0 init=1170.94 mode_ok=True load1=0.62 
+[1/320 eta 76.9 min]
+  r0 format_diff        cached    a1 total=1866.0 pull=0.0 init=1191.1 mode_ok=True load1=1.0 
+[2/320 eta 56.9 min]
+  r0 post_comment       uncached  a1 total=5490.5 pull=2826.0 init=1230.94 mode_ok=True load1=1.0 
+[3/320 eta 60.7 min]
+  r0 post_comment       cached    a1 total=1947.39 pull=0.0 init=1130.83 mode_ok=True load1=0.92 
+[4/320 eta 54.7 min]
+  r0 policy_check       uncached  a1 total=8498.93 pull=4939.0 init=2240.95 mode_ok=True load1=0.92 
+[5/320 eta 61.6 min]
+  r0 policy_check       cached    a1 total=3649.57 pull=0.0 init=2251.26 mode_ok=True load1=1.14 
+[6/320 eta 63.3 min]
+  r0 order_lookup       uncached  a1 total=6321.03 pull=3546.0 init=1500.88 mode_ok=True load1=1.11 
+[7/320 eta 69.1 min]
+  r0 order_lookup       cached    a1 total=2848.43 pull=0.0 init=1501.02 mode_ok=True load1=1.15 
+[8/320 eta 65.4 min]
+  r0 edit_file          uncached  a1 total=4375.57 pull=2433.0 init=1140.99 mode_ok=True load1=1.13 
+[9/320 eta 64.3 min]
+  r0 edit_file          cached    a1 total=2726.25 pull=0.0 init=1160.94 mode_ok=True load1=1.17 
+[10/320 eta 64.1 min]
+  r0 product_lookup     uncached  a1 total=6148.39 pull=3739.0 init=1460.88 mode_ok=True load1=1.06 
+[11/320 eta 65.0 min]
+  r0 product_lookup     cached    a1 total=2491.84 pull=0.0 init=1510.88 mode_ok=True load1=1.19 
+[12/320 eta 67.1 min]
+  r0 order_update       uncached  a1 total=5477.32 pull=2860.0 init=1160.84 mode_ok=True load1=1.18 
+[13/320 eta 66.9 min]
+  r0 order_update       cached    a1 total=2736.24 pull=0.0 init=1170.81 mode_ok=True load1=1.06 
+[14/320 eta 64.5 min]
+  r0 search             uncached  a1 total=5347.93 pull=3159.0 init=1460.93 mode_ok=True load1=1.05 
+[15/320 eta 64.4 min]
+  r0 search             cached    a1 total=2659.22 pull=0.0 init=1590.82 mode_ok=True load1=1.18 
+[16/320 eta 67.5 min]
+  r0 run_tests          uncached  a1 total=8114.35 pull=4906.0 init=2371.04 mode_ok=True load1=1.16 
+[17/320 eta 72.8 min]
+  r0 run_tests          cached    a1 total=3882.22 pull=0.0 init=2430.93 mode_ok=True load1=1.16 
+[18/320 eta 72.4 min]
+  r0 travel_booking     uncached  a1 total=6427.39 pull=3706.0 init=1491.11 mode_ok=True load1=1.05 
+[19/320 eta 72.1 min]
+  r0 travel_booking     cached    a1 total=2844.89 pull=0.0 init=1490.87 mode_ok=True load1=0.96 
+[20/320 eta 70.3 min]
+  r0 read_file          uncached  a1 total=4359.95 pull=2518.0 init=1160.85 mode_ok=True load1=0.89 
+[21/320 eta 69.6 min]
+  r0 read_file          cached    a1 total=2731.64 pull=0.0 init=1170.93 mode_ok=True load1=0.91 
+[22/320 eta 67.7 min]
+  r0 refund_issue       uncached  a1 total=4555.35 pull=2604.0 init=1180.92 mode_ok=True load1=1.09 
+[23/320 eta 67.2 min]
+  r0 refund_issue       cached    a1 total=2514.12 pull=0.0 init=1170.86 mode_ok=True load1=1.19 
+[24/320 eta 69.9 min]
+  r0 user_lookup        uncached  a1 total=4374.72 pull=2412.0 init=1170.95 mode_ok=True load1=1.08 
+[25/320 eta 69.1 min]
+  r0 user_lookup        cached    a1 total=1923.36 pull=0.0 init=1160.9 mode_ok=True load1=0.91 
+[26/320 eta 67.5 min]
+  r0 promo_code_lookup  uncached  a1 total=4469.6 pull=2583.0 init=1130.84 mode_ok=True load1=0.92 
+[27/320 eta 67.0 min]
+  r0 promo_code_lookup  cached    a1 total=1825.86 pull=0.0 init=1151.26 mode_ok=True load1=1.14 
+[28/320 eta 66.4 min]
+  r0 generic_fallback   uncached  a1 total=8357.37 pull=4891.0 init=2520.94 mode_ok=True load1=1.16 
+[29/320 eta 68.5 min]
+  r0 generic_fallback   cached    a1 total=3861.5 pull=0.0 init=2220.81 mode_ok=True load1=1.17 
+[30/320 eta 67.4 min]
+  r0 shell              uncached  a1 total=5357.73 pull=2638.0 init=1140.97 mode_ok=True load1=1.15 
+[31/320 eta 66.9 min]
+  r0 shell              cached    a1 total=1948.59 pull=0.0 init=1160.94 mode_ok=True load1=1.18 
+[32/320 eta 66.4 min]
+  r1 order_update       uncached  a1 total=5479.9 pull=2665.0 init=1191.47 mode_ok=True load1=1.16 
+[33/320 eta 65.9 min]
+  r1 order_update       cached    a1 total=1938.96 pull=0.0 init=1140.81 mode_ok=True load1=1.12 
+[34/320 eta 64.7 min]
+  r1 travel_booking     uncached  a1 total=5644.4 pull=3146.0 init=1581.01 mode_ok=True load1=1.11 
+[35/320 eta 64.3 min]
+  r1 travel_booking     cached    a1 total=2950.15 pull=0.0 init=1480.97 mode_ok=True load1=1.02 
+[36/320 eta 63.3 min]
+  r1 run_tests          uncached  a1 total=8670.27 pull=4808.0 init=2370.82 mode_ok=True load1=1.01 
+[37/320 eta 63.4 min]
+  r1 run_tests          cached    a1 total=3777.37 pull=0.0 init=2470.89 mode_ok=True load1=1.08 
+[38/320 eta 62.7 min]
+  r1 search             uncached  a1 total=6522.7 pull=3720.0 init=1510.85 mode_ok=True load1=0.99 
+[39/320 eta 62.5 min]
+  r1 search             cached    a1 total=2743.51 pull=0.0 init=1501.06 mode_ok=True load1=1.19 
+[40/320 eta 62.3 min]
+  r1 promo_code_lookup  uncached  a1 total=5471.36 pull=2729.0 init=1160.95 mode_ok=True load1=1.09 
+[41/320 eta 61.9 min]
+  r1 promo_code_lookup  cached    a1 total=2752.15 pull=0.0 init=1201.0 mode_ok=True load1=1.18 
+[42/320 eta 62.7 min]
+  r1 policy_check       uncached  a1 total=8104.29 pull=4788.0 init=2210.86 mode_ok=True load1=1.16 
+[43/320 eta 62.8 min]
+  r1 policy_check       cached    a1 total=3766.64 pull=0.0 init=2220.82 mode_ok=True load1=1.14 
+[44/320 eta 62.6 min]
+  r1 user_lookup        uncached  a1 total=4459.87 pull=2398.0 init=1170.96 mode_ok=True load1=1.12 
+[45/320 eta 62.2 min]
+  r1 user_lookup        cached    a1 total=2631.69 pull=0.0 init=1150.84 mode_ok=True load1=1.18 
+[46/320 eta 62.4 min]
+  r1 format_diff        uncached  a1 total=5485.56 pull=2647.0 init=1161.02 mode_ok=True load1=1.13 
+[47/320 eta 62.5 min]
+  r1 format_diff        cached    a1 total=2407.01 pull=0.0 init=1160.83 mode_ok=True load1=1.11 
+[48/320 eta 64.6 min]
+  r1 post_comment       uncached  a1 total=4570.1 pull=2499.0 init=1180.83 mode_ok=True load1=1.17 
+[49/320 eta 64.2 min]
+  r1 post_comment       cached    a1 total=2736.05 pull=0.0 init=1150.89 mode_ok=True load1=1.16 
+[50/320 eta 64.2 min]
+  r1 read_file          uncached  a1 total=4215.49 pull=2384.0 init=1150.85 mode_ok=True load1=1.14 
+[51/320 eta 63.7 min]
+  r1 read_file          cached    a1 total=1928.69 pull=0.0 init=1110.96 mode_ok=True load1=1.18 
+[52/320 eta 62.8 min]
+  r1 refund_issue       uncached  a1 total=4664.48 pull=2602.0 init=1150.86 mode_ok=True load1=1.16 
+[53/320 eta 62.4 min]
+  r1 refund_issue       cached    a1 total=1927.66 pull=0.0 init=1130.93 mode_ok=True load1=1.06 
+[54/320 eta 61.6 min]
+  r1 generic_fallback   uncached  a1 total=8457.01 pull=4744.0 init=2200.85 mode_ok=True load1=1.13 
+[55/320 eta 61.6 min]
+  r1 generic_fallback   cached    a1 total=3435.89 pull=0.0 init=2230.9 mode_ok=True load1=1.12 
+[56/320 eta 63.7 min]
+  r1 order_lookup       uncached  a1 total=6336.71 pull=3365.0 init=1510.9 mode_ok=True load1=1.02 
+[57/320 eta 63.5 min]
+  r1 order_lookup       cached    a1 total=2957.39 pull=0.0 init=1480.83 mode_ok=True load1=1.03 
+[58/320 eta 62.7 min]
+  r1 shell              uncached  a1 total=5007.73 pull=2717.0 init=1150.93 mode_ok=True load1=1.11 
+[59/320 eta 62.2 min]
+  r1 shell              cached    a1 total=1925.91 pull=0.0 init=1130.91 mode_ok=True load1=1.08 
+[60/320 eta 61.5 min]
+  r1 product_lookup     uncached  a1 total=5696.23 pull=3260.0 init=1460.9 mode_ok=True load1=0.99 
+[61/320 eta 61.2 min]
+  r1 product_lookup     cached    a1 total=2840.22 pull=0.0 init=1500.89 mode_ok=True load1=0.91 
+[62/320 eta 60.5 min]
+  r1 edit_file          uncached  a1 total=4461.64 pull=2453.0 init=1140.85 mode_ok=True load1=0.92 
+[63/320 eta 60.1 min]
+  r1 edit_file          cached    a1 total=1827.15 pull=0.0 init=1140.87 mode_ok=True load1=1.13 
+[64/320 eta 59.8 min]
+  r2 order_lookup       uncached  a1 total=6496.15 pull=3603.0 init=1480.88 mode_ok=True load1=1.12 
+[65/320 eta 59.5 min]
+  r2 order_lookup       cached    a1 total=2625.7 pull=0.0 init=1490.85 mode_ok=True load1=1.16 
+[66/320 eta 59.9 min]
+  r2 generic_fallback   uncached  a1 total=8476.08 pull=4607.0 init=2231.0 mode_ok=True load1=0.98 
+[67/320 eta 59.8 min]
+  r2 generic_fallback   cached    a1 total=3768.36 pull=0.0 init=2210.8 mode_ok=True load1=0.99 
+[68/320 eta 59.3 min]
+  r2 run_tests          uncached  a1 total=3775.55 pull=597.0 init=2340.87 mode_ok=True load1=0.99 
+[69/320 eta 58.7 min]
+  r2 run_tests          cached    a1 total=3891.39 pull=0.0 init=2370.96 mode_ok=True load1=1.12 
+[70/320 eta 58.5 min]
+  r2 user_lookup        uncached  a1 total=3651.85 pull=1132.0 init=1120.82 mode_ok=True load1=1.11 
+[71/320 eta 58.0 min]
+  r2 user_lookup        cached    a1 total=1712.23 pull=0.0 init=1130.9 mode_ok=True load1=1.01 
+[72/320 eta 57.3 min]
+  r2 product_lookup     uncached  a1 total=6616.97 pull=3491.0 init=1470.92 mode_ok=True load1=0.93 
+[73/320 eta 57.1 min]
+  r2 product_lookup     cached    a1 total=2970.55 pull=0.0 init=1500.91 mode_ok=True load1=0.94 
+[74/320 eta 56.6 min]
+  r2 refund_issue       uncached  a1 total=4381.23 pull=2488.0 init=1170.94 mode_ok=True load1=1.03 
+[75/320 eta 56.2 min]
+  r2 refund_issue       cached    a1 total=1818.27 pull=0.0 init=1161.0 mode_ok=True load1=1.03 
+[76/320 eta 55.6 min]
+  r2 post_comment       uncached  a1 total=4357.48 pull=2382.0 init=1230.82 mode_ok=True load1=1.16 
+[77/320 eta 55.6 min]
+  r2 post_comment       cached    a1 total=1828.99 pull=0.0 init=1190.97 mode_ok=True load1=1.13 
+[78/320 eta 55.0 min]
+  r2 shell              uncached  a1 total=5392.06 pull=2468.0 init=1291.07 mode_ok=True load1=1.04 
+[79/320 eta 54.7 min]
+  r2 shell              cached    a1 total=2731.52 pull=0.0 init=1160.95 mode_ok=True load1=1.16 
+[80/320 eta 54.4 min]
+  r2 travel_booking     uncached  a1 total=5699.53 pull=3012.0 init=1500.9 mode_ok=True load1=1.14 
+[81/320 eta 54.1 min]
+  r2 travel_booking     cached    a1 total=2506.53 pull=0.0 init=1520.91 mode_ok=True load1=1.19 
+[82/320 eta 54.1 min]
+  r2 read_file          uncached  a1 total=4241.65 pull=2283.0 init=1150.95 mode_ok=True load1=1.16 
+[83/320 eta 53.8 min]
+  r2 read_file          cached    a1 total=2733.67 pull=0.0 init=1150.89 mode_ok=True load1=1.18 
+[84/320 eta 53.5 min]
+  r2 order_update       uncached  a1 total=4456.88 pull=2536.0 init=1181.05 mode_ok=True load1=1.17 
+[85/320 eta 53.2 min]
+  r2 order_update       cached    a1 total=2743.26 pull=0.0 init=1191.05 mode_ok=True load1=1.13 
+[86/320 eta 52.7 min]
+  r2 format_diff        uncached  a1 total=5040.04 pull=2537.0 init=1180.88 mode_ok=True load1=1.04 
+[87/320 eta 52.4 min]
+  r2 format_diff        cached    a1 total=1812.43 pull=0.0 init=1160.91 mode_ok=True load1=1.03 
+[88/320 eta 51.9 min]
+  r2 edit_file          uncached  a1 total=4442.84 pull=2472.0 init=1150.85 mode_ok=True load1=1.19 
+[89/320 eta 51.6 min]
+  r2 edit_file          cached    a1 total=2507.92 pull=0.0 init=1190.9 mode_ok=True load1=1.14 
+[90/320 eta 52.0 min]
+  r2 policy_check       uncached  a1 total=7454.39 pull=4506.0 init=2260.95 mode_ok=True load1=1.04 
+[91/320 eta 51.8 min]
+  r2 policy_check       cached    a1 total=3628.79 pull=0.0 init=2231.07 mode_ok=True load1=1.18 
+[92/320 eta 52.3 min]
+  r2 promo_code_lookup  uncached  a1 total=5026.74 pull=2563.0 init=1180.96 mode_ok=True load1=1.11 
+[93/320 eta 52.8 min]
+  r2 promo_code_lookup  cached    a1 total=2739.08 pull=0.0 init=1160.92 mode_ok=True load1=1.02 
+[94/320 eta 52.3 min]
+  r2 search             uncached  a1 total=5367.06 pull=2946.0 init=1471.03 mode_ok=True load1=1.09 
+[95/320 eta 52.0 min]
+  r2 search             cached    a1 total=2839.9 pull=0.0 init=1601.03 mode_ok=True load1=1.15 
+[96/320 eta 51.6 min]
+  r3 shell              uncached  a1 total=2406.44 pull=343.0 init=1160.97 mode_ok=True load1=1.12 
+[97/320 eta 51.1 min]
+  r3 shell              cached    a1 total=2839.45 pull=0.0 init=1181.1 mode_ok=True load1=1.02 
+[98/320 eta 50.7 min]
+  r3 refund_issue       uncached  a1 total=2276.68 pull=426.0 init=1180.94 mode_ok=True load1=1.02 
+[99/320 eta 50.2 min]
+  r3 refund_issue       cached    a1 total=2823.13 pull=0.0 init=1160.96 mode_ok=True load1=0.94 
+[100/320 eta 49.8 min]
+  r3 order_update       uncached  a1 total=4329.34 pull=2509.0 init=1171.2 mode_ok=True load1=0.94 
+[101/320 eta 49.5 min]
+  r3 order_update       cached    a1 total=2736.99 pull=0.0 init=1190.93 mode_ok=True load1=0.95 
+[102/320 eta 49.0 min]
+  r3 edit_file          uncached  a1 total=2507.22 pull=355.0 init=1160.88 mode_ok=True load1=0.88 
+[103/320 eta 48.6 min]
+  r3 edit_file          cached    a1 total=2738.97 pull=0.0 init=1180.93 mode_ok=True load1=0.82 
+[104/320 eta 48.2 min]
+  r3 generic_fallback   uncached  a1 total=8153.96 pull=4589.0 init=2280.98 mode_ok=True load1=0.83 
+[105/320 eta 48.0 min]
+  r3 generic_fallback   cached    a1 total=3780.81 pull=0.0 init=2401.03 mode_ok=True load1=1.08 
+[106/320 eta 47.7 min]
+  r3 read_file          uncached  a1 total=5249.9 pull=2490.0 init=1160.89 mode_ok=True load1=0.99 
+[107/320 eta 47.4 min]
+  r3 read_file          cached    a1 total=2729.15 pull=0.0 init=1191.11 mode_ok=True load1=1.07 
+[108/320 eta 47.0 min]
+  r3 order_lookup       uncached  a1 total=6514.94 pull=3317.0 init=1501.03 mode_ok=True load1=0.99 
+[109/320 eta 46.8 min]
+  r3 order_lookup       cached    a1 total=2757.38 pull=0.0 init=1540.98 mode_ok=True load1=1.12 
+[110/320 eta 46.6 min]
+  r3 policy_check       uncached  a1 total=8270.86 pull=4458.0 init=2361.06 mode_ok=True load1=1.17 
+[111/320 eta 46.5 min]
+  r3 policy_check       cached    a1 total=3413.27 pull=0.0 init=2290.99 mode_ok=True load1=1.11 
+[112/320 eta 46.6 min]
+  r3 travel_booking     uncached  a1 total=6293.47 pull=3883.0 init=1541.0 mode_ok=True load1=1.01 
+[113/320 eta 46.4 min]
+  r3 travel_booking     cached    a1 total=2852.32 pull=0.0 init=1540.96 mode_ok=True load1=1.01 
+[114/320 eta 46.0 min]
+  r3 user_lookup        uncached  a1 total=4169.95 pull=2323.0 init=1171.21 mode_ok=True load1=1.01 
+[115/320 eta 45.8 min]
+  r3 user_lookup        cached    a1 total=2742.47 pull=0.0 init=1280.94 mode_ok=True load1=1.0 
+[116/320 eta 45.4 min]
+  r3 format_diff        uncached  a1 total=2516.59 pull=418.0 init=1180.9 mode_ok=True load1=1.0 
+[117/320 eta 45.0 min]
+  r3 format_diff        cached    a1 total=2840.05 pull=0.0 init=1190.96 mode_ok=True load1=0.92 
+[118/320 eta 44.6 min]
+  r3 post_comment       uncached  a1 total=2507.57 pull=445.0 init=1200.84 mode_ok=True load1=0.93 
+[119/320 eta 44.3 min]
+  r3 post_comment       cached    a1 total=2823.2 pull=0.0 init=1170.92 mode_ok=True load1=0.94 
+[120/320 eta 43.9 min]
+  r3 promo_code_lookup  uncached  a1 total=3091.79 pull=491.0 init=1170.91 mode_ok=True load1=0.87 
+[121/320 eta 43.6 min]
+  r3 promo_code_lookup  cached    a1 total=2777.48 pull=0.0 init=1290.9 mode_ok=True load1=0.96 
+[122/320 eta 43.2 min]
+  r3 run_tests          uncached  a1 total=8574.11 pull=4543.0 init=2421.05 mode_ok=True load1=0.89 
+[123/320 eta 43.1 min]
+  r3 run_tests          cached    a1 total=3554.92 pull=0.0 init=2390.92 mode_ok=True load1=0.9 
+[124/320 eta 42.7 min]
+  r3 search             uncached  a1 total=6417.36 pull=3525.0 init=1501.14 mode_ok=True load1=0.92 
+[125/320 eta 42.5 min]
+  r3 search             cached    a1 total=2840.8 pull=0.0 init=1521.05 mode_ok=True load1=1.14 
+[126/320 eta 42.3 min]
+  r3 product_lookup     uncached  a1 total=6539.09 pull=3556.0 init=1531.0 mode_ok=True load1=1.04 
+[127/320 eta 42.2 min]
+  r3 product_lookup     cached    a1 total=2519.32 pull=0.0 init=1510.93 mode_ok=True load1=1.13 
+[128/320 eta 42.2 min]
+  r4 promo_code_lookup  uncached  a1 total=5151.15 pull=2484.0 init=1191.25 mode_ok=True load1=1.12 
+[129/320 eta 41.9 min]
+  r4 promo_code_lookup  cached    a1 total=2750.37 pull=0.0 init=1211.04 mode_ok=True load1=1.13 
+[130/320 eta 41.7 min]
+  r4 search             uncached  a1 total=6299.92 pull=3536.0 init=1560.92 mode_ok=True load1=1.12 
+[131/320 eta 41.5 min]
+  r4 search             cached    a1 total=2623.24 pull=0.0 init=1510.88 mode_ok=True load1=1.18 
+[132/320 eta 41.4 min]
+  r4 format_diff        uncached  a1 total=5174.52 pull=2397.0 init=1180.82 mode_ok=True load1=1.07 
+[133/320 eta 41.1 min]
+  r4 format_diff        cached    a1 total=2729.96 pull=0.0 init=1191.19 mode_ok=True load1=1.06 
+[134/320 eta 40.8 min]
+  r4 run_tests          uncached  a1 total=8398.05 pull=4248.0 init=2481.03 mode_ok=True load1=1.14 
+[135/320 eta 40.6 min]
+  r4 run_tests          cached    a1 total=3816.44 pull=0.0 init=2520.94 mode_ok=True load1=1.08 
+[136/320 eta 40.3 min]
+  r4 user_lookup        uncached  a1 total=4350.85 pull=2344.0 init=1160.98 mode_ok=True load1=1.07 
+[137/320 eta 40.1 min]
+  r4 user_lookup        cached    a1 total=2726.12 pull=0.0 init=1160.96 mode_ok=True load1=1.19 
+[138/320 eta 39.7 min]
+  r4 order_update       uncached  a1 total=5256.57 pull=2458.0 init=1180.9 mode_ok=True load1=1.18 
+[139/320 eta 39.5 min]
+  r4 order_update       cached    a1 total=2632.45 pull=0.0 init=1290.94 mode_ok=True load1=1.18 
+[140/320 eta 39.3 min]
+  r4 refund_issue       uncached  a1 total=4247.7 pull=2422.0 init=1180.92 mode_ok=True load1=1.15 
+[141/320 eta 39.1 min]
+  r4 refund_issue       cached    a1 total=2523.51 pull=0.0 init=1200.97 mode_ok=True load1=1.17 
+[142/320 eta 39.0 min]
+  r4 policy_check       uncached  a1 total=8027.98 pull=4415.0 init=2291.04 mode_ok=True load1=1.2 
+[143/320 eta 39.4 min]
+  r4 policy_check       cached    a1 total=3537.71 pull=0.0 init=2301.11 mode_ok=True load1=1.12 
+[144/320 eta 39.4 min]
+  r4 edit_file          uncached  a1 total=4262.23 pull=2404.0 init=1170.87 mode_ok=True load1=1.02 
+[145/320 eta 39.2 min]
+  r4 edit_file          cached    a1 total=2644.56 pull=0.0 init=1210.94 mode_ok=True load1=0.86 
+[146/320 eta 38.8 min]
+  r4 order_lookup       uncached  a1 total=6299.79 pull=3331.0 init=1510.95 mode_ok=True load1=0.89 
+[147/320 eta 38.6 min]
+  r4 order_lookup       cached    a1 total=2763.77 pull=0.0 init=1610.88 mode_ok=True load1=0.77 
+[148/320 eta 38.3 min]
+  r4 generic_fallback   uncached  a1 total=8133.79 pull=4359.0 init=2271.0 mode_ok=True load1=0.79 
+[149/320 eta 38.1 min]
+  r4 generic_fallback   cached    a1 total=3651.84 pull=0.0 init=2301.0 mode_ok=True load1=0.98 
+[150/320 eta 37.8 min]
+  r4 read_file          uncached  a1 total=5274.94 pull=2698.0 init=1200.92 mode_ok=True load1=0.99 
+[151/320 eta 37.6 min]
+  r4 read_file          cached    a1 total=2731.32 pull=0.0 init=1180.92 mode_ok=True load1=0.98 
+[152/320 eta 37.3 min]
+  r4 post_comment       uncached  a1 total=2519.52 pull=442.0 init=1181.09 mode_ok=True load1=0.98 
+[153/320 eta 37.0 min]
+  r4 post_comment       cached    a1 total=2743.26 pull=0.0 init=1191.15 mode_ok=True load1=0.99 
+[154/320 eta 36.6 min]
+  r4 product_lookup     uncached  a1 total=5475.44 pull=2945.0 init=1501.04 mode_ok=True load1=0.99 
+[155/320 eta 36.4 min]
+  r4 product_lookup     cached    a1 total=2841.8 pull=0.0 init=1490.86 mode_ok=True load1=0.99 
+[156/320 eta 36.1 min]
+  r4 shell              uncached  a1 total=3190.3 pull=423.0 init=1181.11 mode_ok=True load1=0.91 
+[157/320 eta 35.8 min]
+  r4 shell              cached    a1 total=2832.44 pull=0.0 init=1161.0 mode_ok=True load1=0.92 
+[158/320 eta 35.5 min]
+  r4 travel_booking     uncached  a1 total=6510.3 pull=3712.0 init=1480.9 mode_ok=True load1=0.85 
+[159/320 eta 35.3 min]
+  r4 travel_booking     cached    a1 total=2960.48 pull=0.0 init=1480.8 mode_ok=True load1=1.04 
+[160/320 eta 35.0 min]
+  r5 order_lookup       uncached  a1 total=6504.02 pull=3330.0 init=1520.96 mode_ok=True load1=1.04 
+[161/320 eta 34.8 min]
+  r5 order_lookup       cached    a1 total=2779.68 pull=0.0 init=1500.92 mode_ok=True load1=1.02 
+[162/320 eta 34.5 min]
+  r5 promo_code_lookup  uncached  a1 total=5361.55 pull=2632.0 init=1150.94 mode_ok=True load1=1.02 
+[163/320 eta 34.2 min]
+  r5 promo_code_lookup  cached    a1 total=1824.86 pull=0.0 init=1150.8 mode_ok=True load1=0.86 
+[164/320 eta 33.9 min]
+  r5 run_tests          uncached  a1 total=8483.0 pull=4403.0 init=2431.0 mode_ok=True load1=0.8 
+[165/320 eta 33.8 min]
+  r5 run_tests          cached    a1 total=4019.03 pull=0.0 init=2400.95 mode_ok=True load1=0.93 
+[166/320 eta 33.5 min]
+  r5 product_lookup     uncached  a1 total=6537.47 pull=3665.0 init=1480.89 mode_ok=True load1=0.94 
+[167/320 eta 33.3 min]
+  r5 product_lookup     cached    a1 total=2834.57 pull=0.0 init=1490.97 mode_ok=True load1=0.8 
+[168/320 eta 33.0 min]
+  r5 search             uncached  a1 total=6079.92 pull=3625.0 init=1620.9 mode_ok=True load1=0.82 
+[169/320 eta 32.8 min]
+  r5 search             cached    a1 total=2618.71 pull=0.0 init=1520.9 mode_ok=True load1=1.2 
+[170/320 eta 32.6 min]
+  r5 format_diff        uncached  a1 total=5262.68 pull=2606.0 init=1200.92 mode_ok=True load1=1.02 
+[171/320 eta 32.4 min]
+  r5 format_diff        cached    a1 total=2737.61 pull=0.0 init=1201.09 mode_ok=True load1=0.94 
+[172/320 eta 32.1 min]
+  r5 user_lookup        uncached  a1 total=5474.13 pull=2767.0 init=1171.0 mode_ok=True load1=0.87 
+[173/320 eta 31.9 min]
+  r5 user_lookup        cached    a1 total=2726.52 pull=0.0 init=1221.02 mode_ok=True load1=1.06 
+[174/320 eta 31.6 min]
+  r5 travel_booking     uncached  a1 total=6077.15 pull=3534.0 init=1531.15 mode_ok=True load1=1.13 
+[175/320 eta 31.4 min]
+  r5 travel_booking     cached    a1 total=2751.79 pull=0.0 init=1531.14 mode_ok=True load1=1.1 
+[176/320 eta 31.1 min]
+  r5 refund_issue       uncached  a1 total=5260.39 pull=2513.0 init=1211.08 mode_ok=True load1=1.0 
+[177/320 eta 30.9 min]
+  r5 refund_issue       cached    a1 total=2626.8 pull=0.0 init=1210.93 mode_ok=True load1=0.93 
+[178/320 eta 30.6 min]
+  r5 shell              uncached  a1 total=5371.1 pull=2749.0 init=1261.11 mode_ok=True load1=0.85 
+[179/320 eta 30.4 min]
+  r5 shell              cached    a1 total=2723.65 pull=0.0 init=1160.96 mode_ok=True load1=1.11 
+[180/320 eta 30.1 min]
+  r5 edit_file          uncached  a1 total=2398.63 pull=299.0 init=1190.95 mode_ok=True load1=1.02 
+[181/320 eta 29.8 min]
+  r5 edit_file          cached    a1 total=2708.35 pull=0.0 init=1170.83 mode_ok=True load1=1.02 
+[182/320 eta 29.6 min]
+  r5 generic_fallback   uncached  a1 total=8091.97 pull=4369.0 init=2280.98 mode_ok=True load1=0.94 
+[183/320 eta 29.4 min]
+  r5 generic_fallback   cached    a1 total=3767.53 pull=0.0 init=2250.93 mode_ok=True load1=1.05 
+[184/320 eta 29.1 min]
+  r5 post_comment       uncached  a1 total=2333.28 pull=354.0 init=1191.09 mode_ok=True load1=1.04 
+[185/320 eta 28.8 min]
+  r5 post_comment       cached    a1 total=2509.49 pull=0.0 init=1190.97 mode_ok=True load1=1.15 
+[186/320 eta 28.7 min]
+  r5 policy_check       uncached  a1 total=8265.47 pull=4502.0 init=2281.05 mode_ok=True load1=1.13 
+[187/320 eta 28.5 min]
+  r5 policy_check       cached    a1 total=3651.58 pull=0.0 init=2261.0 mode_ok=True load1=1.1 
+[188/320 eta 28.3 min]
+  r5 read_file          uncached  a1 total=5175.44 pull=2440.0 init=1190.97 mode_ok=True load1=1.09 
+[189/320 eta 28.0 min]
+  r5 read_file          cached    a1 total=2631.2 pull=0.0 init=1181.03 mode_ok=True load1=1.12 
+[190/320 eta 27.8 min]
+  r5 order_update       uncached  a1 total=5154.89 pull=2476.0 init=1231.05 mode_ok=True load1=1.1 
+[191/320 eta 27.6 min]
+  r5 order_update       cached    a1 total=2732.67 pull=0.0 init=1221.07 mode_ok=True load1=1.01 
+[192/320 eta 27.3 min]
+  r6 run_tests          uncached  a1 total=7898.73 pull=4678.0 init=2431.01 mode_ok=True load1=0.93 
+[193/320 eta 27.2 min]
+  r6 run_tests          cached    a1 total=3779.16 pull=0.0 init=2421.15 mode_ok=True load1=0.96 
+[194/320 eta 26.9 min]
+  r6 shell              uncached  a1 total=5234.7 pull=2910.0 init=1150.93 mode_ok=True load1=0.97 
+[195/320 eta 26.7 min]
+  r6 shell              cached    a1 total=1935.88 pull=0.0 init=1201.03 mode_ok=True load1=0.9 
+[196/320 eta 26.4 min]
+  r6 promo_code_lookup  uncached  a1 total=5367.73 pull=2836.0 init=1171.1 mode_ok=True load1=0.83 
+[197/320 eta 26.2 min]
+  r6 promo_code_lookup  cached    a1 total=2731.63 pull=0.0 init=1180.89 mode_ok=True load1=0.7 
+[198/320 eta 25.9 min]
+  r6 format_diff        uncached  a1 total=5035.99 pull=2428.0 init=1201.0 mode_ok=True load1=0.67 
+[199/320 eta 25.7 min]
+  r6 format_diff        cached    a1 total=2744.7 pull=0.0 init=1211.21 mode_ok=True load1=0.64 
+[200/320 eta 25.5 min]
+  r6 read_file          uncached  a1 total=2519.08 pull=387.0 init=1211.09 mode_ok=True load1=0.94 
+[201/320 eta 25.2 min]
+  r6 read_file          cached    a1 total=2611.22 pull=0.0 init=1221.02 mode_ok=True load1=0.95 
+[202/320 eta 25.0 min]
+  r6 policy_check       uncached  a1 total=8250.0 pull=4488.0 init=2311.11 mode_ok=True load1=0.95 
+[203/320 eta 24.8 min]
+  r6 policy_check       cached    a1 total=3775.93 pull=0.0 init=2320.98 mode_ok=True load1=0.95 
+[204/320 eta 24.5 min]
+  r6 search             uncached  a1 total=6062.29 pull=3560.0 init=1511.0 mode_ok=True load1=0.95 
+[205/320 eta 24.3 min]
+  r6 search             cached    a1 total=2636.05 pull=0.0 init=1530.94 mode_ok=True load1=0.95 
+[206/320 eta 24.1 min]
+  r6 order_lookup       uncached  a1 total=6208.97 pull=3402.0 init=1531.3 mode_ok=True load1=0.88 
+[207/320 eta 23.9 min]
+  r6 order_lookup       cached    a1 total=2711.61 pull=0.0 init=1510.89 mode_ok=True load1=1.14 
+[208/320 eta 23.6 min]
+  r6 travel_booking     uncached  a1 total=6329.02 pull=3634.0 init=1531.33 mode_ok=True load1=1.04 
+[209/320 eta 23.5 min]
+  r6 travel_booking     cached    a1 total=2747.71 pull=0.0 init=1520.98 mode_ok=True load1=0.81 
+[210/320 eta 23.2 min]
+  r6 refund_issue       uncached  a1 total=5287.88 pull=2509.0 init=1240.95 mode_ok=True load1=0.82 
+[211/320 eta 23.0 min]
+  r6 refund_issue       cached    a1 total=2620.16 pull=0.0 init=1211.04 mode_ok=True load1=1.0 
+[212/320 eta 22.7 min]
+  r6 generic_fallback   uncached  a1 total=8266.16 pull=4412.0 init=2271.15 mode_ok=True load1=1.0 
+[213/320 eta 22.6 min]
+  r6 generic_fallback   cached    a1 total=3533.26 pull=0.0 init=2270.94 mode_ok=True load1=1.13 
+[214/320 eta 22.4 min]
+  r6 user_lookup        uncached  a1 total=4356.19 pull=2221.0 init=1181.02 mode_ok=True load1=1.04 
+[215/320 eta 22.1 min]
+  r6 user_lookup        cached    a1 total=2500.92 pull=0.0 init=1190.94 mode_ok=True load1=1.18 
+[216/320 eta 22.0 min]
+  r6 post_comment       uncached  a1 total=4378.26 pull=2317.0 init=1181.13 mode_ok=True load1=1.09 
+[217/320 eta 21.7 min]
+  r6 post_comment       cached    a1 total=2733.74 pull=0.0 init=1160.88 mode_ok=True load1=1.15 
+[218/320 eta 21.5 min]
+  r6 order_update       uncached  a1 total=5148.38 pull=2412.0 init=1200.9 mode_ok=True load1=1.06 
+[219/320 eta 21.3 min]
+  r6 order_update       cached    a1 total=2740.59 pull=0.0 init=1211.07 mode_ok=True load1=1.2 
+[220/320 eta 21.0 min]
+  r6 product_lookup     uncached  a1 total=6404.89 pull=3621.0 init=1540.94 mode_ok=True load1=1.11 
+[221/320 eta 20.8 min]
+  r6 product_lookup     cached    a1 total=2416.55 pull=0.0 init=1540.97 mode_ok=True load1=1.19 
+[222/320 eta 20.7 min]
+  r6 edit_file          uncached  a1 total=5010.43 pull=2638.0 init=1200.95 mode_ok=True load1=1.17 
+[223/320 eta 20.6 min]
+  r6 edit_file          cached    a1 total=2734.64 pull=0.0 init=1200.97 mode_ok=True load1=1.2 
+[224/320 eta 20.4 min]
+  r7 user_lookup        uncached  a1 total=4243.99 pull=2347.0 init=1190.91 mode_ok=True load1=1.18 
+[225/320 eta 20.2 min]
+  r7 user_lookup        cached    a1 total=2497.59 pull=0.0 init=1150.84 mode_ok=True load1=1.19 
+[226/320 eta 20.1 min]
+  r7 order_lookup       uncached  a1 total=6180.35 pull=3328.0 init=1520.84 mode_ok=True load1=1.16 
+[227/320 eta 19.9 min]
+  r7 order_lookup       cached    a1 total=2729.44 pull=0.0 init=1551.28 mode_ok=True load1=1.13 
+[228/320 eta 19.6 min]
+  r7 policy_check       uncached  a1 total=8201.36 pull=4533.0 init=2260.94 mode_ok=True load1=1.11 
+[229/320 eta 19.5 min]
+  r7 policy_check       cached    a1 total=3766.37 pull=0.0 init=2271.08 mode_ok=True load1=0.94 
+[230/320 eta 19.2 min]
+  r7 travel_booking     uncached  a1 total=6336.98 pull=3816.0 init=1561.03 mode_ok=True load1=0.95 
+[231/320 eta 19.0 min]
+  r7 travel_booking     cached    a1 total=2635.26 pull=0.0 init=1561.0 mode_ok=True load1=0.95 
+[232/320 eta 18.8 min]
+  r7 format_diff        uncached  a1 total=5252.74 pull=2372.0 init=1300.94 mode_ok=True load1=0.88 
+[233/320 eta 18.6 min]
+  r7 format_diff        cached    a1 total=2624.18 pull=0.0 init=1180.93 mode_ok=True load1=0.9 
+[234/320 eta 18.3 min]
+  r7 product_lookup     uncached  a1 total=6303.79 pull=3294.0 init=1531.02 mode_ok=True load1=1.08 
+[235/320 eta 18.1 min]
+  r7 product_lookup     cached    a1 total=2748.34 pull=0.0 init=1531.01 mode_ok=True load1=1.18 
+[236/320 eta 17.9 min]
+  r7 post_comment       uncached  a1 total=5262.07 pull=2498.0 init=1180.9 mode_ok=True load1=1.16 
+[237/320 eta 17.7 min]
+  r7 post_comment       cached    a1 total=2638.98 pull=0.0 init=1191.03 mode_ok=True load1=1.19 
+[238/320 eta 17.5 min]
+  r7 promo_code_lookup  uncached  a1 total=5291.28 pull=2567.0 init=1160.91 mode_ok=True load1=1.08 
+[239/320 eta 17.3 min]
+  r7 promo_code_lookup  cached    a1 total=2737.3 pull=0.0 init=1190.95 mode_ok=True load1=1.13 
+[240/320 eta 17.1 min]
+  r7 edit_file          uncached  a1 total=5018.46 pull=2390.0 init=1201.1 mode_ok=True load1=1.11 
+[241/320 eta 16.8 min]
+  r7 edit_file          cached    a1 total=2738.56 pull=0.0 init=1191.31 mode_ok=True load1=0.94 
+[242/320 eta 16.6 min]
+  r7 order_update       uncached  a1 total=5282.44 pull=2717.0 init=1200.93 mode_ok=True load1=0.87 
+[243/320 eta 16.4 min]
+  r7 order_update       cached    a1 total=2736.53 pull=0.0 init=1211.08 mode_ok=True load1=0.81 
+[244/320 eta 16.2 min]
+  r7 generic_fallback   uncached  a1 total=8434.86 pull=4643.0 init=2340.97 mode_ok=True load1=0.76 
+[245/320 eta 16.0 min]
+  r7 generic_fallback   cached    a1 total=3784.61 pull=0.0 init=2300.96 mode_ok=True load1=0.81 
+[246/320 eta 15.7 min]
+  r7 refund_issue       uncached  a1 total=2404.02 pull=435.0 init=1181.11 mode_ok=True load1=0.76 
+[247/320 eta 15.5 min]
+  r7 refund_issue       cached    a1 total=2710.14 pull=0.0 init=1221.55 mode_ok=True load1=0.71 
+[248/320 eta 15.3 min]
+  r7 read_file          uncached  a1 total=2978.28 pull=481.0 init=1180.97 mode_ok=True load1=0.74 
+[249/320 eta 15.0 min]
+  r7 read_file          cached    a1 total=2734.26 pull=0.0 init=1191.02 mode_ok=True load1=0.86 
+[250/320 eta 14.8 min]
+  r7 search             uncached  a1 total=6188.98 pull=3897.0 init=1540.9 mode_ok=True load1=0.73 
+[251/320 eta 14.6 min]
+  r7 search             cached    a1 total=2846.71 pull=0.0 init=1530.9 mode_ok=True load1=0.79 
+[252/320 eta 14.4 min]
+  r7 run_tests          uncached  a1 total=8355.97 pull=4778.0 init=2490.97 mode_ok=True load1=0.75 
+[253/320 eta 14.2 min]
+  r7 run_tests          cached    a1 total=3667.3 pull=0.0 init=2560.98 mode_ok=True load1=0.9 
+[254/320 eta 13.9 min]
+  r7 shell              uncached  a1 total=5141.81 pull=2716.0 init=1181.05 mode_ok=True load1=1.08 
+[255/320 eta 13.7 min]
+  r7 shell              cached    a1 total=2721.87 pull=0.0 init=1191.05 mode_ok=True load1=1.06 
+[256/320 eta 13.5 min]
+  r8 shell              uncached  a1 total=5315.4 pull=2536.0 init=1201.03 mode_ok=True load1=1.13 
+[257/320 eta 13.3 min]
+  r8 shell              cached    a1 total=2624.69 pull=0.0 init=1201.14 mode_ok=True load1=1.03 
+[258/320 eta 13.1 min]
+  r8 search             uncached  a1 total=6222.66 pull=3777.0 init=1581.04 mode_ok=True load1=1.03 
+[259/320 eta 12.9 min]
+  r8 search             cached    a1 total=2860.45 pull=0.0 init=1530.99 mode_ok=True load1=1.02 
+[260/320 eta 12.6 min]
+  r8 refund_issue       uncached  a1 total=5380.22 pull=2593.0 init=1221.0 mode_ok=True load1=1.01 
+[261/320 eta 12.4 min]
+  r8 refund_issue       cached    a1 total=1822.92 pull=0.0 init=1170.91 mode_ok=True load1=1.01 
+[262/320 eta 12.2 min]
+  r8 promo_code_lookup  uncached  a1 total=4356.89 pull=2483.0 init=1201.0 mode_ok=True load1=1.01 
+[263/320 eta 12.0 min]
+  r8 promo_code_lookup  cached    a1 total=2624.73 pull=0.0 init=1201.08 mode_ok=True load1=1.0 
+[264/320 eta 11.8 min]
+  r8 generic_fallback   uncached  a1 total=7340.68 pull=4233.0 init=2330.86 mode_ok=True load1=1.0 
+[265/320 eta 11.6 min]
+  r8 generic_fallback   cached    a1 total=3663.21 pull=0.0 init=2340.98 mode_ok=True load1=1.13 
+[266/320 eta 11.4 min]
+  r8 format_diff        uncached  a1 total=5048.61 pull=2756.0 init=1211.0 mode_ok=True load1=1.18 
+[267/320 eta 11.2 min]
+  r8 format_diff        cached    a1 total=2723.31 pull=0.0 init=1160.9 mode_ok=True load1=1.07 
+[268/320 eta 10.9 min]
+  r8 user_lookup        uncached  a1 total=4362.67 pull=2321.0 init=1280.97 mode_ok=True load1=0.98 
+[269/320 eta 10.7 min]
+  r8 user_lookup        cached    a1 total=2642.55 pull=0.0 init=1191.04 mode_ok=True load1=0.9 
+[270/320 eta 10.5 min]
+  r8 read_file          uncached  a1 total=5300.68 pull=2738.0 init=1201.08 mode_ok=True load1=0.92 
+[271/320 eta 10.3 min]
+  r8 read_file          cached    a1 total=2744.95 pull=0.0 init=1190.9 mode_ok=True load1=0.94 
+[272/320 eta 10.1 min]
+  r8 order_update       uncached  a1 total=3201.85 pull=357.0 init=1200.94 mode_ok=True load1=1.11 
+[273/320 eta 9.9 min]
+  r8 order_update       cached    a1 total=2715.76 pull=0.0 init=1210.96 mode_ok=True load1=1.01 
+[274/320 eta 9.7 min]
+  r8 post_comment       uncached  a1 total=5384.23 pull=2522.0 init=1300.98 mode_ok=True load1=1.01 
+[275/320 eta 9.5 min]
+  r8 post_comment       cached    a1 total=2505.2 pull=0.0 init=1190.95 mode_ok=True load1=1.12 
+[276/320 eta 9.3 min]
+  r8 run_tests          uncached  a1 total=8308.17 pull=4645.0 init=2480.96 mode_ok=True load1=1.11 
+[277/320 eta 9.1 min]
+  r8 run_tests          cached    a1 total=3802.16 pull=0.0 init=2470.98 mode_ok=True load1=0.93 
+[278/320 eta 8.9 min]
+  r8 travel_booking     uncached  a1 total=6211.33 pull=3685.0 init=1650.98 mode_ok=True load1=0.93 
+[279/320 eta 8.7 min]
+  r8 travel_booking     cached    a1 total=2628.24 pull=0.0 init=1541.0 mode_ok=True load1=1.08 
+[280/320 eta 8.4 min]
+  r8 order_lookup       uncached  a1 total=6190.29 pull=3412.0 init=1580.95 mode_ok=True load1=1.06 
+[281/320 eta 8.2 min]
+  r8 order_lookup       cached    a1 total=2394.62 pull=0.0 init=1550.93 mode_ok=True load1=1.17 
+[282/320 eta 8.0 min]
+  r8 edit_file          uncached  a1 total=5199.85 pull=2777.0 init=1171.03 mode_ok=True load1=1.16 
+[283/320 eta 7.8 min]
+  r8 edit_file          cached    a1 total=2633.69 pull=0.0 init=1170.91 mode_ok=True load1=1.04 
+[284/320 eta 7.6 min]
+  r8 policy_check       uncached  a1 total=8281.21 pull=4698.0 init=2320.98 mode_ok=True load1=0.88 
+[285/320 eta 7.4 min]
+  r8 policy_check       cached    a1 total=3649.08 pull=0.0 init=2291.01 mode_ok=True load1=1.17 
+[286/320 eta 7.2 min]
+  r8 product_lookup     uncached  a1 total=6305.81 pull=3438.0 init=1501.2 mode_ok=True load1=1.07 
+[287/320 eta 7.0 min]
+  r8 product_lookup     cached    a1 total=2728.33 pull=0.0 init=1550.95 mode_ok=True load1=1.11 
+[288/320 eta 6.8 min]
+  r9 edit_file          uncached  a1 total=5024.75 pull=2658.0 init=1211.05 mode_ok=True load1=1.02 
+[289/320 eta 6.6 min]
+  r9 edit_file          cached    a1 total=2839.11 pull=0.0 init=1190.92 mode_ok=True load1=1.14 
+[290/320 eta 6.4 min]
+  r9 read_file          uncached  a1 total=4240.99 pull=2405.0 init=1150.91 mode_ok=True load1=1.04 
+[291/320 eta 6.1 min]
+  r9 read_file          cached    a1 total=2633.98 pull=0.0 init=1200.95 mode_ok=True load1=1.13 
+[292/320 eta 5.9 min]
+  r9 travel_booking     uncached  a1 total=6288.28 pull=3626.0 init=1551.09 mode_ok=True load1=1.11 
+[293/320 eta 5.7 min]
+  r9 travel_booking     cached    a1 total=2632.09 pull=0.0 init=1530.9 mode_ok=True load1=1.11 
+[294/320 eta 5.5 min]
+  r9 generic_fallback   uncached  a1 total=7363.41 pull=4381.0 init=2280.86 mode_ok=True load1=1.1 
+[295/320 eta 5.3 min]
+  r9 generic_fallback   cached    a1 total=3773.55 pull=0.0 init=2250.95 mode_ok=True load1=1.08 
+[296/320 eta 5.1 min]
+  r9 post_comment       uncached  a1 total=5178.85 pull=2414.0 init=1191.06 mode_ok=True load1=0.99 
+[297/320 eta 4.9 min]
+  r9 post_comment       cached    a1 total=1819.37 pull=0.0 init=1171.08 mode_ok=True load1=0.99 
+[298/320 eta 4.7 min]
+  r9 refund_issue       uncached  a1 total=5259.19 pull=2586.0 init=1201.01 mode_ok=True load1=0.99 
+[299/320 eta 4.5 min]
+  r9 refund_issue       cached    a1 total=2844.12 pull=0.0 init=1201.08 mode_ok=True load1=0.92 
+[300/320 eta 4.2 min]
+  r9 format_diff        uncached  a1 total=5265.58 pull=2402.0 init=1231.04 mode_ok=True load1=0.85 
+[301/320 eta 4.0 min]
+  r9 format_diff        cached    a1 total=2615.05 pull=0.0 init=1190.91 mode_ok=True load1=0.96 
+[302/320 eta 3.8 min]
+  r9 order_update       uncached  a1 total=5294.54 pull=2567.0 init=1210.98 mode_ok=True load1=0.96 
+[303/320 eta 3.6 min]
+  r9 order_update       cached    a1 total=2821.9 pull=0.0 init=1200.92 mode_ok=True load1=0.89 
+[304/320 eta 3.4 min]
+  r9 run_tests          uncached  a1 total=8374.97 pull=4309.0 init=2411.15 mode_ok=True load1=0.83 
+[305/320 eta 3.2 min]
+  r9 run_tests          cached    a1 total=3660.68 pull=0.0 init=2421.05 mode_ok=True load1=1.08 
+[306/320 eta 3.0 min]
+  r9 order_lookup       uncached  a1 total=5952.23 pull=3363.0 init=1540.87 mode_ok=True load1=1.17 
+[307/320 eta 2.8 min]
+  r9 order_lookup       cached    a1 total=2632.89 pull=0.0 init=1521.08 mode_ok=True load1=1.11 
+[308/320 eta 2.6 min]
+  r9 user_lookup        uncached  a1 total=5268.39 pull=2603.0 init=1170.92 mode_ok=True load1=1.09 
+[309/320 eta 2.3 min]
+  r9 user_lookup        cached    a1 total=2740.84 pull=0.0 init=1210.97 mode_ok=True load1=1.07 
+[310/320 eta 2.1 min]
+  r9 promo_code_lookup  uncached  a1 total=4830.38 pull=2780.0 init=1181.02 mode_ok=True load1=1.12 
+[311/320 eta 1.9 min]
+  r9 promo_code_lookup  cached    a1 total=2650.45 pull=0.0 init=1180.93 mode_ok=True load1=1.02 
+[312/320 eta 1.7 min]
+  r9 policy_check       uncached  a1 total=8473.23 pull=4546.0 init=2331.18 mode_ok=True load1=0.94 
+[313/320 eta 1.5 min]
+  r9 policy_check       cached    a1 total=3772.35 pull=0.0 init=2270.99 mode_ok=True load1=1.2 
+[314/320 eta 1.3 min]
+  r9 product_lookup     uncached  a1 total=6296.14 pull=3735.0 init=1521.24 mode_ok=True load1=1.09 
+[315/320 eta 1.1 min]
+  r9 product_lookup     cached    a1 total=2560.59 pull=0.0 init=1520.99 mode_ok=True load1=1.16 
+[316/320 eta 0.9 min]
+  r9 shell              uncached  a1 total=5138.28 pull=2519.0 init=1190.99 mode_ok=True load1=1.14 
+[317/320 eta 0.6 min]
+  r9 shell              cached    a1 total=2737.38 pull=0.0 init=1180.98 mode_ok=True load1=1.04 
+[318/320 eta 0.4 min]
+  r9 search             uncached  a1 total=5376.75 pull=3213.0 init=1521.34 mode_ok=True load1=0.88 
+[319/320 eta 0.2 min]
+  r9 search             cached    a1 total=2635.71 pull=0.0 init=1600.88 mode_ok=True load1=0.74 
+[320/320 eta 0.0 min]
+measured e0_aws: 320/320 units ok, 0 given up after 3 attempts
+2026-11-04T15:32:24Z E0 sequential: done
+2026-11-04T15:32:24Z E0 parallel-3: start
+  r0 format_diff        uncached  a1 total=5082.74 pull=417.0 init=3385.42 mode_ok=True load1=0.7 
+  r0 post_comment       uncached  a1 total=6032.8 pull=598.0 init=3032.39 mode_ok=True load1=0.7 
+  r0 policy_check       uncached  a1 total=10155.5 pull=5555.0 init=3220.95 mode_ok=True load1=0.7 
+[1/120 eta 31.0 min]
+  r0 format_diff        cached    a1 total=6680.14 pull=0.0 init=3771.69 mode_ok=True load1=1.18 
+  r0 post_comment       cached    a1 total=6689.91 pull=0.0 init=3913.42 mode_ok=True load1=1.18 
+  r0 policy_check       cached    a1 total=5647.53 pull=0.0 init=4220.9 mode_ok=True load1=1.18 
+[2/120 eta 37.4 min]
+  r0 order_lookup       uncached  a1 total=9770.39 pull=5570.0 init=3261.65 mode_ok=True load1=1.16 
+  r0 edit_file          uncached  a1 total=5770.87 pull=2682.0 init=2111.46 mode_ok=True load1=1.16 
+  r0 product_lookup     uncached  a1 total=10831.45 pull=5639.0 init=3211.19 mode_ok=True load1=1.16 
+[3/120 eta 42.1 min]
+  r0 order_lookup       cached    a1 total=5300.03 pull=0.0 init=3691.99 mode_ok=True load1=1.18 
+  r0 edit_file          cached    a1 total=4272.52 pull=0.0 init=3262.55 mode_ok=True load1=1.18 
+  r0 product_lookup     cached    a1 total=5262.66 pull=0.0 init=3871.72 mode_ok=True load1=1.18 
+[4/120 eta 51.7 min]
+  r0 order_update       uncached  a1 total=8074.12 pull=1803.0 init=4161.76 mode_ok=True load1=1.19 
+  r0 search             uncached  a1 total=8186.36 pull=855.0 init=4613.7 mode_ok=True load1=1.19 
+  r0 run_tests          uncached  a1 total=10569.81 pull=6122.0 init=3332.27 mode_ok=True load1=1.19 
+[5/120 eta 49.5 min]
+  r0 order_update       cached    a1 total=6256.03 pull=0.0 init=4171.04 mode_ok=True load1=1.19 
+  r0 search             cached    a1 total=6278.93 pull=0.0 init=4501.65 mode_ok=True load1=1.19 
+  r0 run_tests          cached    a1 total=5241.64 pull=0.0 init=4071.13 mode_ok=True load1=1.19 
+[6/120 eta 52.9 min]
+  r0 travel_booking     uncached  a1 total=5290.85 pull=678.0 init=3203.42 mode_ok=True load1=1.19 
+  r0 read_file          uncached  a1 total=6261.1 pull=1817.0 init=3050.99 mode_ok=True load1=1.19 
+  r0 refund_issue       uncached  a1 total=6357.85 pull=1888.0 init=3141.42 mode_ok=True load1=1.19 
+[7/120 eta 49.8 min]
+  r0 travel_booking     cached    a1 total=5871.94 pull=0.0 init=3370.86 mode_ok=True load1=1.01 
+  r0 read_file          cached    a1 total=4793.19 pull=0.0 init=2852.54 mode_ok=True load1=1.01 
+  r0 refund_issue       cached    a1 total=5861.99 pull=0.0 init=3311.16 mode_ok=True load1=1.01 
+[8/120 eta 45.8 min]
+  r0 user_lookup        uncached  a1 total=6460.92 pull=666.0 init=2795.72 mode_ok=True load1=1.17 
+  r0 promo_code_lookup  uncached  a1 total=5459.01 pull=494.0 init=3094.86 mode_ok=True load1=1.17 
+  r0 generic_fallback   uncached  a1 total=10418.76 pull=5506.0 init=3241.67 mode_ok=True load1=1.17 
+[9/120 eta 43.7 min]
+  r0 user_lookup        cached    a1 total=4604.11 pull=0.0 init=3191.37 mode_ok=True load1=1.2 
+  r0 promo_code_lookup  cached    a1 total=5545.12 pull=0.0 init=3514.35 mode_ok=True load1=1.2 
+  r0 generic_fallback   cached    a1 total=5503.21 pull=0.0 init=4291.47 mode_ok=True load1=1.2 
+[10/120 eta 43.9 min]
+  r0 shell              uncached  a1 total=7962.32 pull=2675.0 init=3141.0 mode_ok=True load1=1.2 
+  r0 format_diff        uncached  a1 total=7967.91 pull=2634.0 init=3171.67 mode_ok=True load1=1.2 
+  r0 post_comment       uncached  a1 total=6929.28 pull=2669.0 init=2473.1 mode_ok=True load1=1.2 
+[11/120 eta 44.5 min]
+  r0 shell              cached    a1 total=5123.18 pull=0.0 init=3271.81 mode_ok=True load1=1.19 
+  r0 format_diff        cached    a1 total=4108.53 pull=0.0 init=3001.0 mode_ok=True load1=1.19 
+  r0 post_comment       cached    a1 total=5128.47 pull=0.0 init=2901.24 mode_ok=True load1=1.19 
+[12/120 eta 49.0 min]
+  r1 order_update       uncached  a1 total=7467.35 pull=2803.0 init=2915.04 mode_ok=True load1=1.19 
+  r1 travel_booking     uncached  a1 total=12227.68 pull=7134.0 init=3811.36 mode_ok=True load1=1.19 
+  r1 run_tests          uncached  a1 total=14343.04 pull=8848.0 init=3842.31 mode_ok=True load1=1.19 
+[13/120 eta 48.3 min]
+  r1 order_update       cached    a1 total=7343.84 pull=0.0 init=4501.3 mode_ok=True load1=1.14 
+  r1 travel_booking     cached    a1 total=7329.15 pull=0.0 init=4620.86 mode_ok=True load1=1.14 
+  r1 run_tests          cached    a1 total=6295.99 pull=0.0 init=4511.02 mode_ok=True load1=1.14 
+[14/120 eta 50.5 min]
+  r1 search             uncached  a1 total=11763.62 pull=5426.0 init=4741.82 mode_ok=True load1=1.18 
+  r1 promo_code_lookup  uncached  a1 total=8109.1 pull=3507.0 init=3264.09 mode_ok=True load1=1.18 
+  r1 policy_check       uncached  a1 total=12869.39 pull=8157.0 init=3472.12 mode_ok=True load1=1.18 
+[15/120 eta 51.8 min]
+  r1 search             cached    a1 total=6112.05 pull=0.0 init=4531.62 mode_ok=True load1=1.19 
+  r1 promo_code_lookup  cached    a1 total=5150.12 pull=0.0 init=4031.78 mode_ok=True load1=1.19 
+  r1 policy_check       cached    a1 total=6183.59 pull=0.0 init=4301.4 mode_ok=True load1=1.19 
+[16/120 eta 54.9 min]
+  r1 user_lookup        uncached  a1 total=8213.62 pull=2751.0 init=2911.29 mode_ok=True load1=1.19 
+  r1 format_diff        uncached  a1 total=7180.7 pull=2672.0 init=2981.17 mode_ok=True load1=1.19 
+  r1 post_comment       uncached  a1 total=8230.59 pull=2694.0 init=3000.87 mode_ok=True load1=1.19 
+[17/120 eta 53.2 min]
+  r1 user_lookup        cached    a1 total=4336.37 pull=0.0 init=3150.93 mode_ok=True load1=1.16 
+  r1 format_diff        cached    a1 total=5366.25 pull=0.0 init=2821.73 mode_ok=True load1=1.16 
+  r1 post_comment       cached    a1 total=5364.27 pull=0.0 init=3021.29 mode_ok=True load1=1.16 
+[18/120 eta 51.7 min]
+  r1 read_file          uncached  a1 total=10282.85 pull=3547.0 init=4181.23 mode_ok=True load1=1.18 
+  r1 refund_issue       uncached  a1 total=9201.06 pull=3589.0 init=4531.33 mode_ok=True load1=1.18 
+  r1 generic_fallback   uncached  a1 total=11280.27 pull=6223.0 init=3572.31 mode_ok=True load1=1.18 
+[19/120 eta 51.4 min]
+  r1 read_file          cached    a1 total=6561.16 pull=0.0 init=3931.44 mode_ok=True load1=1.2 
+  r1 refund_issue       cached    a1 total=5537.55 pull=0.0 init=3892.06 mode_ok=True load1=1.2 
+  r1 generic_fallback   cached    a1 total=6565.19 pull=0.0 init=3990.82 mode_ok=True load1=1.2 
+[20/120 eta 51.5 min]
+  r1 order_lookup       uncached  a1 total=9679.56 pull=4470.0 init=3052.29 mode_ok=True load1=1.14 
+  r1 shell              uncached  a1 total=7541.61 pull=3062.0 init=2732.71 mode_ok=True load1=1.14 
+  r1 product_lookup     uncached  a1 total=9684.18 pull=4469.0 init=3251.21 mode_ok=True load1=1.14 
+[21/120 eta 51.0 min]
+  r1 order_lookup       cached    a1 total=5592.88 pull=0.0 init=3651.72 mode_ok=True load1=1.2 
+  r1 shell              cached    a1 total=5575.32 pull=0.0 init=3122.07 mode_ok=True load1=1.2 
+  r1 product_lookup     cached    a1 total=4587.45 pull=0.0 init=3411.05 mode_ok=True load1=1.2 
+[22/120 eta 50.6 min]
+  r1 edit_file          uncached  a1 total=9134.41 pull=2848.0 init=3632.28 mode_ok=True load1=1.2 
+  r1 order_update       uncached  a1 total=8136.71 pull=2732.0 init=4091.16 mode_ok=True load1=1.2 
+  r1 travel_booking     uncached  a1 total=10170.71 pull=6052.0 init=2191.16 mode_ok=True load1=1.2 
+[23/120 eta 49.4 min]
+  r1 edit_file          cached    a1 total=4198.54 pull=0.0 init=3092.41 mode_ok=True load1=1.13 
+  r1 order_update       cached    a1 total=5170.8 pull=0.0 init=3391.55 mode_ok=True load1=1.13 
+  r1 travel_booking     cached    a1 total=5142.97 pull=0.0 init=3390.93 mode_ok=True load1=1.13 
+[24/120 eta 49.3 min]
+  r2 order_lookup       uncached  a1 total=12143.23 pull=5954.0 init=5163.93 mode_ok=True load1=1.16 
+  r2 generic_fallback   uncached  a1 total=13145.45 pull=6748.0 init=4652.33 mode_ok=True load1=1.16 
+  r2 run_tests          uncached  a1 total=13177.5 pull=6712.0 init=5101.56 mode_ok=True load1=1.16 
+[25/120 eta 49.8 min]
+  r2 order_lookup       cached    a1 total=7717.82 pull=0.0 init=5201.31 mode_ok=True load1=1.13 
+  r2 generic_fallback   cached    a1 total=6636.18 pull=0.0 init=4881.22 mode_ok=True load1=1.13 
+  r2 run_tests          cached    a1 total=7592.52 pull=0.0 init=5270.82 mode_ok=True load1=1.13 
+[26/120 eta 49.4 min]
+  r2 user_lookup        uncached  a1 total=8567.63 pull=2880.0 init=3821.09 mode_ok=True load1=1.15 
+  r2 product_lookup     uncached  a1 total=10823.05 pull=6441.0 init=1881.43 mode_ok=True load1=1.15 
+  r2 refund_issue       uncached  a1 total=8564.28 pull=2828.0 init=3593.73 mode_ok=True load1=1.15 
+[27/120 eta 49.2 min]
+  r2 user_lookup        cached    a1 total=5021.36 pull=0.0 init=3321.91 mode_ok=True load1=1.14 
+  r2 product_lookup     cached    a1 total=5051.92 pull=0.0 init=3511.23 mode_ok=True load1=1.14 
+  r2 refund_issue       cached    a1 total=3997.42 pull=0.0 init=2881.97 mode_ok=True load1=1.14 
+[28/120 eta 50.0 min]
+  r2 post_comment       uncached  a1 total=8129.15 pull=2779.0 init=4031.13 mode_ok=True load1=1.12 
+  r2 shell              uncached  a1 total=8130.2 pull=2758.0 init=3842.65 mode_ok=True load1=1.12 
+  r2 travel_booking     uncached  a1 total=10571.3 pull=6009.0 init=2364.01 mode_ok=True load1=1.12 
+[29/120 eta 50.0 min]
+  r2 post_comment       cached    a1 total=5429.19 pull=0.0 init=3171.16 mode_ok=True load1=1.11 
+  r2 shell              cached    a1 total=4391.06 pull=0.0 init=3103.21 mode_ok=True load1=1.11 
+  r2 travel_booking     cached    a1 total=5433.81 pull=0.0 init=3340.99 mode_ok=True load1=1.11 
+[30/120 eta 49.6 min]
+  r2 read_file          uncached  a1 total=7206.14 pull=2687.0 init=2942.78 mode_ok=True load1=1.16 
+  r2 order_update       uncached  a1 total=8243.2 pull=2801.0 init=2940.83 mode_ok=True load1=1.16 
+  r2 format_diff        uncached  a1 total=8230.14 pull=2613.0 init=3121.84 mode_ok=True load1=1.16 
+[31/120 eta 48.4 min]
+  r2 read_file          cached    a1 total=5836.73 pull=0.0 init=3120.99 mode_ok=True load1=1.19 
+  r2 order_update       cached    a1 total=5979.36 pull=0.0 init=3031.21 mode_ok=True load1=1.19 
+  r2 format_diff        cached    a1 total=4931.08 pull=0.0 init=3021.22 mode_ok=True load1=1.19 
+[32/120 eta 46.9 min]
+  r2 edit_file          uncached  a1 total=5190.67 pull=636.0 init=3242.52 mode_ok=True load1=1.12 
+  r2 policy_check       uncached  a1 total=10263.87 pull=5829.0 init=3201.21 mode_ok=True load1=1.12 
+  r2 promo_code_lookup  uncached  a1 total=6235.87 pull=551.0 init=2832.03 mode_ok=True load1=1.12 
+[33/120 eta 46.7 min]
+  r2 edit_file          cached    a1 total=5419.43 pull=0.0 init=3791.13 mode_ok=True load1=1.17 
+  r2 policy_check       cached    a1 total=6458.23 pull=0.0 init=4280.94 mode_ok=True load1=1.17 
+  r2 promo_code_lookup  cached    a1 total=6460.69 pull=0.0 init=3861.85 mode_ok=True load1=1.17 
+[34/120 eta 46.6 min]
+  r2 search             uncached  a1 total=12307.46 pull=4019.9999999999995 init=5661.87 mode_ok=True load1=1.2 
+  r2 order_lookup       uncached  a1 total=10328.24 pull=4035.0 init=5226.23 mode_ok=True load1=1.2 
+  r2 generic_fallback   uncached  a1 total=13353.71 pull=7759.0 init=3631.35 mode_ok=True load1=1.2 
+[35/120 eta 45.8 min]
+  r2 search             cached    a1 total=6624.22 pull=0.0 init=4521.71 mode_ok=True load1=1.19 
+  r2 order_lookup       cached    a1 total=5673.43 pull=0.0 init=4341.98 mode_ok=True load1=1.19 
+  r2 generic_fallback   cached    a1 total=6812.31 pull=0.0 init=4520.82 mode_ok=True load1=1.19 
+[36/120 eta 45.1 min]
+  r3 shell              uncached  a1 total=7913.19 pull=3036.0 init=2961.42 mode_ok=True load1=1.15 
+  r3 refund_issue       uncached  a1 total=7898.1 pull=2951.0 init=3322.47 mode_ok=True load1=1.15 
+  r3 order_update       uncached  a1 total=6892.52 pull=3062.0 init=2881.42 mode_ok=True load1=1.15 
+[37/120 eta 44.6 min]
+  r3 shell              cached    a1 total=4361.44 pull=0.0 init=3060.97 mode_ok=True load1=1.14 
+  r3 refund_issue       cached    a1 total=5415.17 pull=0.0 init=2851.44 mode_ok=True load1=1.14 
+  r3 order_update       cached    a1 total=5405.7 pull=0.0 init=3141.32 mode_ok=True load1=1.14 
+[38/120 eta 44.4 min]
+  r3 edit_file          uncached  a1 total=7411.44 pull=2768.0 init=3361.52 mode_ok=True load1=1.12 
+  r3 generic_fallback   uncached  a1 total=11487.71 pull=7537.0 init=2971.05 mode_ok=True load1=1.12 
+  r3 read_file          uncached  a1 total=8574.61 pull=2795.0 init=3651.99 mode_ok=True load1=1.12 
+[39/120 eta 43.3 min]
+  r3 edit_file          cached    a1 total=6195.32 pull=0.0 init=3611.89 mode_ok=True load1=1.18 
+  r3 generic_fallback   cached    a1 total=5083.25 pull=0.0 init=4101.02 mode_ok=True load1=1.18 
+  r3 read_file          cached    a1 total=6183.83 pull=0.0 init=3761.09 mode_ok=True load1=1.18 
+[40/120 eta 43.6 min]
+  r3 order_lookup       uncached  a1 total=12173.19 pull=6081.0 init=4541.11 mode_ok=True load1=1.16 
+  r3 policy_check       uncached  a1 total=13163.48 pull=6307.0 init=4102.3 mode_ok=True load1=1.16 
+  r3 travel_booking     uncached  a1 total=13175.04 pull=6154.0 init=4460.95 mode_ok=True load1=1.16 
+[41/120 eta 43.0 min]
+  r3 order_lookup       cached    a1 total=6465.79 pull=0.0 init=4430.84 mode_ok=True load1=1.13 
+  r3 policy_check       cached    a1 total=6463.14 pull=0.0 init=4142.67 mode_ok=True load1=1.13 
+  r3 travel_booking     cached    a1 total=5411.13 pull=0.0 init=4451.34 mode_ok=True load1=1.13 
+[42/120 eta 42.5 min]
+  r3 user_lookup        uncached  a1 total=7061.7 pull=1310.0 init=3071.74 mode_ok=True load1=1.15 
+  r3 format_diff        uncached  a1 total=5999.82 pull=1245.0 init=3221.56 mode_ok=True load1=1.15 
+  r3 post_comment       uncached  a1 total=7101.25 pull=1358.0 init=3150.79 mode_ok=True load1=1.15 
+[43/120 eta 41.5 min]
+  r3 user_lookup        cached    a1 total=3851.34 pull=0.0 init=2711.25 mode_ok=True load1=1.2 
+  r3 format_diff        cached    a1 total=4774.01 pull=0.0 init=3111.05 mode_ok=True load1=1.2 
+  r3 post_comment       cached    a1 total=4899.82 pull=0.0 init=2791.29 mode_ok=True load1=1.2 
+[44/120 eta 40.3 min]
+  r3 promo_code_lookup  uncached  a1 total=6489.75 pull=1697.0 init=3511.61 mode_ok=True load1=1.15 
+  r3 run_tests          uncached  a1 total=11810.75 pull=6532.0 init=3501.86 mode_ok=True load1=1.15 
+  r3 search             uncached  a1 total=7493.61 pull=588.0 init=4070.28 mode_ok=True load1=1.15 
+[45/120 eta 39.5 min]
+  r3 promo_code_lookup  cached    a1 total=5602.3 pull=0.0 init=3852.38 mode_ok=True load1=1.14 
+  r3 run_tests          cached    a1 total=5643.49 pull=0.0 init=4151.48 mode_ok=True load1=1.14 
+  r3 search             cached    a1 total=6727.3 pull=0.0 init=4311.03 mode_ok=True load1=1.14 
+[46/120 eta 38.9 min]
+  r3 product_lookup     uncached  a1 total=9500.98 pull=4543.0 init=2930.82 mode_ok=True load1=1.15 
+  r3 shell              uncached  a1 total=8471.0 pull=3262.0 init=3521.19 mode_ok=True load1=1.15 
+  r3 refund_issue       uncached  a1 total=9524.51 pull=3347.0 init=3501.31 mode_ok=True load1=1.15 
+[47/120 eta 39.1 min]
+  r3 product_lookup     cached    a1 total=5790.04 pull=0.0 init=3301.73 mode_ok=True load1=1.13 
+  r3 shell              cached    a1 total=4666.12 pull=0.0 init=3133.32 mode_ok=True load1=1.13 
+  r3 refund_issue       cached    a1 total=5830.48 pull=0.0 init=3071.12 mode_ok=True load1=1.13 
+[48/120 eta 38.3 min]
+  r4 promo_code_lookup  uncached  a1 total=8131.4 pull=2503.0 init=4061.29 mode_ok=True load1=1.17 
+  r4 search             uncached  a1 total=9241.29 pull=5577.0 init=2251.28 mode_ok=True load1=1.17 
+  r4 format_diff        uncached  a1 total=9168.46 pull=2572.0 init=3961.16 mode_ok=True load1=1.17 
+[49/120 eta 37.4 min]
+  r4 promo_code_lookup  cached    a1 total=5112.16 pull=0.0 init=3222.16 mode_ok=True load1=1.13 
+  r4 search             cached    a1 total=5060.0 pull=0.0 init=3591.52 mode_ok=True load1=1.13 
+  r4 format_diff        cached    a1 total=4055.0 pull=0.0 init=2831.65 mode_ok=True load1=1.13 
+[50/120 eta 37.3 min]
+  r4 run_tests          uncached  a1 total=11191.85 pull=5888.0 init=3230.96 mode_ok=True load1=1.17 
+  r4 user_lookup        uncached  a1 total=7579.37 pull=1224.0 init=3604.68 mode_ok=True load1=1.17 
+  r4 order_update       uncached  a1 total=6449.67 pull=1295.0 init=3733.57 mode_ok=True load1=1.17 
+[51/120 eta 36.6 min]
+  r4 run_tests          cached    a1 total=5723.84 pull=0.0 init=4302.59 mode_ok=True load1=1.14 
+  r4 user_lookup        cached    a1 total=5713.79 pull=0.0 init=3761.66 mode_ok=True load1=1.14 
+  r4 order_update       cached    a1 total=4662.73 pull=0.0 init=3601.33 mode_ok=True load1=1.14 
+[52/120 eta 36.0 min]
+  r4 refund_issue       uncached  a1 total=7161.53 pull=2746.0 init=3282.24 mode_ok=True load1=1.14 
+  r4 policy_check       uncached  a1 total=12103.24 pull=7731.0 init=2821.07 mode_ok=True load1=1.14 
+  r4 edit_file          uncached  a1 total=8272.81 pull=2798.0 init=3391.81 mode_ok=True load1=1.14 
+[53/120 eta 35.4 min]
+  r4 refund_issue       cached    a1 total=6264.49 pull=0.0 init=3941.06 mode_ok=True load1=1.17 
+  r4 policy_check       cached    a1 total=5122.41 pull=0.0 init=3980.86 mode_ok=True load1=1.17 
+  r4 edit_file          cached    a1 total=6183.11 pull=0.0 init=3861.74 mode_ok=True load1=1.17 
+[54/120 eta 35.3 min]
+  r4 order_lookup       uncached  a1 total=13648.72 pull=7665.0 init=3361.14 mode_ok=True load1=1.15 
+  r4 generic_fallback   uncached  a1 total=12561.39 pull=7432.0 init=3920.9 mode_ok=True load1=1.15 
+  r4 read_file          uncached  a1 total=9512.14 pull=3796.0 init=3462.04 mode_ok=True load1=1.15 
+[55/120 eta 35.5 min]
+  r4 order_lookup       cached    a1 total=6179.6 pull=0.0 init=4340.94 mode_ok=True load1=1.17 
+  r4 generic_fallback   cached    a1 total=5153.43 pull=0.0 init=4011.02 mode_ok=True load1=1.17 
+  r4 read_file          cached    a1 total=6184.16 pull=0.0 init=3791.24 mode_ok=True load1=1.17 
+[56/120 eta 35.0 min]
+  r4 post_comment       uncached  a1 total=5316.86 pull=581.0 init=3721.1 mode_ok=True load1=1.2 
+  r4 product_lookup     uncached  a1 total=8561.46 pull=4448.0 init=2541.65 mode_ok=True load1=1.2 
+  r4 shell              uncached  a1 total=6311.91 pull=604.0 init=3426.52 mode_ok=True load1=1.2 
+[57/120 eta 34.1 min]
+  r4 post_comment       cached    a1 total=6145.92 pull=0.0 init=3231.83 mode_ok=True load1=1.13 
+  r4 product_lookup     cached    a1 total=5032.74 pull=0.0 init=3721.02 mode_ok=True load1=1.13 
+  r4 shell              cached    a1 total=6138.53 pull=0.0 init=3171.66 mode_ok=True load1=1.13 
+[58/120 eta 33.9 min]
+  r4 travel_booking     uncached  a1 total=11190.87 pull=5768.0 init=3270.96 mode_ok=True load1=1.13 
+  r4 promo_code_lookup  uncached  a1 total=6150.59 pull=2775.0 init=1811.08 mode_ok=True load1=1.13 
+  r4 search             uncached  a1 total=10141.84 pull=5928.0 init=3061.91 mode_ok=True load1=1.13 
+[59/120 eta 33.9 min]
+  r4 travel_booking     cached    a1 total=5571.37 pull=0.0 init=3891.75 mode_ok=True load1=1.14 
+  r4 promo_code_lookup  cached    a1 total=4496.98 pull=0.0 init=3311.18 mode_ok=True load1=1.14 
+  r4 search             cached    a1 total=5570.08 pull=0.0 init=3551.39 mode_ok=True load1=1.14 
+[60/120 eta 33.2 min]
+  r5 order_lookup       uncached  a1 total=12547.15 pull=7763.0 init=3261.08 mode_ok=True load1=1.2 
+  r5 promo_code_lookup  uncached  a1 total=7617.06 pull=3544.0 init=2833.22 mode_ok=True load1=1.2 
+  r5 run_tests          uncached  a1 total=13549.76 pull=8361.0 init=3992.53 mode_ok=True load1=1.2 
+[61/120 eta 32.8 min]
+  r5 order_lookup       cached    a1 total=5266.35 pull=0.0 init=4151.11 mode_ok=True load1=1.19 
+  r5 promo_code_lookup  cached    a1 total=6299.78 pull=0.0 init=3423.48 mode_ok=True load1=1.19 
+  r5 run_tests          cached    a1 total=6346.23 pull=0.0 init=4671.85 mode_ok=True load1=1.19 
+[62/120 eta 32.6 min]
+  r5 product_lookup     uncached  a1 total=10169.94 pull=4657.0 init=3932.6 mode_ok=True load1=1.11 
+  r5 search             uncached  a1 total=9102.57 pull=4758.0 init=3211.7 mode_ok=True load1=1.11 
+  r5 format_diff        uncached  a1 total=8241.94 pull=3463.0 init=2821.44 mode_ok=True load1=1.11 
+[63/120 eta 32.0 min]
+  r5 product_lookup     cached    a1 total=6163.38 pull=0.0 init=3682.51 mode_ok=True load1=1.18 
+  r5 search             cached    a1 total=5092.93 pull=0.0 init=3830.95 mode_ok=True load1=1.18 
+  r5 format_diff        cached    a1 total=6166.61 pull=0.0 init=3201.44 mode_ok=True load1=1.18 
+[64/120 eta 31.6 min]
+  r5 user_lookup        uncached  a1 total=6398.95 pull=1496.0 init=3011.4 mode_ok=True load1=1.12 
+  r5 travel_booking     uncached  a1 total=5374.51 pull=643.0 init=3683.81 mode_ok=True load1=1.12 
+  r5 refund_issue       uncached  a1 total=6358.46 pull=1590.0 init=3221.95 mode_ok=True load1=1.12 
+[65/120 eta 30.8 min]
+  r5 user_lookup        cached    a1 total=4316.62 pull=0.0 init=2701.39 mode_ok=True load1=1.17 
+  r5 travel_booking     cached    a1 total=5429.54 pull=0.0 init=3450.93 mode_ok=True load1=1.17 
+  r5 refund_issue       cached    a1 total=5404.76 pull=0.0 init=3111.54 mode_ok=True load1=1.17 
+[66/120 eta 30.4 min]
+  r5 shell              uncached  a1 total=8131.22 pull=2834.0 init=3627.99 mode_ok=True load1=1.11 
+  r5 edit_file          uncached  a1 total=7284.86 pull=2767.0 init=3122.84 mode_ok=True load1=1.11 
+  r5 generic_fallback   uncached  a1 total=12051.66 pull=8007.999999999999 init=2910.95 mode_ok=True load1=1.11 
+[67/120 eta 29.8 min]
+  r5 shell              cached    a1 total=6462.81 pull=0.0 init=3901.27 mode_ok=True load1=1.17 
+  r5 edit_file          cached    a1 total=5370.14 pull=0.0 init=3821.44 mode_ok=True load1=1.17 
+  r5 generic_fallback   cached    a1 total=6489.08 pull=0.0 init=4131.13 mode_ok=True load1=1.17 
+[68/120 eta 29.3 min]
+  r5 post_comment       uncached  a1 total=8215.5 pull=2728.0 init=3801.73 mode_ok=True load1=1.16 
+  r5 policy_check       uncached  a1 total=12899.21 pull=7639.0 init=3291.9 mode_ok=True load1=1.16 
+  r5 read_file          uncached  a1 total=8233.45 pull=2807.0 init=3571.33 mode_ok=True load1=1.16 
+[69/120 eta 28.7 min]
+  r5 post_comment       cached    a1 total=6551.37 pull=0.0 init=3662.19 mode_ok=True load1=1.2 
+  r5 policy_check       cached    a1 total=5510.64 pull=0.0 init=4291.01 mode_ok=True load1=1.2 
+  r5 read_file          cached    a1 total=6572.38 pull=0.0 init=4021.21 mode_ok=True load1=1.2 
+[70/120 eta 28.1 min]
+  r5 order_update       uncached  a1 total=8954.88 pull=2848.0 init=4171.14 mode_ok=True load1=1.11 
+  r5 order_lookup       uncached  a1 total=9976.88 pull=5715.0 init=2661.4 mode_ok=True load1=1.11 
+  r5 promo_code_lookup  uncached  a1 total=7929.26 pull=2700.0 init=4002.04 mode_ok=True load1=1.11 
+[71/120 eta 27.6 min]
+  r5 order_update       cached    a1 total=4234.63 pull=0.0 init=3181.84 mode_ok=True load1=1.12 
+  r5 order_lookup       cached    a1 total=5301.33 pull=0.0 init=3672.25 mode_ok=True load1=1.12 
+  r5 promo_code_lookup  cached    a1 total=5271.13 pull=0.0 init=3271.23 mode_ok=True load1=1.12 
+[72/120 eta 27.1 min]
+  r6 run_tests          uncached  a1 total=12342.49 pull=6608.0 init=3961.0 mode_ok=True load1=1.13 
+  r6 shell              uncached  a1 total=9053.58 pull=3688.0 init=4122.84 mode_ok=True load1=1.13 
+  r6 promo_code_lookup  uncached  a1 total=10097.02 pull=3716.0 init=4454.84 mode_ok=True load1=1.13 
+[73/120 eta 26.5 min]
+  r6 run_tests          cached    a1 total=6367.83 pull=0.0 init=4401.07 mode_ok=True load1=1.12 
+  r6 shell              cached    a1 total=5378.16 pull=0.0 init=3591.78 mode_ok=True load1=1.12 
+  r6 promo_code_lookup  cached    a1 total=6354.86 pull=0.0 init=3661.19 mode_ok=True load1=1.12 
+[74/120 eta 26.0 min]
+  r6 format_diff        uncached  a1 total=10046.16 pull=3552.0 init=4381.12 mode_ok=True load1=1.2 
+  r6 read_file          uncached  a1 total=8955.85 pull=3619.0 init=4202.01 mode_ok=True load1=1.2 
+  r6 policy_check       uncached  a1 total=12174.34 pull=6424.0 init=3941.02 mode_ok=True load1=1.2 
+[75/120 eta 25.5 min]
+  r6 format_diff        cached    a1 total=6252.23 pull=0.0 init=3982.99 mode_ok=True load1=1.15 
+  r6 read_file          cached    a1 total=5205.82 pull=0.0 init=4041.83 mode_ok=True load1=1.15 
+  r6 policy_check       cached    a1 total=6212.33 pull=0.0 init=4140.95 mode_ok=True load1=1.15 
+[76/120 eta 25.0 min]
+  r6 search             uncached  a1 total=10066.02 pull=3759.0 init=4081.51 mode_ok=True load1=1.16 
+  r6 order_lookup       uncached  a1 total=9001.09 pull=3809.0 init=3921.16 mode_ok=True load1=1.16 
+  r6 travel_booking     uncached  a1 total=10072.92 pull=3911.0 init=3791.01 mode_ok=True load1=1.16 
+[77/120 eta 24.3 min]
+  r6 search             cached    a1 total=6473.96 pull=0.0 init=3822.23 mode_ok=True load1=1.15 
+  r6 order_lookup       cached    a1 total=5291.39 pull=0.0 init=4231.48 mode_ok=True load1=1.15 
+  r6 travel_booking     cached    a1 total=4261.68 pull=0.0 init=3191.28 mode_ok=True load1=1.15 
+[78/120 eta 23.7 min]
+  r6 refund_issue       uncached  a1 total=8234.5 pull=2873.0 init=3692.92 mode_ok=True load1=1.19 
+  r6 generic_fallback   uncached  a1 total=13696.45 pull=8522.0 init=2450.95 mode_ok=True load1=1.19 
+  r6 user_lookup        uncached  a1 total=7183.63 pull=2766.0 init=3158.94 mode_ok=True load1=1.19 
+[79/120 eta 23.2 min]
+  r6 refund_issue       cached    a1 total=4845.34 pull=0.0 init=3531.56 mode_ok=True load1=1.11 
+  r6 generic_fallback   cached    a1 total=5872.04 pull=0.0 init=4241.83 mode_ok=True load1=1.11 
+  r6 user_lookup        cached    a1 total=5851.17 pull=0.0 init=3482.32 mode_ok=True load1=1.11 
+[80/120 eta 22.8 min]
+  r6 post_comment       uncached  a1 total=9093.13 pull=3568.0 init=3401.22 mode_ok=True load1=1.11 
+  r6 order_update       uncached  a1 total=8026.49 pull=3435.0 init=3291.51 mode_ok=True load1=1.11 
+  r6 product_lookup     uncached  a1 total=9075.1 pull=4463.0 init=3251.23 mode_ok=True load1=1.11 
+[81/120 eta 22.2 min]
+  r6 post_comment       cached    a1 total=5212.34 pull=0.0 init=3521.98 mode_ok=True load1=1.18 
+  r6 order_update       cached    a1 total=6261.9 pull=0.0 init=3321.13 mode_ok=True load1=1.18 
+  r6 product_lookup     cached    a1 total=6256.57 pull=0.0 init=3650.98 mode_ok=True load1=1.18 
+[82/120 eta 21.8 min]
+  r6 edit_file          uncached  a1 total=5881.97 pull=676.0 init=3622.48 mode_ok=True load1=1.12 
+  r6 run_tests          uncached  a1 total=11831.69 pull=5574.0 init=3821.03 mode_ok=True load1=1.12 
+  r6 shell              uncached  a1 total=6996.04 pull=702.0 init=3578.42 mode_ok=True load1=1.12 
+[83/120 eta 21.3 min]
+  r6 edit_file          cached    a1 total=6402.82 pull=0.0 init=4042.4 mode_ok=True load1=1.2 
+  r6 run_tests          cached    a1 total=5353.46 pull=0.0 init=4281.01 mode_ok=True load1=1.2 
+  r6 shell              cached    a1 total=6427.48 pull=0.0 init=4192.05 mode_ok=True load1=1.2 
+[84/120 eta 20.7 min]
+  r7 user_lookup        uncached  a1 total=9656.22 pull=3379.0 init=4399.87 mode_ok=True load1=1.17 
+  r7 order_lookup       uncached  a1 total=12902.06 pull=7165.0 init=3711.29 mode_ok=True load1=1.17 
+  r7 policy_check       uncached  a1 total=14002.84 pull=7706.0 init=3920.84 mode_ok=True load1=1.17 
+[85/120 eta 20.1 min]
+  r7 user_lookup        cached    a1 total=5620.76 pull=0.0 init=3941.33 mode_ok=True load1=1.11 
+  r7 order_lookup       cached    a1 total=6632.0 pull=0.0 init=4520.89 mode_ok=True load1=1.11 
+  r7 policy_check       cached    a1 total=6639.73 pull=0.0 init=4361.27 mode_ok=True load1=1.11 
+[86/120 eta 19.8 min]
+  r7 travel_booking     uncached  a1 total=9049.53 pull=4877.0 init=3101.7 mode_ok=True load1=1.16 
+  r7 format_diff        uncached  a1 total=7982.25 pull=3591.0 init=2642.53 mode_ok=True load1=1.16 
+  r7 product_lookup     uncached  a1 total=10039.87 pull=4942.0 init=3471.17 mode_ok=True load1=1.16 
+[87/120 eta 19.1 min]
+  r7 travel_booking     cached    a1 total=6369.31 pull=0.0 init=3840.84 mode_ok=True load1=1.2 
+  r7 format_diff        cached    a1 total=5332.49 pull=0.0 init=3532.14 mode_ok=True load1=1.2 
+  r7 product_lookup     cached    a1 total=6360.55 pull=0.0 init=3781.06 mode_ok=True load1=1.2 
+[88/120 eta 18.5 min]
+  r7 post_comment       uncached  a1 total=8848.12 pull=2541.0 init=3401.99 mode_ok=True load1=1.15 
+  r7 promo_code_lookup  uncached  a1 total=8879.48 pull=2636.0 init=3191.96 mode_ok=True load1=1.15 
+  r7 edit_file          uncached  a1 total=7821.91 pull=2562.0 init=3320.97 mode_ok=True load1=1.15 
+[89/120 eta 17.8 min]
+  r7 post_comment       cached    a1 total=4152.7 pull=0.0 init=3122.19 mode_ok=True load1=1.16 
+  r7 promo_code_lookup  cached    a1 total=5176.68 pull=0.0 init=2612.87 mode_ok=True load1=1.16 
+  r7 edit_file          cached    a1 total=5163.47 pull=0.0 init=3191.43 mode_ok=True load1=1.16 
+[90/120 eta 17.2 min]
+  r7 order_update       uncached  a1 total=8262.09 pull=2748.0 init=4294.22 mode_ok=True load1=1.2 
+  r7 generic_fallback   uncached  a1 total=12113.01 pull=7704.0 init=3081.06 mode_ok=True load1=1.2 
+  r7 refund_issue       uncached  a1 total=7108.73 pull=2688.0 init=3623.35 mode_ok=True load1=1.2 
+[91/120 eta 16.6 min]
+  r7 order_update       cached    a1 total=5995.24 pull=0.0 init=3621.35 mode_ok=True load1=1.23 NOISY 
+  r7 generic_fallback   cached    a1 total=6085.45 pull=0.0 init=4141.63 mode_ok=True load1=1.23 NOISY 
+  r7 refund_issue       cached    a1 total=5029.48 pull=0.0 init=3251.68 mode_ok=True load1=1.23 NOISY 
+[92/120 eta 16.2 min]
+  r7 read_file          uncached  a1 total=9848.3 pull=3505.0 init=3712.47 mode_ok=True load1=1.13 
+  r7 search             uncached  a1 total=13914.78 pull=7681.0 init=3781.44 mode_ok=True load1=1.13 
+  r7 run_tests          uncached  a1 total=12895.64 pull=7724.0 init=4181.02 mode_ok=True load1=1.13 
+[93/120 eta 15.7 min]
+  r7 read_file          cached    a1 total=6068.31 pull=0.0 init=4114.1 mode_ok=True load1=1.12 
+  r7 search             cached    a1 total=6070.31 pull=0.0 init=4671.13 mode_ok=True load1=1.12 
+  r7 run_tests          cached    a1 total=5031.51 pull=0.0 init=4042.89 mode_ok=True load1=1.12 
+[94/120 eta 15.2 min]
+  r7 shell              uncached  a1 total=9015.19 pull=2782.0 init=3391.1 mode_ok=True load1=1.19 
+  r7 user_lookup        uncached  a1 total=7959.44 pull=2716.0 init=3732.08 mode_ok=True load1=1.19 
+  r7 order_lookup       uncached  a1 total=8928.52 pull=5552.0 init=2323.88 mode_ok=True load1=1.19 
+[95/120 eta 14.6 min]
+  r7 shell              cached    a1 total=5535.2 pull=0.0 init=2831.18 mode_ok=True load1=1.2 
+  r7 user_lookup        cached    a1 total=5435.35 pull=0.0 init=3091.83 mode_ok=True load1=1.2 
+  r7 order_lookup       cached    a1 total=4471.66 pull=0.0 init=3541.16 mode_ok=True load1=1.2 
+[96/120 eta 14.0 min]
+  r8 shell              uncached  a1 total=8728.68 pull=2658.0 init=4291.28 mode_ok=True load1=1.11 
+  r8 search             uncached  a1 total=9858.62 pull=6306.0 init=2302.83 mode_ok=True load1=1.11 
+  r8 refund_issue       uncached  a1 total=8705.59 pull=2702.0 init=4102.76 mode_ok=True load1=1.11 
+[97/120 eta 13.4 min]
+  r8 shell              cached    a1 total=5571.62 pull=0.0 init=2922.51 mode_ok=True load1=1.16 
+  r8 search             cached    a1 total=4471.21 pull=0.0 init=3672.56 mode_ok=True load1=1.16 
+  r8 refund_issue       cached    a1 total=5570.03 pull=0.0 init=3021.74 mode_ok=True load1=1.16 
+[98/120 eta 12.8 min]
+  r8 promo_code_lookup  uncached  a1 total=8883.65 pull=3464.0 init=4261.13 mode_ok=True load1=1.2 
+  r8 generic_fallback   uncached  a1 total=12198.79 pull=6249.0 init=3883.76 mode_ok=True load1=1.2 
+  r8 format_diff        uncached  a1 total=9992.56 pull=3571.0 init=3981.17 mode_ok=True load1=1.2 
+[99/120 eta 12.2 min]
+  r8 promo_code_lookup  cached    a1 total=5150.41 pull=0.0 init=3841.44 mode_ok=True load1=1.15 
+  r8 generic_fallback   cached    a1 total=6143.21 pull=0.0 init=4412.33 mode_ok=True load1=1.15 
+  r8 format_diff        cached    a1 total=6287.35 pull=0.0 init=3921.32 mode_ok=True load1=1.15 
+[100/120 eta 11.6 min]
+  r8 user_lookup        uncached  a1 total=7879.62 pull=2685.0 init=2761.0 mode_ok=True load1=1.17 
+  r8 read_file          uncached  a1 total=6841.76 pull=2549.0 init=3241.17 mode_ok=True load1=1.17 
+  r8 order_update       uncached  a1 total=7933.32 pull=2706.0 init=2990.77 mode_ok=True load1=1.17 
+[101/120 eta 11.0 min]
+  r8 user_lookup        cached    a1 total=5417.23 pull=0.0 init=3092.7 mode_ok=True load1=1.16 
+  r8 read_file          cached    a1 total=4382.19 pull=0.0 init=3101.1 mode_ok=True load1=1.16 
+  r8 order_update       cached    a1 total=5397.56 pull=0.0 init=3241.03 mode_ok=True load1=1.16 
+[102/120 eta 10.5 min]
+  r8 post_comment       uncached  a1 total=9885.49 pull=3530.0 init=3502.31 mode_ok=True load1=1.13 
+  r8 run_tests          uncached  a1 total=13004.47 pull=7931.0 init=3940.88 mode_ok=True load1=1.13 
+  r8 travel_booking     uncached  a1 total=14020.6 pull=7807.0 init=3611.68 mode_ok=True load1=1.13 
+[103/120 eta 9.9 min]
+  r8 post_comment       cached    a1 total=6835.31 pull=0.0 init=4133.03 mode_ok=True load1=1.17 
+  r8 run_tests          cached    a1 total=5894.28 pull=0.0 init=4351.37 mode_ok=True load1=1.17 
+  r8 travel_booking     cached    a1 total=6946.53 pull=0.0 init=4440.91 mode_ok=True load1=1.17 
+[104/120 eta 9.4 min]
+  r8 order_lookup       uncached  a1 total=11994.95 pull=5426.0 init=5221.5 mode_ok=True load1=1.18 
+  r8 edit_file          uncached  a1 total=9025.76 pull=3334.0 init=4101.65 mode_ok=True load1=1.18 
+  r8 policy_check       uncached  a1 total=13028.06 pull=8145.0 init=3692.51 mode_ok=True load1=1.18 
+[105/120 eta 8.8 min]
+  r8 order_lookup       cached    a1 total=6047.35 pull=0.0 init=4531.78 mode_ok=True load1=1.14 
+  r8 edit_file          cached    a1 total=5008.08 pull=0.0 init=3882.16 mode_ok=True load1=1.14 
+  r8 policy_check       cached    a1 total=6063.16 pull=0.0 init=4121.43 mode_ok=True load1=1.14 
+[106/120 eta 8.2 min]
+  r8 product_lookup     uncached  a1 total=6282.04 pull=571.0 init=4260.84 mode_ok=True load1=1.17 
+  r8 shell              uncached  a1 total=7406.0 pull=1725.0 init=3021.35 mode_ok=True load1=1.17 
+  r8 search             uncached  a1 total=7443.24 pull=562.0 init=4031.79 mode_ok=True load1=1.17 
+[107/120 eta 7.6 min]
+  r8 product_lookup     cached    a1 total=5454.94 pull=0.0 init=3841.11 mode_ok=True load1=1.2 
+  r8 shell              cached    a1 total=4448.08 pull=0.0 init=3141.22 mode_ok=True load1=1.2 
+  r8 search             cached    a1 total=5454.78 pull=0.0 init=3630.98 mode_ok=True load1=1.2 
+[108/120 eta 7.0 min]
+  r9 edit_file          uncached  a1 total=8047.87 pull=2641.0 init=4021.4 mode_ok=True load1=1.12 
+  r9 read_file          uncached  a1 total=8055.75 pull=2603.0 init=3801.64 mode_ok=True load1=1.12 
+  r9 travel_booking     uncached  a1 total=10602.53 pull=5906.0 init=2362.16 mode_ok=True load1=1.12 
+[109/120 eta 6.4 min]
+  r9 edit_file          cached    a1 total=4319.39 pull=0.0 init=2861.97 mode_ok=True load1=1.17 
+  r9 read_file          cached    a1 total=5359.07 pull=0.0 init=3191.86 mode_ok=True load1=1.17 
+  r9 travel_booking     cached    a1 total=5347.65 pull=0.0 init=3541.11 mode_ok=True load1=1.17 
+[110/120 eta 5.8 min]
+  r9 generic_fallback   uncached  a1 total=12067.55 pull=7584.0 init=3150.93 mode_ok=True load1=1.11 
+  r9 post_comment       uncached  a1 total=9216.96 pull=2668.0 init=3843.96 mode_ok=True load1=1.11 
+  r9 refund_issue       uncached  a1 total=8139.03 pull=2729.0 init=4361.47 mode_ok=True load1=1.11 
+[111/120 eta 5.2 min]
+  r9 generic_fallback   cached    a1 total=6336.24 pull=0.0 init=4050.89 mode_ok=True load1=1.12 
+  r9 post_comment       cached    a1 total=6347.03 pull=0.0 init=3681.16 mode_ok=True load1=1.12 
+  r9 refund_issue       cached    a1 total=5316.05 pull=0.0 init=3731.83 mode_ok=True load1=1.12 
+[112/120 eta 4.7 min]
+  r9 format_diff        uncached  a1 total=9591.89 pull=3008.0 init=4231.48 mode_ok=True load1=1.14 
+  r9 order_update       uncached  a1 total=9563.55 pull=2848.0 init=4353.77 mode_ok=True load1=1.14 
+  r9 run_tests          uncached  a1 total=12214.62 pull=7528.0 init=3371.61 mode_ok=True load1=1.14 
+[113/120 eta 4.1 min]
+  r9 format_diff        cached    a1 total=6333.77 pull=0.0 init=3671.94 mode_ok=True load1=1.13 
+  r9 order_update       cached    a1 total=5280.72 pull=0.0 init=3621.17 mode_ok=True load1=1.13 
+  r9 run_tests          cached    a1 total=6214.42 pull=0.0 init=4611.24 mode_ok=True load1=1.13 
+[114/120 eta 3.5 min]
+  r9 order_lookup       uncached  a1 total=9450.5 pull=5756.0 init=2480.94 mode_ok=True load1=1.03 
+  r9 user_lookup        uncached  a1 total=9348.69 pull=2901.0 init=3831.16 mode_ok=True load1=1.03 
+  r9 promo_code_lookup  uncached  a1 total=8351.45 pull=2759.0 init=3713.45 mode_ok=True load1=1.03 
+[115/120 eta 2.9 min]
+  r9 order_lookup       cached    a1 total=5499.35 pull=0.0 init=3590.98 mode_ok=True load1=1.13 
+  r9 user_lookup        cached    a1 total=5563.67 pull=0.0 init=3001.34 mode_ok=True load1=1.13 
+  r9 promo_code_lookup  cached    a1 total=4500.74 pull=0.0 init=3042.26 mode_ok=True load1=1.13 
+[116/120 eta 2.3 min]
+  r9 policy_check       uncached  a1 total=12287.58 pull=7162.0 init=4241.47 mode_ok=True load1=1.11 
+  r9 product_lookup     uncached  a1 total=13376.51 pull=7801.0 init=3421.47 mode_ok=True load1=1.11 
+  r9 shell              uncached  a1 total=9298.34 pull=3654.0 init=3372.06 mode_ok=True load1=1.11 
+[117/120 eta 1.7 min]
+  r9 policy_check       cached    a1 total=6287.4 pull=0.0 init=4352.54 mode_ok=True load1=1.16 
+  r9 product_lookup     cached    a1 total=5326.49 pull=0.0 init=4111.17 mode_ok=True load1=1.16 
+  r9 shell              cached    a1 total=6283.35 pull=0.0 init=3564.14 mode_ok=True load1=1.16 
+[118/120 eta 1.2 min]
+  r9 search             uncached  a1 total=9854.65 pull=5138.0 init=3132.2 mode_ok=True load1=1.18 
+  r9 edit_file          uncached  a1 total=8724.83 pull=4086.0000000000005 init=3421.26 mode_ok=True load1=1.18 
+  r9 read_file          uncached  a1 total=9735.72 pull=4011.0 init=3241.18 mode_ok=True load1=1.18 
+[119/120 eta 0.6 min]
+  r9 search             cached    a1 total=5346.53 pull=0.0 init=3410.83 mode_ok=True load1=1.14 
+  r9 edit_file          cached    a1 total=5321.04 pull=0.0 init=2991.38 mode_ok=True load1=1.14 
+  r9 read_file          cached    a1 total=4307.31 pull=0.0 init=3201.45 mode_ok=True load1=1.14 
+[120/120 eta 0.0 min]
+measured e0_aws_p3: 120/120 units ok, 0 given up after 3 attempts
+2026-11-04T16:42:04Z E0 parallel-3: done

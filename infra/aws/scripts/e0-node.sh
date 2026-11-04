@@ -86,8 +86,8 @@ fetch)
   mkdir -p "$RAW"
   aws s3 cp --region "$REGION" --only-show-errors --recursive --exclude bundle.tgz \
     "s3://$BUCKET/e0/$RUN_ID/" "$RAW/"
-  "$PY" - "$RAW" <<'PY'
-import hashlib, json, pathlib, re, sys
+  SKYPIEA_ACCT=$(aws sts get-caller-identity --query Account --output text) "$PY" - "$RAW" <<'PY'
+import hashlib, json, os, pathlib, re, sys
 raw = pathlib.Path(sys.argv[1])
 man = json.loads((raw / "manifest.json").read_text())
 for name, m in man.items():
@@ -104,7 +104,11 @@ for src, dst in [("e0_aws_runs.csv", "e0_aws_runs.csv"),
                  ("run_params.json", "e0_aws_run_params.json"),
                  ("job.log", "e0_aws_job.log"), ("job_state.txt", "e0_aws_job_state.txt")]:
     t = mask((raw / src).read_text())
-    assert not re.search(r"\b\d{12}\b", t), f"{src}: 12-digit number left after masking"
+    # exact check against the real account id (env only, never printed); a generic 12-digit
+    # search hits floats such as 8007.999999999999
+    acct = os.environ["SKYPIEA_ACCT"]
+    assert len(acct) == 12 and acct not in t, f"{src}: account id left after masking"
+    assert not re.search(r"\d{12}\.dkr\.ecr|:\d{12}:", t), f"{src}: unmasked ECR/ARN id"
     (res / dst).write_text(t)
     print(f"wrote results/{dst} ({len(t)} B, account id masked)")
 PY
