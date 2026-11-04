@@ -37,11 +37,14 @@ MET = {"prewarm_hits": "skypiea_gateway_prewarm_hits_total",
 def parse(paths: list[Path]) -> tuple[list[dict], list[dict]]:
     calls, summ = [], []
     for p in paths:
-        scen, ds = None, "real"
+        scen, ds, imgs = None, "real", {}
         for ln in p.read_text().splitlines():
             if ln.startswith("REAL-TIMING run: scenario "):
                 scen = ln.split()[3].rstrip(",")
                 ds = ln.split("dataset ")[1].split(",")[0] if "dataset " in ln else "real"
+                if ", images " in ln:   # header: "..., images predictor:X platform:Y"
+                    pred, plat = ln.rsplit(", images ", 1)[1].split()[:2]
+                    imgs = {"predictor_image": pred, "platform_image": plat}
             if ln.startswith("ROW "):
                 calls.append({"dataset": ds, **json.loads(ln[4:]), "log": p.name})
             elif ln.startswith("POLICY "):
@@ -54,7 +57,7 @@ def parse(paths: list[Path]) -> tuple[list[dict], list[dict]]:
                 summ.append(row)
             elif ln.startswith("POLICY_ERROR "):
                 pol, err = ln[13:].split(":", 1)
-                summ.append({"dataset": ds, "scenario": scen, "policy": pol,
+                summ.append({"dataset": ds, **imgs, "scenario": scen, "policy": pol,
                              "error": err.strip(),
                              "log": p.name})
     return calls, summ
