@@ -235,21 +235,49 @@ make aws-tunnel                   # own terminal: SSM port-forward 127.0.0.1:164
 make aws-kubeconfig               # kubeconfig over SSM -> ~/.kube/skypiea-aws (server 127.0.0.1:16443)
 make push-images-aws
 make deploy-aws                   # E0 layout: tools at 0 + e0-probe; NO controller, NO monitoring
-make e0-aws N=30                  # then N=100, and make e0-aws-parallel
+make e0-aws-node IMAGE_TAG=a8567cc  # E0 ON the node; the tunnel can be closed
+make e0-aws-status                # poll: done/total, ETA, last error (one short SSM call)
+make e0-aws-fetch                 # after the job stopped the VM: verify + reports
 ```
 
-E0:
-- The harness (`experiments/e0_cold_start.py --target aws`) runs on the laptop and drives
-  Kubernetes through the tunnel: scale 0 to 1, watch the pod, read kubelet events.
-- The timing itself is measured **inside the cluster** by the e0-probe pod, so the tunnel's
-  latency does not enter the cold-start numbers.
-- For uncached runs, image removal runs on the node as one `k3s crictl rmi <ids...>` per run,
-  via `infra/aws/scripts/node-run.sh`. That script uses an SSM `AWS-StartNonInteractiveCommand`
-  session, so there is no SSH.
-- The quiet-machine check (load, memory, running containers) also goes over SSM, and runs
-  before each run, never during one.
+E0 runs **on the node**, unattended (see the incident below):
+- `make e0-aws-node` exports the committed harness (`git archive HEAD`, so the recorded commit
+  is the code that ran), uploads it to S3, and starts the systemd unit `skypiea-e0`. It is a
+  few short SSM calls, each capped at 60 s; no tunnel and no long `kubectl exec` from the laptop.
+- The unit runs `experiments/e0_cold_start.py --target aws --on-node`: local `k3s kubectl` and
+  `k3s crictl`, with the same parameters as kind. It runs sequential n=10 (cached and uncached,
+  all 16 tools), then parallel-3 n=10.
+- Every kubectl/crictl call has a hard timeout. A stalled or failed run is written to the CSV
+  with its `error` and `attempt`. After it, the tools are scaled back to 0 and the probe is
+  restarted, and the run is repeated (up to 3 attempts). Failed attempts are never dropped:
+  the summary counts them as `n_failed`.
+- `Restart=on-failure` plus `--resume`: a restarted unit continues from its own partial CSV.
+  `results/<stem>_progress.json` is rewritten after every unit.
+- At the end the job uploads the CSVs, the log and `run_params.json` to
+  `s3://<bucket>/e0/<run id>/`. It checks each object's size and SHA-256 with
+  `head-object --checksum-mode`, and only then runs `shutdown -h now`. An instance-initiated
+  shutdown means **stop**, not terminate. If an upload fails, it exits 3 and does not shut
+  down; the unit is not restarted.
+- `make e0-aws-fetch` checks `manifest.json` (size + SHA-256, each file < 1 MB) and masks the
+  account id in the image references. It then writes `results/e0_aws*` and re-makes the
+  summaries. The raw copy stays in `~/.cache/skypiea/e0-aws/`.
+- Timing is measured inside the cluster by the e0-probe pod, as on kind. One difference: the
+  harness process now shares the node's 2 vCPUs. It is idle while the probe measures, and the
+  quiet check before every run still applies.
 - The controller and monitoring are **off** during E0, so nothing else competes for the 2
   vCPUs.
+
+**Incident (2026-11-03):**
+1. The first E0 attempt drove the node from the laptop over an SSM tunnel and `kubectl exec`.
+2. Run 14 hung for about 3 h in `kubectl exec`, then failed with `i/o timeout`. The tunnel had
+   died ("broken pipe"), and the clock in WSL jumped backwards (`hv_utils` TimeSync), which
+   points to the laptop sleeping.
+3. This was the same failure class as the earlier `docker push` stall: a long-lived connection
+   from the laptop. Under the "same error twice" rule, I stopped the instance.
+4. Fix: the harness moved onto the node as a systemd unit, with a timeout on every call,
+   resume, and results through S3. The laptop makes only short polling calls.
+5. The 13 partial runs were discarded; one clean set was measured instead. Image copy with
+   `push_ecr.py` is unchanged.
 
 Controller, after E0:
 - `make deploy-aws PLATFORM=true E0PROBE=false` adds the controller (kopf, single replica,

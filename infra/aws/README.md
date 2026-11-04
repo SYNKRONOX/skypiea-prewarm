@@ -30,7 +30,9 @@ make aws-tunnel                  # own terminal: 127.0.0.1:16443 -> k3s API over
 make aws-kubeconfig              # over SSM -> ~/.kube/skypiea-aws (outside the repo)
 make build-images push-images-aws
 make deploy-aws                  # E0 layout: tools at 0 + e0-probe, no controller/monitoring
-make e0-aws N=30                 # E0 on AWS; then N=100 and e0-aws-parallel
+make e0-aws-node IMAGE_TAG=a8567cc  # E0 ON the node (systemd); uploads to S3, then stops the VM
+make e0-aws-status               # done/total, ETA, last error (short SSM call)
+make e0-aws-fetch                # verify (size+sha256), mask account id, reports
 make deploy-aws PLATFORM=true E0PROBE=false   # controller, gateway, monitoring
 make aws-gateway                 # demo: http://127.0.0.1:8080/mcp (laptop loopback only)
 make aws-shell                   # interactive SSM shell on the VM
@@ -41,7 +43,8 @@ points at the tunnel (`https://127.0.0.1:16443`), so it survives a stop/start (t
 changes) unchanged.
 
 Scripts in `scripts/`:
-- `node-run.sh`: one root command on the VM over SSM, with its exit code.
+- `node-run.sh`: one root command on the VM over SSM, with its exit code (capped at 60 s).
+- `e0-node.sh` (laptop) and `e0-node-job.sh` + `../e0-node.service` (node): E0 on the node.
 - `tunnel.sh`
 - `get-k3s-config.sh`
 - `empty-for-destroy.sh`

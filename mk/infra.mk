@@ -4,7 +4,7 @@
         deploy-kind e0-kind aws-plan aws-apply aws-kubeconfig push-images-aws \
         deploy-aws e0-aws aws-stop aws-start aws-destroy infra-check aws-tunnel aws-shell \
         aws-reminder aws-gateway e0-kind-parallel e0-aws-parallel tool-map-coverage \
-        deploy-kind-e0 kind-integration grafana-kind
+        deploy-kind-e0 kind-integration grafana-kind e0-aws-node e0-aws-status e0-aws-fetch
 
 PY          ?= $(if $(wildcard .venv/bin/python),.venv/bin/python,python3)
 IMAGE_TAG   ?= $(shell tools/image_tag.sh)
@@ -111,6 +111,15 @@ deploy-aws:              ## helm install the chart on k3s (all tools at 0); need
 e0-aws:                  ## E0 on AWS (needs aws-tunnel; image removal goes over SSM)
 	$(PY) -m experiments.e0_cold_start --target aws --n $(N) --modes cached,uncached \
 	  --tools all --kubeconfig $(AWS_KUBECONFIG)
+
+e0-aws-node:             ## E0 ON the node (systemd unit; seq n=$(N) then parallel-3); uploads to S3, then stops the VM
+	IMAGE_TAG=$(IMAGE_TAG) N=$(N) PY=$(PY) infra/aws/scripts/e0-node.sh start
+
+e0-aws-status:           ## progress of the on-node E0 job (one short SSM call; S3 if the VM is stopped)
+	infra/aws/scripts/e0-node.sh status $(RUN_ID)
+
+e0-aws-fetch:            ## fetch on-node E0 results from S3, verify, mask account id, make reports
+	PY=$(PY) infra/aws/scripts/e0-node.sh fetch $(RUN_ID)
 
 aws-gateway:             ## demo: gateway on http://127.0.0.1:8080/mcp (laptop loopback only); needs aws-tunnel
 	kubectl --kubeconfig $(AWS_KUBECONFIG) -n $(NS) port-forward --address 127.0.0.1 svc/skypiea-gateway 8080:80

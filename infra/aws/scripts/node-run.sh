@@ -21,7 +21,8 @@ PARAMS=$(python3 -c 'import json,sys; print(json.dumps({"command": [sys.argv[1]]
 # its stdin hits EOF, so stdin is held open by a sleep that is killed afterwards.
 exec 3< <(sleep 3600)
 HOLD=$!
-OUT=$(aws ssm start-session --region "$REGION" --target "$ID" \
+# Every call is short: a hard cap (default 60 s) so nothing holds a session open for long.
+OUT=$(timeout "${NODE_RUN_TIMEOUT:-60}" aws ssm start-session --region "$REGION" --target "$ID" \
         --document-name AWS-StartNonInteractiveCommand --parameters "$PARAMS" 2>&1 <&3) || {
   kill "$HOLD" 2>/dev/null; echo "ssm start-session failed: $OUT" >&2; exit 125; }
 kill "$HOLD" 2>/dev/null || true

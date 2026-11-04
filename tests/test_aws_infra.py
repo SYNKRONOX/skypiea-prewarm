@@ -74,3 +74,13 @@ def test_node_run_returns_only_output_and_exit_code(tmp_path):
 def test_node_run_success_is_zero(tmp_path):
     p = _node_run(tmp_path, "true")
     assert (p.returncode, p.stdout) == (0, "")
+
+
+def test_e0_node_job_stops_only_after_verified_upload():
+    job = (AWS / "scripts" / "e0-node-job.sh").read_text()
+    unit = (AWS / "e0-node.service").read_text()
+    assert job.index("--checksum-mode ENABLED") < job.rindex("shutdown -h now")
+    assert job.index("exit 3") < job.rindex("shutdown -h now")      # failed upload: no shutdown
+    assert "RestartPreventExitStatus=3" in unit and "Restart=on-failure" in unit
+    assert "[Install]" not in unit                                  # never started at boot
+    assert "--resume" in job and "terminate" not in job
