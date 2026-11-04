@@ -63,13 +63,15 @@ profile (P1; see "Image: build, push, run"). Scenario A uses `support`, and Scen
 
 | Profile | Sources | Rule picked on VAL | NFR-3 budget |
 |---|---|---|---|
-| coding | TraceLab, Copilot | start now, copies q0.9, keep 30 s after use, cost threshold lambda = 100 pod-s per cold-start second | **not binding** (worst idle 5.9% of always-warm on VAL; 2-8% on TEST with AWS values); lambda 100 is the end of the sweep, so the rule simply buys as much warmth as the sweep allows |
+| coding (shipped from 2026-11-04: the cap-2 retune) | TraceLab, Copilot | as coding_frozen, but **one copy per tool** | same budget; see "Coding retune under the cap" |
+| coding_frozen (before; kept in `frozen_profiles`, not served) | TraceLab, Copilot | start now, copies q0.9, keep 30 s after use, cost threshold lambda = 100 pod-s per cold-start second | **not binding** (worst idle 5.9% of always-warm on VAL; 2-8% on TEST with AWS values); lambda 100 is the end of the sweep, so the rule simply buys as much warmth as the sweep allows |
 | support | tau-bench, tau2 | start now, copies q0.9, keep 0 s after use, fixed tau 0.4 | binding (22% of always-warm on VAL, 23-24% on TEST; the best setting without the budget would give 76.6% warm on VAL instead of 69.6%) |
 | prd (**SYNTHETIC**, demo only) | synthetic PRD Scenarios A, B (+ C's tool) | timing rule (gap p10), copies q0.9, keep 0 s, lambda 100 | not binding; see "Synthetic PRD demo profile" |
 
-The coding and support profiles were tuned on the kind cold-start file and are frozen. The one
+The support and coding_frozen profiles were tuned on the kind cold-start file. The one
 allowed retune, of coding under the scale-up cap (VAL only), is reported below as "coding,
-retuned"; it is not the shipped profile.
+retuned" and is the shipped `coding` profile since 2026-11-04. The frozen results stay in every
+table ("coding, frozen" / "ours, profile" rows from before the adoption).
 
 tau-bench has no timestamps (0 of 1,928 sessions), so it cannot be replayed. The support
 profile therefore rests on tau2 alone. tau2 has 28 VAL and 56 TEST sessions with timing (342
@@ -109,8 +111,18 @@ picked the frozen profile again (+0.24 points over keep-alive on VAL). The retun
 largest VAL equal-idle margin over keep-alive among settings within the budget. Winner:
 **one copy per tool, lambda 100, everything else frozen** (+3.56 points on VAL; 3 s stagger
 +3.54, top-2 + one copy +3.10, top-1 + one copy +2.27; top-1/top-2 with 3 copies -0.19). It
-is in `results/sim_choice_coding_cap2.json`; the shipped coding profile and bundle are still
-the frozen ones (adopting it needs a profile edit and a new bundle). Support was not touched.
+is in `results/sim_choice_coding_cap2.json`. Support was not touched.
+
+**Adoption (2026-11-04).** (1) *Selection rule change and why:* the retune was selected by
+the VAL equal-idle margin over keep-alive within the idle budget, not by the frozen rule
+(most warm calls within the budget). The budget never binds for coding, so the frozen rule
+rewards over-warming, which the cap punishes. (2) *Order of events:* the selection was made on
+VAL only. The retuned profile was **adopted after the TEST margins below had been seen**, so
+the adoption is not blind to TEST. (3) *Frozen results stay:* every table keeps the frozen
+profile's rows ("coding, frozen", and "ours, profile" in the final table above, which is
+coding_frozen for TraceLab and Copilot). The frozen config is in
+`configs/model/profiles.yaml` under `frozen_profiles.coding_frozen`. The shipped bundle is
+lgbm-coding-af00023.
 
 **Final table: frozen vs retuned vs keep-alive** (TEST; warm % / idle pod-s per 1,000 calls,
 with the equal-idle margin vs keep-alive in points; `results/sim_sensitivity.md`). The margin
@@ -181,7 +193,8 @@ Wait per call: `results/sim_added_cdf.png` (AWS + cap solid, kind dashed). Paret
   keep-alive 30 s (56%), and is 15.6-18.5 points above keep-alive at equal idle in every run:
   kind, AWS, and caps 1, 2, 3 or none. Markov-1 top-1 is also well above keep-alive on tau2,
   so much of this is "the next tool is predictable", not the ranker in particular.
-- **Coding (TraceLab, Copilot): modest, or none, under the cap.** The frozen profile is below
+- **Coding (TraceLab, Copilot): modest, or none, under the cap.** Shipped: the retuned profile.
+  The frozen profile is below
   keep-alive on TraceLab under any cap (-0.9 to -3.0) and 0.6-3.5 points above it on Copilot.
   The retuned profile (one copy per tool, VAL only) is 2.8-4.2 points above keep-alive on
   TraceLab and 3.8-5.8 on Copilot under caps 1-3. These are a few points, on one-node
@@ -400,11 +413,12 @@ whose manifest names another profile is refused at startup (`/healthz` stays 503
 a bundle from a mounted volume instead, set `MODEL_PATH` to its folder (this overrides the
 profile's default path; keep it under `MODEL_ROOT`).
 
-**Current image: `skypiea/predictor:a7642d03dd10`** (built 2026-11-04; coding =
-lgbm-coding-aabdfd2, support = lgbm-support-aabdfd2, prd = lgbm-prd-a7642d0 SYNTHETIC; all
-exported with the AWS file, sha256 00758310b4d6). To push it as is (Window 1, feat/infra):
+**Current image: `skypiea/predictor:af000231bc7b`** (built 2026-11-04; coding =
+lgbm-coding-af00023 (the adopted cap-2 retune, one copy per tool), support =
+lgbm-support-aabdfd2, prd = lgbm-prd-a7642d0 SYNTHETIC; all exported with the AWS file,
+sha256 00758310b4d6). To push it as is (Window 1, feat/infra):
 
-    TAG=a7642d03dd10
+    TAG=af000231bc7b
     docker tag skypiea/predictor:$TAG localhost:5001/skypiea/predictor:$TAG   # kind registry
     docker push localhost:5001/skypiea/predictor:$TAG
     python infra/aws/scripts/push_ecr.py --registry <account>.dkr.ecr.ap-south-1.amazonaws.com \
@@ -460,6 +474,18 @@ Run: container port 8090; read-only root filesystem works; user 10001; no shell 
 | `ADMIN_TOKEN` | from a Secret; unset disables /reload and /rollback |
 | `WORKERS` | 1. Two workers added ~45 ms per request in the load test, cause unknown. Run one worker per pod and scale with replicas; /reload also needs 1. |
 | `PORT` | 8090 (default) |
+
+**Session ids (expected behaviour, not a bug).** The service accepts `session_id` only if it
+matches the contract's `^[A-Za-z0-9_.-]{1,64}$` (`services/predictor/schema.py`). Anything else,
+for example a raw TraceLab id `codex:...`, is a bad request and gets the fail-open answer
+`mode: none` (no decisions, normal cold path). The gateway does **not** hash the id: it forwards
+the client's `Mcp-Session-Id` as is, and makes one with `uuid4().hex` only when the header is
+missing (infra `gateway/app.py`). Our clients all send matching ids: scenario_run and
+replay_check use `uuid4().hex`, replayer uses `<YYYYmmddTHHMMSS>-<hex6>-<hex8>`, and
+decide_check sends `chk-<sha256[:24]>`. The `codex:...` ids came only from decide_check
+posting raw TraceLab ids straight to the predictor. That is now hashed. An outside MCP client
+whose session id has other characters, or is longer than 64, gets the cold path. If that
+matters, the gateway should hash the id (infra's call); the service is unchanged.
 
 Probes: readiness and liveness `GET /healthz` (503 until a model is loaded; the body names
 `model_version` and `profile`). Metrics: `GET /metrics` (Prometheus; annotate the pod with
