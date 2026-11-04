@@ -243,7 +243,7 @@ def report(df: pd.DataFrame, label: str) -> str:
         out.append("")
     out += beat_lines + [""]
     h = pd.read_csv(HIDE_CSV, dtype={"vocab": str}, keep_default_na=False)
-    h = h[h.cold_start_label == label]  # hideable depends on the cold-start file only
+    h = h[h.cold_start_label == label.split(" · run ")[0]]  # depends on the file only
     h = h.sort_values("time").groupby(["source", "cold_mode", "tool_class"],
                                       as_index=False).last()
     h["hideable_pct"] = pd.to_numeric(h.hideable_pct)
@@ -358,6 +358,8 @@ def main() -> int:
         if d.empty or (run == "kind" and primary == "kind" and suffix):
             continue
         label = str(d.cold_start_label.iloc[-1])
+        if run != run_tag(label):  # say which scale-up model the run used
+            label += f" · run {run}"
         pareto(d, label, suffix)
         tau_curve(d, label, suffix)
         (RESULTS / f"sim_report{suffix}.md").write_text(report(d, label), encoding="utf-8")
