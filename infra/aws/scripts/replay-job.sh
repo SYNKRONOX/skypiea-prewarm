@@ -77,7 +77,9 @@ job = {"apiVersion": "batch/v1", "kind": "Job",
                     "containers": [{
                         "name": "replay", "image": "@IMAGE@", "imagePullPolicy": "IfNotPresent",
                         "command": ["python", "/work/check.py", *extra, *args],
-                        "env": [{"name": "PYTHONUNBUFFERED", "value": "1"}],
+                        "env": [{"name": "PYTHONUNBUFFERED", "value": "1"},
+                                {"name": "SKYPIEA_PLATFORM_IMAGE", "value": "@PLATIMG@"},
+                                {"name": "SKYPIEA_PREDICTOR_IMAGE", "value": "@PREDIMG@"}],
                         "resources": {"requests": {"cpu": "50m", "memory": "64Mi"},
                                       "limits": {"cpu": "500m", "memory": "256Mi"}},
                         "securityContext": {"allowPrivilegeEscalation": False,
@@ -95,9 +97,11 @@ K='k3s kubectl -n $NS'
 \$K delete job skypiea-replay --ignore-not-found --wait=true >/dev/null
 \$K delete configmap skypiea-replay --ignore-not-found >/dev/null
 IMG=\$(\$K get deploy skypiea-gateway -o jsonpath='{.spec.template.spec.containers[0].image}')
+PRED=\$(\$K get deploy skypiea-model -o jsonpath='{.spec.template.spec.containers[0].image}' 2>/dev/null || true)
+PLATIMG=\${IMG#*/skypiea/}; PREDIMG=\${PRED#*/skypiea/}
 /snap/bin/aws s3 cp --region $REGION --only-show-errors s3://$BUCKET/$KEY /tmp/replay.json
-sed \"s|@IMAGE@|\$IMG|\" /tmp/replay.json | \$K create -f - ; rm -f /tmp/replay.json
-echo \"image: \${IMG##*/}\"" | sed -E 's/[0-9]{12}(\.dkr)/<account>\1/g'
+sed -e \"s|@IMAGE@|\$IMG|\" -e \"s|@PLATIMG@|\$PLATIMG|\" -e \"s|@PREDIMG@|\${PREDIMG:-none}|\" /tmp/replay.json | \$K create -f - ; rm -f /tmp/replay.json
+echo \"image: \$PLATIMG, predictor: \${PREDIMG:-none}\"" | sed -E 's/[0-9]{12}(\.dkr)/<account>\1/g'
   ;;
 status)
   "$NODE_RUN" "k3s kubectl -n $NS get job skypiea-replay --no-headers; k3s kubectl -n $NS logs job/skypiea-replay --tail=${TAIL:-6} 2>&1"

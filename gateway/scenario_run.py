@@ -32,6 +32,7 @@ import argparse
 import asyncio
 import json
 import math
+import os
 import sys
 import time
 import uuid
@@ -102,6 +103,9 @@ class Runner:
         self.gw, self.ctl, self.stub, self.model = gw, ctl, stub, model
         self.scenario, self.conc, self.t0 = scenario, conc, started
         self.dataset = "real"
+        # exact images (repo:tag, no registry host), set by the Job from the live Deployments
+        self.images = {"predictor_image": os.environ.get("SKYPIEA_PREDICTOR_IMAGE", ""),
+                       "platform_image": os.environ.get("SKYPIEA_PLATFORM_IMAGE", "")}
 
     async def snapshot(self, c: httpx.AsyncClient) -> dict[str, float]:
         m = metrics((await c.get(f"{self.ctl}/metrics")).text, CTL_METRICS)
@@ -135,7 +139,8 @@ class Runner:
                             "params": {"name": call["tool_class"], "_meta": META,
                                        "arguments": {"service_ms": int(call["service_ms"])}}}
                     t = time.monotonic()
-                    row = {"dataset": self.dataset, "policy": pol, "scenario": self.scenario,
+                    row = {"dataset": self.dataset, **self.images, "policy": pol,
+                           "scenario": self.scenario,
                            "session": sid, "batch": b,
                            "tool_class": call["tool_class"], "gap_ms": round(gap, 1),
                            "service_ms": round(call["service_ms"], 1),
@@ -236,7 +241,7 @@ class Runner:
         delta = {k: round(after[k] - before[k], 3) for k in before}
         ok = [r for r in rows if r["ok"]]
         added = [r["added_ms"] for r in ok]
-        summ = {"dataset": self.dataset, "scenario": self.scenario, "policy": pol,
+        summ = {"dataset": self.dataset, **self.images, "scenario": self.scenario, "policy": pol,
                 "sessions": len(sessions),
                 "calls": len(rows), "ok": len(ok), "cold": sum(1 for r in ok if r["cold"]),
                 "cold_rate": round(sum(1 for r in ok if r["cold"]) / len(ok), 4) if ok else None,
@@ -285,7 +290,9 @@ def main() -> int:
         raise SystemExit(f"policies {pols}: predictive runs alone (gateway serves the model) "
                          f"and needs --profile; unknown: {bad}")
     print(f"REAL-TIMING run: scenario {a.scenario}, dataset {a.dataset}, {len(sessions)} sessions, "
-          f"{a.concurrency} at once, unscaled gaps, policies {pols}", flush=True)
+          f"{a.concurrency} at once, unscaled gaps, policies {pols}, images "
+          f"{os.environ.get('SKYPIEA_PREDICTOR_IMAGE')} {os.environ.get('SKYPIEA_PLATFORM_IMAGE')}",
+          flush=True)
     r = Runner(gw, ctl, stub, model, a.scenario, a.concurrency, time.monotonic())
     r.dataset = a.dataset
     failures = []

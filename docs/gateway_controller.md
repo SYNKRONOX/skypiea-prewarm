@@ -220,3 +220,14 @@ make kind-integration             # Scenario A + B through the gateway under eac
 `make kind-integration` reads one Scenario A and one Scenario B session from the synthetic
 traces in the model worktree (read-only) and replays them with think gaps x0.2. On the shared
 laptop its latencies are **functional checks only**; reported timings come from AWS.
+
+## Known limitation: session id forwarded unchanged (2026-11-04)
+
+The gateway forwards the client's `Mcp-Session-Id` to the predictor's `/decide` as
+`session_id`, unchanged. The predictor (image aabdfd2a9a39 and later) degrades to
+`mode=none` (no decisions) when the id is outside `^[A-Za-z0-9_.-]{1,64}$`: one `:`
+is enough, as seen with TraceLab ids like `codex:…`. Such sessions get the cold path
+(FR-4 fail-open: plain scale-to-zero), with no error. The real-timing runs are not
+affected: the replayer sends a fresh uuid4 hex id per session. Planned fix (not done; no
+gateway change during the runs): send an opaque hash of the id (contract proposal P2,
+docs/model.md).

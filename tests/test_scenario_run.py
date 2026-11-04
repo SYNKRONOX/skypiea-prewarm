@@ -87,4 +87,14 @@ def test_report_keeps_failed_calls_and_policy_errors(tmp_path):
     assert rows[0]["prewarm_hits"] == 3.0 and rows[0]["model_version"] == "stub"
     assert rows[1] == {"dataset": "real", "scenario": "A", "policy": "markov1",
                        "error": "RuntimeError: x", "log": "a.log"}
+    # rows carry the exact images; older logs get them from --images (else the report stops)
+    import sys as _sys
+
+    from gateway import scenario_report as sr
+    _sys.argv = ["x", str(log), "--out", str(tmp_path / "o")]
+    with pytest.raises(SystemExit):
+        sr.main()
+    _sys.argv += ["--images", "a.log=predictor:t,platform:p"]
+    assert sr.main() == 0
+    assert "predictor:t" in (tmp_path / "o_calls.csv").read_text()
     assert calls[0]["dataset"] == "real"     # old logs without the label are real-trace runs
