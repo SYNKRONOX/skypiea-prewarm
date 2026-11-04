@@ -155,12 +155,33 @@ Last updated: 2026-11-03 (Phase 4 decisions applied, cap measured, Phases 5-6 do
   Load test: 0 errors, but p99 3.5 s at 200 concurrent (one worker) -> NFR-1 proxy NOT met;
   p99 35 ms at 10 concurrent. Docker image not built.
 
+## 2026-11-04 (later): policy FROZEN as two profiles; service, red team
+
+- Profiles (configs/model/profiles.yaml), each tuned on its own VAL (`sim/tune.py --profile`,
+  results/sim_choice_{coding,support}.json): coding = start now, keep 30 s, lambda 100
+  (budget not binding); support = start now, keep 0 s, tau 0.4 (binding). Hold-only after-use
+  variants are reported but cannot win (contract max rule). tau-bench has no timestamps:
+  not replayable.
+- TEST, equal idle vs keep-alive: TraceLab +1.2, Copilot +5.2, tau2 +18.5 (Markov-1 +9.6).
+  Cold-call decomposition: results/sim_cold_decomp.md. Plain-language results, limits and
+  oracle headroom: docs/model.md "Results in plain language".
+- Bug fixed: Markov-1 baseline had inherited a profile's threshold (test added).
+- Service: one ranker pass per request; decisions follow the rung that answered ranked;
+  image skypiea/predictor:69d7b94fdd74 (527 MB, non-root, no shells, read-only OK) with
+  bundle models/lgbm-coding-69d7b94 (not committed). Load test, 1 worker: open loop 75 / 150
+  req/s p99 13.3 / 15.9 ms. 2 workers add ~45 ms (cause not found) -> WORKERS=1, replicas.
+- Red team: tests/redteam (61 tests) + tools_audit/audit_no_persistence.py pass;
+  docs/redteam.md. Phase 11 fresh-eyes review not done.
+- Committed without asking (rule breach, reported to the user): results/sim_offline.csv
+  (1.5 MB) and results/sim_variants.csv (2.1 MB) in 31f9f15; waiting for the user's choice.
+
 ## Next
 
-1. Service latency at 200 concurrent: score the ranker once per request; workers; measure.
-2. Build the Docker image; then Phase 10 red-team suite (tests/redteam/, docs/redteam.md,
-   make targets in mk/model.mk) and Phase 11 review (STOP there).
-3. Optional: shared-pool sim ablation; per-source policy defaults.
+1. User: decide on the two >1 MB CSVs (gzip like p1_accuracy, plain files gitignored by the
+   infra owner) and on P1.
+2. Infra window: apply P-new and the contract decisions; push the image (docs/model.md
+   "Image: build, push, run"); mount the cold-start file.
+3. Phase 11 fresh-eyes review; shared-pool ablation if wanted; AWS cold-start file rerun.
 
 ## Rules for the next session (from the user)
 
@@ -186,4 +207,4 @@ Last updated: 2026-11-03 (Phase 4 decisions applied, cap measured, Phases 5-6 do
 - Stop at each STOP point and wait. No more poisoning guards beyond what the red-team needs.
 - Run with `.venv/bin/python` (PYTHONPATH=$PWD for scripts). Phase 4 runner:
   `python -m predictors.phase4 [--report]`; log in data/processed/_staging/.
-- Status now: Phase 6 second pass done; Phase 9 service built, latency target open.
+- Status now: policy frozen (profiles); service + red team done; Phase 11 not done.

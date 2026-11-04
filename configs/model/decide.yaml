@@ -1,4 +1,6 @@
-# Warm decisions (predictors/decide.py). Read by DecideConfig.load().
+# Warm decisions (predictors/decide.py). Read by DecideConfig.load(). The served policy is a
+# profile (configs/model/profiles.yaml) applied over these values; the values below are the
+# single-policy VAL pick of 2026-11-04 (first pass), kept as the no-profile default.
 threshold: fixed            # fixed | cost
 tau: 0.3                    # val pick (NFR-3 rule, sim/tune.py); FR-2's tau is 0.6
 # threshold: cost -> tau_j = (cold_s + ttl_s) / (cold_s + ttl_s + lambda_pod_s * cold_s):

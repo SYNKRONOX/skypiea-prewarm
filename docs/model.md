@@ -52,6 +52,119 @@ by the file's `classes` lists, unlisted classes to its `fallback`). Prices and p
   (`apply_caps`): 3 pods per server, 20 in total, an optional ramp budget; when a cap binds,
   pods go to the highest prob x cold-start ms.
 
+## Results in plain language (policy frozen 2026-11-04)
+
+**What was built.** A next-tool ranker (LightGBM over a transition graph) and a warm policy
+that turns its probabilities into "start this many pods of this server, now or in x ms, and
+keep them y s". The policy has two named profiles in `configs/model/profiles.yaml`, each
+tuned only on its own sources' VAL split under the PRD rule (maximise warm calls subject to
+idle pod-seconds <= 30% of always-warm), and evaluated once on TEST:
+
+| Profile | Sources | Rule picked on VAL | NFR-3 budget |
+|---|---|---|---|
+| coding | TraceLab, Copilot | start now, copies q0.9, keep 30 s after use, cost threshold lambda = 100 pod-s per cold-start second | **not binding** (worst idle 5.9% of always-warm); lambda 100 is the end of the sweep, so the rule simply buys as much warmth as the sweep allows |
+| support | tau-bench, tau2 | start now, copies q0.9, keep 0 s after use, fixed tau 0.4 | binding (22% of always-warm on VAL; the best setting without the budget would give 76.6% warm instead of 69.6%) |
+
+tau-bench has no timestamps (0 of 1,928 sessions), so it cannot be replayed; the support
+profile is tuned on tau2 alone (VAL 28 sessions, TEST 56 sessions with timing).
+
+**Final table** (TEST, cached images; warm % of calls / idle pod-seconds per 1,000 calls; cold
+starts from the E0 kind file, a lower bound):
+
+| Policy | TraceLab (coding) | Copilot (coding) | tau2 (support) | tau-bench (support) |
+|---|---|---|---|---|
+| keep-alive 30 s | 58.5 / 18,090 | 51.4 / 19,476 | 56.1 / 18,299 | not replayable |
+| keep-alive 60 s | 66.3 / 29,220 | 60.1 / 32,478 | 60.5 / 30,531 | not replayable |
+| Markov-1 top-1 (tau 0.6) | 58.5 / 18,100 | 51.1 / 19,502 | 66.4 / 19,742 | not replayable |
+| ours, old (one policy, tau 0.6) | 60.5 / 25,804 | 53.1 / 21,280 | 58.8 / 18,758 | not replayable |
+| **ours, profile** | **75.3 / 54,932** | **69.4 / 46,411** | **64.0 / 12,106** | not replayable |
+| oracle (just-in-time) | 93.9 / 568 | 82.6 / 4,716 | 77.5 / 511 | not replayable |
+| always-warm (1 pod per server) | 88.1 / 2,375,528 | 91.3 / 665,397 | 100.0 / 50,923 | not replayable |
+
+**Equal-idle comparison with keep-alive** (our warm % minus keep-alive's at the same idle,
+log-linear between keep-alive 5 s ... 600 s; `results/sim_report.md`):
+
+| Source | Profile | shipped point | points of the sweep above keep-alive | best |
+|---|---|---|---|---|
+| TraceLab | coding | +1.2 (cached) / +2.2 (uncached) | 2 of 20 | +1.2 / +2.2 |
+| Copilot | coding | +5.2 / +5.7 | 9-10 of 20 | +5.2 / +5.7 |
+| tau2 | support | +18.5 / +16.1 | 17-18 of 18-19 | +18.5 / +16.1 |
+
+**What we claim.**
+- On tau2 the support profile warms 64% of calls with 34% less idle than keep-alive 30 s
+  (56%); at equal idle it is 18 points above keep-alive. Markov-1 top-1 is also well above
+  keep-alive on tau2 (+9.6 points at its idle), so much of this is "the next tool is
+  predictable", not the ranker in particular.
+- On Copilot the coding profile is 5 points above keep-alive at equal idle (69% warm at 46k
+  idle pod-s per 1,000 calls; keep-alive needs about 60 s to reach 60%).
+- On TraceLab the coding profile is barely above keep-alive (+1 to +2 points at equal idle):
+  there prediction adds little over keeping pods.
+- Where prediction pays off (`results/sim_cold_decomp.md`; analysis only, nothing tuned on
+  it). Calls left cold by keep-alive 30 s, by cause, and the share our profile warms:
+
+  | Source | first use of the server | gap > 30 s | other (busy pod, parallel calls) | idle /1k: KA30 -> ours |
+  |---|---|---|---|---|
+  | TraceLab | 4.8% of calls, 21.7% warmed | 31.5%, 39.4% | 5.1%, 64.8% | 18,090 -> 54,932 |
+  | Copilot | 9.2%, 30.5% | 33.1%, 42.3% | 6.3%, 22.4% | 19,476 -> 46,410 |
+  | tau2 | 38.3%, 24.4% | 3.8%, 0.0% | 1.8%, 50.0% | 18,299 -> 12,106 |
+
+  On coding traces most keep-alive misses are long gaps, and our profile recovers about 40%
+  of them by spending about 2.4-3x the idle. On tau2 most misses are first uses of a server,
+  which no keep-alive can warm; prediction warms a quarter of them while using less idle.
+
+**What we do not claim.**
+- No result for tau-bench (no timestamps); no result on real cold starts (the kind file is a
+  lower bound measured on a laptop; the AWS file replaces it, and the sim reloads it by path).
+- Not that the ranker is what makes tau2 work: Markov-1 top-1 is already +9.6 points above
+  keep-alive at equal idle there (ours +18.5), and it warms more calls in total (66.4%) by
+  spending 63% more idle than our profile. On TraceLab and Copilot Markov-1 top-1 equals
+  keep-alive 30 s.
+- No production latency or cost numbers: pricing is an assumption (configs/model/pricing.yaml).
+
+**Limits.**
+- Pods are per (session, server); there is no shared pool across sessions. Real deployments
+  share one Deployment per tool server, which would help keep-alive and always-warm (and
+  Scenario C, 500 sessions on one tool) more than shown. Not modelled; per-session is the
+  conservative case for those baselines.
+- tau2 is small (28 VAL / 56 TEST sessions with timing, 342 test calls); its numbers move by
+  several points with a few sessions.
+- The coding profile's budget does not bind and its lambda sits at the end of the sweep: on
+  those sources the PRD rule alone does not stop it spending more idle.
+- One TEST look at tau2 (2026-11-03, disclosed below); VAL also served the ranker's early
+  stopping.
+
+**Oracle headroom.** The just-in-time oracle warms every call whose think gap is at least the
+server's cold start, at almost no idle (568 / 4,716 / 511 pod-s per 1,000 calls). It is not an
+upper bound on warm %: keep-alive and our profile can also warm short-gap calls by keeping
+pods, which is why our profile reaches 69% on Copilot uncached where the oracle reaches 68.6%.
+The headroom is in idle: the oracle uses 4-36x less idle than keep-alive 30 s (and 10-97x
+less than our profiles) while warming more calls on TraceLab (93.9% vs 75.3%), Copilot cached
+(82.6% vs 69.4%) and tau2 (77.5% vs 64.0%).
+
+**Latency** (`services/predictor/loadtest.py`, results/loadtest.csv; service and load client on
+the same laptop; coding bundle lgbm-coding-69d7b94; requests = 500 TraceLab VAL decision
+points, histories up to 200 calls):
+
+| Load | Workers | req/s served | p50 ms | p99 ms | errors | service compute p99 ms |
+|---|---|---|---|---|---|---|
+| open loop 75 req/s (~500 sessions), 60 s | 1 | 73.8 | 6.5 | 13.3 | 0 | 5.5 |
+| open loop 150 req/s, 60 s | 1 | 149.6 | 5.8 | 15.9 | 0 | 5.6 |
+| open loop 75 req/s, 60 s | 2 | 73.8 | 47.7 | 56.3 | 0 | 5.1 |
+| open loop 150 req/s, 60 s | 2 | 149.6 | 48.0 | 57.1 | 0 | 4.4 |
+| closed loop 10 clients, 30 s | 2 | 196.9 | 50.8 | 62.3 | 0 | 5.8 |
+| closed loop 10 clients, 10 s | 1 | 892.8 | 10.0 | 37.6 | 0 | 7.5 |
+| closed loop 200 clients, 60 s | 1 | 273.0 | 395.9 | 5,122 | 1 | 10.7 |
+| closed loop 200 clients, 60 s | 2 | 206.6 | 620.7 | 5,226 | 0 | 6.6 |
+
+One worker meets p99 < 50 ms at 75 and 150 req/s open loop. Two workers add a constant ~45 ms
+per request that I did not find the cause of (not LightGBM threads: OMP_NUM_THREADS=1 did not
+change it); use **one worker per pod and scale with replicas** (this is also what /reload
+needs). The 200-client closed loop is queueing: 200 clients each waiting on their previous
+answer saturate one process (and the Python client on the same machine), so latency is the
+queue length, not the service time (compute p99 7-11 ms); it is kept only as a stress number.
+RSS with one worker stayed at about 245-266 MB (with two workers the tool measured the
+supervisor process, so no memory number for that case).
+
 ## Offline simulation (Phase 6, `sim/offline.py`)
 
 Definitions are in the module docstring; the key modelling choices are: pods are per (session,
@@ -84,7 +197,7 @@ uses 36% of always-warm there, so with a 30 s keep after use no variant is feasi
 | timing (item 2) | spec 61.26 / now 61.15 / jit_p10 61.87 | 61.9 | jit_p10 |
 | threshold | best feasible setting of the winner | tau 0.3 | tau 0.3 (fixed) |
 
-Shipped (configs/model/decide.yaml): copies q0.9, start at the think gap's p10 minus the
+Shipped at the time (configs/model/decide.yaml; **superseded by the profiles above**): copies q0.9, start at the think gap's p10 minus the
 median cold start (TTL until the p90 arrival), `keep_after_use_s` 5, fixed tau 0.3. Item 2:
 between the two rules asked about, the spec rule beat "start now, 30 s TTL" on VAL by 0.1
 point; the shipped rule is a variant of the timing rule (p10 gap, median cold start). The
@@ -157,7 +270,7 @@ the decisions; golden answers unchanged); `WORKERS` uvicorn processes (with more
 rolling the pods); training-only packages (scikit-learn, pandas, pyarrow) are not imported at
 serving time.
 
-Load test: see "Latency" in the results section below.
+Load test: see "Latency" in the results section above.
 
 ### Image: build, push, run (for the infra window)
 
@@ -181,7 +294,7 @@ Run: container port 8090; read-only root filesystem works; user 10001; no shell 
 | `MODEL_PATH` | `/models/current` (baked in; default) |
 | `MODEL_ROOT` | `/models` (default); reloads only from folders under it |
 | `ADMIN_TOKEN` | from a Secret; unset disables /reload and /rollback |
-| `WORKERS` | 2 (load-tested); use 1 if /reload is needed, and scale with replicas |
+| `WORKERS` | 1 (recommended: 2 workers added ~45 ms per request in the load test, and /reload needs 1); scale with replicas |
 | `PORT` | 8090 (default) |
 
 Probes: readiness and liveness `GET /healthz` (503 until a model is loaded). Metrics: `GET
