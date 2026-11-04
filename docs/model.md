@@ -142,7 +142,7 @@ less than our profiles) while warming more calls on TraceLab (93.9% vs 75.3%), C
 (82.6% vs 69.4%) and tau2 (77.5% vs 64.0%).
 
 **Latency** (`services/predictor/loadtest.py`, results/loadtest.csv; service and load client on
-the same laptop; coding bundle lgbm-coding-69d7b94; requests = 500 TraceLab VAL decision
+the same laptop; coding bundle lgbm-coding-69d7b94 (same model files as lgbm-coding-1a72c23); requests = 500 TraceLab VAL decision
 points, histories up to 200 calls):
 
 | Load | Workers | req/s served | p50 ms | p99 ms | errors | service compute p99 ms |

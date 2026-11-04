@@ -1,6 +1,6 @@
 # Prediction engine: state of work (branch feat/model)
 
-Last updated: 2026-11-03 (Phase 4 decisions applied, cap measured, Phases 5-6 done). Local commits only; nothing pushed or merged.
+Last updated: 2026-11-04 (policy frozen: profiles, service, red team; history rewrite for the >1 MB CSVs). Local commits only; nothing pushed or merged.
 
 ## Commits
 
@@ -14,6 +14,12 @@ Last updated: 2026-11-03 (Phase 4 decisions applied, cap measured, Phases 5-6 do
 | 06c2e8e | Ranker fix: isotonic ties broken by raw score (calibration never reorders) |
 | (this) | Phase 4 results: `results/p4_report.md`, `p4_ranker.csv`, `p4_importance.csv`, `p1_accuracy.csv.gz`; `docs/model.md` contract alignment |
 | 2d03cba | Phase 2 results (`results/p1_accuracy.csv.gz`, `ablation_graph.csv`, `paper_protocol.csv`); rows record `37c400d-dirty` because they were produced before commit 3273927, which holds that code |
+| 7a684c0 | Phase 4 decisions, cap measurement, Phase 5 decisions, Phase 6 offline sim |
+| baaabda | Phase 6 second pass (VAL-tuned policy, keep_after_use, lambda threshold), Phase 9 service |
+| 91b09c0 | Profiles tuned on their own VAL, cold-call decomposition, service changes, red team (was 31f9f15) |
+| 8daff1d | Export naming; image build, push and run steps (was 69d7b94) |
+| 1a72c23 | Plain-language results, latency table (was bc78065) |
+| (this) | STATE: history rewrite, new bundle and image names |
 
 ## Done
 
@@ -167,18 +173,23 @@ Last updated: 2026-11-03 (Phase 4 decisions applied, cap measured, Phases 5-6 do
   oracle headroom: docs/model.md "Results in plain language".
 - Bug fixed: Markov-1 baseline had inherited a profile's threshold (test added).
 - Service: one ranker pass per request; decisions follow the rung that answered ranked;
-  image skypiea/predictor:69d7b94fdd74 (527 MB, non-root, no shells, read-only OK) with
-  bundle models/lgbm-coding-69d7b94 (not committed). Load test, 1 worker: open loop 75 / 150
+  image skypiea/predictor:1a72c2309441 (527 MB, non-root, no shells, read-only OK) with
+  bundle models/lgbm-coding-1a72c23 (not committed; model files byte-identical to the
+  earlier lgbm-coding-69d7b94). Load test, 1 worker: open loop 75 / 150
   req/s p99 13.3 / 15.9 ms. 2 workers add ~45 ms (cause not found) -> WORKERS=1, replicas.
 - Red team: tests/redteam (61 tests) + tools_audit/audit_no_persistence.py pass;
   docs/redteam.md. Phase 11 fresh-eyes review not done.
-- Committed without asking (rule breach, reported to the user): results/sim_offline.csv
-  (1.5 MB) and results/sim_variants.csv (2.1 MB) in 31f9f15; waiting for the user's choice.
+- >1 MB rule breach fixed with the user's approval (2026-11-04): the unpushed commits were
+  rewritten so results/sim_offline.csv.gz and sim_variants.csv.gz (83 KB, 191 KB; gzip with
+  no name and mtime 0, written directly by sim/offline.py and sim/tune.py) replace the plain
+  CSVs; no blob over 1 MB on the branch; no .gitignore change needed. Old -> new hashes:
+  31f9f15 -> 91b09c0, 69d7b94 -> 8daff1d, bc78065 -> 1a72c23. Result rows and the old bundle
+  name still record the old hashes; the code in each pair is identical apart from the gzip
+  writer.
 
 ## Next
 
-1. User: decide on the two >1 MB CSVs (gzip like p1_accuracy, plain files gitignored by the
-   infra owner) and on P1.
+1. User: decide on P1.
 2. Infra window: apply P-new and the contract decisions; push the image (docs/model.md
    "Image: build, push, run"); mount the cold-start file.
 3. Phase 11 fresh-eyes review; shared-pool ablation if wanted; AWS cold-start file rerun.
