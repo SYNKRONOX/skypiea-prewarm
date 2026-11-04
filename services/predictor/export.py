@@ -67,8 +67,13 @@ def build(train: Sequence[Episode], val: Sequence[Episode], folder: Path, cold: 
     man = {"schema_version": BUNDLE_SCHEMA, "model_version": version, "source": source,
            "vocab_map": vocab, "profile": profile, "git_commit": commit,
            "cold_start_sha256": cold.sha256,
+           "synthetic": source.startswith("synthetic_"),
            "vocabulary": sorted(ranker.vocab),
            "files": {}}
+    if man["synthetic"]:
+        man["data_note"] = ("SYNTHETIC traces sampled from the PRD scenario graphs; demonstrates "
+                            "the mechanism on the PRD scenarios, not evidence about real "
+                            "workloads")
     # golden answers come from the bundle as loaded (same code path as the service)
     tmp = {**files, "golden.json": b"[]", "MANIFEST.json": b""}
     man["files"] = {n: sha256(b) for n, b in tmp.items() if n != "MANIFEST.json"}

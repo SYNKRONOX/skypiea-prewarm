@@ -290,6 +290,7 @@ def make_app(settings: Settings | None = None) -> Starlette:
         body = {"status": "ok" if b is not None else "no_model",
                 "model_version": b.version if b is not None else None,
                 "profile": b.manifest.get("profile") if b is not None else None,
+                "synthetic": bool(b.manifest.get("synthetic")) if b is not None else None,
                 "previous_version": st.previous.version if st.previous is not None else None,
                 "degraded_count": st.degraded_count,
                 "cold_start_matches_bundle": b.cold_match if b is not None else None}
