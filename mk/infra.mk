@@ -19,6 +19,10 @@ N           ?= 10
 PLATFORM    ?= false
 E0PROBE     ?= true
 PLATFORM_TAG ?= $(IMAGE_TAG)
+# real predictor (optional): PREDICTOR_TAG=aabdfd2a9a39 PROFILE=support|coding SERVE=stub|model
+PREDICTOR_TAG ?=
+PROFILE     ?= support
+SERVE       ?= stub
 TF           = terraform -chdir=infra/aws
 AWS_KUBECONFIG ?= $(HOME)/.kube/skypiea-aws
 AWS_REGION  ?= ap-south-1
@@ -107,6 +111,9 @@ deploy-aws:              ## helm install the chart on k3s (all tools at 0); need
 	  --set registry=$$($(TF) output -raw ecr_registry)/ \
 	  --set imageTag=$(IMAGE_TAG) --set platformImageTag=$(PLATFORM_TAG) \
 	  --set platform.enabled=$(PLATFORM) \
+	  $(if $(PREDICTOR_TAG),--set platform.predictor.image.tag=$(PREDICTOR_TAG) \
+	    --set-file platform.predictor.coldStartYaml=configs/cold_start.yaml \
+	    --set platform.predictor.profile=$(PROFILE) --set platform.predictor.serve=$(SERVE)) \
 	  --set monitoring.enabled=$(PLATFORM) --set e0Probe.enabled=$(E0PROBE) --wait
 	kubectl --kubeconfig $(AWS_KUBECONFIG) -n $(NS) get deploy
 

@@ -172,6 +172,9 @@ spec:
             - {name: SKYPIEA_CONTROLLER_URL, value: "http://skypiea-controller.{{ $ns }}.svc:8081"}
             {{- if $p.predictor.url }}
             - {name: SKYPIEA_PREDICTOR_URL, value: {{ $p.predictor.url | quote }}}
+            {{- else if eq $p.predictor.serve "model" }}
+            {{- if not $p.predictor.image.tag }}{{ fail "platform.predictor.serve=model needs platform.predictor.image.tag" }}{{ end }}
+            - {name: SKYPIEA_PREDICTOR_URL, value: "http://skypiea-model.{{ $ns }}.svc:80"}
             {{- else if $p.predictor.enabled }}
             - {name: SKYPIEA_PREDICTOR_URL, value: "http://skypiea-predictor.{{ $ns }}.svc:80"}
             {{- end }}
@@ -246,6 +249,84 @@ metadata:
 spec:
   type: ClusterIP
   selector: {skypiea.io/tool: skypiea-predictor}
+  ports: [{name: http, port: 80, targetPort: http}]
+{{- end }}
+{{- with $p.predictor.image.tag }}
+{{- if not $p.predictor.coldStartYaml }}{{ fail "platform.predictor.image.tag needs --set-file platform.predictor.coldStartYaml=configs/cold_start.yaml" }}{{ end }}
+{{- if not (has $p.predictor.profile (list "coding" "support")) }}{{ fail "platform.predictor.profile must be coding or support" }}{{ end }}
+{{- $md := dict "root" $ "name" "skypiea-model" }}
+---
+# ======================= real predictor (feat/model services/predictor) =======================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: skypiea-model-cold-start
+  namespace: {{ $ns }}
+  labels: {{- include "skypiea.labels" $md | nindent 4 }}
+data:
+  cold_start.yaml: {{ $p.predictor.coldStartYaml | quote }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: skypiea-model
+  namespace: {{ $ns }}
+  labels: {{- include "skypiea.labels" $md | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {skypiea.io/tool: skypiea-model}
+  template:
+    metadata:
+      labels: {{- include "skypiea.labels" $md | nindent 8 }}
+      annotations:
+        skypiea.io/metrics-port: "8090"
+        skypiea.io/profile: {{ $p.predictor.profile | quote }}
+        checksum/cold-start: {{ $p.predictor.coldStartYaml | sha256sum | trunc 12 | quote }}
+    spec:
+      automountServiceAccountToken: false
+      enableServiceLinks: false
+      {{- with $.Values.imagePullSecrets }}
+      imagePullSecrets: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext: {runAsNonRoot: true, runAsUser: 10001, seccompProfile: {type: RuntimeDefault}}
+      containers:
+        - name: predictor
+          image: {{ printf "%s%s:%s" $.Values.registry $p.predictor.image.repository (toString .) }}
+          imagePullPolicy: IfNotPresent
+          ports: [{name: http, containerPort: 8090}]
+          env:
+            - {name: PREDICTOR_PROFILE, value: {{ $p.predictor.profile | quote }}}
+            - {name: COLD_START_PATH, value: /cold/cold_start.yaml}
+            - {name: WORKERS, value: "1"}
+          readinessProbe:
+            httpGet: {path: /healthz, port: http}
+            periodSeconds: 2
+          livenessProbe:
+            httpGet: {path: /healthz, port: http}
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          resources: {{- toYaml $p.predictor.modelResources | nindent 12 }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: [ALL]}
+          volumeMounts:
+            - {name: cold, mountPath: /cold, readOnly: true}
+            - {name: tmp, mountPath: /tmp}
+      volumes:
+        - {name: cold, configMap: {name: skypiea-model-cold-start}}
+        - {name: tmp, emptyDir: {sizeLimit: 16Mi}}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: skypiea-model
+  namespace: {{ $ns }}
+  labels: {{- include "skypiea.labels" $md | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector: {skypiea.io/tool: skypiea-model}
   ports: [{name: http, port: 80, targetPort: http}]
 {{- end }}
 {{- end }}

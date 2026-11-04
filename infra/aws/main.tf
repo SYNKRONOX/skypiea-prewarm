@@ -1,7 +1,7 @@
 locals {
   # Single source of truth for the tool list: tools/tool_map.yaml (+ the E0 probe and platform).
   tools       = keys(yamldecode(file("${path.module}/../../tools/tool_map.yaml")).servers)
-  images      = concat(local.tools, ["e0-probe", "platform"])
+  images      = concat(local.tools, ["e0-probe", "platform", "predictor"])
   account_id  = data.aws_caller_identity.me.account_id
   ecr_host    = "${local.account_id}.dkr.ecr.${var.region}.amazonaws.com"
   bucket_name = "skypiea-${random_id.bucket.hex}"
@@ -251,6 +251,12 @@ resource "aws_instance" "node" {
     ecr_host    = local.ecr_host
   })
   user_data_replace_on_change = true
+
+  # A stopped instance reads associate_public_ip_address = false; without this, a plan made
+  # while it is stopped wants to REPLACE it (seen 2026-11-04).
+  lifecycle {
+    ignore_changes = [associate_public_ip_address]
+  }
 
   tags = { Name = "skypiea-node" }
 }

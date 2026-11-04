@@ -86,12 +86,24 @@ platform:
       requests: {cpu: 50m, memory: 128Mi}
       limits: {cpu: 500m, memory: 256Mi}
   predictor:
-    enabled: true            # placeholder until the model branch's service is merged
-    url: ""                  # set to use an external predictor instead of the placeholder
+    enabled: true            # stub (stand-in policies: scale_to_zero, always_warm, keep_alive, markov1)
+    url: ""                  # set to use an external predictor instead of stub/model
     policy: scale_to_zero
+    # Which predictor the gateway calls: stub (the baselines above) or model (the real
+    # predictor, feat/model services/predictor; needs image.tag). Both run when image.tag is set.
+    serve: stub
+    # Real predictor: one image holds both bundles; profile selects one (P1, docs/model.md):
+    # support = Scenario A, coding = Scenario B. Its cold-start file is passed at deploy time:
+    #   --set-file platform.predictor.coldStartYaml=configs/cold_start.yaml
+    image: {repository: skypiea/predictor, tag: ""}   # "" = not deployed
+    profile: support
+    coldStartYaml: ""
     resources:
       requests: {cpu: 50m, memory: 96Mi}
       limits: {cpu: 500m, memory: 192Mi}
+    modelResources:          # measured idle RSS 51-62 MiB per profile (docker stats, laptop)
+      requests: {cpu: 100m, memory: 128Mi}
+      limits: {cpu: "1", memory: 512Mi}
 
 # Monitoring: Prometheus (scrapes every pod with a skypiea.io/metrics-port annotation in this
 # namespace) and Grafana with the Skypiea dashboard provisioned (files/skypiea-dashboard.json).
