@@ -59,3 +59,15 @@ scenarios:
       state_5: {tool: tool_5, next: {state_3: 0.57, state_4: 0.25, state_6: 0.10, <end>: 0.08}}
       state_6: {tool: tool_6, next: {state_1: 0.59, state_2: 0.03, state_5: 0.30, <end>: 0.08}}
       state_7: {tool: tool_7, next: {state_1: 0.23, state_2: 0.40, state_4: 0.29, <end>: 0.08}}
+
+  # PRD Scenario C (demand spike), OUR INTERPRETATION: the PRD gives no graph for it, only
+  # that most sessions call promo_code_lookup (docs/prd_excerpts.md). A spike session is one
+  # promo_code_lookup call and the end. Used only inside the synthetic `prd` mix
+  # (traces/generate_synthetic.py --type prd), so the prd bundle's vocabulary covers the tool.
+  spike:
+    prd: "Scenario C (interpretation)"
+    trace_type: synthetic_spike
+    think_source: tau2_bench
+    start: lookup_promo
+    nodes:
+      lookup_promo: {tool: promo_code_lookup, next: {<end>: 1.0}}

@@ -122,6 +122,8 @@ class Spec:
     policy: ContextPolicy | None = None
     always_warm: bool = False
     oracle: bool = False
+    # oracle_cap: the oracle plans its starts for the scale-up cap (see simulate)
+    oracle_cap: bool = False
     # after a use: "pod" keeps the pod's own TTL (reactive_ttl_ms; the old rule), "contract"
     # applies max(ttl of the latest decision naming the server, reactive_ttl_ms) (P-new, with
     # reactive_ttl_ms = keep_after_use)
@@ -336,13 +338,23 @@ def simulate(ep: Episode, spec: Spec, env: Env, servers: Sequence[str], st: Stat
         if spec.oracle and b + 1 < ep.n_batches:
             t_next = times[b + 1][0]
             need = Counter(cold.server(x) for x in ep.batch_tools(b + 1))
-            for s, n in sorted(need.items()):
-                have = len([p for p in alive(s, d)
-                            if p.expire >= t_next and p.busy_until <= t_next])
-                for _ in range(n - have):
+            new = {s: n - len([p for p in alive(s, d)
+                               if p.expire >= t_next and p.busy_until <= t_next])
+                   for s, n in sorted(need.items())}
+            new = {s: n for s, n in new.items() if n > 0}
+            lead = None
+            if spec.oracle_cap and env.cap > 0 and new:
+                # all the batch's starts in ceil(n / cap) waves, each as long as its slowest
+                # start (the parallel_3 time when a wave holds more than one): request every
+                # start that long before the batch and let the cap queue them
+                n_new = sum(new.values())
+                lead = math.ceil(n_new / env.cap) * max(
+                    env.start_ms(s, min(n_new, env.cap) > 1) for s in new)
+            for s, n in new.items():
+                for _ in range(n):
                     pod = Pod(s, d, d, d, 0.0, True)
                     pods[s].append(pod)
-                    launch(pod, max(d, t_next - env.cold_ms(s)), d)
+                    launch(pod, max(d, t_next - (env.cold_ms(s) if lead is None else lead)), d)
                     pod.expire = max(pod.ready, t_next)
                     st.prewarm += 1
         elif spec.policy is not None and b + 1 <= ep.n_batches:
@@ -525,6 +537,8 @@ def specs_for(sim: dict[str, Any], prep: Prepared, env: Env) -> list[Spec]:
                              env.decide.with_(threshold="cost", lambda_pod_s=float(lam))))
     out.append(ours_spec("ours_new", prep, env, env.decide))
     out.append(Spec("oracle", 0.0, oracle=True))
+    if env.cap > 0:
+        out.append(Spec("oracle_cap", 0.0, oracle=True, oracle_cap=True))
     return out
 
 

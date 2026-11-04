@@ -74,9 +74,11 @@ class Tuner:
         self.commit = git_commit()
         self.ratio = float(sim["nfr3_idle_ratio"])
         self.aw: dict[str, dict[str, Any]] = {}
+        self.scaleup = {"scaleup_cap": self.env.cap, "contention": self.env.contention}
         for prep in preps:
             rows = run_specs(prep, baseline_specs(sim, prep, self.env), self.env, sim,
-                             {"step": "baselines", "variant": "", "profile": profile})
+                             {"step": "baselines", "variant": "", "profile": profile,
+                              **self.scaleup})
             self.aw[prep.source] = next(r for r in rows if r["policy"] == "always_warm")
             self._write(rows, prep.source)
 
@@ -99,7 +101,8 @@ class Tuner:
             specs = [ours_spec(f"{name}|{tl}", prep, self.env, self.base.with_(**cfg, **tk),
                                after_use) for tl, tk in thresholds(self.sim)]
             rows = run_specs(prep, specs, self.env, self.sim, {"step": step, "variant": name,
-                                                             "profile": self.profile})
+                                                             "profile": self.profile,
+                                                             **self.scaleup})
             self._write(rows, prep.source)
             for (tl, _), r in zip(thresholds(self.sim), rows, strict=True):
                 per.setdefault(tl, {})[prep.source] = r
@@ -159,8 +162,10 @@ def main(argv: list[str] | None = None) -> int:
     want = None if args.sources == "all" else set(args.sources.split(","))
     if args.profile is not None:
         want = set(load_profiles()[args.profile]["sources"])
-    preps = [prepare(s, cold, "val") for s in sim["sources"]
-             if want is None or s["source"] in want]
+    srcs = list(sim["sources"])  # a profile's source outside sim.yaml (synthetic_prd) too
+    srcs += [{"source": x, "vocab": None} for x in sorted(want or ())
+             if x not in {d["source"] for d in srcs}]
+    preps = [prepare(s, cold, "val") for s in srcs if want is None or s["source"] in want]
     base = DecideConfig.load().with_(**OLD)
     t = Tuner(preps, cold, sim, base, args.profile or "")
     log: dict[str, Any] = {"split": "val", "cold_mode": MODE, "cold_start": cold.label,

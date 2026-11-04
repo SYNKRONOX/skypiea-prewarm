@@ -329,8 +329,10 @@ Load test: see "Latency" in the results section above.
 
 **One predictor per deployment (P1, decided 2026-11-04).** There is no scenario field in the
 request. A deployment serves one profile, chosen by the chart value `predictor.profile`
-(`coding` | `support`). The Scenario A demo uses `support`, and Scenario B uses `coding`. One image
-holds both bundles, at `/models/coding` and `/models/support`. The chart passes the value as the
+(`coding` | `support` | `prd`). The Scenario A demo uses `support`, and Scenario B uses `coding`;
+`prd` is the **SYNTHETIC** demo bundle for both PRD scenarios (see "Synthetic PRD demo profile"
+below). One image holds the three bundles, at `/models/coding`, `/models/support` and
+`/models/prd`. The chart passes the value as the
 env var `PREDICTOR_PROFILE`, and the service then serves `MODEL_ROOT/<profile>`. A bundle
 whose manifest names another profile is refused at startup (`/healthz` stays 503). To serve
 a bundle from a mounted volume instead, set `MODEL_PATH` to its folder (this overrides the
@@ -342,10 +344,14 @@ profile's default path; keep it under `MODEL_ROOT`).
         --cold-start $COLD                           # -> models/lgbm-coding-<commit>/
     nice -n 10 .venv/bin/python -m services.predictor.export --source tau2_bench --profile support \
         --cold-start $COLD                           # -> models/lgbm-support-<commit>/
+    nice -n 10 .venv/bin/python -m traces.generate_synthetic --type prd   # SYNTHETIC traces
+    nice -n 10 .venv/bin/python -m services.predictor.export --source synthetic_prd --profile prd \
+        --cold-start $COLD                           # -> models/lgbm-prd-<commit>/
     TAG=$(git rev-parse --short=12 HEAD)
     docker build -f services/predictor/Dockerfile \
         --build-arg CODING_DIR=models/lgbm-coding-<commit> \
-        --build-arg SUPPORT_DIR=models/lgbm-support-<commit> -t skypiea/predictor:$TAG .
+        --build-arg SUPPORT_DIR=models/lgbm-support-<commit> \
+        --build-arg PRD_DIR=models/lgbm-prd-<commit> -t skypiea/predictor:$TAG .
     # (or: make -f mk/model.mk predictor-image)
     # into the kind registry, then ECR (Window 1, feat/infra):
     docker tag skypiea/predictor:$TAG localhost:5001/skypiea/predictor:$TAG
@@ -356,7 +362,7 @@ profile's default path; keep it under `MODEL_ROOT`).
 Chart (feat/infra owns it; suggested shape):
 
     predictor:
-      profile: support            # Scenario A; coding for Scenario B
+      profile: support            # Scenario A; coding for Scenario B; prd = SYNTHETIC demo
     # Deployment env: PREDICTOR_PROFILE={{ .Values.predictor.profile }},
     #   COLD_START_PATH=/cold/cold_start.yaml (ConfigMap of configs/cold_start.yaml)
 
@@ -371,7 +377,7 @@ Run: container port 8090; read-only root filesystem works; user 10001; no shell 
 
 | Env | Value |
 |---|---|
-| `PREDICTOR_PROFILE` | `coding` (image default) or `support`, from the chart value `predictor.profile` |
+| `PREDICTOR_PROFILE` | `coding` (image default), `support` or `prd` (SYNTHETIC demo), from the chart value `predictor.profile` |
 | `COLD_START_PATH` | mounted cold-start file, e.g. a ConfigMap of configs/cold_start.yaml at `/cold/cold_start.yaml` (required) |
 | `MODEL_PATH` | unset (then `MODEL_ROOT/<profile>`); set it only to serve a mounted bundle folder |
 | `MODEL_ROOT` | `/models` (default); reloads only from folders under it |

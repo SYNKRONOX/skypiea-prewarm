@@ -1,0 +1,961 @@
+{
+ "chosen": {
+  "after_use": "contract",
+  "best_any_threshold_warm": 42.3626,
+  "budget_binding": false,
+  "decide": {
+   "copies_quantile": 0.9,
+   "gap_stat": "p10",
+   "keep_after_use_s": 0.0,
+   "lambda_pod_s": 100.0,
+   "plan_stat": "median_ms",
+   "start_rule": "timing",
+   "threshold": "cost"
+  },
+  "feasible": true,
+  "mean_warm": 42.3626,
+  "threshold": "lam100"
+ },
+ "cold_mode": "cached",
+ "cold_start": "aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",
+ "cold_start_sha256": "00758310b4d6",
+ "git_commit": "365a4fc-dirty",
+ "objective": "max mean warm % s.t. idle <= 0.3 x always-warm on every source",
+ "profile": "prd",
+ "sources": [
+  "synthetic_prd"
+ ],
+ "split": "val",
+ "steps": {
+  "a2_copies": {
+   "all": [
+    {
+     "after_use": "contract",
+     "best_any_threshold_warm": 42.3626,
+     "budget_binding": false,
+     "cfg": {
+      "copies_quantile": 0.9,
+      "gap_stat": "p10",
+      "keep_after_use_s": 0.0,
+      "plan_stat": "median_ms",
+      "start_rule": "timing"
+     },
+     "feasible": true,
+     "mean_warm": 42.3626,
+     "per_source": {
+      "synthetic_prd": {
+       "idle_over_always_warm": 0.0037,
+       "idle_pod_s_per_1k": 37512.329,
+       "warm_pct": 42.3626
+      }
+     },
+     "shippable": true,
+     "threshold": "lam100",
+     "threshold_cfg": {
+      "lambda_pod_s": 100.0,
+      "threshold": "cost"
+     },
+     "variant": "copies=q0.9",
+     "worst_idle_ratio": 0.0037
+    },
+    {
+     "after_use": "contract",
+     "best_any_threshold_warm": 42.3626,
+     "budget_binding": false,
+     "cfg": {
+      "copies_quantile": 0.5,
+      "gap_stat": "p10",
+      "keep_after_use_s": 0.0,
+      "plan_stat": "median_ms",
+      "start_rule": "timing"
+     },
+     "feasible": true,
+     "mean_warm": 42.3626,
+     "per_source": {
+      "synthetic_prd": {
+       "idle_over_always_warm": 0.0037,
+       "idle_pod_s_per_1k": 37512.329,
+       "warm_pct": 42.3626
+      }
+     },
+     "shippable": true,
+     "threshold": "lam100",
+     "threshold_cfg": {
+      "lambda_pod_s": 100.0,
+      "threshold": "cost"
+     },
+     "variant": "copies=q0.5",
+     "worst_idle_ratio": 0.0037
+    },
+    {
+     "after_use": "contract",
+     "best_any_threshold_warm": 42.3626,
+     "budget_binding": false,
+     "cfg": {
+      "copies_quantile": 0.9,
+      "gap_stat": "p10",
+      "keep_after_use_s": 0.0,
+      "max_copies_per_tool": 1,
+      "plan_stat": "median_ms",
+      "start_rule": "timing"
+     },
+     "feasible": true,
+     "mean_warm": 42.3626,
+     "per_source": {
+      "synthetic_prd": {
+       "idle_over_always_warm": 0.0037,
+       "idle_pod_s_per_1k": 37512.329,
+       "warm_pct": 42.3626
+      }
+     },
+     "shippable": true,
+     "threshold": "lam100",
+     "threshold_cfg": {
+      "lambda_pod_s": 100.0,
+      "threshold": "cost"
+     },
+     "variant": "copies=one",
+     "worst_idle_ratio": 0.0037
+    }
+   ],
+   "winner": {
+    "after_use": "contract",
+    "best_any_threshold_warm": 42.3626,
+    "budget_binding": false,
+    "cfg": {
+     "copies_quantile": 0.9,
+     "gap_stat": "p10",
+     "keep_after_use_s": 0.0,
+     "plan_stat": "median_ms",
+     "start_rule": "timing"
+    },
+    "feasible": true,
+    "mean_warm": 42.3626,
+    "per_source": {
+     "synthetic_prd": {
+      "idle_over_always_warm": 0.0037,
+      "idle_pod_s_per_1k": 37512.329,
+      "warm_pct": 42.3626
+     }
+    },
+    "shippable": true,
+    "threshold": "lam100",
+    "threshold_cfg": {
+     "lambda_pod_s": 100.0,
+     "threshold": "cost"
+    },
+    "variant": "copies=q0.9",
+    "worst_idle_ratio": 0.0037
+   }
+  },
+  "a_copies": {
+   "all": [
+    {
+     "after_use": "pod",
+     "best_any_threshold_warm": 27.5824,
+     "budget_binding": false,
+     "cfg": {
+      "copies_quantile": 0.9
+     },
+     "feasible": true,
+     "mean_warm": 27.5824,
+     "per_source": {
+      "synthetic_prd": {
+       "idle_over_always_warm": 0.0042,
+       "idle_pod_s_per_1k": 42406.278,
+       "warm_pct": 27.5824
+      }
+     },
+     "shippable": true,
+     "threshold": "lam100",
+     "threshold_cfg": {
+      "lambda_pod_s": 100.0,
+      "threshold": "cost"
+     },
+     "variant": "copies=q0.9",
+     "worst_idle_ratio": 0.0042
+    },
+    {
+     "after_use": "pod",
+     "best_any_threshold_warm": 27.5824,
+     "budget_binding": false,
+     "cfg": {
+      "copies_quantile": 0.5
+     },
+     "feasible": true,
+     "mean_warm": 27.5824,
+     "per_source": {
+      "synthetic_prd": {
+       "idle_over_always_warm": 0.0042,
+       "idle_pod_s_per_1k": 42406.278,
+       "warm_pct": 27.5824
+      }
+     },
+     "shippable": true,
+     "threshold": "lam100",
+     "threshold_cfg": {
+      "lambda_pod_s": 100.0,
+      "threshold": "cost"
+     },
+     "variant": "copies=q0.5",
+     "worst_idle_ratio": 0.0042
+    },
+    {
+     "after_use": "pod",
+     "best_any_threshold_warm": 27.5824,
+     "budget_binding": false,
+     "cfg": {
+      "max_copies_per_tool": 1
+     },
+     "feasible": true,
+     "mean_warm": 27.5824,
+     "per_source": {
+      "synthetic_prd": {
+       "idle_over_always_warm": 0.0042,
+       "idle_pod_s_per_1k": 42406.278,
+       "warm_pct": 27.5824
+      }
+     },
+     "shippable": true,
+     "threshold": "lam100",
+     "threshold_cfg": {
+      "lambda_pod_s": 100.0,
+      "threshold": "cost"
+     },
+     "variant": "copies=one",
+     "worst_idle_ratio": 0.0042
+    }
+   ],
+   "winner": {
+    "after_use": "pod",
+    "best_any_threshold_warm": 27.5824,
+    "budget_binding": false,
+    "cfg": {
+     "copies_quantile": 0.9
+    },
+    "feasible": true,
+    "mean_warm": 27.5824,
+    "per_source": {
+     "synthetic_prd": {
+      "idle_over_always_warm": 0.0042,
+      "idle_pod_s_per_1k": 42406.278,
+      "warm_pct": 27.5824
+     }
+    },
+    "shippable": true,
+    "threshold": "lam100",
+    "threshold_cfg": {
+     "lambda_pod_s": 100.0,
+     "threshold": "cost"
+    },
+    "variant": "copies=q0.9",
+    "worst_idle_ratio": 0.0042
+   }
+  },
+  "b2_start": {
+   "all": [
+    {
+     "after_use": "contract",
+     "best_any_threshold_warm": 27.5824,
+     "budget_binding": false,
+     "cfg": {
+      "copies_quantile": 0.9,
+      "gap_stat": "p50",
+      "keep_after_use_s": 0.0,
+      "plan_stat": "p95_ms",
+      "start_rule": "timing"
+     },
+     "feasible": true,
+     "mean_warm": 27.5824,
+     "per_source": {
+      "synthetic_prd": {
+       "idle_over_always_warm": 0.0032,
+       "idle_pod_s_per_1k": 32756.828,
+       "warm_pct": 27.5824
+      }
+     },
+     "shippable": true,
+     "threshold": "lam100",
+     "threshold_cfg": {
+      "lambda_pod_s": 100.0,
+      "threshold": "cost"
+     },
+     "variant": "start=spec",
+     "worst_idle_ratio": 0.0032
+    },
+    {
+     "after_use": "contract",
+     "best_any_threshold_warm": 27.3077,
+     "budget_binding": false,
+     "cfg": {
+      "copies_quantile": 0.9,
+      "gap_stat": "p50",
+      "keep_after_use_s": 0.0,
+      "plan_stat": "median_ms",
+      "start_rule": "timing"
+     },
+     "feasible": true,
+     "mean_warm": 27.3077,
+     "per_source": {
+      "synthetic_prd": {
+       "idle_over_always_warm": 0.0032,
+       "idle_pod_s_per_1k": 32719.952,
+       "warm_pct": 27.3077
+      }
+     },
+     "shippable": true,
+     "threshold": "lam100",
+     "threshold_cfg": {
+      "lambda_pod_s": 100.0,
+      "threshold": "cost"
+     },
+     "variant": "start=jit_p50",
+     "worst_idle_ratio": 0.0032
+    },
+    {
+     "after_use": "contract",
+     "best_any_threshold_warm": 42.3626,
+     "budget_binding": false,
+     "cfg": {
+      "copies_quantile": 0.9,
+      "gap_stat": "p10",
+      "keep_after_use_s": 0.0,
+      "plan_stat": "median_ms",
+      "start_rule": "timing"
+     },
+     "feasible": true,
+     "mean_warm": 42.3626,
+     "per_source": {
+      "synthetic_prd": {
+       "idle_over_always_warm": 0.0037,
+       "idle_pod_s_per_1k": 37512.329,
+       "warm_pct": 42.3626
+      }
+     },
+     "shippable": true,
+     "threshold": "lam100",
+     "threshold_cfg": {
+      "lambda_pod_s": 100.0,
+      "threshold": "cost"
+     },
+     "variant": "start=jit_p10",
+     "worst_idle_ratio": 0.0037
+    },
+    {
+     "after_use": "contract",
+     "best_any_threshold_warm": 41.7582,
+     "budget_binding": false,
+     "cfg": {
+      "copies_quantile": 0.9,
+      "gap_stat": "p10",
+      "keep_after_use_s": 0.0,
+      "plan_stat": "median_ms",
+      "start_rule": "now"
+     },
+     "feasible": true,
+     "mean_warm": 41.7582,
+     "per_source": {
+      "synthetic_prd": {
+       "idle_over_always_warm": 0.0029,
+       "idle_pod_s_per_1k": 30036.48,
+       "warm_pct": 41.7582
+      }
+     },
+     "shippable": true,
+     "threshold": "lam100",
+     "threshold_cfg": {
+      "lambda_pod_s": 100.0,
+      "threshold": "cost"
+     },
+     "variant": "start=now",
+     "worst_idle_ratio": 0.0029
+    }
+   ],
+   "winner": {
+    "after_use": "contract",
+    "best_any_threshold_warm": 42.3626,
+    "budget_binding": false,
+    "cfg": {
+     "copies_quantile": 0.9,
+     "gap_stat": "p10",
+     "keep_after_use_s": 0.0,
+     "plan_stat": "median_ms",
+     "start_rule": "timing"
+    },
+    "feasible": true,
+    "mean_warm": 42.3626,
+    "per_source": {
+     "synthetic_prd": {
+      "idle_over_always_warm": 0.0037,
+      "idle_pod_s_per_1k": 37512.329,
+      "warm_pct": 42.3626
+     }
+    },
+    "shippable": true,
+    "threshold": "lam100",
+    "threshold_cfg": {
+     "lambda_pod_s": 100.0,
+     "threshold": "cost"
+    },
+    "variant": "start=jit_p10",
+    "worst_idle_ratio": 0.0037
+   }
+  },
+  "b_start": {
+   "all": [
+    {
+     "after_use": "pod",
+     "best_any_threshold_warm": 27.5824,
+     "budget_binding": false,
+     "cfg": {
+      "copies_quantile": 0.9,
+      "gap_stat": "p50",
+      "plan_stat": "p95_ms",
+      "start_rule": "timing"
+     },
+     "feasible": true,
+     "mean_warm": 27.5824,
+     "per_source": {
+      "synthetic_prd": {
+       "idle_over_always_warm": 0.0042,
+       "idle_pod_s_per_1k": 42406.278,
+       "warm_pct": 27.5824
+      }
+     },
+     "shippable": true,
+     "threshold": "lam100",
+     "threshold_cfg": {
+      "lambda_pod_s": 100.0,
+      "threshold": "cost"
+     },
+     "variant": "start=spec",
+     "worst_idle_ratio": 0.0042
+    },
+    {
+     "after_use": "pod",
+     "best_any_threshold_warm": 27.3077,
+     "budget_binding": false,
+     "cfg": {
+      "copies_quantile": 0.9,
+      "gap_stat": "p50",
+      "plan_stat": "median_ms",
+      "start_rule": "timing"
+     },
+     "feasible": true,
+     "mean_warm": 27.3077,
+     "per_source": {
+      "synthetic_prd": {
+       "idle_over_always_warm": 0.0042,
+       "idle_pod_s_per_1k": 42383.689,
+       "warm_pct": 27.3077
+      }
+     },
+     "shippable": true,
+     "threshold": "lam100",
+     "threshold_cfg": {
+      "lambda_pod_s": 100.0,
+      "threshold": "cost"
+     },
+     "variant": "start=jit_p50",
+     "worst_idle_ratio": 0.0042
+    },
+    {
+     "after_use": "pod",
+     "best_any_threshold_warm": 42.3626,
+     "budget_binding": false,
+     "cfg": {
+      "copies_quantile": 0.9,
+      "gap_stat": "p10",
+      "plan_stat": "median_ms",
+      "start_rule": "timing"
+     },
+     "feasible": true,
+     "mean_warm": 42.3626,
+     "per_source": {
+      "synthetic_prd": {
+       "idle_over_always_warm": 0.0044,
+       "idle_pod_s_per_1k": 45213.977,
+       "warm_pct": 42.3626
+      }
+     },
+     "shippable": true,
+     "threshold": "lam100",
+     "threshold_cfg": {
+      "lambda_pod_s": 100.0,
+      "threshold": "cost"
+     },
+     "variant": "start=jit_p10",
+     "worst_idle_ratio": 0.0044
+    },
+    {
+     "after_use": "pod",
+     "best_any_threshold_warm": 41.7582,
+     "budget_binding": false,
+     "cfg": {
+      "copies_quantile": 0.9,
+      "start_rule": "now"
+     },
+     "feasible": true,
+     "mean_warm": 41.7582,
+     "per_source": {
+      "synthetic_prd": {
+       "idle_over_always_warm": 0.004,
+       "idle_pod_s_per_1k": 40470.546,
+       "warm_pct": 41.7582
+      }
+     },
+     "shippable": true,
+     "threshold": "lam100",
+     "threshold_cfg": {
+      "lambda_pod_s": 100.0,
+      "threshold": "cost"
+     },
+     "variant": "start=now",
+     "worst_idle_ratio": 0.004
+    }
+   ],
+   "winner": {
+    "after_use": "pod",
+    "best_any_threshold_warm": 42.3626,
+    "budget_binding": false,
+    "cfg": {
+     "copies_quantile": 0.9,
+     "gap_stat": "p10",
+     "plan_stat": "median_ms",
+     "start_rule": "timing"
+    },
+    "feasible": true,
+    "mean_warm": 42.3626,
+    "per_source": {
+     "synthetic_prd": {
+      "idle_over_always_warm": 0.0044,
+      "idle_pod_s_per_1k": 45213.977,
+      "warm_pct": 42.3626
+     }
+    },
+    "shippable": true,
+    "threshold": "lam100",
+    "threshold_cfg": {
+     "lambda_pod_s": 100.0,
+     "threshold": "cost"
+    },
+    "variant": "start=jit_p10",
+    "worst_idle_ratio": 0.0044
+   }
+  },
+  "c_keep": {
+   "all": [
+    {
+     "after_use": "contract",
+     "best_any_threshold_warm": 42.3626,
+     "budget_binding": false,
+     "cfg": {
+      "copies_quantile": 0.9,
+      "gap_stat": "p10",
+      "keep_after_use_s": 0.0,
+      "plan_stat": "median_ms",
+      "start_rule": "timing"
+     },
+     "feasible": true,
+     "mean_warm": 42.3626,
+     "per_source": {
+      "synthetic_prd": {
+       "idle_over_always_warm": 0.0037,
+       "idle_pod_s_per_1k": 37512.329,
+       "warm_pct": 42.3626
+      }
+     },
+     "shippable": true,
+     "threshold": "lam100",
+     "threshold_cfg": {
+      "lambda_pod_s": 100.0,
+      "threshold": "cost"
+     },
+     "variant": "keep=0s,contract",
+     "worst_idle_ratio": 0.0037
+    },
+    {
+     "after_use": "contract",
+     "best_any_threshold_warm": 42.3626,
+     "budget_binding": false,
+     "cfg": {
+      "copies_quantile": 0.9,
+      "gap_stat": "p10",
+      "keep_after_use_s": 2.0,
+      "plan_stat": "median_ms",
+      "start_rule": "timing"
+     },
+     "feasible": true,
+     "mean_warm": 42.3626,
+     "per_source": {
+      "synthetic_prd": {
+       "idle_over_always_warm": 0.0037,
+       "idle_pod_s_per_1k": 38205.736,
+       "warm_pct": 42.3626
+      }
+     },
+     "shippable": true,
+     "threshold": "lam100",
+     "threshold_cfg": {
+      "lambda_pod_s": 100.0,
+      "threshold": "cost"
+     },
+     "variant": "keep=2s,contract",
+     "worst_idle_ratio": 0.0037
+    },
+    {
+     "after_use": "contract",
+     "best_any_threshold_warm": 42.3626,
+     "budget_binding": false,
+     "cfg": {
+      "copies_quantile": 0.9,
+      "gap_stat": "p10",
+      "keep_after_use_s": 5.0,
+      "plan_stat": "median_ms",
+      "start_rule": "timing"
+     },
+     "feasible": true,
+     "mean_warm": 42.3626,
+     "per_source": {
+      "synthetic_prd": {
+       "idle_over_always_warm": 0.0038,
+       "idle_pod_s_per_1k": 39245.845,
+       "warm_pct": 42.3626
+      }
+     },
+     "shippable": true,
+     "threshold": "lam100",
+     "threshold_cfg": {
+      "lambda_pod_s": 100.0,
+      "threshold": "cost"
+     },
+     "variant": "keep=5s,contract",
+     "worst_idle_ratio": 0.0038
+    },
+    {
+     "after_use": "contract",
+     "best_any_threshold_warm": 42.3626,
+     "budget_binding": false,
+     "cfg": {
+      "copies_quantile": 0.9,
+      "gap_stat": "p10",
+      "keep_after_use_s": 10.0,
+      "plan_stat": "median_ms",
+      "start_rule": "timing"
+     },
+     "feasible": true,
+     "mean_warm": 42.3626,
+     "per_source": {
+      "synthetic_prd": {
+       "idle_over_always_warm": 0.004,
+       "idle_pod_s_per_1k": 40979.362,
+       "warm_pct": 42.3626
+      }
+     },
+     "shippable": true,
+     "threshold": "lam100",
+     "threshold_cfg": {
+      "lambda_pod_s": 100.0,
+      "threshold": "cost"
+     },
+     "variant": "keep=10s,contract",
+     "worst_idle_ratio": 0.004
+    },
+    {
+     "after_use": "contract",
+     "best_any_threshold_warm": 42.3626,
+     "budget_binding": false,
+     "cfg": {
+      "copies_quantile": 0.9,
+      "gap_stat": "p10",
+      "keep_after_use_s": 30.0,
+      "plan_stat": "median_ms",
+      "start_rule": "timing"
+     },
+     "feasible": true,
+     "mean_warm": 42.3626,
+     "per_source": {
+      "synthetic_prd": {
+       "idle_over_always_warm": 0.0048,
+       "idle_pod_s_per_1k": 49022.219,
+       "warm_pct": 42.3626
+      }
+     },
+     "shippable": true,
+     "threshold": "lam100",
+     "threshold_cfg": {
+      "lambda_pod_s": 100.0,
+      "threshold": "cost"
+     },
+     "variant": "keep=30s,contract",
+     "worst_idle_ratio": 0.0048
+    },
+    {
+     "after_use": "pod",
+     "best_any_threshold_warm": 42.3626,
+     "budget_binding": false,
+     "cfg": {
+      "copies_quantile": 0.9,
+      "gap_stat": "p10",
+      "keep_after_use_s": 0.0,
+      "plan_stat": "median_ms",
+      "start_rule": "timing"
+     },
+     "feasible": true,
+     "mean_warm": 42.3626,
+     "per_source": {
+      "synthetic_prd": {
+       "idle_over_always_warm": 0.0029,
+       "idle_pod_s_per_1k": 29477.164,
+       "warm_pct": 42.3626
+      }
+     },
+     "shippable": false,
+     "threshold": "lam100",
+     "threshold_cfg": {
+      "lambda_pod_s": 100.0,
+      "threshold": "cost"
+     },
+     "variant": "keep=0s,hold",
+     "worst_idle_ratio": 0.0029
+    },
+    {
+     "after_use": "pod",
+     "best_any_threshold_warm": 42.3626,
+     "budget_binding": false,
+     "cfg": {
+      "copies_quantile": 0.9,
+      "gap_stat": "p10",
+      "keep_after_use_s": 2.0,
+      "plan_stat": "median_ms",
+      "start_rule": "timing"
+     },
+     "feasible": true,
+     "mean_warm": 42.3626,
+     "per_source": {
+      "synthetic_prd": {
+       "idle_over_always_warm": 0.003,
+       "idle_pod_s_per_1k": 30350.79,
+       "warm_pct": 42.3626
+      }
+     },
+     "shippable": false,
+     "threshold": "lam100",
+     "threshold_cfg": {
+      "lambda_pod_s": 100.0,
+      "threshold": "cost"
+     },
+     "variant": "keep=2s,hold",
+     "worst_idle_ratio": 0.003
+    },
+    {
+     "after_use": "pod",
+     "best_any_threshold_warm": 42.3626,
+     "budget_binding": false,
+     "cfg": {
+      "copies_quantile": 0.9,
+      "gap_stat": "p10",
+      "keep_after_use_s": 5.0,
+      "plan_stat": "median_ms",
+      "start_rule": "timing"
+     },
+     "feasible": true,
+     "mean_warm": 42.3626,
+     "per_source": {
+      "synthetic_prd": {
+       "idle_over_always_warm": 0.0031,
+       "idle_pod_s_per_1k": 31680.461,
+       "warm_pct": 42.3626
+      }
+     },
+     "shippable": false,
+     "threshold": "lam100",
+     "threshold_cfg": {
+      "lambda_pod_s": 100.0,
+      "threshold": "cost"
+     },
+     "variant": "keep=5s,hold",
+     "worst_idle_ratio": 0.0031
+    },
+    {
+     "after_use": "pod",
+     "best_any_threshold_warm": 42.3626,
+     "budget_binding": false,
+     "cfg": {
+      "copies_quantile": 0.9,
+      "gap_stat": "p10",
+      "keep_after_use_s": 10.0,
+      "plan_stat": "median_ms",
+      "start_rule": "timing"
+     },
+     "feasible": true,
+     "mean_warm": 42.3626,
+     "per_source": {
+      "synthetic_prd": {
+       "idle_over_always_warm": 0.0033,
+       "idle_pod_s_per_1k": 33979.911,
+       "warm_pct": 42.3626
+      }
+     },
+     "shippable": false,
+     "threshold": "lam100",
+     "threshold_cfg": {
+      "lambda_pod_s": 100.0,
+      "threshold": "cost"
+     },
+     "variant": "keep=10s,hold",
+     "worst_idle_ratio": 0.0033
+    }
+   ],
+   "winner": {
+    "after_use": "contract",
+    "best_any_threshold_warm": 42.3626,
+    "budget_binding": false,
+    "cfg": {
+     "copies_quantile": 0.9,
+     "gap_stat": "p10",
+     "keep_after_use_s": 0.0,
+     "plan_stat": "median_ms",
+     "start_rule": "timing"
+    },
+    "feasible": true,
+    "mean_warm": 42.3626,
+    "per_source": {
+     "synthetic_prd": {
+      "idle_over_always_warm": 0.0037,
+      "idle_pod_s_per_1k": 37512.329,
+      "warm_pct": 42.3626
+     }
+    },
+    "shippable": true,
+    "threshold": "lam100",
+    "threshold_cfg": {
+     "lambda_pod_s": 100.0,
+     "threshold": "cost"
+    },
+    "variant": "keep=0s,contract",
+    "worst_idle_ratio": 0.0037
+   }
+  },
+  "timing": {
+   "all": [
+    {
+     "after_use": "contract",
+     "best_any_threshold_warm": 27.5824,
+     "budget_binding": false,
+     "cfg": {
+      "copies_quantile": 0.9,
+      "gap_stat": "p50",
+      "keep_after_use_s": 0.0,
+      "plan_stat": "p95_ms",
+      "start_rule": "timing"
+     },
+     "feasible": true,
+     "mean_warm": 27.5824,
+     "per_source": {
+      "synthetic_prd": {
+       "idle_over_always_warm": 0.0032,
+       "idle_pod_s_per_1k": 32756.828,
+       "warm_pct": 27.5824
+      }
+     },
+     "shippable": true,
+     "threshold": "lam100",
+     "threshold_cfg": {
+      "lambda_pod_s": 100.0,
+      "threshold": "cost"
+     },
+     "variant": "start=spec",
+     "worst_idle_ratio": 0.0032
+    },
+    {
+     "after_use": "contract",
+     "best_any_threshold_warm": 41.7582,
+     "budget_binding": false,
+     "cfg": {
+      "copies_quantile": 0.9,
+      "gap_stat": "p10",
+      "keep_after_use_s": 0.0,
+      "plan_stat": "median_ms",
+      "start_rule": "now"
+     },
+     "feasible": true,
+     "mean_warm": 41.7582,
+     "per_source": {
+      "synthetic_prd": {
+       "idle_over_always_warm": 0.0029,
+       "idle_pod_s_per_1k": 30036.48,
+       "warm_pct": 41.7582
+      }
+     },
+     "shippable": true,
+     "threshold": "lam100",
+     "threshold_cfg": {
+      "lambda_pod_s": 100.0,
+      "threshold": "cost"
+     },
+     "variant": "start=now",
+     "worst_idle_ratio": 0.0029
+    },
+    {
+     "after_use": "contract",
+     "best_any_threshold_warm": 42.3626,
+     "budget_binding": false,
+     "cfg": {
+      "copies_quantile": 0.9,
+      "gap_stat": "p10",
+      "keep_after_use_s": 0.0,
+      "plan_stat": "median_ms",
+      "start_rule": "timing"
+     },
+     "feasible": true,
+     "mean_warm": 42.3626,
+     "per_source": {
+      "synthetic_prd": {
+       "idle_over_always_warm": 0.0037,
+       "idle_pod_s_per_1k": 37512.329,
+       "warm_pct": 42.3626
+      }
+     },
+     "shippable": true,
+     "threshold": "lam100",
+     "threshold_cfg": {
+      "lambda_pod_s": 100.0,
+      "threshold": "cost"
+     },
+     "variant": "start=jit_p10",
+     "worst_idle_ratio": 0.0037
+    }
+   ],
+   "winner": {
+    "after_use": "contract",
+    "best_any_threshold_warm": 42.3626,
+    "budget_binding": false,
+    "cfg": {
+     "copies_quantile": 0.9,
+     "gap_stat": "p10",
+     "keep_after_use_s": 0.0,
+     "plan_stat": "median_ms",
+     "start_rule": "timing"
+    },
+    "feasible": true,
+    "mean_warm": 42.3626,
+    "per_source": {
+     "synthetic_prd": {
+      "idle_over_always_warm": 0.0037,
+      "idle_pod_s_per_1k": 37512.329,
+      "warm_pct": 42.3626
+     }
+    },
+    "shippable": true,
+    "threshold": "lam100",
+    "threshold_cfg": {
+     "lambda_pod_s": 100.0,
+     "threshold": "cost"
+    },
+    "variant": "start=jit_p10",
+    "worst_idle_ratio": 0.0037
+   }
+  }
+ }
+}

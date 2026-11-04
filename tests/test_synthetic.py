@@ -14,7 +14,11 @@ from traces.load import SAMPLES, load_sessions
 
 def test_graphs_are_valid_and_follow_the_prd() -> None:
     g = gen.load_graphs()
-    assert set(g) == set(gen.TYPES)
+    assert set(g) == set(gen.DEFAULT_TYPES) | {"spike"}  # prd is a mix, spike only in it
+    assert set(gen.TYPES) == set(gen.DEFAULT_TYPES) | {"prd"}
+    assert [k for k, _ in gen.PRD_MIX] == ["branching", "deterministic", "spike"]
+    assert g["spike"]["nodes"] == {"lookup_promo": {"tool": "promo_code_lookup",
+                                                    "next": {"<end>": 1.0}}}
     a = g["branching"]["nodes"]
     assert a["lookup_order"]["next"] == {"check_policy": 0.70, "issue_refund": 0.20,
                                          "notify_user": 0.10}
@@ -27,7 +31,7 @@ def test_graphs_are_valid_and_follow_the_prd() -> None:
 
 def test_sessions_follow_graph_and_carry_nodes() -> None:
     graphs = gen.load_graphs()
-    for kind in gen.TYPES:
+    for kind in (*gen.DEFAULT_TYPES, "spike"):
         nodes = graphs[kind]["nodes"]
         for s in gen.sessions(kind, 50, seed=0, root=SAMPLES):
             assert s.has_timing and s.trace_type == f"synthetic_{kind}"
@@ -71,3 +75,14 @@ def test_bad_graph_is_rejected(tmp_path: Path) -> None:
                  "      a: {tool: t, next: {a: 0.5}}\n")
     with pytest.raises(ValueError):
         gen.load_graphs(p)
+
+
+def test_prd_mix_covers_every_prd_tool_and_splits_by_session(tmp_path: Path) -> None:
+    gen.generate("prd", n=40, seed=0, root=SAMPLES, out_root=tmp_path)
+    ss = load_sessions("synthetic_prd", None, root=tmp_path)
+    assert len(ss) == 40 + 40 + 10 and {s.source for s in ss} == {"synthetic_prd"}
+    tools = {t for s in ss for t in s.tool_sequence()}
+    assert tools == {"order_lookup", "policy_check", "refund_issue", "read_file", "run_tests",
+                     "format_diff", "post_comment", "promo_code_lookup"}
+    assert len({s.session_id for s in ss}) == len(ss) and all(s.group == s.session_id
+                                                               for s in ss)

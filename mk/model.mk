@@ -7,6 +7,8 @@ COLD_START ?= $(HOME)/skypiea-infra/configs/cold_start.yaml
 MODEL ?= $(firstword $(wildcard models/lgbm-coding-*/) models/lgbm-tracelab-dev/)
 CODING ?= $(firstword $(wildcard models/lgbm-coding-*/))
 SUPPORT ?= $(firstword $(wildcard models/lgbm-support-*/))
+# SYNTHETIC demo bundle (PRD Scenarios A/B/C traces; not evidence about real workloads)
+PRD ?= $(firstword $(wildcard models/lgbm-prd-*/))
 
 .PHONY: redteam audit loadtest model-all predictor-image
 
@@ -24,7 +26,9 @@ loadtest:  ## open loop 75 and 150 req/s, closed loop 10 and 200 (1 worker)
 	$(NICE) $(PY) -m services.predictor.loadtest --model $(MODEL) --cold-start $(COLD_START) --source tracelab --workers 1 --concurrency 10 --seconds 30
 	$(NICE) $(PY) -m services.predictor.loadtest --model $(MODEL) --cold-start $(COLD_START) --source tracelab --workers 1 --concurrency 200 --seconds 60
 
-model-all:  ## tune on val, simulate on test, export the coding bundle, test
+model-all:  ## tune on val, simulate on test, export the three bundles, test
+	$(NICE) $(PY) -m traces.generate_synthetic --type prd
+	$(NICE) $(PY) -m sim.tune --profile prd --cold-start $(COLD_START)
 	$(NICE) $(PY) -m sim.tune --profile support --cold-start $(COLD_START)
 	$(NICE) $(PY) -m sim.tune --profile coding --cold-start $(COLD_START)
 	$(NICE) $(PY) -m sim.offline --cold-start $(COLD_START)
@@ -32,8 +36,9 @@ model-all:  ## tune on val, simulate on test, export the coding bundle, test
 	$(PY) -m sim.offline --figures
 	$(NICE) $(PY) -m services.predictor.export --source tracelab --profile coding --cold-start $(COLD_START)
 	$(NICE) $(PY) -m services.predictor.export --source tau2_bench --profile support --cold-start $(COLD_START)
+	$(NICE) $(PY) -m services.predictor.export --source synthetic_prd --profile prd --cold-start $(COLD_START)
 	$(PY) -m ruff check .
 	$(NICE) $(PY) -m pytest -q
 
-predictor-image:  ## docker build of the service with both bundles ($(CODING), $(SUPPORT))
-	docker build -f services/predictor/Dockerfile --build-arg CODING_DIR=$(CODING) --build-arg SUPPORT_DIR=$(SUPPORT) -t skypiea/predictor:$$(git rev-parse --short=12 HEAD) .
+predictor-image:  ## docker build of the service with the three bundles ($(CODING), $(SUPPORT), $(PRD))
+	docker build -f services/predictor/Dockerfile --build-arg CODING_DIR=$(CODING) --build-arg SUPPORT_DIR=$(SUPPORT) --build-arg PRD_DIR=$(PRD) -t skypiea/predictor:$$(git rev-parse --short=12 HEAD) .

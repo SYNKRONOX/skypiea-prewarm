@@ -313,3 +313,39 @@ def test_sim_scaleup_cap_and_parallel_contention(tmp_path: Path) -> None:
     # shell waits for a slot (read is Ready at 5 s) and overlaps other: 5 s + 4 s
     assert st.added == [6000.0, 5000.0, 9000.0]
     assert (st.scaleups, st.queued, st.queue_ms, st.contended) == (3, 1, 5000.0, 3)
+
+
+def test_max_warm_tools_and_stagger(cold: ColdStarts) -> None:
+    probs = {"shell": 0.9, "git": 0.8, "read_file": 0.7, "other": 0.5}
+    full = _decider(cold, probs, start_rule="now").decide(CTX).warm
+    assert set(full) == {"shell", "git", "read_file"}  # other is under tau 0.6
+    assert all(w.start_in_ms == 0.0 for w in full.values())  # neutral defaults
+    top2 = _decider(cold, probs, start_rule="now", max_warm_tools=2).decide(CTX).warm
+    assert set(top2) == {"shell", "git"}
+    st = _decider(cold, probs, start_rule="now", stagger_ms=1000.0).decide(CTX).warm
+    assert [st[t].start_in_ms for t in ("shell", "git", "read_file")] == [0.0, 1000.0, 2000.0]
+
+
+def test_sim_oracle_cap_plans_for_the_cap(tmp_path: Path) -> None:
+    f = _cold_file(tmp_path / "cold.yaml")
+    d = yaml.safe_load(f.read_text())
+    d["parallel_3"] = {"servers": {"read": _server("light", [], 5000.0, 7000.0),
+                                   "shell": _server("light", [], 4000.0, 6000.0),
+                                   "generic": _server("heavy", [], 6000.0, 9000.0)}}
+    f.write_text(yaml.safe_dump(d))
+    cs = ColdStarts.load(f)
+    ep = _episode([(0.0, ["other"]), (20_000.0, ["other", "read_file", "shell"])])
+    sim = {**load_config(), "max_concurrent_scale_ups": 2, "contention": "parallel_3"}
+    env = Env(cs, "cached", sim, load_pricing(), DecideConfig.load())
+
+    def run(spec: Spec) -> Stats:
+        st = Stats()
+        simulate(ep, spec, env, ["generic", "read", "shell"], st)
+        return st
+
+    # one cold start ahead: other alone at 16 s; read at 18 s overlaps it (5 s); shell waits
+    # for a slot until other is Ready at 20 s, then overlaps read (4 s)
+    assert run(Spec("oracle", 0.0, oracle=True)).added == [4000.0, 0.0, 3000.0, 4000.0]
+    # cap-aware: 3 starts, 2 waves of the slowest parallel time (6 s): all asked for at 8 s
+    st = run(Spec("oracle_cap", 0.0, oracle=True, oracle_cap=True))
+    assert st.added == [4000.0, 0.0, 0.0, 0.0] and st.queued == 1

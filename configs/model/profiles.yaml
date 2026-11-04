@@ -16,3 +16,12 @@ profiles:
     # VAL pick (results/sim_choice_support.json), tau2 only: NFR-3 budget binding
     decide: {start_rule: now, copies_quantile: 0.9, keep_after_use_s: 0, threshold: fixed,
              tau: 0.4}
+  prd:
+    # SYNTHETIC: PRD Scenarios A, B (and C's tool) sampled from the PRD's own branching
+    # probabilities (traces/generate_synthetic.py --type prd). For the demo only: it shows the
+    # mechanism on the PRD scenarios and is NOT evidence about real workloads.
+    sources: [synthetic_prd]
+    # VAL pick (results/sim_choice_prd.json; AWS cold starts, cap 2, parallel_3): NFR-3 budget
+    # NOT binding (worst idle 0.4% of always-warm); lambda 100 is the end of the sweep
+    decide: {start_rule: timing, gap_stat: p10, plan_stat: median_ms, copies_quantile: 0.9,
+             max_copies_per_tool: 3, keep_after_use_s: 0, threshold: cost, lambda_pod_s: 100}

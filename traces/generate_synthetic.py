@@ -2,6 +2,7 @@
 
     python -m traces.generate_synthetic                      # all three, 2,000 sessions each
     python -m traces.generate_synthetic --type branching --n 500
+    python -m traces.generate_synthetic --type prd           # the demo mix (A + B + C)
 
 Sessions are sampled from the workflow graphs in configs/model/workflow_graphs.yaml. Every
 event carries its workflow ``node``; nodes with ``tool: null`` (e.g. classify_intent) become
@@ -12,6 +13,12 @@ next) are drawn from the empirical think-time distribution of a real source's TR
 (``think_source`` in the graph file: tau2_bench for the support scenario, tracelab for the
 coding ones), and tool run times from TraceLab's train ``service_ms``. Both are sampled by
 inverse CDF over 1,001 quantiles.
+
+``prd`` is a SYNTHETIC mix for the demo bundle: ``n`` Scenario A (branching), ``n`` Scenario B
+(deterministic) and ``n // 4`` Scenario C (spike: one promo_code_lookup call; the PRD gives no
+graph for C, see workflow_graphs.yaml) sessions in one source, synthetic_prd. Each part keeps
+its own random stream and session ids (syn_<kind>_<i>), so it is not evidence about real
+workloads: it shows the mechanism on the PRD scenarios.
 
 Output goes through the normal pipeline (traces/pipeline.py) to
 data/processed/synthetic_<type>/ with the same files as a real source (sessions.jsonl.gz,
@@ -39,7 +46,9 @@ from traces.schema import Batch, Call, Session
 
 ROOT = Path(__file__).resolve().parent.parent
 GRAPHS = ROOT / "configs" / "model" / "workflow_graphs.yaml"
-TYPES = ("deterministic", "branching", "random_walk")
+TYPES = ("deterministic", "branching", "random_walk", "prd")
+DEFAULT_TYPES = ("deterministic", "branching", "random_walk")
+PRD_MIX = (("branching", 1.0), ("deterministic", 1.0), ("spike", 0.25))
 END = "<end>"
 N_QUANTILES = 1001
 
@@ -131,7 +140,13 @@ def generate(kind: str, n: int = 2000, seed: int = 0, root: Path = PROCESSED,
 
     def converter(raw: Path, stats: Counter[str], **_: Any) -> Iterator[Session]:
         stats["synthetic_seed"] = seed
-        yield from sessions(kind, n, seed, root)
+        if kind != "prd":
+            yield from sessions(kind, n, seed, root)
+            return
+        for part, frac in PRD_MIX:
+            for sess in sessions(part, int(n * frac), seed, root):
+                sess.source = "synthetic_prd"
+                yield sess
 
     return pipeline.run(f"synthetic_{kind}", out_root=out_root, converter=converter)
 
@@ -139,11 +154,11 @@ def generate(kind: str, n: int = 2000, seed: int = 0, root: Path = PROCESSED,
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
     p.add_argument("--type", choices=TYPES, action="append",
-                   help="trace type (repeatable); default: all three")
+                   help="trace type (repeatable); default: the three single types")
     p.add_argument("--n", type=int, default=2000, help="sessions per type")
     p.add_argument("--seed", type=int, default=0)
     args = p.parse_args(argv)
-    for kind in args.type or TYPES:
+    for kind in args.type or DEFAULT_TYPES:
         print(generate(kind, args.n, args.seed))
     return 0
 

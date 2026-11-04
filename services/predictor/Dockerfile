@@ -2,8 +2,9 @@
 # Skypiea predictor service. Build from the repo root, with one bundle per profile from
 # `python -m services.predictor.export --profile ...` (models/ is not in git):
 #   docker build -f services/predictor/Dockerfile --build-arg CODING_DIR=models/<coding> \
-#     --build-arg SUPPORT_DIR=models/<support> .
-# One image, both bundles (/models/coding, /models/support); PREDICTOR_PROFILE picks one.
+#     --build-arg SUPPORT_DIR=models/<support> --build-arg PRD_DIR=models/<prd> .
+# One image, three bundles (/models/coding, /models/support, /models/prd); PREDICTOR_PROFILE
+# picks one. prd is SYNTHETIC (PRD scenario traces) for the demo, not evidence about real use.
 # Run read-only: docker run --read-only -e PREDICTOR_PROFILE=support \
 #   -e COLD_START_PATH=/cold/cold_start.yaml -v <dir with cold_start.yaml>:/cold:ro \
 #   -p 8090:8090 <image>
@@ -20,6 +21,7 @@ RUN /opt/venv/bin/pip install -r /req/requirements.txt -c /req/requirements.lock
 FROM ${PYTHON_IMAGE}
 ARG CODING_DIR
 ARG SUPPORT_DIR
+ARG PRD_DIR
 COPY --from=build /opt/venv /opt/venv
 WORKDIR /app
 COPY predictors/ predictors/
@@ -28,6 +30,7 @@ COPY configs/model/ configs/model/
 COPY services/predictor/ services/predictor/
 COPY ${CODING_DIR}/ /models/coding/
 COPY ${SUPPORT_DIR}/ /models/support/
+COPY ${PRD_DIR}/ /models/prd/
 RUN apt-get update && apt-get install -y --no-install-recommends libgomp1 \
  && rm -rf /var/lib/apt/lists/* \
  && python -m compileall -q predictors traces services \

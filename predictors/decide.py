@@ -27,6 +27,10 @@ For each tool class j with in-next-batch probability p_j (the ladder's first hea
   start_in_ms - cold_plan, ttl_min, ttl_max), or ``ttl_default_ms`` without timing. cold_plan
   is the cold-start file's ``plan_stat`` for ``plan_mode``. ``now``: start_in 0, TTL
   ``ttl_default_ms``.
+- ``max_warm_tools`` (0 = no limit) keeps only the k most likely tool classes that pass the
+  threshold (ties by name); ``stagger_ms`` adds i x stagger_ms to the start_in_ms of the i-th
+  of them (0-based, most likely first), so their scale-ups do not all start at once (both for
+  the controller's max concurrent scale-ups per node; neutral at their defaults).
 - ``keep_after_use_s`` is sent with every decision (contract P-new): after a pod serves a
   call the controller keeps it for max(ttl_s of the latest decision naming its server,
   keep_after_use_s).
@@ -80,6 +84,8 @@ class DecideConfig:
     max_total_warm_pods: int = 20
     max_new_pods_per_s: float = 5.0
     budget_ms: float = 40.0
+    max_warm_tools: int = 0
+    stagger_ms: float = 0.0
 
     @classmethod
     def load(cls, path: Path = CONFIG, **overrides: Any) -> DecideConfig:
@@ -174,6 +180,13 @@ class Decider(ContextPolicy):
                 continue
             out[t] = WarmDecision(copies=self.copies(ctx, t), start_in_ms=start_in,
                                   prob=p, ttl_ms=ttl)
+        c = self.cfg
+        if c.max_warm_tools > 0 or c.stagger_ms > 0:
+            order = sorted(out, key=lambda t: (-out[t].prob, t))
+            if c.max_warm_tools > 0:
+                order = order[:c.max_warm_tools]
+            out = {t: replace(out[t], start_in_ms=out[t].start_in_ms + i * c.stagger_ms)
+                   for i, t in enumerate(order)}
         return Decision(out, mode, degraded)
 
     def _unseen(self, ctx: Context) -> bool:

@@ -4,8 +4,9 @@
 
 Environment:
 - ``MODEL_PATH``: the bundle folder served at startup (``services/predictor/engine.py``).
-- ``PREDICTOR_PROFILE``: ``coding`` or ``support``. Without ``MODEL_PATH`` the bundle is
-  ``MODEL_ROOT/<profile>`` (the image holds both); a bundle whose manifest names another
+- ``PREDICTOR_PROFILE``: ``coding``, ``support`` or ``prd`` (SYNTHETIC demo). Without
+  ``MODEL_PATH`` the bundle is
+  ``MODEL_ROOT/<profile>`` (the image holds all three); a bundle whose manifest names another
   profile is refused at startup. The chart sets it from ``predictor.profile``.
 - ``COLD_START_PATH``: the infra cold-start file (read once at startup, by path).
 - ``ADMIN_TOKEN``: required in ``X-Admin-Token`` for /reload and /rollback (constant-time

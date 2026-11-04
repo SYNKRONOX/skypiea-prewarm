@@ -62,6 +62,9 @@ SOURCES: dict[str, dict[str, Any]] = {
     "synthetic_branching": {"min_batches": 1},
     "synthetic_deterministic": {"min_batches": 1},
     "synthetic_random_walk": {"min_batches": 1},
+    # SYNTHETIC mix of PRD Scenarios A, B and C for the demo bundle (not evidence about real
+    # workloads); a spike session has one call.
+    "synthetic_prd": {"min_batches": 1},
 }
 
 CALL_SCHEMA = pa.schema([
