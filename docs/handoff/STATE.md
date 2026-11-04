@@ -27,7 +27,8 @@ Last updated: 2026-11-04 (P1 decided: one profile per deployment; AWS cold-start
 | a7642d0 | Bundles from synthetic_* sources are marked synthetic (manifest, /healthz); bundle lgbm-prd-a7642d0 exported from here |
 | 64e65c9 | Cap sensitivity + final tables (results/sim_sensitivity.*), prd TEST check (results/sim_prd.csv.gz), docs claims rewritten, prd section, STATE |
 | af00023 | Adopt the retuned coding profile; frozen config kept as `frozen_profiles.coding_frozen`; bundle lgbm-coding-af00023 exported from here |
-| (this) | Docs: adoption (rule change, adopted after TEST was seen, frozen rows kept), session-id note, image af000231bc7b; STATE |
+| 0a26db4 | Docs: adoption (rule change, adopted after TEST was seen, frozen rows kept), session-id note, image af000231bc7b; STATE |
+| (this) | Results package: `sim/results_summary.py` (`make -f mk/model.mk results-summary`) -> docs/results_summary.md from committed results only; docs/numbers_and_sources.md; docs/limits.md; STATE |
 
 ## Done
 
@@ -264,11 +265,30 @@ Last updated: 2026-11-04 (P1 decided: one profile per deployment; AWS cold-start
 - Older results (sim_offline, sim_report, cold_decomp) were run with the frozen coding
   profile and are labelled as such; sim.offline now runs the adopted profile as `ours_new`.
 
+## 2026-11-04 (package): results package, no new experiments
+
+- `make -f mk/model.mk results-summary` builds docs/results_summary.md from committed files only
+  (it refuses an input that is untracked or differs from HEAD; the header lists each input and
+  the commit that last changed it). Two TODO rows remain: E0 cold starts and the AWS scenario
+  runs. After the infra merge, run it with `INFRA_RESULTS=<feat/infra results dir>` (E0
+  summaries; tested against ~/skypiea-infra/results, not committed that way) and
+  `SCENARIOS='<glob of replayer CSVs>'`. The scenario part assumes the replayer columns policy,
+  cold and added_latency_ms (+ dataset if present).
+- docs/numbers_and_sources.md: every spoken number with its PRD line or file + commit.
+  UNSOURCED: 75 req/s ~ 500 sessions (assumed ~6.7 s between calls), operator caps 3 / 20,
+  ramp 5 pods/s. Flagged too: the 30% budget is our reading of NFR-3 (idle pod-s, not
+  never-used CPU-s); 5 s keep-after-use is superseded (no shipped profile uses it); the cap of
+  2 is a setting; the sim does not model the 150 ms hold.
+- docs/limits.md: plain-language limits.
+- New docs files outside the original allowed list (results_summary, numbers_and_sources,
+  limits) were created because the user asked for them by name.
+
 ## Next
 
 1. Infra window: push skypiea/predictor:af000231bc7b; chart `predictor.profile` (coding |
    support | prd) -> `PREDICTOR_PROFILE`; mount the AWS cold-start file.
-2. Open, not done: Phase 11 fresh-eyes review; shared-pool ablation.
+2. After the merge: regenerate docs/results_summary.md with INFRA_RESULTS and SCENARIOS.
+3. Open, not done: Phase 11 fresh-eyes review; shared-pool ablation.
 
 ## Rules for the next session (from the user)
 

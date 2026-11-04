@@ -10,7 +10,7 @@ SUPPORT ?= $(firstword $(wildcard models/lgbm-support-*/))
 # SYNTHETIC demo bundle (PRD Scenarios A/B/C traces; not evidence about real workloads)
 PRD ?= $(firstword $(wildcard models/lgbm-prd-*/))
 
-.PHONY: redteam audit loadtest model-all predictor-image
+.PHONY: redteam audit loadtest model-all predictor-image results-summary
 
 redteam:  ## red-team suite (tests/redteam, under 10 minutes)
 	$(NICE) $(PY) -m pytest -q tests/redteam
@@ -42,3 +42,10 @@ model-all:  ## tune on val, simulate on test, export the three bundles, test
 
 predictor-image:  ## docker build of the service with the three bundles ($(CODING), $(SUPPORT), $(PRD))
 	docker build -f services/predictor/Dockerfile --build-arg CODING_DIR=$(CODING) --build-arg SUPPORT_DIR=$(SUPPORT) --build-arg PRD_DIR=$(PRD) -t skypiea/predictor:$$(git rev-parse --short=12 HEAD) .
+
+# docs/results_summary.md from committed results only (fails if an input is not committed).
+# After the infra merge: make -f mk/model.mk results-summary INFRA_RESULTS=<dir> SCENARIOS='<glob>'
+INFRA_RESULTS ?=
+SCENARIOS ?=
+results-summary:  ## build docs/results_summary.md from committed results/*.csv(.gz)
+	$(PY) -m sim.results_summary $(if $(INFRA_RESULTS),--infra-results $(INFRA_RESULTS)) $(if $(SCENARIOS),--scenarios '$(SCENARIOS)')
