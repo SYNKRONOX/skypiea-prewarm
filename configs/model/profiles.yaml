@@ -7,10 +7,12 @@
 profiles:
   coding:
     sources: [tracelab, copilot_2026]
-    # VAL pick (results/sim_choice_coding.json): NFR-3 budget NOT binding (worst idle 5.9% of
-    # always-warm); lambda 100 is the end of the sweep
-    decide: {start_rule: now, copies_quantile: 0.9, keep_after_use_s: 30, threshold: cost,
-             lambda_pod_s: 100}
+    # ADOPTED 2026-11-04: the cap-2 retune (results/sim_choice_coding_cap2.json; VAL only, AWS
+    # cold starts, cap 2, parallel_3): the frozen profile with one copy per tool. Selected on
+    # VAL by equal-idle margin vs keep-alive; adopted after the TEST margins were seen. The
+    # frozen config is kept below as coding_frozen.
+    decide: {start_rule: now, copies_quantile: 0.9, max_copies_per_tool: 1,
+             keep_after_use_s: 30, threshold: cost, lambda_pod_s: 100}
   support:
     sources: [tau_bench, tau2_bench]
     # VAL pick (results/sim_choice_support.json), tau2 only: NFR-3 budget binding
@@ -25,3 +27,12 @@ profiles:
     # NOT binding (worst idle 0.4% of always-warm); lambda 100 is the end of the sweep
     decide: {start_rule: timing, gap_stat: p10, plan_stat: median_ms, copies_quantile: 0.9,
              max_copies_per_tool: 3, keep_after_use_s: 0, threshold: cost, lambda_pod_s: 100}
+
+# Superseded profiles, kept for the "before" tables (DecideConfig.for_profile finds them; the
+# service does not offer them, and they own no sources).
+frozen_profiles:
+  coding_frozen:
+    # VAL pick (results/sim_choice_coding.json): NFR-3 budget NOT binding (worst idle 5.9% of
+    # always-warm); lambda 100 is the end of the sweep. Shipped until 2026-11-04.
+    decide: {start_rule: now, copies_quantile: 0.9, keep_after_use_s: 30, threshold: cost,
+             lambda_pod_s: 100}

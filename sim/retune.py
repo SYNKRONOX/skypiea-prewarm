@@ -5,11 +5,12 @@
 
 tune (VAL split, cached images, AWS cold starts, the cap and contention of sim.yaml: at most 2
 scale-ups at once per node, parallel_3): the scale-up cap was unknown when the profiles were
-frozen, so the CODING profile gets one retune with the cap in the loop. Candidates change only
+frozen, so the CODING profile got one retune with the cap in the loop. Candidates change only
 how many pods one decision starts at once: top-k warm tools per decision (max_warm_tools),
 one copy per tool, staggered starts (stagger_ms), and higher thresholds (tau up to 0.95 and the
-lambda sweep). Every variant x threshold goes to results/sim_variants.csv.gz (step
-``cap2_retune``). The support profile is not touched.
+lambda sweep). The winner was adopted as ``coding``; the tune starts from ``coding_frozen``
+(configs/model/profiles.yaml, frozen_profiles). Every variant x threshold goes to
+results/sim_variants.csv.gz (step ``cap2_retune``). The support profile is not touched.
 
 Selection: the frozen rule (max mean warm % s.t. idle <= 30% of always-warm) does not bind for
 coding (the frozen pick used 5.9% of always-warm), so it picks whatever warms most, which is
@@ -94,7 +95,7 @@ def tune(aws: ColdStarts) -> dict[str, Any]:
     sim = {**sim, "tau_sweep": [*sim["tau_sweep"], 0.95]}
     prof = load_profiles()["coding"]
     preps = [prepare(s, aws, "val") for s in sim["sources"] if s["source"] in prof["sources"]]
-    base = DecideConfig.for_profile("coding")
+    base = DecideConfig.for_profile("coding_frozen")
     t = Tuner(preps, aws, sim, base, "coding")
     ka: dict[str, dict[str, tuple[float, float]]] = {}
     for prep in preps:  # the Tuner's baseline rows (same env, same split); rerun is cheap
@@ -148,7 +149,7 @@ def tune(aws: ColdStarts) -> dict[str, Any]:
 
 
 def over_of(c: dict[str, Any]) -> dict[str, Any]:
-    return {**DecideConfig.for_profile("coding").__dict__, **c["overrides"],
+    return {**DecideConfig.for_profile("coding_frozen").__dict__, **c["overrides"],
             **c["threshold_cfg"]}
 
 
@@ -191,8 +192,9 @@ def sens(colds: dict[str, ColdStarts]) -> None:
                 env = Env(cold, mode, sim, pricing, DecideConfig.for_profile(profile))
                 specs = [s for s in baseline_specs(sim, prep, env)
                          if s.name in KEEP or s.name == "always_warm"]
+                frozen = "coding_frozen" if profile == "coding" else profile
                 specs.append(ours_spec(f"{profile}_frozen", prep, env,
-                                       DecideConfig.for_profile(profile)))
+                                       DecideConfig.for_profile(frozen)))
                 if profile == "coding":
                     specs.append(ours_spec("coding_retuned", prep, env, retuned))
                 specs += [Spec("oracle", 0.0, oracle=True),

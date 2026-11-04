@@ -109,15 +109,18 @@ class DecideConfig:
     @classmethod
     def for_profile(cls, name: str, path: Path = CONFIG, profiles: Path = PROFILES
                     ) -> DecideConfig:
-        """decide.yaml with the named profile's overrides (configs/model/profiles.yaml)."""
-        prof = load_profiles(profiles)
+        """decide.yaml with the named profile's overrides (configs/model/profiles.yaml); also
+        finds the superseded ``frozen_profiles`` (e.g. coding_frozen)."""
+        prof = {**load_profiles(profiles, frozen=True), **load_profiles(profiles)}
         if name not in prof:
             raise ValueError(f"unknown profile {name!r}")
         return cls.load(path, **(prof[name].get("decide") or {}))
 
 
-def load_profiles(path: Path = PROFILES) -> dict[str, dict[str, Any]]:
-    return dict(yaml.safe_load(path.read_text(encoding="utf-8"))["profiles"])
+def load_profiles(path: Path = PROFILES, frozen: bool = False) -> dict[str, dict[str, Any]]:
+    """The served profiles, or with ``frozen`` the superseded ones (``frozen_profiles``)."""
+    d = yaml.safe_load(path.read_text(encoding="utf-8"))
+    return dict(d.get("frozen_profiles") or {}) if frozen else dict(d["profiles"])
 
 
 def profile_of(source: str, path: Path = PROFILES) -> str | None:
