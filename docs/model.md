@@ -65,8 +65,11 @@ profile (P1; see "Image: build, push, run"). Scenario A uses `support`, and Scen
 |---|---|---|---|
 | coding | TraceLab, Copilot | start now, copies q0.9, keep 30 s after use, cost threshold lambda = 100 pod-s per cold-start second | **not binding** (worst idle 5.9% of always-warm on VAL; 2-8% on TEST with AWS values); lambda 100 is the end of the sweep, so the rule simply buys as much warmth as the sweep allows |
 | support | tau-bench, tau2 | start now, copies q0.9, keep 0 s after use, fixed tau 0.4 | binding (22% of always-warm on VAL, 23-24% on TEST; the best setting without the budget would give 76.6% warm on VAL instead of 69.6%) |
+| prd (**SYNTHETIC**, demo only) | synthetic PRD Scenarios A, B (+ C's tool) | timing rule (gap p10), copies q0.9, keep 0 s, lambda 100 | not binding; see "Synthetic PRD demo profile" |
 
-The tuning used the kind cold-start file, and the policy is frozen. Nothing was re-tuned on the AWS values.
+The coding and support profiles were tuned on the kind cold-start file and are frozen. The one
+allowed retune, of coding under the scale-up cap (VAL only), is reported below as "coding,
+retuned"; it is not the shipped profile.
 
 tau-bench has no timestamps (0 of 1,928 sessions), so it cannot be replayed. The support
 profile therefore rests on tau2 alone. tau2 has 28 VAL and 56 TEST sessions with timing (342
@@ -94,53 +97,97 @@ cold starts, scale-up cap 2, parallel_3 contention; `results/sim_report.md`):
 | oracle (just-in-time) | 54.0 / 551 | 59.7 / 4,661 | 72.5 / 532 | not replayable |
 | always-warm (1 pod per server) | 87.8 / 2,375,346 | 91.0 / 665,196 | 100.0 / 50,923 | not replayable |
 
-**Equal-idle comparison with keep-alive.** The margin is our warm % minus keep-alive's at the
-same idle, interpolated log-linearly between keep-alive 5 s and 600 s
-(`results/sim_kind_vs_aws.md`). Each cell gives the shipped point, cached / uncached:
+**Coding retune under the cap (2026-11-04, VAL only).** The cap of 2 scale-ups at once was
+unknown when the profiles were frozen, so the coding profile got one retune on VAL with the
+cap and parallel_3 in the loop (`sim/retune.py`; every variant x threshold is in
+`results/sim_variants.csv.gz`, step `cap2_retune`; choice in
+`results/sim_choice_coding_cap2.json`). Candidates: top-1 or top-2 warm tools per decision,
+one copy per tool, staggered starts (3 s or 6 s between a decision's tools), and higher
+thresholds (tau up to 0.95, lambda 1-100). **Rule change:** the frozen rule (most warm calls
+within the 30% idle budget) never binds for coding, so it picks whatever warms most, and it
+picked the frozen profile again (+0.24 points over keep-alive on VAL). The retune picks the
+largest VAL equal-idle margin over keep-alive among settings within the budget. Winner:
+**one copy per tool, lambda 100, everything else frozen** (+3.56 points on VAL; 3 s stagger
++3.54, top-2 + one copy +3.10, top-1 + one copy +2.27; top-1/top-2 with 3 copies -0.19). It
+is in `results/sim_choice_coding_cap2.json`; the shipped coding profile and bundle are still
+the frozen ones (adopting it needs a profile edit and a new bundle). Support was not touched.
 
-| Source | Profile | kind | AWS, no cap | **AWS, cap 2 + parallel_3** | sweep points above keep-alive (AWS, cap) |
+**Final table: frozen vs retuned vs keep-alive** (TEST; warm % / idle pod-s per 1,000 calls,
+with the equal-idle margin vs keep-alive in points; `results/sim_sensitivity.md`). The margin
+is our warm % minus keep-alive's at the same idle, log-linear between keep-alive 5 s and 600 s.
+
+| Source | Images | Policy | kind | AWS, no cap | AWS, cap 2 + parallel_3 |
 |---|---|---|---|---|---|
-| TraceLab | coding | +1.2 / +2.2 | +1.5 / +2.4 | **-1.9 / -2.4** | 0 of 20 |
-| Copilot | coding | +5.2 / +5.7 | +5.4 / +5.7 | **+2.4 / +1.9** | 4 of 20 |
-| tau2 | support | +18.5 / +16.1 | +18.1 / +17.7 | **+15.7 / +18.2** | 17-18 of 18-19 |
+| TraceLab | cached | keep-alive 30 s | 58.5 / 18,090 | 58.4 / 18,084 | 56.9 / 17,622 |
+| TraceLab | cached | coding, frozen | 75.3 / 54,932 (+1.2) | 76.0 / 57,219 (+1.5) | 70.8 / 53,587 (**-1.9**) |
+| TraceLab | cached | coding, retuned | 70.0 / 27,589 (+4.6) | 70.5 / 28,398 (+4.7) | 67.6 / 27,387 (**+3.5**) |
+| TraceLab | uncached | keep-alive 30 s | 57.8 / 18,207 | 56.6 / 18,472 | 53.4 / 17,768 |
+| TraceLab | uncached | coding, frozen | 77.6 / 64,247 (+2.2) | 77.8 / 68,772 (+2.4) | 69.4 / 61,936 (**-2.4**) |
+| TraceLab | uncached | coding, retuned | 71.8 / 32,099 (+5.1) | 71.7 / 34,243 (+5.3) | 66.5 / 32,361 (**+3.4**) |
+| Copilot | cached | keep-alive 30 s | 51.4 / 19,476 | 51.1 / 19,511 | 49.6 / 19,301 |
+| Copilot | cached | coding, frozen | 69.4 / 46,411 (+5.2) | 69.6 / 47,311 (+5.4) | 64.8 / 45,556 (+2.4) |
+| Copilot | cached | coding, retuned | 67.4 / 34,642 (+6.6) | 67.6 / 35,303 (+6.8) | 64.2 / 34,541 (+5.1) |
+| Copilot | uncached | keep-alive 30 s | 49.2 / 19,991 | 47.4 / 20,479 | 44.7 / 20,109 |
+| Copilot | uncached | coding, frozen | 68.8 / 50,723 (+5.7) | 67.4 / 53,100 (+5.7) | 60.6 / 49,984 (+1.9) |
+| Copilot | uncached | coding, retuned | 66.9 / 38,448 (+7.1) | 65.5 / 40,755 (+7.1) | 60.7 / 39,202 (+5.0) |
+| tau2 | cached | keep-alive 30 s | 56.1 / 18,299 | 56.4 / 18,232 | 56.4 / 18,218 |
+| tau2 | cached | support (frozen) | 64.0 / 12,106 (+18.5) | 64.0 / 12,120 (+18.1) | 61.4 / 11,859 (+15.7) |
+| tau2 | uncached | keep-alive 30 s | 55.6 / 18,319 | 52.6 / 18,973 | 50.3 / 19,413 |
+| tau2 | uncached | support (frozen) | 62.3 / 11,920 (+16.1) | 60.2 / 12,041 (+17.7) | 58.8 / 11,990 (+18.2) |
+
+The retuned coding profile warms 3-5 points fewer calls than the frozen one but with about half
+the idle, which is what moves it above keep-alive. Other baselines (keep-alive 60 s,
+Markov-1, always-warm) under AWS + cap are in `results/sim_report.md`.
+
+**Sensitivity to the cap** (TEST, AWS cold starts with parallel_3 contention, margin vs
+keep-alive in points, cached / uncached; report only, nothing was tuned on these). **E0
+measured 1 and 3 starts at once, not 2**: in every capped run a start that overlaps another
+takes the 3-at-once time, also when only 2 overlap.
+
+| Source | Policy | cap 1 | cap 2 | cap 3 | no cap |
+|---|---|---|---|---|---|
+| TraceLab | coding, frozen | -1.3 / -3.0 | -1.9 / -2.4 | -0.9 / -0.9 | +0.7 / +1.5 |
+| TraceLab | coding, retuned | +3.6 / +2.8 | +3.5 / +3.4 | +4.0 / +4.2 | +4.3 / +4.9 |
+| Copilot | coding, frozen | +2.6 / +0.6 | +2.4 / +1.9 | +3.4 / +3.5 | +3.9 / +4.5 |
+| Copilot | coding, retuned | +5.2 / +3.8 | +5.1 / +5.0 | +5.5 / +5.8 | +5.6 / +6.1 |
+| tau2 | support | +16.0 / +15.6 | +15.7 / +18.2 | +15.7 / +18.4 | +15.7 / +18.4 |
 
 **What changed from kind to AWS.**
 - **The AWS numbers alone change little.** Cached cold starts are within -0.3 / +0.7 s of kind
-  (2.6-3.8 s). Uncached ones are 0.6-2.5 s slower (4.3-8.4 s). Without the cap, cached warm % moves
-  by under 1 point (the oracle by about 3). Uncached warm % moves by up to 3 points (the oracle
-  by 11-15). The margins in the "AWS, no cap" column are within 1.6 points of kind.
-- **Contention and the cap cause the changes.** Our coding profile starts many pods at
-  once (up to 3 copies of several servers). On TraceLab, 55% of its starts wait for a slot (mean
-  7.8 s cached) and 83% overlap another start. For keep-alive 30 s the figures are 16% and 40%.
-  Its warm % drops 5 points (75.3 -> 70.8 cached), and keep-alive drops only 1.6.
-- **Conclusion that changed: TraceLab.** The coding profile is now *below* keep-alive at equal
-  idle (-1.9 / -2.4), and no point of its sweep is above it. On TraceLab, prediction does not
-  pay on a 2-vCPU node.
-- **Conclusion that weakened: Copilot.** The margin halves (+5.2 -> +2.4 cached, +5.7 -> +1.9 uncached).
-- **Conclusion that held: tau2.** The support profile starts few pods (tau 0.4, keep 0 s), so it
-  rarely queues (0-2% of starts). It stays 16-18 points above keep-alive at equal idle, with 35%
-  less idle than keep-alive 30 s.
-- **Hideable calls drop with AWS uncached starts.** The share of calls whose think gap covers the cold start falls from 82 to 68%
-  on TraceLab, 68 to 56% on Copilot, and 68 to 56% on tau2. Cached it is about the same: 94 -> 91, 82 -> 79,
-  78 -> 78 (`results/sim_report.md`, last table).
-- **The oracle is no longer a useful ceiling under the cap.** It starts each pod at the last
-  moment, so any queueing or contention makes it late (TraceLab 93.9 -> 54.0% warm cached).
-  It does not know about the cap. Its idle stays tiny.
+  (2.6-3.8 s); uncached ones are 0.6-2.5 s slower (4.3-8.4 s). Without the cap the margins are
+  within 1.6 points of kind.
+- **Contention and the cap cause the changes.** The frozen coding profile starts many pods at
+  once (up to 3 copies of several servers): on TraceLab 55% of its starts wait for a slot
+  (mean 7.8 s cached) and 83% overlap another start (keep-alive 30 s: 16% and 40%). One copy
+  per tool removes most of that.
+- **Hideable calls drop with AWS uncached starts:** 82 -> 68% on TraceLab, 68 -> 56% on Copilot
+  and tau2; cached about the same (94 -> 91, 82 -> 79, 78 -> 78).
 
-Wait per call: `results/sim_added_cdf.png` shows the CDF of each call's wait for a pod, with AWS + cap
-solid and kind dashed. Pareto plots: `results/sim_pareto.png` (AWS + cap) and
-`results/sim_pareto_kind.png`.
+**Oracle: uncapped ceiling, not achievable under the cap.** The oracle knows the next batch and
+starts each pod one cold start before it. With AWS cold starts, no cap and no contention it is
+the headroom ceiling (cached / uncached warm %: TraceLab 91.1 / 67.8, Copilot 79.7 / 57.8, tau2
+78.1 / 53.2, at 520-4,700 idle pod-s per 1,000 calls, 4-36x less than keep-alive 30 s). It is
+**not achievable under the cap**: its just-in-time starts queue or slow down (cap 2: 54.0 /
+59.7 / 72.5% cached). A cap-aware oracle, which asks for all of a batch's starts ceil(n / cap)
+waves early, gets back part of it (cap 2: 72.5 / 66.1 / 72.5% cached, about 1,300 / 4,900 / 530
+idle). That plan is simple, not optimal. The oracle is not an upper bound on warm %, because
+keeping pods also warms short-gap calls.
+
+Wait per call: `results/sim_added_cdf.png` (AWS + cap solid, kind dashed). Pareto plots:
+`results/sim_pareto.png` (AWS + cap), `results/sim_pareto_kind.png`.
 
 **What we claim.**
-- **Support profile on tau2:** it warms 61% of calls (cached) with 35% less idle than keep-alive 30 s
-  (56%). At equal idle it is 16-18.5 points above keep-alive, on kind and on AWS, with or without
-  the scale-up cap. Markov-1 top-1 is also well above keep-alive on tau2, so much of this is
-  "the next tool is predictable", not the ranker in particular.
-- **Coding profile on Copilot:** with AWS cold starts and the cap it is 2 points above keep-alive at equal idle
-  (65% warm at 46k idle pod-s per 1,000 calls).
-- **Coding profile on TraceLab:** with AWS cold starts and the cap it does not beat keep-alive; it buys more warm
-  calls only by spending more idle, as keep-alive 60 s does.
-- **Where prediction pays off:** see the cold-call decomposition below (analysis only; nothing was tuned on it).
+- **Support (tau2): strong.** It warms 61% of calls (cached, AWS + cap) with 35% less idle than
+  keep-alive 30 s (56%), and is 15.6-18.5 points above keep-alive at equal idle in every run:
+  kind, AWS, and caps 1, 2, 3 or none. Markov-1 top-1 is also well above keep-alive on tau2,
+  so much of this is "the next tool is predictable", not the ranker in particular.
+- **Coding (TraceLab, Copilot): modest, or none, under the cap.** The frozen profile is below
+  keep-alive on TraceLab under any cap (-0.9 to -3.0) and 0.6-3.5 points above it on Copilot.
+  The retuned profile (one copy per tool, VAL only) is 2.8-4.2 points above keep-alive on
+  TraceLab and 3.8-5.8 on Copilot under caps 1-3. These are a few points, on one-node
+  cold-start numbers.
+- **Where prediction pays:** see the cold-call decomposition (analysis only; nothing was tuned
+  on it; frozen profiles).
 
   Calls left cold by keep-alive 30 s, by cause, and the share our profile warms (AWS + cap,
   cached; `results/sim_cold_decomp.md`; kind values in brackets):
@@ -157,41 +204,56 @@ solid and kind dashed. Pareto plots: `results/sim_pareto.png` (AWS + cap) and
   less idle. With the cap, every share is lower, because warming starts queue behind each other.
 
 **What we do not claim.**
-- **tau-bench:** no result, because it has no timestamps.
-- **Production latency or cost:** no numbers. The pricing is an assumption (configs/model/pricing.yaml), and
-  the cold starts come from one 2-vCPU node.
-- **The ranker as the reason tau2 works:** not claimed. Markov-1 top-1 is already +6.7 to +9.6 points above
-  keep-alive at equal idle there, in every run.
-- **Coding traces:** not that prediction helps there in general. On a 2-vCPU node with the cap it does not
-  on TraceLab, and it helps only a little on Copilot.
+- **tau-bench:** no result. It has no timestamps (0 of 1,928 sessions), so it cannot be
+  replayed; the support profile rests on tau2 alone.
+- **Production latency or cost:** no numbers. The pricing is an assumption
+  (configs/model/pricing.yaml), and the cold starts come from one 2-vCPU node.
+- **The ranker as the reason tau2 works:** not claimed. Markov-1 top-1 is already +6.7 to
+  +9.6 points above keep-alive at equal idle there, in every run.
+- **That prediction helps coding workloads in general:** not claimed.
+- **Anything from the `prd` profile:** it is trained and tested on SYNTHETIC traces (below).
 
 **Limits.**
-- **Per-session pods, no shared pool.** Pods are per (session, server); nothing is shared across sessions.
-  Real deployments share one Deployment per tool server, which would help keep-alive and
-  always-warm (and Scenario C, 500 sessions on one tool) more than shown.
-- **The scale-up model is approximate.** Each session is its own node, so other sessions never compete for
-  the 2 slots, and real contention is higher. The parallel_3 time (3 at once) is used for 2 at once
-  because 2 was not measured, which overstates contention. A start already running is not slowed by a later
-  one, which understates it. The queue is first come, first served.
-- **tau2 is small:** 28 VAL / 56 TEST sessions with timing, 342 test calls. The numbers move by several points
-  with a few sessions.
-- **tau-bench cannot be replayed** (no timestamps).
-- **The coding profile has no brake on idle.** Its budget does not bind and its lambda sits at the end of the sweep. On
-  those sources the PRD rule alone does not stop it spending more idle, and with the cap that
-  extra spending also queues its own starts.
-- **The policy was tuned on kind values.** It was not re-tuned for AWS or the cap, so a coding profile tuned with
-  the cap might start fewer pods.
-- **Tuning disclosures:** one TEST look at tau2 (2026-11-03, disclosed below); VAL also served the ranker's
-  early stopping.
+- **Each session is its own node.** Pods are per (session, server); nothing is shared across
+  sessions, and other sessions never compete for the 2 scale-up slots. Real deployments share
+  one Deployment per tool server, which would help keep-alive and always-warm (and Scenario
+  C, 500 sessions on one tool) more than shown, and real contention is higher.
+- **2-at-once timing is borrowed from the 3-at-once measurement.** E0 measured 1 and 3 starts
+  at once, not 2, so any overlap takes the parallel_3 time; this overstates contention for 2.
+  A start already running is not slowed by a later one, which understates it. The queue is
+  first come, first served.
+- **tau2 is small:** 28 VAL / 56 TEST sessions with timing (342 TEST calls); "n=15" in the
+  plan does not match the data. A few sessions move the numbers by several points.
+- **tau-bench is not replayable** (no timestamps).
+- **Tuning:** the frozen profiles were tuned on kind values; the coding retune used AWS + cap
+  on VAL, with a different selection rule (equal-idle margin, disclosed above). One earlier
+  TEST look at tau2 (2026-11-03, disclosed below); VAL also served the ranker's early stopping.
 - **No fresh-eyes review:** the Phase 11 review was skipped for time.
 
-**Oracle headroom.** On kind cold starts, the just-in-time oracle warms every call whose
-think gap is at least the server's cold start, at almost no idle (568 / 4,716 / 511 pod-s per
-1,000 calls). That is 4-36x less idle than keep-alive 30 s, while it warms more calls than
-our profiles (93.9 / 82.6 / 77.5% vs 75.3 / 69.4 / 64.0%). It is not an upper bound on
-warm %, because keeping pods also warms short-gap calls. Under the AWS cap the oracle as
-written is late (its starts queue), so the headroom it shows there is idle only. A
-cap-aware oracle that starts earlier when slots are busy was not built.
+**Synthetic PRD demo profile `prd` (SYNTHETIC; not evidence about real workloads).** For the
+demo, the image carries a third bundle, `lgbm-prd-<commit>`, trained on SYNTHETIC traces
+(`traces/generate_synthetic.py --type prd`, seed 0, 4,500 sessions). They are sampled from
+the PRD's own scenario graphs (`configs/model/workflow_graphs.yaml`):
+- 2,000 Scenario A sessions: order_lookup -> policy_check 0.70 / refund_issue 0.20 / end 0.10;
+  policy_check -> refund_issue 0.55 / end 0.45;
+- 2,000 Scenario B sessions: read_file -> run_tests -> format_diff -> post_comment;
+- 500 Scenario C sessions: one promo_code_lookup call. The PRD gives no graph for C; this is
+  our interpretation, there only so the vocabulary covers the tool.
+
+Think times come from tau2 (A, C) and TraceLab (B) train splits. The vocabulary covers every
+PRD tool name: order_lookup, policy_check, refund_issue, read_file, run_tests, format_diff,
+post_comment, promo_code_lookup. The split is by session (2,520 train / 630 val / 1,350 test,
+no session in two splits). The decision parameters were tuned on VAL only (AWS cold starts,
+cap 2, parallel_3; `results/sim_choice_prd.json`): timing rule (gap p10, cold-start median),
+copies q0.9, keep 0 s after use, cost threshold lambda 100 (budget not binding). The manifest
+says `"synthetic": true` with a data note, and `/healthz` shows `"synthetic": true`.
+
+Held-out synthetic TEST (AWS + cap, `results/sim_prd.csv.gz`; cached / uncached warm %):
+`prd` 42.9 / 23.7, Markov-1 35.5 / 17.5, keep-alive 30 s 0 / 0 (no tool repeats within a
+session), oracle 48.5 / 29.1. The ranker's probabilities are close to the PRD branches but not
+equal: after order_lookup it gives policy_check 0.67 and end 0.18 (PRD 0.70 / 0.10); after
+policy_check, refund_issue 0.63 (PRD 0.55). These numbers show that the mechanism runs on
+the PRD scenarios. They say nothing about real workloads.
 
 **Latency** (`services/predictor/loadtest.py`, results/loadtest.csv; service and load client on
 the same laptop; coding bundle lgbm-coding-69d7b94 (same model files as the current coding
@@ -337,6 +399,20 @@ env var `PREDICTOR_PROFILE`, and the service then serves `MODEL_ROOT/<profile>`.
 whose manifest names another profile is refused at startup (`/healthz` stays 503). To serve
 a bundle from a mounted volume instead, set `MODEL_PATH` to its folder (this overrides the
 profile's default path; keep it under `MODEL_ROOT`).
+
+**Current image: `skypiea/predictor:a7642d03dd10`** (built 2026-11-04; coding =
+lgbm-coding-aabdfd2, support = lgbm-support-aabdfd2, prd = lgbm-prd-a7642d0 SYNTHETIC; all
+exported with the AWS file, sha256 00758310b4d6). To push it as is (Window 1, feat/infra):
+
+    TAG=a7642d03dd10
+    docker tag skypiea/predictor:$TAG localhost:5001/skypiea/predictor:$TAG   # kind registry
+    docker push localhost:5001/skypiea/predictor:$TAG
+    python infra/aws/scripts/push_ecr.py --registry <account>.dkr.ecr.ap-south-1.amazonaws.com \
+        --tag $TAG --images predictor          # needs the ECR repository skypiea/predictor
+    # chart: predictor.profile = support (Scenario A) | coding (Scenario B) | prd (SYNTHETIC demo)
+    # check: GET /healthz -> model_version, profile, "synthetic", "cold_start_matches_bundle": true
+
+To rebuild from scratch:
 
     # feat/model worktree, clean commit; one bundle per profile (not in git)
     COLD=~/skypiea-infra/configs/cold_start.yaml     # the file the pods will mount (AWS now)

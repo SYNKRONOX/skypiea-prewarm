@@ -290,16 +290,20 @@ def write_md() -> None:
                 out.append(f"| {s} | {m} | {p} | " + " | ".join(
                     cell(r, s, m, p, "m") for r in caps) + " |")
     out += ["", "## Oracle (TEST, warm % / idle pod-s per 1k)", "",
-            "`oracle` knows the next batch and starts each pod one cold start before it, "
-            "ignoring the cap: with no cap it is the headroom ceiling; under a cap it is "
-            "**not achievable** (its starts queue). `oracle_cap` also knows the cap and asks "
-            "for all of a batch's starts ceil(n / cap) waves early.", "",
-            "| Source | Mode | oracle, no cap (ceiling) | oracle under cap 2 (not achievable) "
-            "| oracle_cap, cap 1 | oracle_cap, cap 2 | oracle_cap, cap 3 |",
-            "|---|---|---|---|---|---|---|"]
+            "`oracle` knows the next batch and starts each pod one cold start before it. With "
+            "no cap and no contention (AWS) it is the headroom ceiling. With contention or a "
+            "cap it is **not achievable**: its just-in-time starts are slowed or queued. "
+            "`oracle_cap` also knows the cap and asks for all of a batch's starts ceil(n / cap) "
+            "waves early (a simple plan, not an optimum; at cap 1 no start overlaps another, "
+            "so none takes the slower parallel_3 time).", "",
+            "| Source | Mode | oracle, AWS no cap, no contention (ceiling) | oracle, "
+            "uncapped + parallel_3 (not achievable) | oracle, cap 2 (not achievable) | "
+            "oracle_cap, cap 1 | oracle_cap, cap 2 | oracle_cap, cap 3 |",
+            "|---|---|---|---|---|---|---|---|"]
     for s in srcs:
         for m in modes:
-            out.append(f"| {s} | {m} | {cell('aws_uncapped_parallel_3', s, m, 'oracle')} | "
+            out.append(f"| {s} | {m} | {cell('aws', s, m, 'oracle')} | "
+                       f"{cell('aws_uncapped_parallel_3', s, m, 'oracle')} | "
                        f"{cell('aws_cap2_parallel_3', s, m, 'oracle')} | " + " | ".join(
                            cell(r, s, m, "oracle_cap") for r in caps[:3]) + " |")
     SENS_MD.write_text("\n".join(out) + "\n", encoding="utf-8")

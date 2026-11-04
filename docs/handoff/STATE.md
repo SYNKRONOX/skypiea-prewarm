@@ -22,7 +22,10 @@ Last updated: 2026-11-04 (P1 decided: one profile per deployment; AWS cold-start
 | ca2628f | STATE: history rewrite, new bundle and image names |
 | d84c894 | Sim: scale-up cap + parallel_3 contention, CDF data, multi-run; service: PREDICTOR_PROFILE, cold-file-aware golden check; make loadtest 1 worker |
 | aabdfd2 | Sim results: kind rerun (identical), AWS no cap, AWS cap 2 + parallel_3; figures per run, wait CDFs, kind vs AWS table; bundles lgbm-{coding,support}-aabdfd2 exported from here |
-| (this) | AWS cold-call decomposition; docs: results with AWS, image section for two profiles; STATE |
+| 365a4fc | AWS cold-call decomposition; docs: results with AWS, image section for two profiles; STATE |
+| fd3441e | Coding retune under the cap (VAL only; `sim/retune.py`), decide knobs max_warm_tools / stagger_ms, cap-aware oracle; SYNTHETIC prd profile (generator `--type prd`, tuned on its VAL); image/make take a third bundle |
+| a7642d0 | Bundles from synthetic_* sources are marked synthetic (manifest, /healthz); bundle lgbm-prd-a7642d0 exported from here |
+| (this) | Cap sensitivity + final tables (results/sim_sensitivity.*), prd TEST check (results/sim_prd.csv.gz), docs claims rewritten, prd section, STATE |
 
 ## Done
 
@@ -216,13 +219,40 @@ Last updated: 2026-11-04 (P1 decided: one profile per deployment; AWS cold-start
 - Deleted (user): models/lgbm-coding-69d7b94/ and image 69d7b94fdd74. Still present: the
   superseded bundle models/lgbm-coding-1a72c23 and image 1a72c2309441.
 
+## 2026-11-04 (end): coding retune under the cap, cap sensitivity, SYNTHETIC prd bundle
+
+- Coding retune (user-allowed, VAL only, AWS + cap 2 + parallel_3): winner **one copy per tool,
+  lambda 100** (results/sim_choice_coding_cap2.json). Selection rule changed to the VAL
+  equal-idle margin vs keep-alive within the 30% budget, because the frozen rule does not bind
+  for coding and re-picked the frozen profile. NOT adopted: the shipped coding profile and
+  bundle are still the frozen ones (user to decide).
+- TEST, AWS + cap 2, margin vs keep-alive (cached / uncached): TraceLab frozen -1.9 / -2.4,
+  retuned +3.5 / +3.4; Copilot frozen +2.4 / +1.9, retuned +5.1 / +5.0; tau2 support +15.7 /
+  +18.2. Caps 1/2/3/none in results/sim_sensitivity.md. E0 measured 1 and 3 at once, not 2.
+- Oracle: ceiling = AWS no cap, no contention (91.1 / 79.7 / 78.1% cached); under the cap
+  not achievable (54.0 / 59.7 / 72.5); cap-aware oracle_cap at cap 2: 72.5 / 66.1 / 72.5.
+- Sensitivity rows record `365a4fc-dirty`: they were run before commit fd3441e from the code
+  that commit holds (sim/retune.py was not yet committed).
+- prd profile (SYNTHETIC; demo only, not evidence about real workloads): 4,500 sessions from
+  the PRD graphs (A 2,000, B 2,000, C 500 = one promo_code_lookup call, our interpretation),
+  split by session 2,520 / 630 / 1,350; tuned on VAL: timing gap p10, copies q0.9, keep 0 s,
+  lambda 100. Bundle models/lgbm-prd-a7642d0 (manifest `synthetic: true`, data_note).
+- Image **skypiea/predictor:a7642d03dd10** (528 MB): /models/coding = lgbm-coding-aabdfd2,
+  /models/support = lgbm-support-aabdfd2, /models/prd = lgbm-prd-a7642d0. Smoke-tested all
+  three through /decide (read-only, uid 10001, AWS file mounted, cold_start_matches_bundle
+  true). prd does not abstain on order_lookup -> policy_check (warms refund_issue, p 0.69);
+  abstains only after promo_code_lookup, where END has p 1.0.
+- Deleted (user): models/lgbm-coding-1a72c23 and image 1a72c2309441. Previous image
+  aabdfd2a9a39 is still present (superseded by a7642d03dd10).
+
 ## Next
 
-1. Infra window: chart value `predictor.profile` -> `PREDICTOR_PROFILE`; push
-   skypiea/predictor:aabdfd2a9a39 (docs/model.md "Image: build, push, run"); mount the AWS
-   cold-start file; apply P-new and the contract decisions.
-2. Open, not done: Phase 11 fresh-eyes review; shared-pool ablation; a coding profile tuned
-   with the cap (frozen for now); a cap-aware oracle.
+1. Infra window: chart value `predictor.profile` (coding | support | prd) ->
+   `PREDICTOR_PROFILE`; push skypiea/predictor:a7642d03dd10 (docs/model.md "Image: build,
+   push, run"); mount the AWS cold-start file; apply P-new and the contract decisions.
+2. User decision: adopt the retuned coding profile (one copy per tool) and re-export the
+   coding bundle, or keep the frozen one.
+3. Open, not done: Phase 11 fresh-eyes review; shared-pool ablation.
 
 ## Rules for the next session (from the user)
 
