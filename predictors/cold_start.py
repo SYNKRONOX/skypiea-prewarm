@@ -4,6 +4,7 @@
     cs.server("shell_other")              # -> "shell"
     cs.ms("shell_other", "cached", "median_ms")
     cs.tier("shell_other")                # light | medium | heavy
+    cs.parallel_ms("shell", "cached")     # parallel_3 block (3 starts at once), None if absent
 
 No cold-start number lives in code: everything comes from the file, which the infra session
 generates from E0 (kind now, AWS later). ``label`` carries the file's environment and status
@@ -14,7 +15,7 @@ A class not listed under any server goes to the file's ``fallback`` server.
 from __future__ import annotations
 
 import hashlib
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -33,6 +34,7 @@ class ColdStarts:
     status: str
     sha256: str
     path: str
+    parallel: dict[str, dict[str, Any]] = field(default_factory=dict)  # parallel_3 block
 
     @classmethod
     def load(cls, path: Path | str) -> ColdStarts:
@@ -54,8 +56,16 @@ class ColdStarts:
                         raise ValueError(f"{p}: {name}.{mode}.{stat} missing or negative")
             for c in s.get("classes") or []:
                 class_server.setdefault(str(c), str(name))
+        par = ((d.get("parallel_3") or {}).get("servers") or {})
+        for name, s in par.items():
+            for mode in MODES:
+                for stat in STATS:
+                    v = (s.get(mode) or {}).get(stat)
+                    if not isinstance(v, int | float) or v < 0:
+                        raise ValueError(f"{p}: parallel_3.{name}.{mode}.{stat} missing")
         return cls(servers, class_server, fallback, str(d.get("environment", "unknown")),
-                   str(d.get("status", "")), hashlib.sha256(raw).hexdigest()[:12], str(p))
+                   str(d.get("status", "")), hashlib.sha256(raw).hexdigest()[:12], str(p),
+                   {str(k): v for k, v in par.items()})
 
     @property
     def label(self) -> str:
@@ -71,6 +81,12 @@ class ColdStarts:
 
     def server_ms(self, server: str, mode: str = "cached", stat: str = "median_ms") -> float:
         return float(self.servers[server][mode][stat])
+
+    def parallel_ms(self, server: str, mode: str = "cached", stat: str = "median_ms"
+                    ) -> float | None:
+        """Cold start of ``server`` when 3 tools start at once (``parallel_3``), if measured."""
+        v = self.parallel.get(server)
+        return None if v is None else float(v[mode][stat])
 
     def tier(self, tool_class: str) -> str:
         return str(self.servers[self.server(tool_class)].get("tier", "heavy"))

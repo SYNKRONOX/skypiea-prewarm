@@ -8,6 +8,8 @@ tick_ms: 1000               # controller reconciliation tick (FR-3 check)
 purge_ms: 5000              # FR-3: removed within TTL + 5 s
 reactive_ttl_ms: 30000      # pods started by a cold call: controller default TTL
 pod_concurrency: 1          # calls one pod serves at a time
+max_concurrent_scale_ups: 2 # pods starting at once per node (controller maxScaleUpsPerNode; 0 = no limit)
+contention: parallel_3      # a start overlapping another takes the parallel_3 duration (none = off)
 sources:
   - {source: tracelab, vocab: null}
   - {source: copilot_2026, vocab: coding_common}

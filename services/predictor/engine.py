@@ -104,6 +104,7 @@ class Bundle:
     ladder: Ladder
     decider: Decider
     golden: tuple[dict[str, Any], ...] = ()  # golden requests (warm-up before a swap)
+    cold_match: bool = True  # served with the cold-start file the bundle was exported with
 
     @property
     def vocabulary(self) -> tuple[str, ...]:
@@ -195,10 +196,13 @@ def load_bundle(files: Mapping[str, bytes], cold: ColdStarts, *, check_golden: b
         reqs = tuple(c["request"] for c in cases)
     except (ValueError, UnicodeDecodeError, KeyError, TypeError) as e:
         raise BundleError("golden.json is not a list of cases") from e
+    # decisions depend on the cold-start file; with another file only the ranking is checked
+    made_with = man.get("cold_start_sha256")
+    match = made_with is None or made_with == cold.sha256
     b = Bundle(version, man, ranker, cfg, ladder, Decider(ladder, ranker.base.graph, cold, cfg),
-               reqs)
+               reqs, match)
     if check_golden:
-        verify_golden(b, files["golden.json"])
+        verify_golden(b, files["golden.json"], ranked_only=not match)
     return b
 
 
@@ -288,7 +292,7 @@ def unbudgeted(b: Bundle) -> Bundle:
                   Decider(lad, b.decider.graph, b.decider.cold, b.cfg), b.golden)
 
 
-def verify_golden(b: Bundle, text: bytes) -> None:
+def verify_golden(b: Bundle, text: bytes, ranked_only: bool = False) -> None:
     from services.predictor.schema import parse_request
     b = unbudgeted(b)
     try:
@@ -301,6 +305,8 @@ def verify_golden(b: Bundle, text: bytes) -> None:
         got = answer(b, parse_request(c["request"]))
         want = {k: v for k, v in c["response"].items() if k != "model_version"}
         got.pop("model_version")
+        if ranked_only:
+            got, want = got.get("ranked"), want.get("ranked")
         if json.dumps(got, sort_keys=True) != json.dumps(want, sort_keys=True):
             raise BundleError("golden answers differ")
 

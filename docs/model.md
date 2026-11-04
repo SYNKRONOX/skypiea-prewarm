@@ -262,7 +262,7 @@ field name only. `/reload` (admin token, constant-time compare; MODEL_ROOT paths
 allowlisted s3:// only; hash, schema, vocabulary, golden-answer and 200-call warm-up p99 <= 50
 ms checks before an atomic swap), `/rollback`, `/healthz`, `/metrics`. Bundles:
 `models/README.md`. Dockerfile: same pinned base image as the platform image, non-root, no
-shells; **not built yet**.
+shells (built; see below).
 
 Changes 2026-11-04: the ranker scores once per request (one booster call serves `ranked` and
 the decisions; golden answers unchanged); `WORKERS` uvicorn processes (with more than one,
@@ -274,34 +274,62 @@ Load test: see "Latency" in the results section above.
 
 ### Image: build, push, run (for the infra window)
 
-    # feat/model worktree; bundle for the coding profile (not in git)
+**One predictor per deployment (P1, decided 2026-11-04).** There is no scenario field in the
+request. A deployment serves one profile, chosen by the chart value `predictor.profile`
+(`coding` | `support`). The Scenario A demo uses `support`, and Scenario B uses `coding`. One image
+holds both bundles, at `/models/coding` and `/models/support`. The chart passes the value as the
+env var `PREDICTOR_PROFILE`, and the service then serves `MODEL_ROOT/<profile>`. A bundle
+whose manifest names another profile is refused at startup (`/healthz` stays 503). To serve
+a bundle from a mounted volume instead, set `MODEL_PATH` to its folder (this overrides the
+profile's default path; keep it under `MODEL_ROOT`).
+
+    # feat/model worktree, clean commit; one bundle per profile (not in git)
+    COLD=~/skypiea-infra/configs/cold_start.yaml     # the file the pods will mount (AWS now)
     nice -n 10 .venv/bin/python -m services.predictor.export --source tracelab --profile coding \
-        --cold-start ~/skypiea-infra/configs/cold_start.yaml          # -> models/lgbm-coding-<commit>/
+        --cold-start $COLD                           # -> models/lgbm-coding-<commit>/
+    nice -n 10 .venv/bin/python -m services.predictor.export --source tau2_bench --profile support \
+        --cold-start $COLD                           # -> models/lgbm-support-<commit>/
     TAG=$(git rev-parse --short=12 HEAD)
     docker build -f services/predictor/Dockerfile \
-        --build-arg MODEL_DIR=models/lgbm-coding-<commit> -t skypiea/predictor:$TAG .
+        --build-arg CODING_DIR=models/lgbm-coding-<commit> \
+        --build-arg SUPPORT_DIR=models/lgbm-support-<commit> -t skypiea/predictor:$TAG .
+    # (or: make -f mk/model.mk predictor-image)
     # into the kind registry, then ECR (Window 1, feat/infra):
     docker tag skypiea/predictor:$TAG localhost:5001/skypiea/predictor:$TAG
     docker push localhost:5001/skypiea/predictor:$TAG
     python infra/aws/scripts/push_ecr.py --registry <account>.dkr.ecr.ap-south-1.amazonaws.com \
         --tag $TAG --images predictor          # needs the ECR repository skypiea/predictor
 
+Chart (feat/infra owns it; suggested shape):
+
+    predictor:
+      profile: support            # Scenario A; coding for Scenario B
+    # Deployment env: PREDICTOR_PROFILE={{ .Values.predictor.profile }},
+    #   COLD_START_PATH=/cold/cold_start.yaml (ConfigMap of configs/cold_start.yaml)
+
+**Cold-start file and bundles.** A bundle records the sha256 of the cold-start file it was
+exported with (`cold_start_sha256` in MANIFEST.json). Its golden answers include the
+decisions, and those depend on cold starts. When the mounted file is the same, the full golden
+check runs. When it is a different file (for example kind instead of AWS), only the ranking is
+checked, the model still loads, and `/healthz` shows `"cold_start_matches_bundle": false`.
+Export with the file the pods mount (AWS now).
+
 Run: container port 8090; read-only root filesystem works; user 10001; no shell in the image.
 
 | Env | Value |
 |---|---|
+| `PREDICTOR_PROFILE` | `coding` (image default) or `support`, from the chart value `predictor.profile` |
 | `COLD_START_PATH` | mounted cold-start file, e.g. a ConfigMap of configs/cold_start.yaml at `/cold/cold_start.yaml` (required) |
-| `MODEL_PATH` | `/models/current` (baked in; default) |
+| `MODEL_PATH` | unset (then `MODEL_ROOT/<profile>`); set it only to serve a mounted bundle folder |
 | `MODEL_ROOT` | `/models` (default); reloads only from folders under it |
 | `ADMIN_TOKEN` | from a Secret; unset disables /reload and /rollback |
-| `WORKERS` | 1 (recommended: 2 workers added ~45 ms per request in the load test, and /reload needs 1); scale with replicas |
+| `WORKERS` | 1. Two workers added ~45 ms per request in the load test, cause unknown. Run one worker per pod and scale with replicas; /reload also needs 1. |
 | `PORT` | 8090 (default) |
 
-Probes: readiness and liveness `GET /healthz` (503 until a model is loaded). Metrics: `GET
-/metrics` (Prometheus; annotate the pod with the metrics port). The gateway points
-`platform.predictor.url` at `http://<service>:8090`; the request/response is the contract
-plus `keep_after_use_s`, `mode`, `degraded`, `truncated`. Image size 527 MB (numpy, scipy and
-LightGBM are most of it).
+Probes: readiness and liveness `GET /healthz` (503 until a model is loaded; the body names
+`model_version` and `profile`). Metrics: `GET /metrics` (Prometheus; annotate the pod with
+the metrics port). The gateway points `platform.predictor.url` at `http://<service>:8090`. The
+request/response is the contract plus `keep_after_use_s`, `mode`, `degraded` and `truncated`.
 
 ## Predictor service contract: alignment with docs/predictor_contract.md (draft v1)
 

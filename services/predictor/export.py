@@ -66,6 +66,7 @@ def build(train: Sequence[Episode], val: Sequence[Episode], folder: Path, cold: 
                                                                          "golden.json")}
     man = {"schema_version": BUNDLE_SCHEMA, "model_version": version, "source": source,
            "vocab_map": vocab, "profile": profile, "git_commit": commit,
+           "cold_start_sha256": cold.sha256,
            "vocabulary": sorted(ranker.vocab),
            "files": {}}
     # golden answers come from the bundle as loaded (same code path as the service)

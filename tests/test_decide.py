@@ -287,3 +287,29 @@ def test_results_csv_gz_append_is_deterministic(tmp_path: Path) -> None:
     import gzip
 
     assert gzip.decompress(p.read_bytes()).decode() == "a,b\r\n1,\r\n2,3\r\n"
+
+
+def test_sim_scaleup_cap_and_parallel_contention(tmp_path: Path) -> None:
+    f = _cold_file(tmp_path / "cold.yaml")
+    d = yaml.safe_load(f.read_text())
+    d["parallel_3"] = {"servers": {"read": _server("light", [], 5000.0, 7000.0),
+                                   "shell": _server("light", [], 4000.0, 6000.0),
+                                   "generic": _server("heavy", [], 6000.0, 9000.0)}}
+    f.write_text(yaml.safe_dump(d))
+    cs = ColdStarts.load(f)
+    assert cs.parallel_ms("read") == 5000.0 and cs.parallel_ms("nope") is None
+    ep = _episode([(0.0, ["other", "read_file", "shell"])])
+
+    def run(cap: int, contention: str) -> Stats:
+        sim = {**load_config(), "max_concurrent_scale_ups": cap, "contention": contention}
+        st = Stats()
+        simulate(ep, Spec("scale_to_zero", 0.0),
+                 Env(cs, "cached", sim, load_pricing(), DecideConfig.load()), ["read"], st)
+        return st
+
+    assert run(0, "none").added == [4000.0, 2000.0, 2000.0]  # alone, at once, no limit
+    st = run(2, "parallel_3")
+    # other starts alone (4 s), read joins it at t=0: both take the parallel_3 time (6 s, 5 s);
+    # shell waits for a slot (read is Ready at 5 s) and overlaps other: 5 s + 4 s
+    assert st.added == [6000.0, 5000.0, 9000.0]
+    assert (st.scaleups, st.queued, st.queue_ms, st.contended) == (3, 1, 5000.0, 3)

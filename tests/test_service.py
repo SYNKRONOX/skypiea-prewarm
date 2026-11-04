@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import shutil
 from pathlib import Path
@@ -215,3 +216,28 @@ def test_fuzzed_requests_never_crash(client: TestClient) -> None:
             assert all(0 <= x["copies"] <= 10 for x in out["decisions"])
 
     check()
+
+
+def test_other_cold_start_file_checks_the_ranking_only(env: dict, tmp_path: Path) -> None:
+    d = yaml.safe_load(env["cold_path"].read_text())
+    for s in d["servers"].values():
+        for m in ("cached", "uncached"):
+            s[m]["median_ms"] *= 3.0  # other environment: decisions may differ
+    other = ColdStarts.load(_write(tmp_path / "other.yaml", d))
+    assert other.sha256 != env["cold"].sha256
+    files = read_folder(env["a"])
+    assert load_bundle(files, env["cold"]).cold_match is True
+    assert load_bundle(files, other).cold_match is False  # served; ranking still verified
+    gold = json.loads(files["golden.json"])
+    gold[0]["response"]["ranked"][0]["p"] = 0.123456  # a wrong ranking is still refused
+    files = {**files, "golden.json": json.dumps(gold).encode()}
+    man = json.loads(files["MANIFEST.json"])
+    man["files"]["golden.json"] = hashlib.sha256(files["golden.json"]).hexdigest()
+    files["MANIFEST.json"] = json.dumps(man).encode()
+    with pytest.raises(BundleError, match="golden"):
+        load_bundle(files, other)
+
+
+def _write(path: Path, d: dict) -> Path:
+    path.write_text(yaml.safe_dump(d))
+    return path

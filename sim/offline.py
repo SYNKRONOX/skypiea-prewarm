@@ -3,6 +3,7 @@
     nice -n 10 python -m sim.offline --cold-start PATH   # all sources in configs/model/sim.yaml
     python -m sim.offline --sources tau2_bench --cold-start PATH
     python -m sim.offline --figures                      # figures + markdown from the CSVs
+    python -m sim.offline --runs KIND.yaml:0:none,AWS.yaml:2:parallel_3   # one fit, several runs
 
 Test-split sessions with timing are replayed one by one through each policy, with their
 recorded think times and service times. Cold-start durations come from the cold-start file
@@ -20,6 +21,13 @@ Model of the pool (definitions used for every number):
   server is still starting, the call waits for it (FR-9 hold; added latency = rest of the
   start). Otherwise it cold-starts a pod (added latency = the server's cold start). A pod
   scheduled for later is started at once.
+- Scale-ups (configs/model/sim.yaml; the controller's maxScaleUpsPerNode): at most
+  ``max_concurrent_scale_ups`` pods of a session are starting at once; a further start waits
+  for a slot (first come; no cross-session sharing, so each session is its own node). With
+  ``contention: parallel_3`` a start that overlaps another takes the file's parallel_3 time
+  (3 at once, measured), and so do the starts it joins at the same instant; a start already
+  running is not lengthened by a later one. With cap 0 and contention none the results equal
+  the model without these (checked on all test sessions).
 - A pod expires at max(Ready, last use) + TTL and is removed at the next ``tick_ms`` tick
   (FR-3 proxy: removal within TTL + ``purge_ms``). A decision's TTL holds a prewarmed pod
   until its first use and can extend (never shorten) a live pod; after a use every pod keeps
@@ -101,6 +109,7 @@ class Pod:
     fixed_end: float | None = None  # always-warm pods: alive until the session ends
     need_next: int = 0  # prewarm pods: calls of this server in the batch after the decision
     t_next: float = math.inf  # prewarm pods: that batch's arrival
+    par: bool = False  # started while another scale-up was in progress (parallel_3 duration)
 
 
 @dataclass
@@ -152,6 +161,10 @@ class Stats:
     unused_wrong: int = 0  # prewarmed pods never used: server not in the next batch
     unused_surplus: int = 0  # ... server in the next batch, but other pods served it
     unused_expired: int = 0  # ... removed before the next batch arrived
+    scaleups: int = 0  # pod starts (always-warm pods excluded)
+    queued: int = 0  # ... that waited for a scale-up slot (max_concurrent_scale_ups)
+    queue_ms: float = 0.0  # total slot wait
+    contended: int = 0  # ... that overlapped another start (parallel_3 duration)
 
 
 class Env:
@@ -163,11 +176,23 @@ class Env:
         self.tick = float(sim["tick_ms"])
         self.conc = int(sim["pod_concurrency"])
         self.stat = str(sim["cold_stat"])
+        self.cap = int(sim.get("max_concurrent_scale_ups", 0))  # 0 = no limit
+        self.contention = str(sim.get("contention", "none"))  # none | parallel_3
+        if self.contention not in ("none", "parallel_3"):
+            raise ValueError(f"contention must be none or parallel_3, not {self.contention!r}")
         self._cpu = {s: float(pricing["cpu_request_cores"][cold.server_tier(s)])
                      for s in cold.servers}
 
     def cold_ms(self, server: str) -> float:
         return self.cold.server_ms(server, self.mode, self.stat)
+
+    def start_ms(self, server: str, overlapped: bool) -> float:
+        """A pod start's duration: the parallel_3 value if it overlaps another start."""
+        if overlapped and self.contention == "parallel_3":
+            v = self.cold.parallel_ms(server, self.mode, self.stat)
+            if v is not None:
+                return max(v, self.cold_ms(server))
+        return self.cold_ms(server)
 
     def cpu(self, server: str) -> float:
         return self._cpu[server]
@@ -205,6 +230,41 @@ def simulate(ep: Episode, spec: Spec, env: Env, servers: Sequence[str], st: Stat
         pods[s] = live
         return live
 
+    starting: list[Pod] = []  # pods with a scale-up that may still be in progress
+
+    def launch(pod: Pod, t_req: float, now: float) -> None:
+        """Start ``pod`` at the first time >= t_req with a free scale-up slot. A start that
+        overlaps another takes the parallel_3 duration, and so do the starts it joins at the
+        same instant (their effects are not final yet). Keeps expire - ready."""
+        nonlocal starting
+        starting = [p for p in starting if p.ready > now and p is not pod]
+
+        def busy(x: float) -> int:
+            return sum(1 for p in starting if p.start <= x < p.ready)
+
+        start = t_req
+        if env.cap > 0:
+            for c in sorted({t_req, *(p.ready for p in starting if p.ready > t_req)}):
+                if busy(c) < env.cap:
+                    start = c
+                    break
+        over = busy(start) > 0
+        off = pod.expire - pod.ready
+        pod.start, pod.ready, pod.par = start, start + env.start_ms(pod.server, over), over
+        pod.expire = pod.ready + off
+        if over:
+            for p in starting:
+                if p.start == start and not p.par:
+                    nr = start + env.start_ms(p.server, True)
+                    p.expire += nr - p.ready
+                    p.ready, p.par = nr, True
+                    st.contended += 1
+        starting.append(pod)
+        st.scaleups += 1
+        st.queued += start > t_req
+        st.queue_ms += start - t_req
+        st.contended += over
+
     last: Decision | None = None
     dec_ttl: dict[str, float] = {}  # ttl of the latest decision naming each server
     fr2_n = fr2_ok = 0
@@ -212,28 +272,37 @@ def simulate(ep: Episode, spec: Spec, env: Env, servers: Sequence[str], st: Stat
         t, _ = times[b]
         gap = t - times[b - 1][1] if b > 0 else -math.inf
         all_warm = True
+        # waits are settled after the whole batch: a later start in the same instant can
+        # lengthen an earlier one (contention)
+        pending: list[tuple[Any, str, Pod, float, bool]] = []
         for e in ep.events[lo:hi]:
             s = cold.server(e.tool)
-            cms = env.cold_ms(s)
             live = alive(s, t)
             free = [p for p in live if p.busy_until <= t and p.start <= t]
             ready = [p for p in free if p.ready <= t]
+            svc = float(e.service_ms or 0.0)
             if ready:
-                pod, wait = min(ready, key=lambda p: p.ready), 0.0
+                pod, known = min(ready, key=lambda p: p.ready), True
             elif free:
-                pod = min(free, key=lambda p: p.ready)
-                wait = pod.ready - t
+                pod, known = min(free, key=lambda p: p.ready), False
             else:
                 later = [p for p in live if p.start > t]
-                if later:
+                if later:  # scheduled (or queued) for later: start it now, same expiry
                     pod = min(later, key=lambda p: p.start)
-                    pod.start, pod.ready = t, t + cms
+                    keep = pod.expire
+                    launch(pod, t, t)
+                    pod.expire = max(keep, pod.ready)
                 else:
-                    pod = Pod(s, t, t + cms, t + cms, spec.reactive_ttl_ms, False)
+                    pod = Pod(s, t, t, t, spec.reactive_ttl_ms, False)
                     pods[s].append(pod)
-                wait = cms
+                    launch(pod, t, t)
+                known = False
+            pod.busy_until = (t + svc if env.conc == 1 else t) if known else math.inf
+            pending.append((e, s, pod, svc, known))
+        for e, s, pod, svc, known in pending:
+            cms = env.cold_ms(s)
+            wait = 0.0 if known else max(0.0, pod.ready - t)
             serve = t + wait
-            svc = float(e.service_ms or 0.0)
             pod.busy_until = serve + svc if env.conc == 1 else serve
             pod.busy_ms += svc
             pod.used, pod.last_use = True, serve + svc
@@ -271,9 +340,10 @@ def simulate(ep: Episode, spec: Spec, env: Env, servers: Sequence[str], st: Stat
                 have = len([p for p in alive(s, d)
                             if p.expire >= t_next and p.busy_until <= t_next])
                 for _ in range(n - have):
-                    start = max(d, t_next - env.cold_ms(s))
-                    ready = start + env.cold_ms(s)
-                    pods[s].append(Pod(s, start, ready, max(ready, t_next), 0.0, True))
+                    pod = Pod(s, d, d, d, 0.0, True)
+                    pods[s].append(pod)
+                    launch(pod, max(d, t_next - env.cold_ms(s)), d)
+                    pod.expire = max(pod.ready, t_next)
                     st.prewarm += 1
         elif spec.policy is not None and b + 1 <= ep.n_batches:
             last = spec.policy.decide(ep.context(b + 1))
@@ -297,10 +367,10 @@ def simulate(ep: Episode, spec: Spec, env: Env, servers: Sequence[str], st: Stat
                     if p.fixed_end is None:
                         p.expire = max(p.expire, max(p.ready, target) + wd.ttl_ms)
                 for _ in range(grant.get(s, 0)):
-                    start = d + wd.start_in_ms
-                    ready = start + env.cold_ms(s)
-                    pods[s].append(Pod(s, start, ready, ready + wd.ttl_ms, spec.reactive_ttl_ms,
-                                       True, need_next=nxt[s], t_next=t_nx))
+                    pod = Pod(s, d, d, d + wd.ttl_ms, spec.reactive_ttl_ms, True,
+                              need_next=nxt[s], t_next=t_nx)
+                    pods[s].append(pod)
+                    launch(pod, d + wd.start_in_ms, d)
                     st.prewarm += 1
 
     for s in list(pods):
@@ -384,8 +454,20 @@ class Prepared:
     servers: list[str]
 
 
+_PREPARED: dict[tuple[Any, ...], Prepared] = {}  # one fit per source within a process
+
+
 def prepare(src: dict[str, Any], cold: ColdStarts, split: str = "test",
             root: Path | None = None) -> Prepared:
+    key = (src["source"], src.get("vocab"), split, str(root),
+           tuple(sorted(cold.class_server.items())), cold.fallback)
+    if key not in _PREPARED:
+        _PREPARED[key] = _prepare(src, cold, split, root)
+    return _PREPARED[key]
+
+
+def _prepare(src: dict[str, Any], cold: ColdStarts, split: str, root: Path | None
+             ) -> Prepared:
     source, vocab = src["source"], src.get("vocab")
     kw = {"vocab": vocab} if root is None else {"vocab": vocab, "root": root}
     train, val, test = split_groups(source, "fixed", **kw)
@@ -484,7 +566,12 @@ def _row(st: Stats, spec: Spec, base: dict[str, Any], price: float, purge_ms: fl
             "fr2_sessions_all_pct": pct(st.fr2_all, st.fr2_sessions),
             "fr2_sessions_80_pct": pct(st.fr2_80, st.fr2_sessions),
             "fr3_max_lag_ms": f"{st.fr3_max_lag_ms:.1f}",
-            "fr3_pass": st.fr3_max_lag_ms <= purge_ms}
+            "fr3_pass": st.fr3_max_lag_ms <= purge_ms,
+            "scaleups": st.scaleups, "scaleup_queued_pct": pct(st.queued, st.scaleups),
+            "scaleup_queue_ms_mean": f"{st.queue_ms / max(st.queued, 1):.1f}",
+            "scaleup_contended_pct": pct(st.contended, st.scaleups),
+            "added_ms_cdf": json.dumps([round(float(v), 1)
+                                        for v in np.percentile(a, np.arange(0, 101, 2))])}
 
 
 def _open(path: Path, mode: str) -> io.TextIOBase:
@@ -581,10 +668,13 @@ def run_source(src: dict[str, Any], sim: dict[str, Any], cold: ColdStarts,
         base = {"time": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
                 "source": prep.source, "vocab": prep.vocab or "", "cold_mode": mode,
                 "sessions": len(prep.eps), "cold_start_label": cold.label,
-                "cold_start_sha256": cold.sha256}
+                "cold_start_sha256": cold.sha256, "scaleup_cap": env.cap,
+                "contention": env.contention}
         _append(hide_path, [{**r, "git_commit": commit}
                             for r in hideable_rows(prep.eps, env, base)])
-        rows = run_specs(prep, specs_for(sim, prep, env), env, sim, {"profile": profile or ""})
+        rows = run_specs(prep, specs_for(sim, prep, env), env, sim,
+                         {"profile": profile or "", "scaleup_cap": env.cap,
+                          "contention": env.contention})
         nfr3(rows, next(r for r in rows if r["policy"] == "always_warm"))
         for r in rows:
             r["config"], r["git_commit"] = cfg, commit
@@ -604,22 +694,44 @@ def load_config(path: Path = CONFIG) -> dict[str, Any]:
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
     p.add_argument("--cold-start", default=None, help="cold-start YAML (default: sim.yaml)")
+    p.add_argument("--runs", default=None,
+                   help="several runs in one process (one ranker fit per source): "
+                        "PATH:CAP:CONTENTION,... (overrides the three options below)")
     p.add_argument("--sources", default="all")
     p.add_argument("--figures", action="store_true")
+    p.add_argument("--scaleup-cap", type=int, default=None,
+                   help="max concurrent scale-ups per session's node (0 = none; sim.yaml)")
+    p.add_argument("--contention", choices=["none", "parallel_3"], default=None)
+    p.add_argument("--out", default=None, help="results CSV (default results/sim_offline.csv.gz)")
     args = p.parse_args(argv)
     sim = load_config()
+    if args.scaleup_cap is not None:
+        sim["max_concurrent_scale_ups"] = args.scaleup_cap
+    if args.contention is not None:
+        sim["contention"] = args.contention
+    out = Path(args.out) if args.out else CSV_PATH
+    hide = out.with_name(out.name.replace("offline", "hideable")) if args.out else HIDE_CSV
     if args.figures:
         from sim.figures import main as figs
         return figs()
-    path = Path(args.cold_start or sim["cold_start_path"])
-    path = path if path.is_absolute() else ROOT / path
-    cold = ColdStarts.load(path)
-    print(f"cold starts: {cold.path} ({cold.label}, sha256 {cold.sha256})", flush=True)
+    if args.runs:
+        runs = [(a, int(b), c) for a, b, c in (r.rsplit(":", 2) for r in args.runs.split(","))]
+    else:
+        runs = [(args.cold_start or sim["cold_start_path"],
+                 int(sim.get("max_concurrent_scale_ups", 0)), str(sim.get("contention", "none")))]
     pricing, dcfg = load_pricing(), DecideConfig.load()
     want = None if args.sources == "all" else set(args.sources.split(","))
     for src in sim["sources"]:
-        if want is None or src["source"] in want:
-            run_source(src, sim, cold, pricing, dcfg)
+        if want is not None and src["source"] not in want:
+            continue
+        for path_s, cap, contention in runs:
+            path = Path(path_s).expanduser()
+            path = path if path.is_absolute() else ROOT / path
+            cold = ColdStarts.load(path)
+            print(f"cold starts: {cold.path} ({cold.label}, sha256 {cold.sha256}); "
+                  f"scale-up cap {cap}, contention {contention}", flush=True)
+            run_source(src, {**sim, "max_concurrent_scale_ups": cap, "contention": contention},
+                       cold, pricing, dcfg, out, hide)
     return 0
 
 

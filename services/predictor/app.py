@@ -4,6 +4,9 @@
 
 Environment:
 - ``MODEL_PATH``: the bundle folder served at startup (``services/predictor/engine.py``).
+- ``PREDICTOR_PROFILE``: ``coding`` or ``support``. Without ``MODEL_PATH`` the bundle is
+  ``MODEL_ROOT/<profile>`` (the image holds both); a bundle whose manifest names another
+  profile is refused at startup. The chart sets it from ``predictor.profile``.
 - ``COLD_START_PATH``: the infra cold-start file (read once at startup, by path).
 - ``ADMIN_TOKEN``: required in ``X-Admin-Token`` for /reload and /rollback (constant-time
   compare); unset disables both (403).
@@ -55,6 +58,7 @@ from starlette.responses import JSONResponse, Response
 from starlette.routing import Route
 
 from predictors.cold_start import ColdStarts
+from predictors.decide import load_profiles
 from services.predictor.engine import (
     Bundle,
     BundleError,
@@ -67,6 +71,7 @@ from services.predictor.engine import (
 from services.predictor.schema import MAX_BODY_BYTES, TooLarge, parse_request
 
 log = logging.getLogger("skypiea.predictor")
+PROFILES = tuple(sorted(load_profiles()))  # configs/model/profiles.yaml
 FLAG_NAMES = ("now_ms", "history_total", "item", "tool_class", "t_start_ms", "t_end_ms",
               "error", "batch_id")
 BAD_REASONS = ("not_object", "session_id", "history")
@@ -99,14 +104,22 @@ class Settings:
     model_root: str | None
     s3_allowlist: tuple[str, ...]
     workers: int = 1
+    profile: str | None = None
 
     @classmethod
     def from_env(cls) -> Settings:
         allow = tuple(x.strip() for x in os.environ.get("MODEL_URI_ALLOWLIST", "").split(",")
                       if x.strip())
-        return cls(os.environ.get("MODEL_PATH"), os.environ.get("COLD_START_PATH"),
-                   os.environ.get("ADMIN_TOKEN") or None, os.environ.get("MODEL_ROOT"), allow,
-                   int(os.environ.get("WORKERS", "1")))
+        profile = os.environ.get("PREDICTOR_PROFILE") or None
+        if profile is not None and profile not in PROFILES:
+            raise ValueError(f"PREDICTOR_PROFILE must be one of {PROFILES}")
+        root = os.environ.get("MODEL_ROOT")
+        path = os.environ.get("MODEL_PATH") or None
+        if path is None and profile is not None and root:
+            path = os.path.join(root, profile)
+        return cls(path, os.environ.get("COLD_START_PATH"),
+                   os.environ.get("ADMIN_TOKEN") or None, root, allow,
+                   int(os.environ.get("WORKERS", "1")), profile)
 
 
 class State:
@@ -248,7 +261,10 @@ def make_app(settings: Settings | None = None) -> Starlette:
             st.cold = ColdStarts.load(Path(settings.cold_start_path))
         if settings.model_path and st.cold is not None:
             try:
-                st.serve(load_bundle(read_folder(Path(settings.model_path)), st.cold))
+                b = load_bundle(read_folder(Path(settings.model_path)), st.cold)
+                if settings.profile is not None and b.manifest.get("profile") != settings.profile:
+                    raise BundleError(f"bundle is not for profile {settings.profile}")
+                st.serve(b)
                 metrics.reloads.labels("startup_ok").inc()
             except (BundleError, OSError) as e:
                 metrics.reloads.labels("startup_failed").inc()
@@ -272,8 +288,10 @@ def make_app(settings: Settings | None = None) -> Starlette:
         b = st.current
         body = {"status": "ok" if b is not None else "no_model",
                 "model_version": b.version if b is not None else None,
+                "profile": b.manifest.get("profile") if b is not None else None,
                 "previous_version": st.previous.version if st.previous is not None else None,
-                "degraded_count": st.degraded_count}
+                "degraded_count": st.degraded_count,
+                "cold_start_matches_bundle": b.cold_match if b is not None else None}
         return JSONResponse(body, status_code=200 if b is not None else 503)
 
     async def prom(request: Request) -> Response:
