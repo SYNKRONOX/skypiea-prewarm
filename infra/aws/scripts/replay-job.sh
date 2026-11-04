@@ -35,7 +35,7 @@ d = json.load(open(sys.argv[1]))
 json.dump({sys.argv[2]: d[sys.argv[2]]}, open(sys.argv[3], "w"), separators=(",", ":"))
 PY
   elif [ "$CHECK" = concurrent ]; then
-    POL="${2:-scale_to_zero,markov1}"
+    POL="${POL:-${2:-scale_to_zero,markov1}}"
     if [ -n "${FROM_TEST:-}" ]; then   # test sessions of A|B's source (real predictor)
       "$PY" -m gateway.concurrent_check --export-sessions "$T/sessions.json" --n "${N:-40}" \
         --from-test "$FROM_TEST" --record "${RECORD:-results/concurrent_sessions.json}"
