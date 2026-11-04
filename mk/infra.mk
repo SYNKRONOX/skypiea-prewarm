@@ -18,6 +18,7 @@ N           ?= 10
 # AWS deploy: E0 first (no controller); afterwards PLATFORM=true E0PROBE=false
 PLATFORM    ?= false
 E0PROBE     ?= true
+PLATFORM_TAG ?= $(IMAGE_TAG)
 TF           = terraform -chdir=infra/aws
 AWS_KUBECONFIG ?= $(HOME)/.kube/skypiea-aws
 AWS_REGION  ?= ap-south-1
@@ -104,7 +105,8 @@ deploy-aws:              ## helm install the chart on k3s (all tools at 0); need
 	helm upgrade --install skypiea $(CHART) --kubeconfig $(AWS_KUBECONFIG) \
 	  -n $(NS) --create-namespace -f $(CHART)/values-aws.yaml \
 	  --set registry=$$($(TF) output -raw ecr_registry)/ \
-	  --set imageTag=$(IMAGE_TAG) --set platform.enabled=$(PLATFORM) \
+	  --set imageTag=$(IMAGE_TAG) --set platformImageTag=$(PLATFORM_TAG) \
+	  --set platform.enabled=$(PLATFORM) \
 	  --set monitoring.enabled=$(PLATFORM) --set e0Probe.enabled=$(E0PROBE) --wait
 	kubectl --kubeconfig $(AWS_KUBECONFIG) -n $(NS) get deploy
 

@@ -5,6 +5,7 @@
 # Prefix for image names, with trailing slash: "<registry>/" -> <registry>/skypiea/<tool>:<tag>
 registry: ""
 imageTag: latest          # set by make: --set imageTag=$(tools/image_tag.sh)
+platformImageTag: ""      # optional: platform image (gateway/controller/predictor) tag; "" = imageTag
 imagePullSecrets: []
 
 replicas: 0               # initial count only; afterwards the Skypiea controller owns replicas
@@ -76,6 +77,11 @@ platform:
     maxPerTool: 3
     maxTotal: 20
     alwaysWarm: false        # always-warm baseline
+    # Pods starting at once per node (0 = no limit); excess scale-ups queue by due time.
+    # E0 on AWS (2 vCPU): 3 at once = 5.5 s median cached vs 2.7 s alone. See
+    # docs/gateway_controller.md.
+    maxScaleUpsPerNode: 2
+    nodes: 1                 # schedulable nodes (the controller has no cluster-wide RBAC)
     resources:
       requests: {cpu: 50m, memory: 128Mi}
       limits: {cpu: 500m, memory: 256Mi}

@@ -1,7 +1,7 @@
 {{- if .Values.platform.enabled }}
 {{- $p := .Values.platform }}
 {{- $ns := .Release.Namespace }}
-{{- $img := printf "%sskypiea/platform:%s" .Values.registry (toString .Values.imageTag) }}
+{{- $img := printf "%sskypiea/platform:%s" .Values.registry (toString (default .Values.imageTag .Values.platformImageTag)) }}
 {{- $ctl := dict "root" $ "name" "skypiea-controller" }}
 {{- $gw := dict "root" $ "name" "skypiea-gateway" }}
 {{- $pr := dict "root" $ "name" "skypiea-predictor" }}
@@ -79,6 +79,8 @@ spec:
             - {name: SKYPIEA_MAX_PER_TOOL, value: {{ $p.controller.maxPerTool | quote }}}
             - {name: SKYPIEA_MAX_TOTAL, value: {{ $p.controller.maxTotal | quote }}}
             - {name: SKYPIEA_ALWAYS_WARM, value: {{ $p.controller.alwaysWarm | quote }}}
+            - {name: SKYPIEA_MAX_SCALEUPS_PER_NODE, value: {{ $p.controller.maxScaleUpsPerNode | quote }}}
+            - {name: SKYPIEA_NODES, value: {{ $p.controller.nodes | quote }}}
           readinessProbe:
             httpGet: {path: /healthz, port: api}
             periodSeconds: 2

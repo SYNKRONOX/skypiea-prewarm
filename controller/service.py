@@ -1,7 +1,8 @@
 """Controller runtime: HTTP API + reconcile loop around the pure WarmPool.
 
 HTTP (aiohttp, cluster-internal Service only):
-  POST /v1/warm      {tool_class, copies, ttl_s|null, reason}     -> {accepted, server}
+  POST /v1/warm      {tool_class, copies, ttl_s|null, reason, start_in_ms?} -> {accepted, server}
+                     (start_in_ms orders the scale-up queue when the per-node limit is hit)
   POST /v1/inflight  {gateway_id, counts: {server: n}}
   GET  /v1/state     current pool state (debugging, functional checks)
   GET  /healthz, GET /metrics
@@ -21,6 +22,7 @@ from prometheus_client import (
     CollectorRegistry,
     Counter,
     Gauge,
+    Histogram,
     generate_latest,
 )
 
@@ -84,6 +86,16 @@ class Metrics:
                            "long", ["tool"], registry=r)
         self.warm_requests = Counter("skypiea_warm_requests_total", "POST /v1/warm",
                                      ["tool", "reason"], registry=r)
+        self.queue_depth = Gauge("skypiea_scaleup_queue_depth", "Pods waiting for a scale-up "
+                                 "slot (max_scaleups_per_node reached)", registry=r)
+        self.queued = Counter("skypiea_scaleups_queued_total", "Scale-ups that had to wait "
+                              "for a slot", ["tool"], registry=r)
+        self.queue_wait = Histogram("skypiea_scaleup_queue_wait_seconds", "Time a queued "
+                                    "scale-up waited for its slot", registry=r,
+                                    buckets=(0.5, 1, 2, 3, 5, 8, 13, 20, 30, 60, 120))
+        self.queue_expired = Counter("skypiea_scaleups_expired_in_queue_total", "Queued "
+                                     "scale-ups whose warm/demand ended before a slot freed",
+                                     ["tool"], registry=r)
 
 
 class ControllerService:
@@ -103,10 +115,11 @@ class ControllerService:
             tool_class if tool_class in self.tm.servers else self.tm.fallback)
 
     # ---------------- inputs ----------------
-    def warm(self, tool_class: str, copies: int, ttl_s: int | None, reason: str) -> dict:
+    def warm(self, tool_class: str, copies: int, ttl_s: int | None, reason: str,
+             start_in_ms: int = 0) -> dict:
         server = self.server_for(tool_class)
         n_ref = len(self.pool.refused)
-        accepted = self.pool.warm(server, copies, ttl_s, self.clock())
+        accepted = self.pool.warm(server, copies, ttl_s, self.clock(), start_in_ms)
         self._count_refused(n_ref)
         self.metrics.warm_requests.labels(server, reason.split(":")[0]).inc()
         return {"server": server, "accepted": accepted, "requested": copies}
@@ -125,6 +138,7 @@ class ControllerService:
             n_ref = len(self.pool.refused)
             actions = self.pool.plan(now, self.wall())
             self._count_refused(n_ref)
+            self._drain_queue_events()
             done = []
             for a in actions:
                 try:
@@ -144,6 +158,21 @@ class ControllerService:
                 self.metrics.stuck.labels(name).set(1 if name in stuck else 0)
             return done
 
+    def _drain_queue_events(self) -> None:
+        p = self.pool
+        for server in p.queued:
+            self.metrics.queued.labels(server).inc()
+            log.info("scale-up of %s queued (max %d starting per node)", server,
+                     p.cfg.max_scaleups_per_node)
+        for _, waited in p.dequeued:
+            self.metrics.queue_wait.observe(waited)
+        for server, waited in p.expired:
+            self.metrics.queue_expired.labels(server).inc()
+            log.warning("queued scale-up of %s ended after %.1fs without a slot", server,
+                        waited)
+        p.queued, p.dequeued, p.expired = [], [], []
+        self.metrics.queue_depth.set(sum(n for _, n in p.queue))
+
     async def run(self) -> None:
         await self.ready_event.wait()
         while True:
@@ -160,7 +189,8 @@ class ControllerService:
         return {name: {"live": st.live, "ready": st.ready,
                        "copies": st.copies if now < st.warm_until + purge else 0,
                        "warm_for_s": round(max(0.0, st.warm_until - now), 2),
-                       "inflight": self.pool.inflight(name, now)}
+                       "inflight": self.pool.inflight(name, now),
+                       "queued": next((n for s, n in self.pool.queue if s == name), 0)}
                 for name, st in self.pool.s.items()}
 
     def web_app(self) -> web.Application:
@@ -170,12 +200,14 @@ class ControllerService:
                 cls, copies = str(d["tool_class"]), int(d.get("copies", 1))
                 ttl = d.get("ttl_s")
                 ttl = None if ttl is None else int(ttl)
+                start_in_ms = int(d.get("start_in_ms") or 0)
                 reason = str(d.get("reason", ""))[:64] or "unspecified"
             except (ValueError, KeyError, TypeError) as e:
                 return web.json_response({"error": f"bad request: {e}"}, status=400)
-            if copies < 0 or (ttl is not None and ttl < 0):
-                return web.json_response({"error": "copies and ttl_s must be >= 0"}, status=400)
-            return web.json_response(self.warm(cls, copies, ttl, reason))
+            if copies < 0 or (ttl is not None and ttl < 0) or start_in_ms < 0:
+                return web.json_response({"error": "copies, ttl_s and start_in_ms must be "
+                                                   ">= 0"}, status=400)
+            return web.json_response(self.warm(cls, copies, ttl, reason, start_in_ms))
 
         async def inflight(request: web.Request) -> web.Response:
             try:
