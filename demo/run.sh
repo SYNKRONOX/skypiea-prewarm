@@ -68,16 +68,7 @@ docker tag "skypiea/predictor:$PRED_TAG" "$REG/skypiea/predictor:$PRED_TAG"
 docker push -q "$REG/skypiea/predictor:$PRED_TAG" >/dev/null
 echo "pushed $(echo $TOOLS | wc -w) tools, platform, predictor"
 
-deploy() {   # serve = stub | model
-  helm upgrade --install skypiea charts/skypiea --kube-context "$CTX" -n "$NS" --create-namespace \
-    -f charts/skypiea/values-kind.yaml --set imageTag="$TAG" \
-    --set platform.enabled=true --set e0Probe.enabled=false \
-    --set platform.predictor.image.tag="$PRED_TAG" --set platform.predictor.profile=prd \
-    --set-file platform.predictor.coldStartYaml=configs/cold_start.yaml \
-    --set platform.predictor.serve="$1" --wait --timeout 10m >/dev/null
-  kubectl --context "$CTX" -n "$NS" rollout status deploy/skypiea-gateway --timeout=180s >/dev/null
-  echo "deployed: images $TAG, predictor $PRED_TAG (profile prd), gateway serves the $1"
-}
+deploy() { SERVE=$1 PRED_TAG=$PRED_TAG TAG=$TAG demo/deploy.sh; }
 replay() {   # policy [extra args]
   local pol=$1; shift
   "$PY" -m gateway.scenario_run --base http://127.0.0.1:18080,http://127.0.0.1:18081,http://127.0.0.1:18082,http://127.0.0.1:18083 \
