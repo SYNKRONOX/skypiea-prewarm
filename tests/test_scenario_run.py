@@ -124,3 +124,68 @@ def test_markov1_warmup_drops_non_finite_calls():
     assert info["markov1_warmup_dropped_calls"] == 1 and info["markov1_warmup_dropped_from"] == [0]
     hist = [j["history"] for u, j in sent if u.endswith("/decide")]
     assert [[h["tool_class"] for h in x] for x in hist] == [["a"], ["c"]]
+
+
+def test_keep_alive_t_points_set_the_stub_ttl():
+    import asyncio
+
+    from gateway.scenario_run import Runner
+
+    sent = []
+
+    class R:
+        def raise_for_status(self):
+            pass
+
+    class C:
+        async def post(self, url, json):
+            sent.append((url, json))
+            return R()
+
+    r = Runner("gw", "ctl", "stub", "model", "A", 5, 0.0)
+    for pol, ttl in (("keep_alive", 30), ("keep_alive_10", 10), ("keep_alive_60", 60)):
+        info = asyncio.run(r.setup(C(), pol, [], None))
+        assert sent[-1] == ("stub/admin/policy", {"name": "keep_alive", "params": {"ttl_s": ttl}})
+        assert info["stub_params"] == {"ttl_s": ttl}
+
+
+def test_stub_ranked_never_sums_above_one():
+    import random
+    import time
+
+    from gateway.predictor_stub import _answer
+
+    rng = random.Random(1)
+    for _ in range(3000):
+        n = rng.randint(1, 12)
+        w = [rng.random() for _ in range(n)]
+        ranked = {f"c{i}": x / sum(w) for i, x in enumerate(w)}
+        out = _answer("markov1", ranked, [], time.perf_counter())["ranked"]
+        assert sum(x["p"] for x in out) <= 1.0 + 1e-12
+    # the case the old round(.., 6) got wrong: 2 x 0.5000005 -> 1.000002 after rounding
+    out = _answer("m", {"a": 0.4999995, "b": 0.4999995}, [], time.perf_counter())["ranked"]
+    assert sum(x["p"] for x in out) <= 1.0
+
+
+def test_concurrent_export_drops_non_finite_calls(tmp_path, monkeypatch):
+    import sys
+
+    import gateway.scenario_sessions as ss
+    from gateway import concurrent_check
+
+    nan = float("nan")
+    calls = {"B": {"sessions": {
+        "s1": [{"tool_class": "a", "t_ms": 0.0, "service_ms": 1.0},
+               {"tool_class": "b", "t_ms": 5.0, "service_ms": nan}],
+        "s2": [{"tool_class": "a", "t_ms": 0.0, "service_ms": 2.0}]}}}
+    rec = {"scenarios": {"B": {"source": "tracelab", "split": "test", "ids": ["s1", "s2"]}}}
+    monkeypatch.setattr(ss, "draw", lambda *a: (calls, rec))
+    out, record = tmp_path / "s.json", tmp_path / "r.json"
+    monkeypatch.setattr(sys, "argv", ["x", "--export-sessions", str(out), "--from-test", "B",
+                                      "--record", str(record), "--n", "2"])
+    assert concurrent_check.main() == 0
+    sess = json.loads(out.read_text())["B"]
+    assert [len(s) for s in sess] == [1, 1]
+    r = json.loads(record.read_text())["B"]
+    assert r["nonfinite_dropped_calls"] == 1 and r["nonfinite_dropped_from"] == {"s1": 1}
+    assert r["calls_after_drop"] == [1, 1]

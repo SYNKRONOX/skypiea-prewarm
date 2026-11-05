@@ -42,7 +42,8 @@ import httpx
 
 META = {"io.modelcontextprotocol/protocolVersion": "2026-07-28",
         "io.modelcontextprotocol/clientCapabilities": {}}
-STUB_POLICIES = ["scale_to_zero", "always_warm", "keep_alive", "markov1"]
+STUB_POLICIES = ["scale_to_zero", "always_warm", "keep_alive", "markov1",
+                 "keep_alive_10", "keep_alive_60"]   # extra keep-alive T points (2026-11-05)
 CTL_METRICS = ["skypiea_pod_seconds_idle_total", "skypiea_scale_events_total",
                "skypiea_scaleups_queued_total", "skypiea_scaleups_expired_in_queue_total",
                "skypiea_scale_refused_total", "skypiea_scale_errors_total",
@@ -182,9 +183,13 @@ class Runner:
                                                     "cold_start_matches_bundle")}
             return info
         params = {"ttl_s": 90} if pol == "always_warm" else {}
+        name = pol
         if pol == "keep_alive":
             params = {"ttl_s": 30}
-        (await c.post(f"{self.stub}/admin/policy", json={"name": pol, "params": params})
+        elif pol.startswith("keep_alive_"):   # keep_alive_10, keep_alive_60: T in seconds
+            name, params = "keep_alive", {"ttl_s": int(pol.rsplit("_", 1)[1])}
+        info["stub_params"] = params
+        (await c.post(f"{self.stub}/admin/policy", json={"name": name, "params": params})
          ).raise_for_status()
         if pol == "markov1":
             dropped = {}

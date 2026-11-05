@@ -189,10 +189,24 @@ def main() -> int:
         from gateway.scenario_sessions import draw
 
         calls, rec = draw(Path(a.sessions_dir), a.n, 20261105, 600.0, 0)
-        sess = list(calls[a.from_test]["sessions"].values())
+        import math
+
+        sess, dropped = [], {}
+        for sid, cs in calls[a.from_test]["sessions"].items():
+            # data hygiene (2026-11-05): drop calls with a non-finite t_ms/service_ms (as the
+            # Markov-1 warm-up); counts and session ids go into the record
+            clean = [x for x in cs if math.isfinite(x["t_ms"]) and math.isfinite(x["service_ms"])]
+            if len(clean) < len(cs):
+                dropped[sid] = len(cs) - len(clean)
+            sess.append(clean)
         Path(a.export_sessions).write_text(json.dumps({"A": [], "B": sess}))
         r = rec["scenarios"][a.from_test]
         r.pop("markov1_warmup", None)
+        r["nonfinite_dropped_calls"] = sum(dropped.values())
+        r["nonfinite_dropped_from"] = dropped
+        r["calls_after_drop"] = [len(x) for x in sess]
+        print(f"dropped {sum(dropped.values())} non-finite calls from {len(dropped)} sessions: "
+              f"{dropped}")
         Path(a.record).write_text(json.dumps({"seed": 20261105, "n": a.n, a.from_test: r},
                                              indent=1) + "\n")
         print(f"wrote {a.export_sessions}: {len(sess)} {r['source']} test sessions, "
