@@ -1,0 +1,21 @@
+# Offline trace simulation (sim/offline.py). Read by SimConfig.load().
+# Cold starts are read from this file at run time (path relative to the repo root unless
+# absolute; override with --cold-start). Replace it with the AWS file when it exists.
+cold_start_path: configs/cold_start.yaml
+cold_modes: [cached, uncached]
+cold_stat: median_ms        # the simulated cold-start duration of every pod start
+tick_ms: 1000               # controller reconciliation tick (FR-3 check)
+purge_ms: 5000              # FR-3: removed within TTL + 5 s
+reactive_ttl_ms: 30000      # pods started by a cold call: controller default TTL
+pod_concurrency: 1          # calls one pod serves at a time
+max_concurrent_scale_ups: 2 # pods starting at once per node (controller maxScaleUpsPerNode; 0 = no limit)
+contention: parallel_3      # a start overlapping another takes the parallel_3 duration (none = off)
+sources:
+  - {source: tracelab, vocab: null}
+  - {source: copilot_2026, vocab: coding_common}
+  - {source: tau2_bench, vocab: null}
+keep_alive_s: [5, 10, 30, 60, 300, 600]
+tau_sweep: [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+markov_tau: 0.6
+lambda_sweep: [1, 3, 10, 30, 100]  # cost threshold knob (pod-s per cold-start s)
+nfr3_idle_ratio: 0.3          # NFR-3: idle pod-seconds <= 30% of always-warm (val selection)

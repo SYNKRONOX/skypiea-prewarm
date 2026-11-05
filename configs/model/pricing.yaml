@@ -1,0 +1,10 @@
+# Prices and per-pod CPU for the PRD cost model (sim/offline.py). ASSUMPTIONS until the AWS
+# bill is in: the vCPU-second price spreads the node's on-demand price over its vCPUs.
+status: assumption
+vcpu_second_usd: 1.3993e-05   # m7i-flex.large $0.10075/h (ap-south-1, 2026-10-29) / 2 vCPU / 3600 s
+vcpu_second_source: feat/infra docs/aws_plan.md, EC2 on-demand list price
+# CPU requested per pod by tier (cores), from feat/infra charts/skypiea/values.yaml (0b24053)
+cpu_request_cores:
+  light: 0.05
+  medium: 0.05
+  heavy: 0.075

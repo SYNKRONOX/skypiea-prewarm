@@ -1,0 +1,7 @@
+# Synthetic PRD Scenario A (traces/generate_synthetic.py); tools are already classes.
+classes: [order_lookup, policy_check, refund_issue, other]
+default: other
+exact:
+  order_lookup: [order_lookup]
+  policy_check: [policy_check]
+  refund_issue: [refund_issue]

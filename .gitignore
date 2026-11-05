@@ -34,3 +34,11 @@ Thumbs.db
 
 # Chat exports (handoff notes are tracked, raw transcripts are not)
 docs/handoff/*.txt
+# PRD PDF has personal contact details: keep PDFs in docs/ untracked, except the plan
+docs/*.pdf
+!docs/Skypiea_Final_Plan.pdf
+
+# Chat exports are never committed
+
+# The full accuracy log is committed gzipped (results/p1_accuracy.csv.gz)
+results/p1_accuracy.csv

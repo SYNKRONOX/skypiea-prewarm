@@ -1,0 +1,14 @@
+# SYNTHETIC mix of PRD Scenarios A, B and C (traces/generate_synthetic.py --type prd) for the
+# demo bundle; tools are already classes and are the deployed tool-server names.
+classes: [order_lookup, policy_check, refund_issue, read_file, run_tests, format_diff,
+          post_comment, promo_code_lookup, other]
+default: other
+exact:
+  order_lookup: [order_lookup]
+  policy_check: [policy_check]
+  refund_issue: [refund_issue]
+  read_file: [read_file]
+  run_tests: [run_tests]
+  format_diff: [format_diff]
+  post_comment: [post_comment]
+  promo_code_lookup: [promo_code_lookup]

@@ -1,0 +1,24 @@
+# LightGBM re-ranker (predictors/lgbm_ranker.py). Read by LGBMRanker.from_config().
+seed: 0
+num_threads: 4            # the laptop is shared with Docker and the kind cluster
+candidates:
+  ngram_top: 20
+  graph_top: 5            # top of the graph-prior blend, unioned with the n-gram top
+oof_folds: 3              # group folds for out-of-fold base-model features on train
+max_train_points: 60000   # decision points sampled (seeded) for LightGBM training
+max_val_points: 30000     # decision points for early stopping and calibration
+# graph: {per_session_cap: 5}   # optional overrides of configs/model/graph.yaml (experiments)
+# none: ship raw LightGBM scores (default; raw is already calibrated on TEST, Phase 4).
+# isotonic: apply the VAL-fitted isotonic map. The map is always fitted and saved, and the
+# Phase 4 runner reports TEST ECE both ways; VAL cannot choose, since isotonic is fitted on it.
+calibration: none         # none | isotonic
+lgbm:
+  objective: binary
+  learning_rate: 0.05
+  num_leaves: 31
+  min_data_in_leaf: 50
+  feature_fraction: 0.9
+  bagging_fraction: 1.0
+  lambda_l2: 1.0
+  max_rounds: 1000
+  early_stopping_rounds: 50

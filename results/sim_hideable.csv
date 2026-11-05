@@ -1,0 +1,491 @@
+time,source,vocab,cold_mode,sessions,cold_start_label,cold_start_sha256,tool_class,server,calls,hideable_pct,git_commit,scaleup_cap,contention
+2026-11-03T18:10:01Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,ALL,,225290,93.9030,8cc573b-dirty,,
+2026-11-03T18:10:01Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,agent,generic_fallback,1789,93.6836,8cc573b-dirty,,
+2026-11-03T18:10:01Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,build,shell,4411,98.8438,8cc573b-dirty,,
+2026-11-03T18:10:01Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,git,shell,12387,95.2773,8cc573b-dirty,,
+2026-11-03T18:10:01Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,other,generic_fallback,351,90.0285,8cc573b-dirty,,
+2026-11-03T18:10:01Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,package,shell,2139,99.1585,8cc573b-dirty,,
+2026-11-03T18:10:01Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,planning,post_comment,6787,94.5926,8cc573b-dirty,,
+2026-11-03T18:10:01Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,read_file,read_file,54354,94.2672,8cc573b-dirty,,
+2026-11-03T18:10:01Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,run_tests,run_tests,1091,81.1182,8cc573b-dirty,,
+2026-11-03T18:10:01Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,schedule,generic_fallback,440,92.0455,8cc573b-dirty,,
+2026-11-03T18:10:01Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,search,search,33921,84.4226,8cc573b-dirty,,
+2026-11-03T18:10:01Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,shell_io,shell,27270,93.0400,8cc573b-dirty,,
+2026-11-03T18:10:01Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,shell_other,shell,54840,97.8118,8cc573b-dirty,,
+2026-11-03T18:10:01Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,user_io,post_comment,637,99.8430,8cc573b-dirty,,
+2026-11-03T18:10:01Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,web,generic_fallback,2361,67.8102,8cc573b-dirty,,
+2026-11-03T18:10:01Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,write_file,edit_file,22512,99.7024,8cc573b-dirty,,
+2026-11-03T18:10:01Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,ALL,,225290,81.9158,8cc573b-dirty,,
+2026-11-03T18:10:01Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,agent,generic_fallback,1789,77.2499,8cc573b-dirty,,
+2026-11-03T18:10:01Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,build,shell,4411,91.1811,8cc573b-dirty,,
+2026-11-03T18:10:01Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,git,shell,12387,87.6241,8cc573b-dirty,,
+2026-11-03T18:10:01Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,other,generic_fallback,351,73.7892,8cc573b-dirty,,
+2026-11-03T18:10:01Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,package,shell,2139,94.9977,8cc573b-dirty,,
+2026-11-03T18:10:01Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,planning,post_comment,6787,77.2359,8cc573b-dirty,,
+2026-11-03T18:10:01Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,read_file,read_file,54354,80.3713,8cc573b-dirty,,
+2026-11-03T18:10:01Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,run_tests,run_tests,1091,46.8378,8cc573b-dirty,,
+2026-11-03T18:10:01Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,schedule,generic_fallback,440,53.1818,8cc573b-dirty,,
+2026-11-03T18:10:01Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,search,search,33921,70.2014,8cc573b-dirty,,
+2026-11-03T18:10:01Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,shell_io,shell,27270,65.0605,8cc573b-dirty,,
+2026-11-03T18:10:01Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,shell_other,shell,54840,93.8239,8cc573b-dirty,,
+2026-11-03T18:10:01Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,user_io,post_comment,637,99.8430,8cc573b-dirty,,
+2026-11-03T18:10:01Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,web,generic_fallback,2361,38.4583,8cc573b-dirty,,
+2026-11-03T18:10:01Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,write_file,edit_file,22512,96.7262,8cc573b-dirty,,
+2026-11-03T18:14:58Z,copilot_2026,coding_common,cached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,ALL,,18322,82.1854,8cc573b-dirty,,
+2026-11-03T18:14:58Z,copilot_2026,coding_common,cached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,build,shell,1344,85.0446,8cc573b-dirty,,
+2026-11-03T18:14:58Z,copilot_2026,coding_common,cached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,other,generic_fallback,208,58.6538,8cc573b-dirty,,
+2026-11-03T18:14:58Z,copilot_2026,coding_common,cached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,package,shell,5,40.0000,8cc573b-dirty,,
+2026-11-03T18:14:58Z,copilot_2026,coding_common,cached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,planning,post_comment,855,80.4678,8cc573b-dirty,,
+2026-11-03T18:14:58Z,copilot_2026,coding_common,cached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,read_file,read_file,6441,80.0963,8cc573b-dirty,,
+2026-11-03T18:14:58Z,copilot_2026,coding_common,cached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,run_tests,run_tests,65,50.7692,8cc573b-dirty,,
+2026-11-03T18:14:58Z,copilot_2026,coding_common,cached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,search,search,2757,67.7911,8cc573b-dirty,,
+2026-11-03T18:14:58Z,copilot_2026,coding_common,cached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,shell,shell,2714,85.9617,8cc573b-dirty,,
+2026-11-03T18:14:58Z,copilot_2026,coding_common,cached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,write_file,edit_file,3933,94.3046,8cc573b-dirty,,
+2026-11-03T18:14:58Z,copilot_2026,coding_common,uncached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,ALL,,18322,67.4653,8cc573b-dirty,,
+2026-11-03T18:14:58Z,copilot_2026,coding_common,uncached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,build,shell,1344,74.7024,8cc573b-dirty,,
+2026-11-03T18:14:58Z,copilot_2026,coding_common,uncached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,other,generic_fallback,208,48.5577,8cc573b-dirty,,
+2026-11-03T18:14:58Z,copilot_2026,coding_common,uncached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,package,shell,5,20.0000,8cc573b-dirty,,
+2026-11-03T18:14:58Z,copilot_2026,coding_common,uncached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,planning,post_comment,855,60.5848,8cc573b-dirty,,
+2026-11-03T18:14:58Z,copilot_2026,coding_common,uncached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,read_file,read_file,6441,59.9286,8cc573b-dirty,,
+2026-11-03T18:14:58Z,copilot_2026,coding_common,uncached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,run_tests,run_tests,65,47.6923,8cc573b-dirty,,
+2026-11-03T18:14:58Z,copilot_2026,coding_common,uncached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,search,search,2757,48.1683,8cc573b-dirty,,
+2026-11-03T18:14:58Z,copilot_2026,coding_common,uncached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,shell,shell,2714,76.3817,8cc573b-dirty,,
+2026-11-03T18:14:58Z,copilot_2026,coding_common,uncached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,write_file,edit_file,3933,87.5922,8cc573b-dirty,,
+2026-11-03T18:15:14Z,tau2_bench,,cached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,ALL,,342,77.4854,8cc573b-dirty,,
+2026-11-03T18:15:14Z,tau2_bench,,cached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,escalate,post_comment,29,100.0000,8cc573b-dirty,,
+2026-11-03T18:15:14Z,tau2_bench,,cached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,flight_search,travel_booking,64,95.3125,8cc573b-dirty,,
+2026-11-03T18:15:14Z,tau2_bench,,cached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,other,generic_fallback,5,100.0000,8cc573b-dirty,,
+2026-11-03T18:15:14Z,tau2_bench,,cached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,reservation_book,travel_booking,4,100.0000,8cc573b-dirty,,
+2026-11-03T18:15:14Z,tau2_bench,,cached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,reservation_cancel,travel_booking,13,84.6154,8cc573b-dirty,,
+2026-11-03T18:15:14Z,tau2_bench,,cached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,reservation_lookup,travel_booking,160,78.7500,8cc573b-dirty,,
+2026-11-03T18:15:14Z,tau2_bench,,cached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,reservation_modify,travel_booking,24,91.6667,8cc573b-dirty,,
+2026-11-03T18:15:14Z,tau2_bench,,cached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,user_lookup,user_lookup,43,16.2791,8cc573b-dirty,,
+2026-11-03T18:15:14Z,tau2_bench,,uncached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,ALL,,342,68.4211,8cc573b-dirty,,
+2026-11-03T18:15:14Z,tau2_bench,,uncached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,escalate,post_comment,29,100.0000,8cc573b-dirty,,
+2026-11-03T18:15:14Z,tau2_bench,,uncached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,flight_search,travel_booking,64,89.0625,8cc573b-dirty,,
+2026-11-03T18:15:14Z,tau2_bench,,uncached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,other,generic_fallback,5,100.0000,8cc573b-dirty,,
+2026-11-03T18:15:14Z,tau2_bench,,uncached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,reservation_book,travel_booking,4,100.0000,8cc573b-dirty,,
+2026-11-03T18:15:14Z,tau2_bench,,uncached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,reservation_cancel,travel_booking,13,84.6154,8cc573b-dirty,,
+2026-11-03T18:15:14Z,tau2_bench,,uncached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,reservation_lookup,travel_booking,160,61.8750,8cc573b-dirty,,
+2026-11-03T18:15:14Z,tau2_bench,,uncached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,reservation_modify,travel_booking,24,91.6667,8cc573b-dirty,,
+2026-11-03T18:15:14Z,tau2_bench,,uncached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,user_lookup,user_lookup,43,16.2791,8cc573b-dirty,,
+2026-11-04T14:55:21Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,ALL,,225290,93.9030,7a684c0-dirty,,
+2026-11-04T14:55:21Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,agent,generic_fallback,1789,93.6836,7a684c0-dirty,,
+2026-11-04T14:55:21Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,build,shell,4411,98.8438,7a684c0-dirty,,
+2026-11-04T14:55:21Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,git,shell,12387,95.2773,7a684c0-dirty,,
+2026-11-04T14:55:21Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,other,generic_fallback,351,90.0285,7a684c0-dirty,,
+2026-11-04T14:55:21Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,package,shell,2139,99.1585,7a684c0-dirty,,
+2026-11-04T14:55:21Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,planning,post_comment,6787,94.5926,7a684c0-dirty,,
+2026-11-04T14:55:21Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,read_file,read_file,54354,94.2672,7a684c0-dirty,,
+2026-11-04T14:55:21Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,run_tests,run_tests,1091,81.1182,7a684c0-dirty,,
+2026-11-04T14:55:21Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,schedule,generic_fallback,440,92.0455,7a684c0-dirty,,
+2026-11-04T14:55:21Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,search,search,33921,84.4226,7a684c0-dirty,,
+2026-11-04T14:55:21Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,shell_io,shell,27270,93.0400,7a684c0-dirty,,
+2026-11-04T14:55:21Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,shell_other,shell,54840,97.8118,7a684c0-dirty,,
+2026-11-04T14:55:21Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,user_io,post_comment,637,99.8430,7a684c0-dirty,,
+2026-11-04T14:55:21Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,web,generic_fallback,2361,67.8102,7a684c0-dirty,,
+2026-11-04T14:55:21Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,write_file,edit_file,22512,99.7024,7a684c0-dirty,,
+2026-11-04T15:00:24Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,ALL,,225290,81.9158,7a684c0-dirty,,
+2026-11-04T15:00:24Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,agent,generic_fallback,1789,77.2499,7a684c0-dirty,,
+2026-11-04T15:00:24Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,build,shell,4411,91.1811,7a684c0-dirty,,
+2026-11-04T15:00:24Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,git,shell,12387,87.6241,7a684c0-dirty,,
+2026-11-04T15:00:24Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,other,generic_fallback,351,73.7892,7a684c0-dirty,,
+2026-11-04T15:00:24Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,package,shell,2139,94.9977,7a684c0-dirty,,
+2026-11-04T15:00:24Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,planning,post_comment,6787,77.2359,7a684c0-dirty,,
+2026-11-04T15:00:24Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,read_file,read_file,54354,80.3713,7a684c0-dirty,,
+2026-11-04T15:00:24Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,run_tests,run_tests,1091,46.8378,7a684c0-dirty,,
+2026-11-04T15:00:24Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,schedule,generic_fallback,440,53.1818,7a684c0-dirty,,
+2026-11-04T15:00:24Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,search,search,33921,70.2014,7a684c0-dirty,,
+2026-11-04T15:00:24Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,shell_io,shell,27270,65.0605,7a684c0-dirty,,
+2026-11-04T15:00:24Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,shell_other,shell,54840,93.8239,7a684c0-dirty,,
+2026-11-04T15:00:24Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,user_io,post_comment,637,99.8430,7a684c0-dirty,,
+2026-11-04T15:00:24Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,web,generic_fallback,2361,38.4583,7a684c0-dirty,,
+2026-11-04T15:00:24Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,write_file,edit_file,22512,96.7262,7a684c0-dirty,,
+2026-11-04T15:04:42Z,copilot_2026,coding_common,cached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,ALL,,18322,82.1854,7a684c0-dirty,,
+2026-11-04T15:04:42Z,copilot_2026,coding_common,cached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,build,shell,1344,85.0446,7a684c0-dirty,,
+2026-11-04T15:04:42Z,copilot_2026,coding_common,cached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,other,generic_fallback,208,58.6538,7a684c0-dirty,,
+2026-11-04T15:04:42Z,copilot_2026,coding_common,cached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,package,shell,5,40.0000,7a684c0-dirty,,
+2026-11-04T15:04:42Z,copilot_2026,coding_common,cached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,planning,post_comment,855,80.4678,7a684c0-dirty,,
+2026-11-04T15:04:42Z,copilot_2026,coding_common,cached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,read_file,read_file,6441,80.0963,7a684c0-dirty,,
+2026-11-04T15:04:42Z,copilot_2026,coding_common,cached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,run_tests,run_tests,65,50.7692,7a684c0-dirty,,
+2026-11-04T15:04:42Z,copilot_2026,coding_common,cached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,search,search,2757,67.7911,7a684c0-dirty,,
+2026-11-04T15:04:42Z,copilot_2026,coding_common,cached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,shell,shell,2714,85.9617,7a684c0-dirty,,
+2026-11-04T15:04:42Z,copilot_2026,coding_common,cached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,write_file,edit_file,3933,94.3046,7a684c0-dirty,,
+2026-11-04T15:04:59Z,copilot_2026,coding_common,uncached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,ALL,,18322,67.4653,7a684c0-dirty,,
+2026-11-04T15:04:59Z,copilot_2026,coding_common,uncached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,build,shell,1344,74.7024,7a684c0-dirty,,
+2026-11-04T15:04:59Z,copilot_2026,coding_common,uncached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,other,generic_fallback,208,48.5577,7a684c0-dirty,,
+2026-11-04T15:04:59Z,copilot_2026,coding_common,uncached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,package,shell,5,20.0000,7a684c0-dirty,,
+2026-11-04T15:04:59Z,copilot_2026,coding_common,uncached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,planning,post_comment,855,60.5848,7a684c0-dirty,,
+2026-11-04T15:04:59Z,copilot_2026,coding_common,uncached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,read_file,read_file,6441,59.9286,7a684c0-dirty,,
+2026-11-04T15:04:59Z,copilot_2026,coding_common,uncached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,run_tests,run_tests,65,47.6923,7a684c0-dirty,,
+2026-11-04T15:04:59Z,copilot_2026,coding_common,uncached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,search,search,2757,48.1683,7a684c0-dirty,,
+2026-11-04T15:04:59Z,copilot_2026,coding_common,uncached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,shell,shell,2714,76.3817,7a684c0-dirty,,
+2026-11-04T15:04:59Z,copilot_2026,coding_common,uncached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,write_file,edit_file,3933,87.5922,7a684c0-dirty,,
+2026-11-04T15:05:17Z,tau2_bench,,cached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,ALL,,342,77.4854,7a684c0-dirty,,
+2026-11-04T15:05:17Z,tau2_bench,,cached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,escalate,post_comment,29,100.0000,7a684c0-dirty,,
+2026-11-04T15:05:17Z,tau2_bench,,cached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,flight_search,travel_booking,64,95.3125,7a684c0-dirty,,
+2026-11-04T15:05:17Z,tau2_bench,,cached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,other,generic_fallback,5,100.0000,7a684c0-dirty,,
+2026-11-04T15:05:17Z,tau2_bench,,cached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,reservation_book,travel_booking,4,100.0000,7a684c0-dirty,,
+2026-11-04T15:05:17Z,tau2_bench,,cached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,reservation_cancel,travel_booking,13,84.6154,7a684c0-dirty,,
+2026-11-04T15:05:17Z,tau2_bench,,cached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,reservation_lookup,travel_booking,160,78.7500,7a684c0-dirty,,
+2026-11-04T15:05:17Z,tau2_bench,,cached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,reservation_modify,travel_booking,24,91.6667,7a684c0-dirty,,
+2026-11-04T15:05:17Z,tau2_bench,,cached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,user_lookup,user_lookup,43,16.2791,7a684c0-dirty,,
+2026-11-04T15:05:17Z,tau2_bench,,uncached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,ALL,,342,68.4211,7a684c0-dirty,,
+2026-11-04T15:05:17Z,tau2_bench,,uncached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,escalate,post_comment,29,100.0000,7a684c0-dirty,,
+2026-11-04T15:05:17Z,tau2_bench,,uncached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,flight_search,travel_booking,64,89.0625,7a684c0-dirty,,
+2026-11-04T15:05:17Z,tau2_bench,,uncached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,other,generic_fallback,5,100.0000,7a684c0-dirty,,
+2026-11-04T15:05:17Z,tau2_bench,,uncached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,reservation_book,travel_booking,4,100.0000,7a684c0-dirty,,
+2026-11-04T15:05:17Z,tau2_bench,,uncached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,reservation_cancel,travel_booking,13,84.6154,7a684c0-dirty,,
+2026-11-04T15:05:17Z,tau2_bench,,uncached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,reservation_lookup,travel_booking,160,61.8750,7a684c0-dirty,,
+2026-11-04T15:05:17Z,tau2_bench,,uncached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,reservation_modify,travel_booking,24,91.6667,7a684c0-dirty,,
+2026-11-04T15:05:17Z,tau2_bench,,uncached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,user_lookup,user_lookup,43,16.2791,7a684c0-dirty,,
+2026-11-04T15:42:02Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,ALL,,225290,93.9030,baaabda-dirty,,
+2026-11-04T15:42:02Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,agent,generic_fallback,1789,93.6836,baaabda-dirty,,
+2026-11-04T15:42:02Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,build,shell,4411,98.8438,baaabda-dirty,,
+2026-11-04T15:42:02Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,git,shell,12387,95.2773,baaabda-dirty,,
+2026-11-04T15:42:02Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,other,generic_fallback,351,90.0285,baaabda-dirty,,
+2026-11-04T15:42:02Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,package,shell,2139,99.1585,baaabda-dirty,,
+2026-11-04T15:42:02Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,planning,post_comment,6787,94.5926,baaabda-dirty,,
+2026-11-04T15:42:02Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,read_file,read_file,54354,94.2672,baaabda-dirty,,
+2026-11-04T15:42:02Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,run_tests,run_tests,1091,81.1182,baaabda-dirty,,
+2026-11-04T15:42:02Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,schedule,generic_fallback,440,92.0455,baaabda-dirty,,
+2026-11-04T15:42:02Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,search,search,33921,84.4226,baaabda-dirty,,
+2026-11-04T15:42:02Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,shell_io,shell,27270,93.0400,baaabda-dirty,,
+2026-11-04T15:42:02Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,shell_other,shell,54840,97.8118,baaabda-dirty,,
+2026-11-04T15:42:02Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,user_io,post_comment,637,99.8430,baaabda-dirty,,
+2026-11-04T15:42:02Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,web,generic_fallback,2361,67.8102,baaabda-dirty,,
+2026-11-04T15:42:02Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,write_file,edit_file,22512,99.7024,baaabda-dirty,,
+2026-11-04T15:45:56Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,ALL,,225290,81.9158,baaabda-dirty,,
+2026-11-04T15:45:56Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,agent,generic_fallback,1789,77.2499,baaabda-dirty,,
+2026-11-04T15:45:56Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,build,shell,4411,91.1811,baaabda-dirty,,
+2026-11-04T15:45:56Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,git,shell,12387,87.6241,baaabda-dirty,,
+2026-11-04T15:45:56Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,other,generic_fallback,351,73.7892,baaabda-dirty,,
+2026-11-04T15:45:56Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,package,shell,2139,94.9977,baaabda-dirty,,
+2026-11-04T15:45:56Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,planning,post_comment,6787,77.2359,baaabda-dirty,,
+2026-11-04T15:45:56Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,read_file,read_file,54354,80.3713,baaabda-dirty,,
+2026-11-04T15:45:56Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,run_tests,run_tests,1091,46.8378,baaabda-dirty,,
+2026-11-04T15:45:56Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,schedule,generic_fallback,440,53.1818,baaabda-dirty,,
+2026-11-04T15:45:56Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,search,search,33921,70.2014,baaabda-dirty,,
+2026-11-04T15:45:56Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,shell_io,shell,27270,65.0605,baaabda-dirty,,
+2026-11-04T15:45:56Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,shell_other,shell,54840,93.8239,baaabda-dirty,,
+2026-11-04T15:45:56Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,user_io,post_comment,637,99.8430,baaabda-dirty,,
+2026-11-04T15:45:56Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,web,generic_fallback,2361,38.4583,baaabda-dirty,,
+2026-11-04T15:45:56Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,write_file,edit_file,22512,96.7262,baaabda-dirty,,
+2026-11-04T15:50:15Z,copilot_2026,coding_common,cached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,ALL,,18322,82.1854,baaabda-dirty,,
+2026-11-04T15:50:15Z,copilot_2026,coding_common,cached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,build,shell,1344,85.0446,baaabda-dirty,,
+2026-11-04T15:50:15Z,copilot_2026,coding_common,cached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,other,generic_fallback,208,58.6538,baaabda-dirty,,
+2026-11-04T15:50:15Z,copilot_2026,coding_common,cached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,package,shell,5,40.0000,baaabda-dirty,,
+2026-11-04T15:50:15Z,copilot_2026,coding_common,cached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,planning,post_comment,855,80.4678,baaabda-dirty,,
+2026-11-04T15:50:15Z,copilot_2026,coding_common,cached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,read_file,read_file,6441,80.0963,baaabda-dirty,,
+2026-11-04T15:50:15Z,copilot_2026,coding_common,cached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,run_tests,run_tests,65,50.7692,baaabda-dirty,,
+2026-11-04T15:50:15Z,copilot_2026,coding_common,cached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,search,search,2757,67.7911,baaabda-dirty,,
+2026-11-04T15:50:15Z,copilot_2026,coding_common,cached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,shell,shell,2714,85.9617,baaabda-dirty,,
+2026-11-04T15:50:15Z,copilot_2026,coding_common,cached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,write_file,edit_file,3933,94.3046,baaabda-dirty,,
+2026-11-04T15:50:34Z,copilot_2026,coding_common,uncached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,ALL,,18322,67.4653,baaabda-dirty,,
+2026-11-04T15:50:34Z,copilot_2026,coding_common,uncached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,build,shell,1344,74.7024,baaabda-dirty,,
+2026-11-04T15:50:34Z,copilot_2026,coding_common,uncached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,other,generic_fallback,208,48.5577,baaabda-dirty,,
+2026-11-04T15:50:34Z,copilot_2026,coding_common,uncached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,package,shell,5,20.0000,baaabda-dirty,,
+2026-11-04T15:50:34Z,copilot_2026,coding_common,uncached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,planning,post_comment,855,60.5848,baaabda-dirty,,
+2026-11-04T15:50:34Z,copilot_2026,coding_common,uncached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,read_file,read_file,6441,59.9286,baaabda-dirty,,
+2026-11-04T15:50:34Z,copilot_2026,coding_common,uncached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,run_tests,run_tests,65,47.6923,baaabda-dirty,,
+2026-11-04T15:50:34Z,copilot_2026,coding_common,uncached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,search,search,2757,48.1683,baaabda-dirty,,
+2026-11-04T15:50:34Z,copilot_2026,coding_common,uncached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,shell,shell,2714,76.3817,baaabda-dirty,,
+2026-11-04T15:50:34Z,copilot_2026,coding_common,uncached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,write_file,edit_file,3933,87.5922,baaabda-dirty,,
+2026-11-04T15:50:57Z,tau2_bench,,cached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,ALL,,342,77.4854,baaabda-dirty,,
+2026-11-04T15:50:57Z,tau2_bench,,cached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,escalate,post_comment,29,100.0000,baaabda-dirty,,
+2026-11-04T15:50:57Z,tau2_bench,,cached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,flight_search,travel_booking,64,95.3125,baaabda-dirty,,
+2026-11-04T15:50:57Z,tau2_bench,,cached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,other,generic_fallback,5,100.0000,baaabda-dirty,,
+2026-11-04T15:50:57Z,tau2_bench,,cached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,reservation_book,travel_booking,4,100.0000,baaabda-dirty,,
+2026-11-04T15:50:57Z,tau2_bench,,cached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,reservation_cancel,travel_booking,13,84.6154,baaabda-dirty,,
+2026-11-04T15:50:57Z,tau2_bench,,cached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,reservation_lookup,travel_booking,160,78.7500,baaabda-dirty,,
+2026-11-04T15:50:57Z,tau2_bench,,cached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,reservation_modify,travel_booking,24,91.6667,baaabda-dirty,,
+2026-11-04T15:50:57Z,tau2_bench,,cached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,user_lookup,user_lookup,43,16.2791,baaabda-dirty,,
+2026-11-04T15:50:58Z,tau2_bench,,uncached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,ALL,,342,68.4211,baaabda-dirty,,
+2026-11-04T15:50:58Z,tau2_bench,,uncached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,escalate,post_comment,29,100.0000,baaabda-dirty,,
+2026-11-04T15:50:58Z,tau2_bench,,uncached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,flight_search,travel_booking,64,89.0625,baaabda-dirty,,
+2026-11-04T15:50:58Z,tau2_bench,,uncached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,other,generic_fallback,5,100.0000,baaabda-dirty,,
+2026-11-04T15:50:58Z,tau2_bench,,uncached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,reservation_book,travel_booking,4,100.0000,baaabda-dirty,,
+2026-11-04T15:50:58Z,tau2_bench,,uncached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,reservation_cancel,travel_booking,13,84.6154,baaabda-dirty,,
+2026-11-04T15:50:58Z,tau2_bench,,uncached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,reservation_lookup,travel_booking,160,61.8750,baaabda-dirty,,
+2026-11-04T15:50:58Z,tau2_bench,,uncached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,reservation_modify,travel_booking,24,91.6667,baaabda-dirty,,
+2026-11-04T15:50:58Z,tau2_bench,,uncached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,user_lookup,user_lookup,43,16.2791,baaabda-dirty,,
+2026-11-04T15:56:16Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,ALL,,225290,93.9030,baaabda-dirty,,
+2026-11-04T15:56:16Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,agent,generic_fallback,1789,93.6836,baaabda-dirty,,
+2026-11-04T15:56:16Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,build,shell,4411,98.8438,baaabda-dirty,,
+2026-11-04T15:56:16Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,git,shell,12387,95.2773,baaabda-dirty,,
+2026-11-04T15:56:16Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,other,generic_fallback,351,90.0285,baaabda-dirty,,
+2026-11-04T15:56:16Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,package,shell,2139,99.1585,baaabda-dirty,,
+2026-11-04T15:56:16Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,planning,post_comment,6787,94.5926,baaabda-dirty,,
+2026-11-04T15:56:16Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,read_file,read_file,54354,94.2672,baaabda-dirty,,
+2026-11-04T15:56:16Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,run_tests,run_tests,1091,81.1182,baaabda-dirty,,
+2026-11-04T15:56:16Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,schedule,generic_fallback,440,92.0455,baaabda-dirty,,
+2026-11-04T15:56:16Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,search,search,33921,84.4226,baaabda-dirty,,
+2026-11-04T15:56:16Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,shell_io,shell,27270,93.0400,baaabda-dirty,,
+2026-11-04T15:56:16Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,shell_other,shell,54840,97.8118,baaabda-dirty,,
+2026-11-04T15:56:16Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,user_io,post_comment,637,99.8430,baaabda-dirty,,
+2026-11-04T15:56:16Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,web,generic_fallback,2361,67.8102,baaabda-dirty,,
+2026-11-04T15:56:16Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,write_file,edit_file,22512,99.7024,baaabda-dirty,,
+2026-11-04T16:00:04Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,ALL,,225290,81.9158,baaabda-dirty,,
+2026-11-04T16:00:04Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,agent,generic_fallback,1789,77.2499,baaabda-dirty,,
+2026-11-04T16:00:04Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,build,shell,4411,91.1811,baaabda-dirty,,
+2026-11-04T16:00:04Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,git,shell,12387,87.6241,baaabda-dirty,,
+2026-11-04T16:00:04Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,other,generic_fallback,351,73.7892,baaabda-dirty,,
+2026-11-04T16:00:04Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,package,shell,2139,94.9977,baaabda-dirty,,
+2026-11-04T16:00:04Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,planning,post_comment,6787,77.2359,baaabda-dirty,,
+2026-11-04T16:00:04Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,read_file,read_file,54354,80.3713,baaabda-dirty,,
+2026-11-04T16:00:04Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,run_tests,run_tests,1091,46.8378,baaabda-dirty,,
+2026-11-04T16:00:04Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,schedule,generic_fallback,440,53.1818,baaabda-dirty,,
+2026-11-04T16:00:04Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,search,search,33921,70.2014,baaabda-dirty,,
+2026-11-04T16:00:04Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,shell_io,shell,27270,65.0605,baaabda-dirty,,
+2026-11-04T16:00:04Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,shell_other,shell,54840,93.8239,baaabda-dirty,,
+2026-11-04T16:00:04Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,user_io,post_comment,637,99.8430,baaabda-dirty,,
+2026-11-04T16:00:04Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,web,generic_fallback,2361,38.4583,baaabda-dirty,,
+2026-11-04T16:00:04Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,write_file,edit_file,22512,96.7262,baaabda-dirty,,
+2026-11-04T16:04:04Z,copilot_2026,coding_common,cached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,ALL,,18322,82.1854,baaabda-dirty,,
+2026-11-04T16:04:04Z,copilot_2026,coding_common,cached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,build,shell,1344,85.0446,baaabda-dirty,,
+2026-11-04T16:04:04Z,copilot_2026,coding_common,cached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,other,generic_fallback,208,58.6538,baaabda-dirty,,
+2026-11-04T16:04:04Z,copilot_2026,coding_common,cached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,package,shell,5,40.0000,baaabda-dirty,,
+2026-11-04T16:04:04Z,copilot_2026,coding_common,cached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,planning,post_comment,855,80.4678,baaabda-dirty,,
+2026-11-04T16:04:04Z,copilot_2026,coding_common,cached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,read_file,read_file,6441,80.0963,baaabda-dirty,,
+2026-11-04T16:04:04Z,copilot_2026,coding_common,cached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,run_tests,run_tests,65,50.7692,baaabda-dirty,,
+2026-11-04T16:04:04Z,copilot_2026,coding_common,cached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,search,search,2757,67.7911,baaabda-dirty,,
+2026-11-04T16:04:04Z,copilot_2026,coding_common,cached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,shell,shell,2714,85.9617,baaabda-dirty,,
+2026-11-04T16:04:04Z,copilot_2026,coding_common,cached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,write_file,edit_file,3933,94.3046,baaabda-dirty,,
+2026-11-04T16:04:19Z,copilot_2026,coding_common,uncached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,ALL,,18322,67.4653,baaabda-dirty,,
+2026-11-04T16:04:19Z,copilot_2026,coding_common,uncached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,build,shell,1344,74.7024,baaabda-dirty,,
+2026-11-04T16:04:19Z,copilot_2026,coding_common,uncached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,other,generic_fallback,208,48.5577,baaabda-dirty,,
+2026-11-04T16:04:19Z,copilot_2026,coding_common,uncached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,package,shell,5,20.0000,baaabda-dirty,,
+2026-11-04T16:04:19Z,copilot_2026,coding_common,uncached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,planning,post_comment,855,60.5848,baaabda-dirty,,
+2026-11-04T16:04:19Z,copilot_2026,coding_common,uncached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,read_file,read_file,6441,59.9286,baaabda-dirty,,
+2026-11-04T16:04:19Z,copilot_2026,coding_common,uncached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,run_tests,run_tests,65,47.6923,baaabda-dirty,,
+2026-11-04T16:04:19Z,copilot_2026,coding_common,uncached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,search,search,2757,48.1683,baaabda-dirty,,
+2026-11-04T16:04:19Z,copilot_2026,coding_common,uncached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,shell,shell,2714,76.3817,baaabda-dirty,,
+2026-11-04T16:04:19Z,copilot_2026,coding_common,uncached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,write_file,edit_file,3933,87.5922,baaabda-dirty,,
+2026-11-04T16:04:37Z,tau2_bench,,cached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,ALL,,342,77.4854,baaabda-dirty,,
+2026-11-04T16:04:37Z,tau2_bench,,cached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,escalate,post_comment,29,100.0000,baaabda-dirty,,
+2026-11-04T16:04:37Z,tau2_bench,,cached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,flight_search,travel_booking,64,95.3125,baaabda-dirty,,
+2026-11-04T16:04:37Z,tau2_bench,,cached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,other,generic_fallback,5,100.0000,baaabda-dirty,,
+2026-11-04T16:04:37Z,tau2_bench,,cached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,reservation_book,travel_booking,4,100.0000,baaabda-dirty,,
+2026-11-04T16:04:37Z,tau2_bench,,cached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,reservation_cancel,travel_booking,13,84.6154,baaabda-dirty,,
+2026-11-04T16:04:37Z,tau2_bench,,cached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,reservation_lookup,travel_booking,160,78.7500,baaabda-dirty,,
+2026-11-04T16:04:37Z,tau2_bench,,cached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,reservation_modify,travel_booking,24,91.6667,baaabda-dirty,,
+2026-11-04T16:04:37Z,tau2_bench,,cached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,user_lookup,user_lookup,43,16.2791,baaabda-dirty,,
+2026-11-04T16:04:37Z,tau2_bench,,uncached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,ALL,,342,68.4211,baaabda-dirty,,
+2026-11-04T16:04:37Z,tau2_bench,,uncached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,escalate,post_comment,29,100.0000,baaabda-dirty,,
+2026-11-04T16:04:37Z,tau2_bench,,uncached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,flight_search,travel_booking,64,89.0625,baaabda-dirty,,
+2026-11-04T16:04:37Z,tau2_bench,,uncached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,other,generic_fallback,5,100.0000,baaabda-dirty,,
+2026-11-04T16:04:37Z,tau2_bench,,uncached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,reservation_book,travel_booking,4,100.0000,baaabda-dirty,,
+2026-11-04T16:04:37Z,tau2_bench,,uncached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,reservation_cancel,travel_booking,13,84.6154,baaabda-dirty,,
+2026-11-04T16:04:37Z,tau2_bench,,uncached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,reservation_lookup,travel_booking,160,61.8750,baaabda-dirty,,
+2026-11-04T16:04:37Z,tau2_bench,,uncached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,reservation_modify,travel_booking,24,91.6667,baaabda-dirty,,
+2026-11-04T16:04:37Z,tau2_bench,,uncached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,user_lookup,user_lookup,43,16.2791,baaabda-dirty,,
+2026-11-04T18:45:36Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,ALL,,225290,93.9030,d84c894,0,none
+2026-11-04T18:45:36Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,agent,generic_fallback,1789,93.6836,d84c894,0,none
+2026-11-04T18:45:36Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,build,shell,4411,98.8438,d84c894,0,none
+2026-11-04T18:45:36Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,git,shell,12387,95.2773,d84c894,0,none
+2026-11-04T18:45:36Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,other,generic_fallback,351,90.0285,d84c894,0,none
+2026-11-04T18:45:36Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,package,shell,2139,99.1585,d84c894,0,none
+2026-11-04T18:45:36Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,planning,post_comment,6787,94.5926,d84c894,0,none
+2026-11-04T18:45:36Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,read_file,read_file,54354,94.2672,d84c894,0,none
+2026-11-04T18:45:36Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,run_tests,run_tests,1091,81.1182,d84c894,0,none
+2026-11-04T18:45:36Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,schedule,generic_fallback,440,92.0455,d84c894,0,none
+2026-11-04T18:45:36Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,search,search,33921,84.4226,d84c894,0,none
+2026-11-04T18:45:36Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,shell_io,shell,27270,93.0400,d84c894,0,none
+2026-11-04T18:45:36Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,shell_other,shell,54840,97.8118,d84c894,0,none
+2026-11-04T18:45:36Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,user_io,post_comment,637,99.8430,d84c894,0,none
+2026-11-04T18:45:36Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,web,generic_fallback,2361,67.8102,d84c894,0,none
+2026-11-04T18:45:36Z,tracelab,,cached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,write_file,edit_file,22512,99.7024,d84c894,0,none
+2026-11-04T18:49:47Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,ALL,,225290,81.9158,d84c894,0,none
+2026-11-04T18:49:47Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,agent,generic_fallback,1789,77.2499,d84c894,0,none
+2026-11-04T18:49:47Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,build,shell,4411,91.1811,d84c894,0,none
+2026-11-04T18:49:47Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,git,shell,12387,87.6241,d84c894,0,none
+2026-11-04T18:49:47Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,other,generic_fallback,351,73.7892,d84c894,0,none
+2026-11-04T18:49:47Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,package,shell,2139,94.9977,d84c894,0,none
+2026-11-04T18:49:47Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,planning,post_comment,6787,77.2359,d84c894,0,none
+2026-11-04T18:49:47Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,read_file,read_file,54354,80.3713,d84c894,0,none
+2026-11-04T18:49:47Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,run_tests,run_tests,1091,46.8378,d84c894,0,none
+2026-11-04T18:49:47Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,schedule,generic_fallback,440,53.1818,d84c894,0,none
+2026-11-04T18:49:47Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,search,search,33921,70.2014,d84c894,0,none
+2026-11-04T18:49:47Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,shell_io,shell,27270,65.0605,d84c894,0,none
+2026-11-04T18:49:47Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,shell_other,shell,54840,93.8239,d84c894,0,none
+2026-11-04T18:49:47Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,user_io,post_comment,637,99.8430,d84c894,0,none
+2026-11-04T18:49:47Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,web,generic_fallback,2361,38.4583,d84c894,0,none
+2026-11-04T18:49:47Z,tracelab,,uncached,2092,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,write_file,edit_file,22512,96.7262,d84c894,0,none
+2026-11-04T18:53:57Z,tracelab,,cached,2092,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,ALL,,225290,91.0906,d84c894-dirty,0,none
+2026-11-04T18:53:57Z,tracelab,,cached,2092,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,agent,generic_fallback,1789,93.5718,d84c894-dirty,0,none
+2026-11-04T18:53:57Z,tracelab,,cached,2092,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,build,shell,4411,96.5767,d84c894-dirty,0,none
+2026-11-04T18:53:57Z,tracelab,,cached,2092,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,git,shell,12387,92.8635,d84c894-dirty,0,none
+2026-11-04T18:53:57Z,tracelab,,cached,2092,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,other,generic_fallback,351,90.0285,d84c894-dirty,0,none
+2026-11-04T18:53:57Z,tracelab,,cached,2092,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,package,shell,2139,98.3170,d84c894-dirty,0,none
+2026-11-04T18:53:57Z,tracelab,,cached,2092,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,planning,post_comment,6787,91.3658,d84c894-dirty,0,none
+2026-11-04T18:53:57Z,tracelab,,cached,2092,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,read_file,read_file,54354,89.7652,d84c894-dirty,0,none
+2026-11-04T18:53:57Z,tracelab,,cached,2092,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,run_tests,run_tests,1091,83.3181,d84c894-dirty,0,none
+2026-11-04T18:53:57Z,tracelab,,cached,2092,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,schedule,generic_fallback,440,91.8182,d84c894-dirty,0,none
+2026-11-04T18:53:57Z,tracelab,,cached,2092,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,search,search,33921,87.8718,d84c894-dirty,0,none
+2026-11-04T18:53:57Z,tracelab,,cached,2092,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,shell_io,shell,27270,79.5746,d84c894-dirty,0,none
+2026-11-04T18:53:57Z,tracelab,,cached,2092,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,shell_other,shell,54840,96.4843,d84c894-dirty,0,none
+2026-11-04T18:53:57Z,tracelab,,cached,2092,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,user_io,post_comment,637,99.8430,d84c894-dirty,0,none
+2026-11-04T18:53:57Z,tracelab,,cached,2092,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,web,generic_fallback,2361,67.5985,d84c894-dirty,0,none
+2026-11-04T18:53:57Z,tracelab,,cached,2092,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,write_file,edit_file,22512,99.5291,d84c894-dirty,0,none
+2026-11-04T18:58:38Z,tracelab,,uncached,2092,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,ALL,,225290,67.7789,d84c894-dirty,0,none
+2026-11-04T18:58:38Z,tracelab,,uncached,2092,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,agent,generic_fallback,1789,60.2571,d84c894-dirty,0,none
+2026-11-04T18:58:38Z,tracelab,,uncached,2092,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,build,shell,4411,64.1351,d84c894-dirty,0,none
+2026-11-04T18:58:38Z,tracelab,,uncached,2092,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,git,shell,12387,68.2651,d84c894-dirty,0,none
+2026-11-04T18:58:38Z,tracelab,,uncached,2092,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,other,generic_fallback,351,29.6296,d84c894-dirty,0,none
+2026-11-04T18:58:38Z,tracelab,,uncached,2092,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,package,shell,2139,74.2403,d84c894-dirty,0,none
+2026-11-04T18:58:38Z,tracelab,,uncached,2092,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,planning,post_comment,6787,66.9515,d84c894-dirty,0,none
+2026-11-04T18:58:38Z,tracelab,,uncached,2092,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,read_file,read_file,54354,73.0747,d84c894-dirty,0,none
+2026-11-04T18:58:38Z,tracelab,,uncached,2092,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,run_tests,run_tests,1091,27.0394,d84c894-dirty,0,none
+2026-11-04T18:58:38Z,tracelab,,uncached,2092,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,schedule,generic_fallback,440,29.7727,d84c894-dirty,0,none
+2026-11-04T18:58:38Z,tracelab,,uncached,2092,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,search,search,33921,57.9022,d84c894-dirty,0,none
+2026-11-04T18:58:38Z,tracelab,,uncached,2092,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,shell_io,shell,27270,30.5207,d84c894-dirty,0,none
+2026-11-04T18:58:38Z,tracelab,,uncached,2092,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,shell_other,shell,54840,79.6627,d84c894-dirty,0,none
+2026-11-04T18:58:38Z,tracelab,,uncached,2092,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,user_io,post_comment,637,99.5290,d84c894-dirty,0,none
+2026-11-04T18:58:38Z,tracelab,,uncached,2092,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,web,generic_fallback,2361,20.3304,d84c894-dirty,0,none
+2026-11-04T18:58:38Z,tracelab,,uncached,2092,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,write_file,edit_file,22512,94.1276,d84c894-dirty,0,none
+2026-11-04T19:03:02Z,tracelab,,cached,2092,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,ALL,,225290,91.0906,d84c894-dirty,2,parallel_3
+2026-11-04T19:03:02Z,tracelab,,cached,2092,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,agent,generic_fallback,1789,93.5718,d84c894-dirty,2,parallel_3
+2026-11-04T19:03:02Z,tracelab,,cached,2092,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,build,shell,4411,96.5767,d84c894-dirty,2,parallel_3
+2026-11-04T19:03:02Z,tracelab,,cached,2092,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,git,shell,12387,92.8635,d84c894-dirty,2,parallel_3
+2026-11-04T19:03:02Z,tracelab,,cached,2092,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,other,generic_fallback,351,90.0285,d84c894-dirty,2,parallel_3
+2026-11-04T19:03:02Z,tracelab,,cached,2092,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,package,shell,2139,98.3170,d84c894-dirty,2,parallel_3
+2026-11-04T19:03:02Z,tracelab,,cached,2092,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,planning,post_comment,6787,91.3658,d84c894-dirty,2,parallel_3
+2026-11-04T19:03:02Z,tracelab,,cached,2092,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,read_file,read_file,54354,89.7652,d84c894-dirty,2,parallel_3
+2026-11-04T19:03:02Z,tracelab,,cached,2092,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,run_tests,run_tests,1091,83.3181,d84c894-dirty,2,parallel_3
+2026-11-04T19:03:02Z,tracelab,,cached,2092,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,schedule,generic_fallback,440,91.8182,d84c894-dirty,2,parallel_3
+2026-11-04T19:03:02Z,tracelab,,cached,2092,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,search,search,33921,87.8718,d84c894-dirty,2,parallel_3
+2026-11-04T19:03:02Z,tracelab,,cached,2092,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,shell_io,shell,27270,79.5746,d84c894-dirty,2,parallel_3
+2026-11-04T19:03:02Z,tracelab,,cached,2092,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,shell_other,shell,54840,96.4843,d84c894-dirty,2,parallel_3
+2026-11-04T19:03:02Z,tracelab,,cached,2092,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,user_io,post_comment,637,99.8430,d84c894-dirty,2,parallel_3
+2026-11-04T19:03:02Z,tracelab,,cached,2092,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,web,generic_fallback,2361,67.5985,d84c894-dirty,2,parallel_3
+2026-11-04T19:03:02Z,tracelab,,cached,2092,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,write_file,edit_file,22512,99.5291,d84c894-dirty,2,parallel_3
+2026-11-04T19:07:23Z,tracelab,,uncached,2092,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,ALL,,225290,67.7789,d84c894-dirty,2,parallel_3
+2026-11-04T19:07:23Z,tracelab,,uncached,2092,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,agent,generic_fallback,1789,60.2571,d84c894-dirty,2,parallel_3
+2026-11-04T19:07:23Z,tracelab,,uncached,2092,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,build,shell,4411,64.1351,d84c894-dirty,2,parallel_3
+2026-11-04T19:07:23Z,tracelab,,uncached,2092,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,git,shell,12387,68.2651,d84c894-dirty,2,parallel_3
+2026-11-04T19:07:23Z,tracelab,,uncached,2092,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,other,generic_fallback,351,29.6296,d84c894-dirty,2,parallel_3
+2026-11-04T19:07:23Z,tracelab,,uncached,2092,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,package,shell,2139,74.2403,d84c894-dirty,2,parallel_3
+2026-11-04T19:07:23Z,tracelab,,uncached,2092,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,planning,post_comment,6787,66.9515,d84c894-dirty,2,parallel_3
+2026-11-04T19:07:23Z,tracelab,,uncached,2092,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,read_file,read_file,54354,73.0747,d84c894-dirty,2,parallel_3
+2026-11-04T19:07:23Z,tracelab,,uncached,2092,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,run_tests,run_tests,1091,27.0394,d84c894-dirty,2,parallel_3
+2026-11-04T19:07:23Z,tracelab,,uncached,2092,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,schedule,generic_fallback,440,29.7727,d84c894-dirty,2,parallel_3
+2026-11-04T19:07:23Z,tracelab,,uncached,2092,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,search,search,33921,57.9022,d84c894-dirty,2,parallel_3
+2026-11-04T19:07:23Z,tracelab,,uncached,2092,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,shell_io,shell,27270,30.5207,d84c894-dirty,2,parallel_3
+2026-11-04T19:07:23Z,tracelab,,uncached,2092,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,shell_other,shell,54840,79.6627,d84c894-dirty,2,parallel_3
+2026-11-04T19:07:23Z,tracelab,,uncached,2092,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,user_io,post_comment,637,99.5290,d84c894-dirty,2,parallel_3
+2026-11-04T19:07:23Z,tracelab,,uncached,2092,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,web,generic_fallback,2361,20.3304,d84c894-dirty,2,parallel_3
+2026-11-04T19:07:23Z,tracelab,,uncached,2092,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,write_file,edit_file,22512,94.1276,d84c894-dirty,2,parallel_3
+2026-11-04T19:12:23Z,copilot_2026,coding_common,cached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,ALL,,18322,82.1854,d84c894-dirty,0,none
+2026-11-04T19:12:23Z,copilot_2026,coding_common,cached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,build,shell,1344,85.0446,d84c894-dirty,0,none
+2026-11-04T19:12:23Z,copilot_2026,coding_common,cached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,other,generic_fallback,208,58.6538,d84c894-dirty,0,none
+2026-11-04T19:12:23Z,copilot_2026,coding_common,cached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,package,shell,5,40.0000,d84c894-dirty,0,none
+2026-11-04T19:12:23Z,copilot_2026,coding_common,cached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,planning,post_comment,855,80.4678,d84c894-dirty,0,none
+2026-11-04T19:12:23Z,copilot_2026,coding_common,cached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,read_file,read_file,6441,80.0963,d84c894-dirty,0,none
+2026-11-04T19:12:23Z,copilot_2026,coding_common,cached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,run_tests,run_tests,65,50.7692,d84c894-dirty,0,none
+2026-11-04T19:12:23Z,copilot_2026,coding_common,cached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,search,search,2757,67.7911,d84c894-dirty,0,none
+2026-11-04T19:12:23Z,copilot_2026,coding_common,cached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,shell,shell,2714,85.9617,d84c894-dirty,0,none
+2026-11-04T19:12:23Z,copilot_2026,coding_common,cached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,write_file,edit_file,3933,94.3046,d84c894-dirty,0,none
+2026-11-04T19:12:42Z,copilot_2026,coding_common,uncached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,ALL,,18322,67.4653,d84c894-dirty,0,none
+2026-11-04T19:12:42Z,copilot_2026,coding_common,uncached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,build,shell,1344,74.7024,d84c894-dirty,0,none
+2026-11-04T19:12:42Z,copilot_2026,coding_common,uncached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,other,generic_fallback,208,48.5577,d84c894-dirty,0,none
+2026-11-04T19:12:42Z,copilot_2026,coding_common,uncached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,package,shell,5,20.0000,d84c894-dirty,0,none
+2026-11-04T19:12:42Z,copilot_2026,coding_common,uncached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,planning,post_comment,855,60.5848,d84c894-dirty,0,none
+2026-11-04T19:12:42Z,copilot_2026,coding_common,uncached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,read_file,read_file,6441,59.9286,d84c894-dirty,0,none
+2026-11-04T19:12:42Z,copilot_2026,coding_common,uncached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,run_tests,run_tests,65,47.6923,d84c894-dirty,0,none
+2026-11-04T19:12:42Z,copilot_2026,coding_common,uncached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,search,search,2757,48.1683,d84c894-dirty,0,none
+2026-11-04T19:12:42Z,copilot_2026,coding_common,uncached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,shell,shell,2714,76.3817,d84c894-dirty,0,none
+2026-11-04T19:12:42Z,copilot_2026,coding_common,uncached,398,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,write_file,edit_file,3933,87.5922,d84c894-dirty,0,none
+2026-11-04T19:13:02Z,copilot_2026,coding_common,cached,398,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,ALL,,18322,79.0907,d84c894-dirty,0,none
+2026-11-04T19:13:02Z,copilot_2026,coding_common,cached,398,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,build,shell,1344,80.3571,d84c894-dirty,0,none
+2026-11-04T19:13:02Z,copilot_2026,coding_common,cached,398,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,other,generic_fallback,208,58.6538,d84c894-dirty,0,none
+2026-11-04T19:13:02Z,copilot_2026,coding_common,cached,398,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,package,shell,5,20.0000,d84c894-dirty,0,none
+2026-11-04T19:13:02Z,copilot_2026,coding_common,cached,398,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,planning,post_comment,855,78.0117,d84c894-dirty,0,none
+2026-11-04T19:13:02Z,copilot_2026,coding_common,cached,398,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,read_file,read_file,6441,72.8148,d84c894-dirty,0,none
+2026-11-04T19:13:02Z,copilot_2026,coding_common,cached,398,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,run_tests,run_tests,65,50.7692,d84c894-dirty,0,none
+2026-11-04T19:13:02Z,copilot_2026,coding_common,cached,398,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,search,search,2757,72.3975,d84c894-dirty,0,none
+2026-11-04T19:13:02Z,copilot_2026,coding_common,cached,398,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,shell,shell,2714,82.3876,d84c894-dirty,0,none
+2026-11-04T19:13:02Z,copilot_2026,coding_common,cached,398,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,write_file,edit_file,3933,93.2113,d84c894-dirty,0,none
+2026-11-04T19:13:22Z,copilot_2026,coding_common,uncached,398,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,ALL,,18322,55.9873,d84c894-dirty,0,none
+2026-11-04T19:13:22Z,copilot_2026,coding_common,uncached,398,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,build,shell,1344,60.5655,d84c894-dirty,0,none
+2026-11-04T19:13:22Z,copilot_2026,coding_common,uncached,398,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,other,generic_fallback,208,28.3654,d84c894-dirty,0,none
+2026-11-04T19:13:22Z,copilot_2026,coding_common,uncached,398,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,package,shell,5,20.0000,d84c894-dirty,0,none
+2026-11-04T19:13:22Z,copilot_2026,coding_common,uncached,398,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,planning,post_comment,855,49.9415,d84c894-dirty,0,none
+2026-11-04T19:13:22Z,copilot_2026,coding_common,uncached,398,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,read_file,read_file,6441,46.9648,d84c894-dirty,0,none
+2026-11-04T19:13:22Z,copilot_2026,coding_common,uncached,398,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,run_tests,run_tests,65,38.4615,d84c894-dirty,0,none
+2026-11-04T19:13:22Z,copilot_2026,coding_common,uncached,398,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,search,search,2757,35.2557,d84c894-dirty,0,none
+2026-11-04T19:13:22Z,copilot_2026,coding_common,uncached,398,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,shell,shell,2714,59.7273,d84c894-dirty,0,none
+2026-11-04T19:13:22Z,copilot_2026,coding_common,uncached,398,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,write_file,edit_file,3933,84.2614,d84c894-dirty,0,none
+2026-11-04T19:13:43Z,copilot_2026,coding_common,cached,398,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,ALL,,18322,79.0907,d84c894-dirty,2,parallel_3
+2026-11-04T19:13:43Z,copilot_2026,coding_common,cached,398,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,build,shell,1344,80.3571,d84c894-dirty,2,parallel_3
+2026-11-04T19:13:43Z,copilot_2026,coding_common,cached,398,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,other,generic_fallback,208,58.6538,d84c894-dirty,2,parallel_3
+2026-11-04T19:13:43Z,copilot_2026,coding_common,cached,398,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,package,shell,5,20.0000,d84c894-dirty,2,parallel_3
+2026-11-04T19:13:43Z,copilot_2026,coding_common,cached,398,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,planning,post_comment,855,78.0117,d84c894-dirty,2,parallel_3
+2026-11-04T19:13:43Z,copilot_2026,coding_common,cached,398,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,read_file,read_file,6441,72.8148,d84c894-dirty,2,parallel_3
+2026-11-04T19:13:43Z,copilot_2026,coding_common,cached,398,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,run_tests,run_tests,65,50.7692,d84c894-dirty,2,parallel_3
+2026-11-04T19:13:43Z,copilot_2026,coding_common,cached,398,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,search,search,2757,72.3975,d84c894-dirty,2,parallel_3
+2026-11-04T19:13:43Z,copilot_2026,coding_common,cached,398,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,shell,shell,2714,82.3876,d84c894-dirty,2,parallel_3
+2026-11-04T19:13:43Z,copilot_2026,coding_common,cached,398,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,write_file,edit_file,3933,93.2113,d84c894-dirty,2,parallel_3
+2026-11-04T19:14:05Z,copilot_2026,coding_common,uncached,398,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,ALL,,18322,55.9873,d84c894-dirty,2,parallel_3
+2026-11-04T19:14:05Z,copilot_2026,coding_common,uncached,398,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,build,shell,1344,60.5655,d84c894-dirty,2,parallel_3
+2026-11-04T19:14:05Z,copilot_2026,coding_common,uncached,398,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,other,generic_fallback,208,28.3654,d84c894-dirty,2,parallel_3
+2026-11-04T19:14:05Z,copilot_2026,coding_common,uncached,398,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,package,shell,5,20.0000,d84c894-dirty,2,parallel_3
+2026-11-04T19:14:05Z,copilot_2026,coding_common,uncached,398,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,planning,post_comment,855,49.9415,d84c894-dirty,2,parallel_3
+2026-11-04T19:14:05Z,copilot_2026,coding_common,uncached,398,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,read_file,read_file,6441,46.9648,d84c894-dirty,2,parallel_3
+2026-11-04T19:14:05Z,copilot_2026,coding_common,uncached,398,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,run_tests,run_tests,65,38.4615,d84c894-dirty,2,parallel_3
+2026-11-04T19:14:05Z,copilot_2026,coding_common,uncached,398,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,search,search,2757,35.2557,d84c894-dirty,2,parallel_3
+2026-11-04T19:14:05Z,copilot_2026,coding_common,uncached,398,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,shell,shell,2714,59.7273,d84c894-dirty,2,parallel_3
+2026-11-04T19:14:05Z,copilot_2026,coding_common,uncached,398,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,write_file,edit_file,3933,84.2614,d84c894-dirty,2,parallel_3
+2026-11-04T19:14:31Z,tau2_bench,,cached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,ALL,,342,77.4854,d84c894-dirty,0,none
+2026-11-04T19:14:31Z,tau2_bench,,cached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,escalate,post_comment,29,100.0000,d84c894-dirty,0,none
+2026-11-04T19:14:31Z,tau2_bench,,cached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,flight_search,travel_booking,64,95.3125,d84c894-dirty,0,none
+2026-11-04T19:14:31Z,tau2_bench,,cached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,other,generic_fallback,5,100.0000,d84c894-dirty,0,none
+2026-11-04T19:14:31Z,tau2_bench,,cached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,reservation_book,travel_booking,4,100.0000,d84c894-dirty,0,none
+2026-11-04T19:14:31Z,tau2_bench,,cached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,reservation_cancel,travel_booking,13,84.6154,d84c894-dirty,0,none
+2026-11-04T19:14:31Z,tau2_bench,,cached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,reservation_lookup,travel_booking,160,78.7500,d84c894-dirty,0,none
+2026-11-04T19:14:31Z,tau2_bench,,cached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,reservation_modify,travel_booking,24,91.6667,d84c894-dirty,0,none
+2026-11-04T19:14:31Z,tau2_bench,,cached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,user_lookup,user_lookup,43,16.2791,d84c894-dirty,0,none
+2026-11-04T19:14:32Z,tau2_bench,,uncached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,ALL,,342,68.4211,d84c894-dirty,0,none
+2026-11-04T19:14:32Z,tau2_bench,,uncached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,escalate,post_comment,29,100.0000,d84c894-dirty,0,none
+2026-11-04T19:14:32Z,tau2_bench,,uncached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,flight_search,travel_booking,64,89.0625,d84c894-dirty,0,none
+2026-11-04T19:14:32Z,tau2_bench,,uncached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,other,generic_fallback,5,100.0000,d84c894-dirty,0,none
+2026-11-04T19:14:32Z,tau2_bench,,uncached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,reservation_book,travel_booking,4,100.0000,d84c894-dirty,0,none
+2026-11-04T19:14:32Z,tau2_bench,,uncached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,reservation_cancel,travel_booking,13,84.6154,d84c894-dirty,0,none
+2026-11-04T19:14:32Z,tau2_bench,,uncached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,reservation_lookup,travel_booking,160,61.8750,d84c894-dirty,0,none
+2026-11-04T19:14:32Z,tau2_bench,,uncached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,reservation_modify,travel_booking,24,91.6667,d84c894-dirty,0,none
+2026-11-04T19:14:32Z,tau2_bench,,uncached,56,kind: lower bound; replace with AWS (kind pulls from a registry on the same machine),96d8a3d6952d,user_lookup,user_lookup,43,16.2791,d84c894-dirty,0,none
+2026-11-04T19:14:32Z,tau2_bench,,cached,56,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,ALL,,342,78.0702,d84c894-dirty,0,none
+2026-11-04T19:14:32Z,tau2_bench,,cached,56,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,escalate,post_comment,29,100.0000,d84c894-dirty,0,none
+2026-11-04T19:14:32Z,tau2_bench,,cached,56,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,flight_search,travel_booking,64,95.3125,d84c894-dirty,0,none
+2026-11-04T19:14:32Z,tau2_bench,,cached,56,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,other,generic_fallback,5,100.0000,d84c894-dirty,0,none
+2026-11-04T19:14:32Z,tau2_bench,,cached,56,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,reservation_book,travel_booking,4,100.0000,d84c894-dirty,0,none
+2026-11-04T19:14:32Z,tau2_bench,,cached,56,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,reservation_cancel,travel_booking,13,84.6154,d84c894-dirty,0,none
+2026-11-04T19:14:32Z,tau2_bench,,cached,56,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,reservation_lookup,travel_booking,160,80.0000,d84c894-dirty,0,none
+2026-11-04T19:14:32Z,tau2_bench,,cached,56,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,reservation_modify,travel_booking,24,91.6667,d84c894-dirty,0,none
+2026-11-04T19:14:32Z,tau2_bench,,cached,56,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,user_lookup,user_lookup,43,16.2791,d84c894-dirty,0,none
+2026-11-04T19:14:32Z,tau2_bench,,uncached,56,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,ALL,,342,56.1404,d84c894-dirty,0,none
+2026-11-04T19:14:32Z,tau2_bench,,uncached,56,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,escalate,post_comment,29,100.0000,d84c894-dirty,0,none
+2026-11-04T19:14:32Z,tau2_bench,,uncached,56,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,flight_search,travel_booking,64,67.1875,d84c894-dirty,0,none
+2026-11-04T19:14:32Z,tau2_bench,,uncached,56,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,other,generic_fallback,5,100.0000,d84c894-dirty,0,none
+2026-11-04T19:14:32Z,tau2_bench,,uncached,56,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,reservation_book,travel_booking,4,100.0000,d84c894-dirty,0,none
+2026-11-04T19:14:32Z,tau2_bench,,uncached,56,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,reservation_cancel,travel_booking,13,76.9231,d84c894-dirty,0,none
+2026-11-04T19:14:32Z,tau2_bench,,uncached,56,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,reservation_lookup,travel_booking,160,46.2500,d84c894-dirty,0,none
+2026-11-04T19:14:32Z,tau2_bench,,uncached,56,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,reservation_modify,travel_booking,24,83.3333,d84c894-dirty,0,none
+2026-11-04T19:14:32Z,tau2_bench,,uncached,56,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,user_lookup,user_lookup,43,16.2791,d84c894-dirty,0,none
+2026-11-04T19:14:33Z,tau2_bench,,cached,56,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,ALL,,342,78.0702,d84c894-dirty,2,parallel_3
+2026-11-04T19:14:33Z,tau2_bench,,cached,56,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,escalate,post_comment,29,100.0000,d84c894-dirty,2,parallel_3
+2026-11-04T19:14:33Z,tau2_bench,,cached,56,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,flight_search,travel_booking,64,95.3125,d84c894-dirty,2,parallel_3
+2026-11-04T19:14:33Z,tau2_bench,,cached,56,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,other,generic_fallback,5,100.0000,d84c894-dirty,2,parallel_3
+2026-11-04T19:14:33Z,tau2_bench,,cached,56,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,reservation_book,travel_booking,4,100.0000,d84c894-dirty,2,parallel_3
+2026-11-04T19:14:33Z,tau2_bench,,cached,56,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,reservation_cancel,travel_booking,13,84.6154,d84c894-dirty,2,parallel_3
+2026-11-04T19:14:33Z,tau2_bench,,cached,56,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,reservation_lookup,travel_booking,160,80.0000,d84c894-dirty,2,parallel_3
+2026-11-04T19:14:33Z,tau2_bench,,cached,56,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,reservation_modify,travel_booking,24,91.6667,d84c894-dirty,2,parallel_3
+2026-11-04T19:14:33Z,tau2_bench,,cached,56,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,user_lookup,user_lookup,43,16.2791,d84c894-dirty,2,parallel_3
+2026-11-04T19:14:33Z,tau2_bench,,uncached,56,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,ALL,,342,56.1404,d84c894-dirty,2,parallel_3
+2026-11-04T19:14:33Z,tau2_bench,,uncached,56,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,escalate,post_comment,29,100.0000,d84c894-dirty,2,parallel_3
+2026-11-04T19:14:33Z,tau2_bench,,uncached,56,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,flight_search,travel_booking,64,67.1875,d84c894-dirty,2,parallel_3
+2026-11-04T19:14:33Z,tau2_bench,,uncached,56,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,other,generic_fallback,5,100.0000,d84c894-dirty,2,parallel_3
+2026-11-04T19:14:33Z,tau2_bench,,uncached,56,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,reservation_book,travel_booking,4,100.0000,d84c894-dirty,2,parallel_3
+2026-11-04T19:14:33Z,tau2_bench,,uncached,56,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,reservation_cancel,travel_booking,13,76.9231,d84c894-dirty,2,parallel_3
+2026-11-04T19:14:33Z,tau2_bench,,uncached,56,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,reservation_lookup,travel_booking,160,46.2500,d84c894-dirty,2,parallel_3
+2026-11-04T19:14:33Z,tau2_bench,,uncached,56,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,reservation_modify,travel_booking,24,83.3333,d84c894-dirty,2,parallel_3
+2026-11-04T19:14:33Z,tau2_bench,,uncached,56,"aws: measured on AWS (EC2 k3s, images pulled from ECR in the same region)",00758310b4d6,user_lookup,user_lookup,43,16.2791,d84c894-dirty,2,parallel_3

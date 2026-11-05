@@ -8,6 +8,12 @@ Each row is one LLM round. All tools emitted in a round form one batch.
 - error: ``is_error``; null is stored as False and counted.
 - group: ``user``.
 
+Shell calls (Bash, exec_command, ...) are classified by the first word of the command using
+the ``shell_split`` rules in configs/tool_classes/tracelab.yaml. The converter reads only
+the first executable name from TraceLab's parsed ``executables`` list, keeps the resulting
+class as the raw tool name ``<tool>:<class>`` and discards the rest; no command text, skeleton
+or argument is stored.
+
 Resumed Claude sessions repeat calls from an earlier session of the same user (same call
 id, tool name and emit time). Those copies are dropped and counted. Rows are streamed
 and grouped by consecutive ``session_id``; a session whose rows are not contiguous yields
@@ -25,6 +31,7 @@ from typing import Any
 
 from traces.schema import Batch, Call, Session
 from traces.timeutil import ms_between, parse_ts
+from traces.tool_classes import ShellSplit, load_shell_split
 
 FILE = "tracelab/syfi_coding_trace.jsonl.gz"
 
@@ -46,8 +53,11 @@ def _session(sid: str, rows: list[dict[str, Any]], seen: set[tuple[str, str, str
             if t.get("is_error") is None:
                 stats["calls_error_null"] += 1
             lat = t.get("tool_wall_latency_ms")
-            calls.append(Call(t["tool_name"], None if lat is None else float(lat),
-                              bool(t.get("is_error")), t["tool_name"]))
+            name = t["tool_name"]
+            if t.get("shell_class"):
+                name = f"{name}:{t['shell_class']}"
+            calls.append(Call(name, None if lat is None else float(lat),
+                              bool(t.get("is_error")), name))
             if t.get("emitted_at"):
                 emits.append(parse_ts(t["emitted_at"]))
         if not calls:
@@ -59,7 +69,21 @@ def _session(sid: str, rows: list[dict[str, Any]], seen: set[tuple[str, str, str
     return Session(sid, "tracelab", rows[0]["user"], True, batches)
 
 
+_TOOL_FIELDS = ("tool_call_id", "tool_name", "emitted_at", "tool_wall_latency_ms", "is_error")
+
+
+def _slim_tool(t: dict[str, Any], split: ShellSplit | None, stats: Counter[str]) -> dict[str, Any]:
+    """Keep only metadata; for shell calls, replace the command by its first-word class."""
+    out = {k: t.get(k) for k in _TOOL_FIELDS}
+    if split is not None and t["tool_name"] in split.tools:
+        cls = split.classify(t.get("executables"))
+        out["shell_class"] = cls
+        stats[f"shell_first_word_{cls}"] += 1
+    return out
+
+
 def convert(raw: Path, stats: Counter[str], **opts: Any) -> Iterator[Session]:
+    split = load_shell_split("tracelab")
     seen: set[tuple[str, str, str]] = set()
     current: str | None = None
     rows: list[dict[str, Any]] = []
@@ -75,7 +99,7 @@ def convert(raw: Path, stats: Counter[str], **opts: Any) -> Iterator[Session]:
                 "round_index": d["round_index"],
                 "user": d["user"],
                 "timing_events": [{"timestamp": e.get("timestamp")} for e in d["timing_events"]],
-                "tools": d["tools"],
+                "tools": [_slim_tool(t, split, stats) for t in d["tools"]],
             })
     if rows:
         yield _session(current, rows, seen, stats)  # type: ignore[arg-type]

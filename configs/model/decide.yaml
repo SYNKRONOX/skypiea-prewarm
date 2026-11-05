@@ -1,0 +1,31 @@
+# Warm decisions (predictors/decide.py). Read by DecideConfig.load(). The served policy is a
+# profile (configs/model/profiles.yaml) applied over these values; the values below are the
+# single-policy VAL pick of 2026-11-04 (first pass), kept as the no-profile default.
+threshold: fixed            # fixed | cost
+tau: 0.3                    # val pick (NFR-3 rule, sim/tune.py); FR-2's tau is 0.6
+# threshold: cost -> tau_j = (cold_s + ttl_s) / (cold_s + ttl_s + lambda_pod_s * cold_s):
+# lambda_pod_s = pod-seconds worth paying to save one second of cold start (a policy knob)
+lambda_pod_s: 10
+cost_tau_clamp: [0.05, 0.99]
+min_conf: 0.3               # abstain (mode "prior", no decisions) below this max probability
+copies_quantile: 0.9        # smallest n with P(count <= n) >= this
+max_copies_per_tool: 3      # also capped at 10 by the contract; controller maxPerTool is 3
+ttl_default_ms: 30000       # FR-3 default; used when there is no timing data
+ttl_min_ms: 5000
+ttl_max_ms: 600000
+margin_ms: 0                # start this much earlier than the plan below
+start_rule: timing          # timing (start at gap - cold, TTL until the p90 arrival) | now
+gap_stat: p10               # val pick; gap quantile the timing rule plans to: p50 | p10
+# Sent with every decision (contract P-new): after a use the controller keeps the pod for
+# max(ttl_s of the latest decision naming its server, keep_after_use_s).
+keep_after_use_s: 5         # val pick (results/sim_choice.json)
+# Planning cold start: start_in_ms = max(0, gap_p50 - cold_start - margin), with cold_start
+# read from the cold-start file (never from code) at this statistic and image mode.
+plan_stat: median_ms        # val pick; median_ms | p95_ms
+plan_mode: cached           # cached | uncached; the simulator sets it to the mode it replays
+# Operator caps (fleet level; applied by the controller / simulator, not per request)
+max_pods_per_tool: 3
+max_total_warm_pods: 20
+max_new_pods_per_s: 5       # ramp limit for Scenario C
+# Fail-open ladder (predictors/ladder.py)
+budget_ms: 40

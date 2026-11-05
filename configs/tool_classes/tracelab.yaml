@@ -1,9 +1,14 @@
 # TraceLab: Claude Code and Codex CLI coding agents.
-classes: [shell, shell_io, read_file, write_file, search, web, planning, agent, user_io,
-          schedule, custom_tool, other]
+#
+# Shell calls are split by the first word of the command (see shell_split below). The
+# converter reads that one token from TraceLab's parsed `executables` list, maps it to a
+# class and emits the raw tool as "<tool>:<class>" (e.g. "Bash:git"); the command itself is
+# never stored. custom_tool (MCP and anonymised tools, 0.1% of calls) is folded into `other`
+# to stay within the 15-class cap.
+classes: [shell_other, shell_io, read_file, write_file, search, run_tests, git, build,
+          package, web, planning, agent, user_io, schedule, other]
 default: other
 exact:
-  shell: [exec_command, Bash, exec, shell, shell_command, run]
   # Feeding or polling an already running process (Codex write_stdin, Claude BashOutput).
   shell_io: [write_stdin, BashOutput, KillBash, wait]
   read_file: [Read, view_image, NotebookRead]
@@ -20,4 +25,35 @@ prefix:
   planning: [Task]          # TaskCreate, TaskUpdate, TaskList, TaskGet, TaskOutput, TaskStop
   agent: [EnterWorktree, ExitWorktree]
 regex:
-  custom_tool: ['^custom_tool_\d+$', '^mcp__', '^list_mcp_resource']
+  # Shell calls after the first-word split ("Bash:run_tests" -> run_tests).
+  shell_other: [':shell_other$']
+  run_tests: [':run_tests$']
+  git: [':git$']
+  build: [':build$']
+  search: [':search$']
+  read_file: [':read_file$']
+  write_file: [':write_file$']
+  package: [':package$']
+  other: ['^custom_tool_\d+$', '^mcp__', '^list_mcp_resource']
+
+# First-word split of shell commands. TraceLab stores only parsed executable names (no
+# arguments), so sub-commands are not visible: `npm test` and `npm install` are both `npm`,
+# `cargo test` and `cargo build` are both `cargo`. Multi-purpose build drivers therefore go
+# to `build`. Leading setup words are skipped so `cd x && pytest` counts as pytest.
+shell_split:
+  tools: [exec_command, Bash, exec, shell, shell_command, run]
+  skip: [cd, pushd, popd, source, ., set, export, env, sudo, time, timeout, nohup, command]
+  default: shell_other
+  words:
+    run_tests: [pytest, py.test, tox, nox, jest, vitest, mocha, ctest, phpunit, rspec,
+                unittest]
+    git: [git, gh]
+    build: [make, cmake, ninja, cargo, go, tsc, npm, npx, pnpm, yarn, bun, mvn, gradle,
+            gcc, g++, clang, javac, rustc, py_compile, ruff, mypy, eslint, prettier, black,
+            flake8, pyright]
+    search: [grep, rg, find, ls, fd, tree, ag, ack, locate, which]
+    # sed and nl are Codex's read idiom (`sed -n 1,200p f`, `nl -ba f`); with no
+    # arguments available, a rare `sed -i` edit also lands here.
+    read_file: [cat, head, tail, less, more, sed, nl, wc, bat]
+    write_file: [apply_patch]
+    package: [pip, pip3, uv, conda, mamba, apt, apt-get, brew, poetry]

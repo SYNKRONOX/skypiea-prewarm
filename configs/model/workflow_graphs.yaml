@@ -1,0 +1,73 @@
+# Workflow graphs for the PRD scenarios (docs/prd_excerpts.md), used two ways:
+#   1. traces/generate_synthetic.py samples synthetic sessions from them;
+#   2. the graph prior uses their allowed edges when the workflow node is known.
+#
+# Each node may call one tool (`tool: null` = an LLM-only step with no tool call). `next`
+# gives the transition probabilities to the following node; `<end>` ends the session. The
+# allowed edges of a node are the keys of `next` with probability > 0.
+#
+# Real traces have no workflow nodes. For them the graph prior uses edges observed in train
+# (min support 3), labelled "learned edges, not workflow-defined".
+version: 1
+scenarios:
+  # PRD Scenario A (customer-support refund). Tool-level branching follows the PRD exactly:
+  # after order_lookup: policy_check 0.70, refund_issue 0.20, end 0.10;
+  # after policy_check: refund_issue 0.55, end 0.45.
+  # "End" means the agent goes straight to the closing notify_user step. NOTE: these branch
+  # probabilities give 0.70 * 0.55 = 38.5% full three-tool chains, not the PRD's "about 85%";
+  # the explicit branch probabilities are used.
+  branching:
+    prd: "Scenario A"
+    trace_type: synthetic_branching
+    think_source: tau2_bench
+    start: classify_intent
+    nodes:
+      classify_intent: {tool: null, next: {lookup_order: 1.0}}
+      lookup_order: {tool: order_lookup, next: {check_policy: 0.70, issue_refund: 0.20,
+                                                notify_user: 0.10}}
+      check_policy: {tool: policy_check, next: {issue_refund: 0.55, notify_user: 0.45}}
+      issue_refund: {tool: refund_issue, next: {notify_user: 1.0}}
+      notify_user: {tool: null, next: {<end>: 1.0}}
+
+  # PRD Scenario B (coding PR review): fixed linear pipeline, no branching.
+  deterministic:
+    prd: "Scenario B"
+    trace_type: synthetic_deterministic
+    think_source: tracelab
+    start: read_file
+    nodes:
+      read_file: {tool: read_file, next: {run_tests: 1.0}}
+      run_tests: {tool: run_tests, next: {format_diff: 1.0}}
+      format_diff: {tool: format_diff, next: {post_comment: 1.0}}
+      post_comment: {tool: post_comment, next: {<end>: 1.0}}
+
+  # PRD stochastic random walk: 8 states, 3 successors each plus 8% end, drawn once with
+  # numpy default_rng(0) and Dirichlet(1,1,1) weights, then fixed here (one 0.00 edge raised
+  # to 0.10 so every listed edge is reachable). Start state is uniform.
+  random_walk:
+    prd: "stochastic random walk"
+    trace_type: synthetic_random_walk
+    think_source: tracelab
+    start: uniform
+    max_events: 200
+    nodes:
+      state_0: {tool: tool_0, next: {state_4: 0.10, state_5: 0.59, state_7: 0.23, <end>: 0.08}}
+      state_1: {tool: tool_1, next: {state_0: 0.21, state_4: 0.46, state_5: 0.25, <end>: 0.08}}
+      state_2: {tool: tool_2, next: {state_0: 0.15, state_3: 0.58, state_4: 0.19, <end>: 0.08}}
+      state_3: {tool: tool_3, next: {state_0: 0.08, state_4: 0.02, state_6: 0.82, <end>: 0.08}}
+      state_4: {tool: tool_4, next: {state_0: 0.15, state_3: 0.14, state_5: 0.63, <end>: 0.08}}
+      state_5: {tool: tool_5, next: {state_3: 0.57, state_4: 0.25, state_6: 0.10, <end>: 0.08}}
+      state_6: {tool: tool_6, next: {state_1: 0.59, state_2: 0.03, state_5: 0.30, <end>: 0.08}}
+      state_7: {tool: tool_7, next: {state_1: 0.23, state_2: 0.40, state_4: 0.29, <end>: 0.08}}
+
+  # PRD Scenario C (demand spike), OUR INTERPRETATION: the PRD gives no graph for it, only
+  # that most sessions call promo_code_lookup (docs/prd_excerpts.md). A spike session is one
+  # promo_code_lookup call and the end. Used only inside the synthetic `prd` mix
+  # (traces/generate_synthetic.py --type prd), so the prd bundle's vocabulary covers the tool.
+  spike:
+    prd: "Scenario C (interpretation)"
+    trace_type: synthetic_spike
+    think_source: tau2_bench
+    start: lookup_promo
+    nodes:
+      lookup_promo: {tool: promo_code_lookup, next: {<end>: 1.0}}

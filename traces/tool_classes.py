@@ -70,6 +70,40 @@ def _read(source: str) -> dict[str, Any]:
     return cfg
 
 
+@dataclass(frozen=True)
+class ShellSplit:
+    """Classify a shell call by the first word of its command (the ``shell_split`` block).
+
+    Only the executable name is looked at; arguments are never seen or stored.
+    """
+
+    tools: frozenset[str]
+    skip: frozenset[str]
+    words: dict[str, str]
+    default: str
+
+    def classify(self, executables: list[str] | None) -> str:
+        for word in executables or []:
+            if word in self.skip:
+                continue
+            return self.words.get(word, self.default)
+        return self.default
+
+
+def load_shell_split(source: str) -> ShellSplit | None:
+    """The source's first-word shell rules, or None if it has none."""
+    cfg = _read(source).get("shell_split")
+    if not cfg:
+        return None
+    words: dict[str, str] = {}
+    for cls, items in cfg["words"].items():
+        for w in items:
+            if words.setdefault(str(w), cls) != cls:
+                raise ValueError(f"{source}: shell word {w!r} mapped to two classes")
+    return ShellSplit(frozenset(cfg["tools"]), frozenset(str(s) for s in cfg.get("skip", [])),
+                      words, cfg.get("default", "shell_other"))
+
+
 def load_mapper(source: str) -> ToolMapper:
     """Load and check the mapping for ``source``."""
     cfg = _read(source)

@@ -1,0 +1,41 @@
+# Shared coding vocabulary for TraceLab and the GitHub Copilot agent, used for pooled and
+# cross-source experiments (train on one, test on the other).
+#
+# Rule: keep a distinction only if BOTH sources can express it. Copilot runs git through its
+# generic terminal tool, so TraceLab `git` becomes `shell`; Copilot has no agent, web,
+# user-interaction or scheduling tools, so those become `other`. Each source keeps its full
+# native vocabulary for within-source experiments (vocab=None).
+#
+# Every class of every listed source must be mapped; the loader fails on an unmapped class.
+name: coding_common
+version: 1
+classes: [read_file, write_file, search, shell, run_tests, build, package, planning, other]
+sources:
+  tracelab:
+    read_file: read_file
+    write_file: write_file
+    search: search
+    shell_other: shell
+    shell_io: shell          # polling / feeding a running terminal process
+    git: shell               # Copilot has no separate git tool
+    run_tests: run_tests
+    build: build
+    package: package
+    planning: planning
+    schedule: other
+    agent: other
+    web: other
+    user_io: other
+    other: other
+  copilot_2026:
+    read_file: read_file
+    write_file: write_file
+    search: search
+    project: search          # get_projects_in_solution, get_files_in_project
+    shell: shell
+    run_tests: run_tests
+    build: build             # run_build, get_errors
+    package: package
+    planning: planning
+    custom_tool: other
+    other: other

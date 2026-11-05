@@ -37,3 +37,6 @@ e1:
 
 clean-cluster:
 	kind delete cluster --name $(CLUSTER)
+
+-include mk/infra.mk
+-include mk/model.mk

@@ -6,6 +6,9 @@
 
 ``split`` is "train", "val", "test", a list of those, or None for everything. ``level``
 is "class" (mapped tool classes, the default) or "raw" (the source's own tool names).
+``vocab`` (e.g. "coding_common") maps the source's classes onto a shared vocabulary from
+configs/vocab/<vocab>.yaml, so several sources can be pooled or crossed; it applies to the
+class level only.
 Pass ``root=SAMPLES`` to read the small committed samples instead (used by tests and CI).
 """
 
@@ -20,6 +23,7 @@ from typing import Any, Literal
 import pandas as pd
 
 from traces.schema import Session
+from traces.vocab import load_vocab
 
 ROOT = Path(__file__).resolve().parent.parent
 PROCESSED = ROOT / "data" / "processed"
@@ -56,37 +60,59 @@ def iter_session_dicts(source: str, split: SplitArg = None,
                 yield d
 
 
-def load_sessions(source: str, split: SplitArg = "train",
-                  root: Path = PROCESSED) -> list[Session]:
-    return [Session.from_dict(d) for d in iter_session_dicts(source, split, root)]
+def load_sessions(source: str, split: SplitArg = "train", root: Path = PROCESSED,
+                  vocab: str | None = None) -> list[Session]:
+    sessions = [Session.from_dict(d) for d in iter_session_dicts(source, split, root)]
+    if vocab is not None:
+        v = load_vocab(vocab)
+        for s in sessions:
+            for b in s.batches:
+                for c in b.calls:
+                    c.tool = v.map(source, c.tool)
+    return sessions
 
 
 def _name(call: Any, level: Level) -> str:
     return call.tool if level == "class" else (call.raw_tool or call.tool)
 
 
+def _check_level(level: Level, vocab: str | None) -> None:
+    if vocab is not None and level != "class":
+        raise ValueError("vocab applies to level='class' only")
+
+
 def load_sequences(source: str, split: SplitArg = "train", root: Path = PROCESSED,
-                   level: Level = "class") -> list[list[str]]:
+                   level: Level = "class", vocab: str | None = None) -> list[list[str]]:
     """Flat tool sequences (calls in a batch sorted by name), for Markov and n-gram models."""
+    _check_level(level, vocab)
     out = []
-    for s in load_sessions(source, split, root):
+    for s in load_sessions(source, split, root, vocab):
         out.append([_name(c, level) for b in s.batches
                     for c in sorted(b.calls, key=lambda c: _name(c, level))])
     return out
 
 
 def load_batches(source: str, split: SplitArg = "train", root: Path = PROCESSED,
-                 level: Level = "class") -> list[list[frozenset[str]]]:
+                 level: Level = "class", vocab: str | None = None) -> list[list[frozenset[str]]]:
     """Per session, the set of tools in each non-empty batch (for parallel prediction)."""
+    _check_level(level, vocab)
     return [
         [frozenset(_name(c, level) for c in b.calls) for b in s.batches if b.calls]
-        for s in load_sessions(source, split, root)
+        for s in load_sessions(source, split, root, vocab)
     ]
 
 
-def load_calls_df(source: str, split: SplitArg = "train",
-                  root: Path = PROCESSED) -> pd.DataFrame:
+def load_calls_df(source: str, split: SplitArg = "train", root: Path = PROCESSED,
+                  vocab: str | None = None) -> pd.DataFrame:
     """One row per call, from calls.parquet (or built from the sessions for samples)."""
+    df = _calls_df(source, split, root)
+    if vocab is not None and len(df):
+        v = load_vocab(vocab)
+        df["tool"] = [v.map(source, t) for t in df["tool"]]
+    return df
+
+
+def _calls_df(source: str, split: SplitArg, root: Path) -> pd.DataFrame:
     wanted = _splits(split)
     parquet = root / source / "calls.parquet"
     if parquet.exists():
@@ -107,7 +133,7 @@ def load_calls_df(source: str, split: SplitArg = "train",
     return pd.DataFrame(rows)
 
 
-def load_all(sources: Iterable[str], split: SplitArg = "train",
-             root: Path = PROCESSED) -> list[Session]:
+def load_all(sources: Iterable[str], split: SplitArg = "train", root: Path = PROCESSED,
+             vocab: str | None = None) -> list[Session]:
     """Sessions from several sources combined (each keeps its ``source`` field)."""
-    return [s for src in sources for s in load_sessions(src, split, root)]
+    return [s for src in sources for s in load_sessions(src, split, root, vocab)]

@@ -1,0 +1,932 @@
+{
+ "chosen": {
+  "after_use": "contract",
+  "best_any_threshold_warm": 76.6082,
+  "budget_binding": true,
+  "decide": {
+   "copies_quantile": 0.9,
+   "gap_stat": "p50",
+   "keep_after_use_s": 0.0,
+   "plan_stat": "p95_ms",
+   "start_rule": "now",
+   "tau": 0.4,
+   "threshold": "fixed"
+  },
+  "feasible": true,
+  "mean_warm": 69.5906,
+  "threshold": "tau0.4"
+ },
+ "cold_mode": "cached",
+ "cold_start": "kind: lower bound; replace with AWS (kind pulls from a registry on the same machine)",
+ "cold_start_sha256": "96d8a3d6952d",
+ "git_commit": "baaabda-dirty",
+ "objective": "max mean warm % s.t. idle <= 0.3 x always-warm on every source",
+ "profile": "support",
+ "sources": [
+  "tau2_bench"
+ ],
+ "split": "val",
+ "steps": {
+  "a2_copies": {
+   "all": [
+    {
+     "after_use": "contract",
+     "best_any_threshold_warm": 55.5556,
+     "budget_binding": false,
+     "cfg": {
+      "copies_quantile": 0.9,
+      "gap_stat": "p50",
+      "keep_after_use_s": 0.0,
+      "plan_stat": "p95_ms",
+      "start_rule": "timing"
+     },
+     "feasible": true,
+     "mean_warm": 55.5556,
+     "per_source": {
+      "tau2_bench": {
+       "idle_over_always_warm": 0.2875,
+       "idle_pod_s_per_1k": 13853.751,
+       "warm_pct": 55.5556
+      }
+     },
+     "shippable": true,
+     "threshold": "lam100",
+     "threshold_cfg": {
+      "lambda_pod_s": 100.0,
+      "threshold": "cost"
+     },
+     "variant": "copies=q0.9",
+     "worst_idle_ratio": 0.2875
+    },
+    {
+     "after_use": "contract",
+     "best_any_threshold_warm": 55.5556,
+     "budget_binding": false,
+     "cfg": {
+      "copies_quantile": 0.5,
+      "gap_stat": "p50",
+      "keep_after_use_s": 0.0,
+      "plan_stat": "p95_ms",
+      "start_rule": "timing"
+     },
+     "feasible": true,
+     "mean_warm": 55.5556,
+     "per_source": {
+      "tau2_bench": {
+       "idle_over_always_warm": 0.2875,
+       "idle_pod_s_per_1k": 13853.751,
+       "warm_pct": 55.5556
+      }
+     },
+     "shippable": true,
+     "threshold": "lam100",
+     "threshold_cfg": {
+      "lambda_pod_s": 100.0,
+      "threshold": "cost"
+     },
+     "variant": "copies=q0.5",
+     "worst_idle_ratio": 0.2875
+    },
+    {
+     "after_use": "contract",
+     "best_any_threshold_warm": 55.5556,
+     "budget_binding": false,
+     "cfg": {
+      "copies_quantile": 0.9,
+      "gap_stat": "p50",
+      "keep_after_use_s": 0.0,
+      "max_copies_per_tool": 1,
+      "plan_stat": "p95_ms",
+      "start_rule": "timing"
+     },
+     "feasible": true,
+     "mean_warm": 55.5556,
+     "per_source": {
+      "tau2_bench": {
+       "idle_over_always_warm": 0.2875,
+       "idle_pod_s_per_1k": 13853.751,
+       "warm_pct": 55.5556
+      }
+     },
+     "shippable": true,
+     "threshold": "lam100",
+     "threshold_cfg": {
+      "lambda_pod_s": 100.0,
+      "threshold": "cost"
+     },
+     "variant": "copies=one",
+     "worst_idle_ratio": 0.2875
+    }
+   ],
+   "winner": {
+    "after_use": "contract",
+    "best_any_threshold_warm": 55.5556,
+    "budget_binding": false,
+    "cfg": {
+     "copies_quantile": 0.9,
+     "gap_stat": "p50",
+     "keep_after_use_s": 0.0,
+     "plan_stat": "p95_ms",
+     "start_rule": "timing"
+    },
+    "feasible": true,
+    "mean_warm": 55.5556,
+    "per_source": {
+     "tau2_bench": {
+      "idle_over_always_warm": 0.2875,
+      "idle_pod_s_per_1k": 13853.751,
+      "warm_pct": 55.5556
+     }
+    },
+    "shippable": true,
+    "threshold": "lam100",
+    "threshold_cfg": {
+     "lambda_pod_s": 100.0,
+     "threshold": "cost"
+    },
+    "variant": "copies=q0.9",
+    "worst_idle_ratio": 0.2875
+   }
+  },
+  "a_copies": {
+   "all": [
+    {
+     "after_use": "pod",
+     "best_any_threshold_warm": 67.2515,
+     "budget_binding": false,
+     "cfg": {
+      "copies_quantile": 0.9
+     },
+     "feasible": false,
+     "mean_warm": 57.3099,
+     "per_source": {
+      "tau2_bench": {
+       "idle_over_always_warm": 0.3792,
+       "idle_pod_s_per_1k": 18271.007,
+       "warm_pct": 57.3099
+      }
+     },
+     "shippable": true,
+     "threshold": "tau0.9",
+     "threshold_cfg": {
+      "tau": 0.9,
+      "threshold": "fixed"
+     },
+     "variant": "copies=q0.9",
+     "worst_idle_ratio": 0.3792
+    },
+    {
+     "after_use": "pod",
+     "best_any_threshold_warm": 67.2515,
+     "budget_binding": false,
+     "cfg": {
+      "copies_quantile": 0.5
+     },
+     "feasible": false,
+     "mean_warm": 57.3099,
+     "per_source": {
+      "tau2_bench": {
+       "idle_over_always_warm": 0.3792,
+       "idle_pod_s_per_1k": 18271.007,
+       "warm_pct": 57.3099
+      }
+     },
+     "shippable": true,
+     "threshold": "tau0.9",
+     "threshold_cfg": {
+      "tau": 0.9,
+      "threshold": "fixed"
+     },
+     "variant": "copies=q0.5",
+     "worst_idle_ratio": 0.3792
+    },
+    {
+     "after_use": "pod",
+     "best_any_threshold_warm": 67.2515,
+     "budget_binding": false,
+     "cfg": {
+      "max_copies_per_tool": 1
+     },
+     "feasible": false,
+     "mean_warm": 57.3099,
+     "per_source": {
+      "tau2_bench": {
+       "idle_over_always_warm": 0.3792,
+       "idle_pod_s_per_1k": 18271.007,
+       "warm_pct": 57.3099
+      }
+     },
+     "shippable": true,
+     "threshold": "tau0.9",
+     "threshold_cfg": {
+      "tau": 0.9,
+      "threshold": "fixed"
+     },
+     "variant": "copies=one",
+     "worst_idle_ratio": 0.3792
+    }
+   ],
+   "winner": {
+    "after_use": "pod",
+    "best_any_threshold_warm": 67.2515,
+    "budget_binding": false,
+    "cfg": {
+     "copies_quantile": 0.9
+    },
+    "feasible": false,
+    "mean_warm": 57.3099,
+    "per_source": {
+     "tau2_bench": {
+      "idle_over_always_warm": 0.3792,
+      "idle_pod_s_per_1k": 18271.007,
+      "warm_pct": 57.3099
+     }
+    },
+    "shippable": true,
+    "threshold": "tau0.9",
+    "threshold_cfg": {
+     "tau": 0.9,
+     "threshold": "fixed"
+    },
+    "variant": "copies=q0.9",
+    "worst_idle_ratio": 0.3792
+   }
+  },
+  "b2_start": {
+   "all": [
+    {
+     "after_use": "contract",
+     "best_any_threshold_warm": 55.5556,
+     "budget_binding": false,
+     "cfg": {
+      "copies_quantile": 0.9,
+      "gap_stat": "p50",
+      "keep_after_use_s": 0.0,
+      "plan_stat": "p95_ms",
+      "start_rule": "timing"
+     },
+     "feasible": true,
+     "mean_warm": 55.5556,
+     "per_source": {
+      "tau2_bench": {
+       "idle_over_always_warm": 0.2875,
+       "idle_pod_s_per_1k": 13853.751,
+       "warm_pct": 55.5556
+      }
+     },
+     "shippable": true,
+     "threshold": "lam100",
+     "threshold_cfg": {
+      "lambda_pod_s": 100.0,
+      "threshold": "cost"
+     },
+     "variant": "start=spec",
+     "worst_idle_ratio": 0.2875
+    },
+    {
+     "after_use": "contract",
+     "best_any_threshold_warm": 55.5556,
+     "budget_binding": false,
+     "cfg": {
+      "copies_quantile": 0.9,
+      "gap_stat": "p50",
+      "keep_after_use_s": 0.0,
+      "plan_stat": "median_ms",
+      "start_rule": "timing"
+     },
+     "feasible": true,
+     "mean_warm": 55.5556,
+     "per_source": {
+      "tau2_bench": {
+       "idle_over_always_warm": 0.2884,
+       "idle_pod_s_per_1k": 13895.64,
+       "warm_pct": 55.5556
+      }
+     },
+     "shippable": true,
+     "threshold": "lam100",
+     "threshold_cfg": {
+      "lambda_pod_s": 100.0,
+      "threshold": "cost"
+     },
+     "variant": "start=jit_p50",
+     "worst_idle_ratio": 0.2884
+    },
+    {
+     "after_use": "contract",
+     "best_any_threshold_warm": 65.4971,
+     "budget_binding": true,
+     "cfg": {
+      "copies_quantile": 0.9,
+      "gap_stat": "p10",
+      "keep_after_use_s": 0.0,
+      "plan_stat": "median_ms",
+      "start_rule": "timing"
+     },
+     "feasible": true,
+     "mean_warm": 52.6316,
+     "per_source": {
+      "tau2_bench": {
+       "idle_over_always_warm": 0.193,
+       "idle_pod_s_per_1k": 9299.298,
+       "warm_pct": 52.6316
+      }
+     },
+     "shippable": true,
+     "threshold": "tau0.3",
+     "threshold_cfg": {
+      "tau": 0.3,
+      "threshold": "fixed"
+     },
+     "variant": "start=jit_p10",
+     "worst_idle_ratio": 0.193
+    },
+    {
+     "after_use": "contract",
+     "best_any_threshold_warm": 76.6082,
+     "budget_binding": true,
+     "cfg": {
+      "copies_quantile": 0.9,
+      "gap_stat": "p50",
+      "keep_after_use_s": 0.0,
+      "plan_stat": "p95_ms",
+      "start_rule": "now"
+     },
+     "feasible": true,
+     "mean_warm": 69.5906,
+     "per_source": {
+      "tau2_bench": {
+       "idle_over_always_warm": 0.224,
+       "idle_pod_s_per_1k": 10792.661,
+       "warm_pct": 69.5906
+      }
+     },
+     "shippable": true,
+     "threshold": "tau0.4",
+     "threshold_cfg": {
+      "tau": 0.4,
+      "threshold": "fixed"
+     },
+     "variant": "start=now",
+     "worst_idle_ratio": 0.224
+    }
+   ],
+   "winner": {
+    "after_use": "contract",
+    "best_any_threshold_warm": 76.6082,
+    "budget_binding": true,
+    "cfg": {
+     "copies_quantile": 0.9,
+     "gap_stat": "p50",
+     "keep_after_use_s": 0.0,
+     "plan_stat": "p95_ms",
+     "start_rule": "now"
+    },
+    "feasible": true,
+    "mean_warm": 69.5906,
+    "per_source": {
+     "tau2_bench": {
+      "idle_over_always_warm": 0.224,
+      "idle_pod_s_per_1k": 10792.661,
+      "warm_pct": 69.5906
+     }
+    },
+    "shippable": true,
+    "threshold": "tau0.4",
+    "threshold_cfg": {
+     "tau": 0.4,
+     "threshold": "fixed"
+    },
+    "variant": "start=now",
+    "worst_idle_ratio": 0.224
+   }
+  },
+  "b_start": {
+   "all": [
+    {
+     "after_use": "pod",
+     "best_any_threshold_warm": 67.2515,
+     "budget_binding": false,
+     "cfg": {
+      "copies_quantile": 0.9,
+      "gap_stat": "p50",
+      "plan_stat": "p95_ms",
+      "start_rule": "timing"
+     },
+     "feasible": false,
+     "mean_warm": 57.3099,
+     "per_source": {
+      "tau2_bench": {
+       "idle_over_always_warm": 0.3792,
+       "idle_pod_s_per_1k": 18271.007,
+       "warm_pct": 57.3099
+      }
+     },
+     "shippable": true,
+     "threshold": "tau0.9",
+     "threshold_cfg": {
+      "tau": 0.9,
+      "threshold": "fixed"
+     },
+     "variant": "start=spec",
+     "worst_idle_ratio": 0.3792
+    },
+    {
+     "after_use": "pod",
+     "best_any_threshold_warm": 66.6667,
+     "budget_binding": false,
+     "cfg": {
+      "copies_quantile": 0.9,
+      "gap_stat": "p50",
+      "plan_stat": "median_ms",
+      "start_rule": "timing"
+     },
+     "feasible": false,
+     "mean_warm": 57.3099,
+     "per_source": {
+      "tau2_bench": {
+       "idle_over_always_warm": 0.3792,
+       "idle_pod_s_per_1k": 18271.007,
+       "warm_pct": 57.3099
+      }
+     },
+     "shippable": true,
+     "threshold": "tau0.9",
+     "threshold_cfg": {
+      "tau": 0.9,
+      "threshold": "fixed"
+     },
+     "variant": "start=jit_p50",
+     "worst_idle_ratio": 0.3792
+    },
+    {
+     "after_use": "pod",
+     "best_any_threshold_warm": 70.1754,
+     "budget_binding": false,
+     "cfg": {
+      "copies_quantile": 0.9,
+      "gap_stat": "p10",
+      "plan_stat": "median_ms",
+      "start_rule": "timing"
+     },
+     "feasible": false,
+     "mean_warm": 57.3099,
+     "per_source": {
+      "tau2_bench": {
+       "idle_over_always_warm": 0.3792,
+       "idle_pod_s_per_1k": 18271.007,
+       "warm_pct": 57.3099
+      }
+     },
+     "shippable": true,
+     "threshold": "tau0.9",
+     "threshold_cfg": {
+      "tau": 0.9,
+      "threshold": "fixed"
+     },
+     "variant": "start=jit_p10",
+     "worst_idle_ratio": 0.3792
+    },
+    {
+     "after_use": "pod",
+     "best_any_threshold_warm": 76.6082,
+     "budget_binding": false,
+     "cfg": {
+      "copies_quantile": 0.9,
+      "start_rule": "now"
+     },
+     "feasible": false,
+     "mean_warm": 57.3099,
+     "per_source": {
+      "tau2_bench": {
+       "idle_over_always_warm": 0.3792,
+       "idle_pod_s_per_1k": 18271.007,
+       "warm_pct": 57.3099
+      }
+     },
+     "shippable": true,
+     "threshold": "tau0.9",
+     "threshold_cfg": {
+      "tau": 0.9,
+      "threshold": "fixed"
+     },
+     "variant": "start=now",
+     "worst_idle_ratio": 0.3792
+    }
+   ],
+   "winner": {
+    "after_use": "pod",
+    "best_any_threshold_warm": 67.2515,
+    "budget_binding": false,
+    "cfg": {
+     "copies_quantile": 0.9,
+     "gap_stat": "p50",
+     "plan_stat": "p95_ms",
+     "start_rule": "timing"
+    },
+    "feasible": false,
+    "mean_warm": 57.3099,
+    "per_source": {
+     "tau2_bench": {
+      "idle_over_always_warm": 0.3792,
+      "idle_pod_s_per_1k": 18271.007,
+      "warm_pct": 57.3099
+     }
+    },
+    "shippable": true,
+    "threshold": "tau0.9",
+    "threshold_cfg": {
+     "tau": 0.9,
+     "threshold": "fixed"
+    },
+    "variant": "start=spec",
+    "worst_idle_ratio": 0.3792
+   }
+  },
+  "c_keep": {
+   "all": [
+    {
+     "after_use": "contract",
+     "best_any_threshold_warm": 55.5556,
+     "budget_binding": false,
+     "cfg": {
+      "copies_quantile": 0.9,
+      "gap_stat": "p50",
+      "keep_after_use_s": 0.0,
+      "plan_stat": "p95_ms",
+      "start_rule": "timing"
+     },
+     "feasible": true,
+     "mean_warm": 55.5556,
+     "per_source": {
+      "tau2_bench": {
+       "idle_over_always_warm": 0.2875,
+       "idle_pod_s_per_1k": 13853.751,
+       "warm_pct": 55.5556
+      }
+     },
+     "shippable": true,
+     "threshold": "lam100",
+     "threshold_cfg": {
+      "lambda_pod_s": 100.0,
+      "threshold": "cost"
+     },
+     "variant": "keep=0s,contract",
+     "worst_idle_ratio": 0.2875
+    },
+    {
+     "after_use": "contract",
+     "best_any_threshold_warm": 55.5556,
+     "budget_binding": false,
+     "cfg": {
+      "copies_quantile": 0.9,
+      "gap_stat": "p50",
+      "keep_after_use_s": 2.0,
+      "plan_stat": "p95_ms",
+      "start_rule": "timing"
+     },
+     "feasible": true,
+     "mean_warm": 55.5556,
+     "per_source": {
+      "tau2_bench": {
+       "idle_over_always_warm": 0.2921,
+       "idle_pod_s_per_1k": 14075.973,
+       "warm_pct": 55.5556
+      }
+     },
+     "shippable": true,
+     "threshold": "lam100",
+     "threshold_cfg": {
+      "lambda_pod_s": 100.0,
+      "threshold": "cost"
+     },
+     "variant": "keep=2s,contract",
+     "worst_idle_ratio": 0.2921
+    },
+    {
+     "after_use": "contract",
+     "best_any_threshold_warm": 55.5556,
+     "budget_binding": false,
+     "cfg": {
+      "copies_quantile": 0.9,
+      "gap_stat": "p50",
+      "keep_after_use_s": 5.0,
+      "plan_stat": "p95_ms",
+      "start_rule": "timing"
+     },
+     "feasible": true,
+     "mean_warm": 55.5556,
+     "per_source": {
+      "tau2_bench": {
+       "idle_over_always_warm": 0.299,
+       "idle_pod_s_per_1k": 14409.306,
+       "warm_pct": 55.5556
+      }
+     },
+     "shippable": true,
+     "threshold": "lam100",
+     "threshold_cfg": {
+      "lambda_pod_s": 100.0,
+      "threshold": "cost"
+     },
+     "variant": "keep=5s,contract",
+     "worst_idle_ratio": 0.299
+    },
+    {
+     "after_use": "contract",
+     "best_any_threshold_warm": 57.3099,
+     "budget_binding": true,
+     "cfg": {
+      "copies_quantile": 0.9,
+      "gap_stat": "p50",
+      "keep_after_use_s": 10.0,
+      "plan_stat": "p95_ms",
+      "start_rule": "timing"
+     },
+     "feasible": true,
+     "mean_warm": 49.7076,
+     "per_source": {
+      "tau2_bench": {
+       "idle_over_always_warm": 0.2094,
+       "idle_pod_s_per_1k": 10090.521,
+       "warm_pct": 49.7076
+      }
+     },
+     "shippable": true,
+     "threshold": "tau0.3",
+     "threshold_cfg": {
+      "tau": 0.3,
+      "threshold": "fixed"
+     },
+     "variant": "keep=10s,contract",
+     "worst_idle_ratio": 0.2094
+    },
+    {
+     "after_use": "contract",
+     "best_any_threshold_warm": 67.2515,
+     "budget_binding": false,
+     "cfg": {
+      "copies_quantile": 0.9,
+      "gap_stat": "p50",
+      "keep_after_use_s": 30.0,
+      "plan_stat": "p95_ms",
+      "start_rule": "timing"
+     },
+     "feasible": false,
+     "mean_warm": 57.3099,
+     "per_source": {
+      "tau2_bench": {
+       "idle_over_always_warm": 0.3792,
+       "idle_pod_s_per_1k": 18271.007,
+       "warm_pct": 57.3099
+      }
+     },
+     "shippable": true,
+     "threshold": "tau0.9",
+     "threshold_cfg": {
+      "tau": 0.9,
+      "threshold": "fixed"
+     },
+     "variant": "keep=30s,contract",
+     "worst_idle_ratio": 0.3792
+    },
+    {
+     "after_use": "pod",
+     "best_any_threshold_warm": 49.1228,
+     "budget_binding": false,
+     "cfg": {
+      "copies_quantile": 0.9,
+      "gap_stat": "p50",
+      "keep_after_use_s": 0.0,
+      "plan_stat": "p95_ms",
+      "start_rule": "timing"
+     },
+     "feasible": true,
+     "mean_warm": 49.1228,
+     "per_source": {
+      "tau2_bench": {
+       "idle_over_always_warm": 0.2352,
+       "idle_pod_s_per_1k": 11334.962,
+       "warm_pct": 49.1228
+      }
+     },
+     "shippable": false,
+     "threshold": "lam100",
+     "threshold_cfg": {
+      "lambda_pod_s": 100.0,
+      "threshold": "cost"
+     },
+     "variant": "keep=0s,hold",
+     "worst_idle_ratio": 0.2352
+    },
+    {
+     "after_use": "pod",
+     "best_any_threshold_warm": 52.6316,
+     "budget_binding": false,
+     "cfg": {
+      "copies_quantile": 0.9,
+      "gap_stat": "p50",
+      "keep_after_use_s": 2.0,
+      "plan_stat": "p95_ms",
+      "start_rule": "timing"
+     },
+     "feasible": true,
+     "mean_warm": 52.6316,
+     "per_source": {
+      "tau2_bench": {
+       "idle_over_always_warm": 0.2457,
+       "idle_pod_s_per_1k": 11839.751,
+       "warm_pct": 52.6316
+      }
+     },
+     "shippable": false,
+     "threshold": "lam100",
+     "threshold_cfg": {
+      "lambda_pod_s": 100.0,
+      "threshold": "cost"
+     },
+     "variant": "keep=2s,hold",
+     "worst_idle_ratio": 0.2457
+    },
+    {
+     "after_use": "pod",
+     "best_any_threshold_warm": 54.386,
+     "budget_binding": false,
+     "cfg": {
+      "copies_quantile": 0.9,
+      "gap_stat": "p50",
+      "keep_after_use_s": 5.0,
+      "plan_stat": "p95_ms",
+      "start_rule": "timing"
+     },
+     "feasible": true,
+     "mean_warm": 54.386,
+     "per_source": {
+      "tau2_bench": {
+       "idle_over_always_warm": 0.2609,
+       "idle_pod_s_per_1k": 12571.8,
+       "warm_pct": 54.386
+      }
+     },
+     "shippable": false,
+     "threshold": "lam100",
+     "threshold_cfg": {
+      "lambda_pod_s": 100.0,
+      "threshold": "cost"
+     },
+     "variant": "keep=5s,hold",
+     "worst_idle_ratio": 0.2609
+    },
+    {
+     "after_use": "pod",
+     "best_any_threshold_warm": 56.7251,
+     "budget_binding": false,
+     "cfg": {
+      "copies_quantile": 0.9,
+      "gap_stat": "p50",
+      "keep_after_use_s": 10.0,
+      "plan_stat": "p95_ms",
+      "start_rule": "timing"
+     },
+     "feasible": true,
+     "mean_warm": 56.7251,
+     "per_source": {
+      "tau2_bench": {
+       "idle_over_always_warm": 0.2888,
+       "idle_pod_s_per_1k": 13914.516,
+       "warm_pct": 56.7251
+      }
+     },
+     "shippable": false,
+     "threshold": "lam100",
+     "threshold_cfg": {
+      "lambda_pod_s": 100.0,
+      "threshold": "cost"
+     },
+     "variant": "keep=10s,hold",
+     "worst_idle_ratio": 0.2888
+    }
+   ],
+   "winner": {
+    "after_use": "contract",
+    "best_any_threshold_warm": 55.5556,
+    "budget_binding": false,
+    "cfg": {
+     "copies_quantile": 0.9,
+     "gap_stat": "p50",
+     "keep_after_use_s": 0.0,
+     "plan_stat": "p95_ms",
+     "start_rule": "timing"
+    },
+    "feasible": true,
+    "mean_warm": 55.5556,
+    "per_source": {
+     "tau2_bench": {
+      "idle_over_always_warm": 0.2875,
+      "idle_pod_s_per_1k": 13853.751,
+      "warm_pct": 55.5556
+     }
+    },
+    "shippable": true,
+    "threshold": "lam100",
+    "threshold_cfg": {
+     "lambda_pod_s": 100.0,
+     "threshold": "cost"
+    },
+    "variant": "keep=0s,contract",
+    "worst_idle_ratio": 0.2875
+   }
+  },
+  "timing": {
+   "all": [
+    {
+     "after_use": "contract",
+     "best_any_threshold_warm": 55.5556,
+     "budget_binding": false,
+     "cfg": {
+      "copies_quantile": 0.9,
+      "gap_stat": "p50",
+      "keep_after_use_s": 0.0,
+      "plan_stat": "p95_ms",
+      "start_rule": "timing"
+     },
+     "feasible": true,
+     "mean_warm": 55.5556,
+     "per_source": {
+      "tau2_bench": {
+       "idle_over_always_warm": 0.2875,
+       "idle_pod_s_per_1k": 13853.751,
+       "warm_pct": 55.5556
+      }
+     },
+     "shippable": true,
+     "threshold": "lam100",
+     "threshold_cfg": {
+      "lambda_pod_s": 100.0,
+      "threshold": "cost"
+     },
+     "variant": "start=spec",
+     "worst_idle_ratio": 0.2875
+    },
+    {
+     "after_use": "contract",
+     "best_any_threshold_warm": 76.6082,
+     "budget_binding": true,
+     "cfg": {
+      "copies_quantile": 0.9,
+      "gap_stat": "p50",
+      "keep_after_use_s": 0.0,
+      "plan_stat": "p95_ms",
+      "start_rule": "now"
+     },
+     "feasible": true,
+     "mean_warm": 69.5906,
+     "per_source": {
+      "tau2_bench": {
+       "idle_over_always_warm": 0.224,
+       "idle_pod_s_per_1k": 10792.661,
+       "warm_pct": 69.5906
+      }
+     },
+     "shippable": true,
+     "threshold": "tau0.4",
+     "threshold_cfg": {
+      "tau": 0.4,
+      "threshold": "fixed"
+     },
+     "variant": "start=now",
+     "worst_idle_ratio": 0.224
+    }
+   ],
+   "winner": {
+    "after_use": "contract",
+    "best_any_threshold_warm": 76.6082,
+    "budget_binding": true,
+    "cfg": {
+     "copies_quantile": 0.9,
+     "gap_stat": "p50",
+     "keep_after_use_s": 0.0,
+     "plan_stat": "p95_ms",
+     "start_rule": "now"
+    },
+    "feasible": true,
+    "mean_warm": 69.5906,
+    "per_source": {
+     "tau2_bench": {
+      "idle_over_always_warm": 0.224,
+      "idle_pod_s_per_1k": 10792.661,
+      "warm_pct": 69.5906
+     }
+    },
+    "shippable": true,
+    "threshold": "tau0.4",
+    "threshold_cfg": {
+     "tau": 0.4,
+     "threshold": "fixed"
+    },
+    "variant": "start=now",
+    "worst_idle_ratio": 0.224
+   }
+  }
+ }
+}

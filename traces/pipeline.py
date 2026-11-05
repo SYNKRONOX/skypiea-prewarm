@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import argparse
 import gzip
+import hashlib
 import importlib
 import json
 import math
@@ -57,6 +58,13 @@ SOURCES: dict[str, dict[str, Any]] = {
     "tau2_bench": {"min_batches": 2},
     "bfcl": {"min_batches": 1},
     "toolathlon": {"min_batches": 2},
+    # Synthetic PRD traces (traces/generate_synthetic.py). Scenario A can end after one tool.
+    "synthetic_branching": {"min_batches": 1},
+    "synthetic_deterministic": {"min_batches": 1},
+    "synthetic_random_walk": {"min_batches": 1},
+    # SYNTHETIC mix of PRD Scenarios A, B and C for the demo bundle (not evidence about real
+    # workloads); a spike session has one call.
+    "synthetic_prd": {"min_batches": 1},
 }
 
 CALL_SCHEMA = pa.schema([
@@ -141,6 +149,23 @@ def assign_splits(groups: list[str], seed: int = SEED) -> dict[str, str]:
     return out
 
 
+def extend_splits(groups: list[str], existing: dict[str, str],
+                  seed: int = SEED) -> dict[str, str]:
+    """Keep every existing assignment; place each new group by a hash of (seed, group).
+
+    Used when a source grows (e.g. more Copilot shards): earlier groups never move, and a new
+    group's split depends only on its own name, so it is stable across reruns. Fractions match
+    ``assign_splits`` in expectation (30% test, then 20% of the rest val).
+    """
+    out = {g: existing[g] for g in groups if g in existing}
+    for g in sorted(set(groups) - set(existing)):
+        h = hashlib.sha256(f"{seed}:{g}".encode()).digest()
+        u = int.from_bytes(h[:8], "big") / 2**64
+        v = int.from_bytes(h[8:16], "big") / 2**64
+        out[g] = "test" if u < TEST_FRAC else ("val" if v < VAL_FRAC else "train")
+    return out
+
+
 def read_sessions(path: Path) -> Iterator[dict[str, Any]]:
     with gzip.open(path, "rt", encoding="utf-8") as f:
         for line in f:
@@ -155,14 +180,18 @@ def quantiles(xs: list[float]) -> str:
 
 
 def run(source: str, limit: int | None = None, raw: Path = RAW, out_root: Path = PROCESSED,
-        **opts: Any) -> str:
+        keep_splits: Path | None = None, converter: Any = None, **opts: Any) -> str:
+    """Run the pipeline. ``keep_splits`` names an earlier splits.json whose assignments are
+    kept; groups not in it are placed by ``extend_splits``. ``converter`` replaces the
+    source's ``traces.convert_<source>.convert`` (used by the synthetic generator)."""
     if source not in SOURCES:
         raise SystemExit(f"unknown source {source!r}; choose from {sorted(SOURCES)}")
     out = out_root / source
     out.mkdir(parents=True, exist_ok=True)
     conv_stats: Counter[str] = Counter()
     clean_stats: Counter[str] = Counter()
-    converter = importlib.import_module(f"traces.convert_{source}").convert
+    if converter is None:
+        converter = importlib.import_module(f"traces.convert_{source}").convert
     sessions = islice(converter(raw, conv_stats, **opts), limit)
     first = next(sessions, None)  # surfaces converter errors (e.g. gated data) first
     mapper: ToolMapper = load_mapper(source)
@@ -183,9 +212,14 @@ def run(source: str, limit: int | None = None, raw: Path = RAW, out_root: Path =
                 f.write(json.dumps(kept.to_dict(), separators=(",", ":")) + "\n")
 
     # Split by group.
-    splits = assign_splits(list(groups))
+    rule = "shuffle"
+    if keep_splits is not None:
+        old = json.loads(keep_splits.read_text(encoding="utf-8"))["groups"]
+        splits, rule = extend_splits(list(groups), old), "kept + sha256 for new groups"
+    else:
+        splits = assign_splits(list(groups))
     (out / "splits.json").write_text(json.dumps(
-        {"seed": SEED, "test_frac": TEST_FRAC, "val_frac_of_train": VAL_FRAC,
+        {"seed": SEED, "test_frac": TEST_FRAC, "val_frac_of_train": VAL_FRAC, "rule": rule,
          "groups": dict(sorted(splits.items()))}, indent=1) + "\n", encoding="utf-8")
 
     # Pass 2: write sessions and calls, collecting report statistics.
@@ -272,7 +306,7 @@ def run(source: str, limit: int | None = None, raw: Path = RAW, out_root: Path =
         f"| Think time (last result to next emit) | {quantiles(thinks)} |",
         f"| Tool run time (service_ms) | {quantiles(services)} |",
         "",
-        "## Splits (by group, seed 0)",
+        f"## Splits (by group, seed 0, rule: {rule})",
         "",
         "| Split | Groups | Sessions | Calls |",
         "|---|---|---|---|",
@@ -332,10 +366,14 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--source", required=True, choices=sorted(SOURCES))
     p.add_argument("--limit", type=int, help="convert at most N sessions")
     p.add_argument("--shards", type=int, help="copilot_2026: read at most N shard files")
+    p.add_argument("--out-root", type=Path, default=PROCESSED, help="output root directory")
+    p.add_argument("--keep-splits", type=Path,
+                   help="earlier splits.json: keep its assignments, hash-place new groups")
     args = p.parse_args(argv)
     opts = {"shards": args.shards} if args.shards is not None else {}
     try:
-        print(run(args.source, args.limit, **opts))
+        print(run(args.source, args.limit, out_root=args.out_root,
+                  keep_splits=args.keep_splits, **opts))
     except ValidationError as e:
         print(f"VALIDATION FAILED: {e}", file=sys.stderr)
         return 1
