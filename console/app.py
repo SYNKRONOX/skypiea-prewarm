@@ -65,13 +65,14 @@ class Hub:
 class Console:
     def __init__(self, llm: Any, kube_context: str = "kind-skypiea",
                  base: StackClient | None = None, pred: StackClient | None = None,
-                 start_poller: bool = True):
+                 start_poller: bool = True, mcp_factory=None):
         self.hub = Hub()
         self.llm = llm
         self.ctx = kube_context
         self.stacks = {"base": base or StackClient(BASE), "pred": pred or StackClient(PRED)}
         self.poller = Poller(self.stacks, self.hub.publish, self.model_health)
         self.start_poller = start_poller
+        self.mcp_factory = mcp_factory
         self.settings = {"mirror": "concurrent", "hint": False,
                          "baseline_policy": "scale_to_zero", "demo": "airline",
                          "autopilot": False, "busy": None}
@@ -132,7 +133,8 @@ class Console:
         if self.conv is not None:
             self.previous = self.conv
         self.conv = Conversation(get_task(self.settings["demo"]), self.llm,
-                                 self.stacks, self.poller, self.hub.publish, self.settings)
+                                 self.stacks, self.poller, self.hub.publish, self.settings,
+                                 mcp_factory=self.mcp_factory)
         return self.conv
 
     async def busy(self, what: str | None) -> None:

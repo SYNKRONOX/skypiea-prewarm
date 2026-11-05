@@ -113,12 +113,13 @@ def evaluate_decisions(session: dict[str, Any]) -> list[dict[str, Any]]:
 
 class Conversation:
     def __init__(self, task: Task, llm: Any, stacks: dict[str, Any], poller: Any, publish,
-                 settings: dict[str, Any], clock=time.monotonic):
+                 settings: dict[str, Any], clock=time.monotonic, mcp_factory=None):
         self.task, self.llm, self.stacks, self.poller = task, llm, stacks, poller
         self.publish, self.settings, self.clock = publish, settings, clock
         self.id = uuid.uuid4().hex[:12]
         self.sid = uuid.uuid4().hex
-        self.clients = {k: McpClient(st.s.mcp_url, timeout_s=180) for k, st in stacks.items()}
+        make = mcp_factory or (lambda url: McpClient(url, timeout_s=180))
+        self.clients = {k: make(st.s.mcp_url) for k, st in stacks.items()}
         for c in self.clients.values():
             c.session_id = self.sid
         self.messages: list[dict[str, Any]] = [{"role": "system", "content": task.system}]
