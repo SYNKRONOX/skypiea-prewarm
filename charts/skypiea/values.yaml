@@ -114,6 +114,10 @@ platform:
 monitoring:
   enabled: true
   scrapeInterval: 5s          # tool pods live seconds to minutes
+  # Live console (opt-in): also scrape these namespaces (read-only Role there) and add a
+  # `namespace` label; provision the "Skypiea Live: baseline vs predictive" dashboard.
+  extraNamespaces: []
+  liveDashboard: false
   retention: 2d
   prometheus:
     image: prom/prometheus:v3.15.1@sha256:fa3302279710be2f21a8301ec17a8b4f2301fd829bd113839b3b6b02b6f191a2

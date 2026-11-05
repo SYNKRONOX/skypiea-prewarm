@@ -33,6 +33,30 @@ roleRef: {apiGroup: rbac.authorization.k8s.io, kind: Role, name: skypiea-prometh
 subjects:
   - {kind: ServiceAccount, name: skypiea-prometheus, namespace: {{ $ns }}}
 ---
+{{- range $m.extraNamespaces }}
+# Live console (opt-in, monitoring.extraNamespaces): read-only pod discovery in {{ . }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: skypiea-prometheus-{{ $ns }}
+  namespace: {{ . }}
+  labels: {{- include "skypiea.labels" $pctx | nindent 4 }}
+rules:
+  - apiGroups: [""]
+    resources: [pods]
+    verbs: [get, list, watch]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: skypiea-prometheus-{{ $ns }}
+  namespace: {{ . }}
+  labels: {{- include "skypiea.labels" $pctx | nindent 4 }}
+roleRef: {apiGroup: rbac.authorization.k8s.io, kind: Role, name: skypiea-prometheus-{{ $ns }}}
+subjects:
+  - {kind: ServiceAccount, name: skypiea-prometheus, namespace: {{ $ns }}}
+---
+{{- end }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -48,7 +72,7 @@ data:
       - job_name: skypiea
         kubernetes_sd_configs:
           - role: pod
-            namespaces: {names: [{{ $ns }}]}
+            namespaces: {names: [{{ $ns }}{{ range $m.extraNamespaces }}, {{ . }}{{ end }}]}
         relabel_configs:
           - source_labels: [__meta_kubernetes_pod_annotation_skypiea_io_metrics_port]
             regex: .+
@@ -64,6 +88,10 @@ data:
             target_label: component
           - source_labels: [__meta_kubernetes_pod_name]
             target_label: pod
+          {{- if $m.extraNamespaces }}
+          - source_labels: [__meta_kubernetes_namespace]
+            target_label: namespace
+          {{- end }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -80,7 +108,10 @@ spec:
     metadata:
       labels: {{- include "skypiea.labels" $pctx | nindent 8 }}
       annotations:
-        checksum/config: {{ $m | toJson | sha256sum | trunc 16 }}
+        {{- /* new live-console keys only enter the checksum when set (defaults unchanged) */}}
+        {{- $ck := $m }}
+        {{- if not (or $m.extraNamespaces $m.liveDashboard) }}{{ $ck = omit $m "extraNamespaces" "liveDashboard" }}{{ end }}
+        checksum/config: {{ $ck | toJson | sha256sum | trunc 16 }}
     spec:
       serviceAccountName: skypiea-prometheus
       enableServiceLinks: false
@@ -169,6 +200,10 @@ metadata:
 data:
   skypiea-dashboard.json: |-
 {{ .Files.Get "files/skypiea-dashboard.json" | indent 4 }}
+{{- if $m.liveDashboard }}
+  skypiea-live-dashboard.json: |-
+{{ .Files.Get "files/skypiea-live-dashboard.json" | indent 4 }}
+{{- end }}
 ---
 apiVersion: apps/v1
 kind: Deployment
