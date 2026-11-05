@@ -1,9 +1,8 @@
-# Prediction-engine targets (feat/model). Include from the root Makefile with
-#   include mk/model.mk
-# (the root Makefile is owned by feat/infra; until it includes this: make -f mk/model.mk ...).
+# Prediction-engine targets. Included from the root Makefile (make <target>); also works
+# standalone as make -f mk/model.mk <target>.
 PY ?= .venv/bin/python
 NICE ?= nice -n 10
-COLD_START ?= $(HOME)/skypiea-infra/configs/cold_start.yaml
+COLD_START ?= configs/cold_start.yaml
 MODEL ?= $(firstword $(wildcard models/lgbm-coding-*/) models/lgbm-tracelab-dev/)
 CODING ?= $(firstword $(wildcard models/lgbm-coding-*/))
 SUPPORT ?= $(firstword $(wildcard models/lgbm-support-*/))
@@ -44,7 +43,7 @@ predictor-image:  ## docker build of the service with the three bundles ($(CODIN
 	docker build -f services/predictor/Dockerfile --build-arg CODING_DIR=$(CODING) --build-arg SUPPORT_DIR=$(SUPPORT) --build-arg PRD_DIR=$(PRD) -t skypiea/predictor:$$(git rev-parse --short=12 HEAD) .
 
 # docs/results_summary.md from committed results only (fails if an input is not committed).
-# After the infra merge: make -f mk/model.mk results-summary INFRA_RESULTS=<dir> SCENARIOS='<glob>'
+# With the AWS results: make results-summary INFRA_RESULTS=results SCENARIOS='results/scenario_aws*_calls.csv'
 INFRA_RESULTS ?=
 SCENARIOS ?=
 results-summary:  ## build docs/results_summary.md from committed results/*.csv(.gz)

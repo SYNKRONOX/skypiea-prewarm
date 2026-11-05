@@ -5,8 +5,8 @@ PRD text verbatim, or a file and the commit that last changed it), and one sente
 **UNSOURCED** marks a number that is a design choice or an assumption, with no requirement or
 measurement behind it. Result numbers are copied from `docs/results_summary.md`, which is
 generated from the committed result files (`make -f mk/model.mk results-summary`). If a row
-here ever disagrees with that file, the file is right. "infra" means the feat/infra branch
-(`~/skypiea-infra`).
+here ever disagrees with that file, the file is right. "infra" means the infra side of the
+repo (merged from feat/infra; results under `results/`).
 
 ## Requirements and settings
 

@@ -2,7 +2,7 @@
 each placeholder policy. FUNCTIONAL CHECK ONLY: the laptop is shared, so no latency printed here
 is a result (all reported timings come from the AWS run).
 
-    python -m gateway.replay_check [--policies all] [--sessions-dir ~/skypiea-model/data/processed]
+    python -m gateway.replay_check [--policies all] [--sessions-dir data/processed]
 
 On AWS it runs INSIDE the cluster as a Job (no laptop tunnel; infra/aws/scripts/replay-job.sh):
     python -m gateway.replay_check --export-sessions sessions.json     # laptop, needs pandas
@@ -21,7 +21,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import socket
 import subprocess
 import sys
@@ -154,8 +153,8 @@ def main() -> int:
     ap.add_argument("--context", default="kind-skypiea")
     ap.add_argument("--namespace", default="skypiea-tools")
     ap.add_argument("--policies", default="all")
-    ap.add_argument("--sessions-dir", default=os.path.expanduser(
-        "~/skypiea-model/data/processed"))
+    ap.add_argument("--sessions-dir", default=str(
+        Path(__file__).resolve().parent.parent / "data" / "processed"))
     ap.add_argument("--gap-scale", type=float, default=0.2)
     ap.add_argument("--train-sessions", type=int, default=3)
     ap.add_argument("--out", default=None, help="write per-call JSON lines here (not results/)")

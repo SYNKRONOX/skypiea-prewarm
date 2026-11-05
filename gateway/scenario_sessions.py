@@ -16,11 +16,10 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import random
 from pathlib import Path
 
-DEFAULT_DATA = Path(os.path.expanduser("~/skypiea-model/data/processed"))
+DEFAULT_DATA = Path(__file__).resolve().parent.parent / "data" / "processed"
 SETS = {
     "real": {"A": {"source": "tau2_bench", "profile": "support"},
              "B": {"source": "tracelab", "profile": "coding"}},

@@ -429,7 +429,7 @@ sha256 00758310b4d6). To push it as is (Window 1, feat/infra):
 To rebuild from scratch:
 
     # feat/model worktree, clean commit; one bundle per profile (not in git)
-    COLD=~/skypiea-infra/configs/cold_start.yaml     # the file the pods will mount (AWS now)
+    COLD=configs/cold_start.yaml                     # the file the pods will mount (AWS now)
     nice -n 10 .venv/bin/python -m services.predictor.export --source tracelab --profile coding \
         --cold-start $COLD                           # -> models/lgbm-coding-<commit>/
     nice -n 10 .venv/bin/python -m services.predictor.export --source tau2_bench --profile support \

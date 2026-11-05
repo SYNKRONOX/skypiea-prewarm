@@ -1,6 +1,6 @@
 # RESULTS run on AWS: real think gaps and service times (scales must be 1).
 mode: results
-sessions_path: ~/skypiea-model/data/processed/tracelab/calls.parquet
+sessions_path: data/processed/tracelab/calls.parquet
 n_sessions: 50
 split: test
 seed: 0

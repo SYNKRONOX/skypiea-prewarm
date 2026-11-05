@@ -1,8 +1,8 @@
 """Results package: docs/results_summary.md, built only from committed result files.
 
     python -m sim.results_summary                          # make -f mk/model.mk results-summary
-    python -m sim.results_summary --infra-results ~/skypiea-infra/results \
-        --scenarios 'results/scenario_aws*_calls.csv'      # after the infra merge
+    python -m sim.results_summary --infra-results results \
+        --scenarios 'results/scenario_aws*_calls.csv'      # with the AWS results
 
 Every number in the output is read from a file under results/ (or the infra paths given);
 none is typed here. Each input must be tracked by git and unchanged against HEAD, so the page

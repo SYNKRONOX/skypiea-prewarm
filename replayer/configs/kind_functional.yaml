@@ -1,6 +1,6 @@
 # FUNCTIONAL check on kind (shared laptop): gaps scaled down; never report these numbers.
 mode: functional
-sessions_path: ~/skypiea-model/data/processed/synthetic_branching/calls.parquet
+sessions_path: data/processed/synthetic_branching/calls.parquet
 n_sessions: 4
 split: test
 seed: 0

@@ -4,12 +4,12 @@ Model bundles for the predictor service. **Bundles are not committed** (only thi
 rebuild them with:
 
     nice -n 10 python -m services.predictor.export --source tracelab --profile coding \
-        --cold-start ~/skypiea-infra/configs/cold_start.yaml     # -> models/lgbm-coding-<commit>/
+        --cold-start configs/cold_start.yaml     # -> models/lgbm-coding-<commit>/
     nice -n 10 python -m services.predictor.export --source tau2_bench --profile support \
-        --cold-start ~/skypiea-infra/configs/cold_start.yaml     # -> models/lgbm-support-<commit>/
+        --cold-start configs/cold_start.yaml     # -> models/lgbm-support-<commit>/
     nice -n 10 python -m traces.generate_synthetic --type prd       # SYNTHETIC PRD traces
     nice -n 10 python -m services.predictor.export --source synthetic_prd --profile prd \
-        --cold-start ~/skypiea-infra/configs/cold_start.yaml     # -> models/lgbm-prd-<commit>/
+        --cold-start configs/cold_start.yaml     # -> models/lgbm-prd-<commit>/
 
 The image holds three bundles (`/models/coding`, `/models/support`, `/models/prd`);
 `PREDICTOR_PROFILE` picks one. `prd` is SYNTHETIC (trained on traces sampled from the PRD

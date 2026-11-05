@@ -394,7 +394,10 @@ Results: `results/scenario_aws_{calls,summary}.csv` (real), `results/scenario_aw
 **Terraform state.** It lives only on this laptop, in
 `~/skypiea-infra/infra/aws/terraform.tfstate` (plus `terraform.tfstate.backup`). It is
 git-ignored, never committed and never uploaded. It contains resource ids and the account id,
-but no keys. **If it is lost**, `make aws-destroy` cannot work, and teardown has to start from
+but no keys. Since the merge into `main`, `infra/aws` in the `skypiea-prewarm` checkout has
+no state of its own: run `make aws-*` targets that read state (`aws-destroy`, `aws-stop`,
+`aws-start`, `push-images-aws`, `deploy-aws`) from `~/skypiea-infra`, or move the state file
+into this checkout's `infra/aws/` first (it stays git-ignored). **If it is lost**, `make aws-destroy` cannot work, and teardown has to start from
 the tag listing instead:
 
 ```bash

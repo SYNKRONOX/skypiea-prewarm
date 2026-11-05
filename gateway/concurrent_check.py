@@ -13,7 +13,6 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
-import os
 import sys
 import time
 import uuid
@@ -182,8 +181,8 @@ def main() -> int:
                          "draw) instead of the PRD synthetic ones; ids -> --record")
     ap.add_argument("--record", help="where to write the drawn ids (with --from-test)")
     ap.add_argument("--n", type=int, default=40)
-    ap.add_argument("--sessions-dir", default=os.path.expanduser(
-        "~/skypiea-model/data/processed"))
+    ap.add_argument("--sessions-dir", default=str(
+        Path(__file__).resolve().parent.parent / "data" / "processed"))
     a = ap.parse_args()
     if a.export_sessions and a.from_test:
         from gateway.scenario_sessions import draw

@@ -16,6 +16,9 @@ from tools.common.toolmap import TOOL_MAP_PATH, load
 
 ROOT = Path(__file__).resolve().parent.parent
 VOCAB_GLOBS = ["configs/vocab/*.yaml", "configs/tool_classes/*.yaml"]
+# Offline-only vocabularies: abstract tool names (tool_0..tool_7) used in the predictor-accuracy
+# ablations, never replayed through the gateway, so they need no deployed server.
+OFFLINE_ONLY = {"configs/tool_classes/synthetic_random_walk.yaml"}
 
 
 def _classes_in(doc) -> set[str]:
@@ -40,6 +43,8 @@ def _vocab() -> dict[str, set[str]]:
     found: dict[str, set[str]] = {}
     for pattern in VOCAB_GLOBS:
         for path in sorted(ROOT.glob(pattern)):
+            if str(path.relative_to(ROOT)) in OFFLINE_ONLY:
+                continue
             classes = _classes_in(yaml.safe_load(path.read_text(encoding="utf-8")))
             if classes:
                 found[str(path.relative_to(ROOT))] = classes
