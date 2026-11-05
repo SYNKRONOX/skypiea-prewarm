@@ -339,6 +339,59 @@ Where every quoted number comes from: [`docs/numbers_and_sources.md`](docs/numbe
 
 ---
 
+## Demo
+
+Two demos run on a laptop with kind. **They are functional demos. Their numbers are not results
+like the AWS tables above.**
+
+- **[`docs/DEMO.md`](docs/DEMO.md): `make demo`.** It starts from a fresh clone (after
+  `make setup`) with no datasets: it creates the kind cluster, builds the images, deploys the
+  chart with profile `prd`, replays SYNTHETIC PRD Scenario A sessions under scale-to-zero and
+  then under the predictor, and prints a table (about 4.5 min with a warm Docker cache). It
+  leaves the cluster up for the CLI and Grafana. `make demo-failures` stops the predictor and
+  kills the controller; the calls still succeed. `make demo-clean` removes everything.
+- **[`docs/AGENT.md`](docs/AGENT.md): `make agent-demo`.** A tool-calling agent that talks to
+  the tools only through the gateway's `POST /mcp`. Its LLM is either a scripted stand-in (no
+  network) or any OpenAI-compatible endpoint (`make agent-demo LLM=openai-compatible`, for
+  example local Ollama). The LLM picks the tool order itself.
+
+### Live LLM agent on kind
+
+Source: [`results/agent_runs/summary.csv`](results/agent_runs/summary.csv) and
+[`results/agent_runs/summary_think.csv`](results/agent_runs/summary_think.csv)
+(`make agent-live`, then `python -m agent.summarize`; per-call rows in `results/agent_runs/*_steps.csv`).
+**Labels:** kind cold starts on a laptop (a lower bound), local 8B model (llama3.1:8b on
+Ollama, temperature 0), SYNTHETIC predictor profile `prd` for both scenarios (bundle
+lgbm-prd-a7642d0; the coding profile has no `format_diff`), 10 sessions per cell, real (unscaled)
+LLM think times. Sessions run one after another, so a pod kept warm by one session can serve
+the next one. No CIs: the cells are too small.
+
+| Scenario | Policy | sessions | ok calls | cold % | added p50 ms | added p99 ms | idle pod-s | LLM followed the scenario graph |
+|---|---|---|---|---|---|---|---|---|
+| A | scale-to-zero | 10 | 33 | 81.8 | 2,522 | 4,158 | 173 | 4/10 |
+| A | keep-alive 30 s | 10 | 33 | 9.1 | 0 | 3,250 | 243 | 4/10 |
+| A | **predictive (Skypiea)** | 10 | 32 | 6.2 | 0 | 2,663 | 202 | 4/10 |
+| B | scale-to-zero | 10 | 37 | 32.4 | 0 | 3,947 | 223 | 9/10 |
+| B | keep-alive 30 s | 10 | 34 | 11.8 | 0 | 3,957 | 270 | 8/10 |
+| B | **predictive (Skypiea)** | 10 | 34 | 14.7 | 0 | 2,957 | 307 | 8/10 |
+
+- **Think gaps vs cold starts.** The think gap is the time of the LLM request that produced a
+  call. Its median is 1,354 ms and its p90 is 2,938 ms. The AWS cached cold starts of
+  these tools take 2,572 to 3,791 ms (`configs/cold_start.yaml`). Over all 203 calls,
+  the think gap alone is long enough to hide the tool's cold start for 7.9% of calls
+  (cached) and 0.5% (uncached). Here, the later calls of a multi-call reply count
+  as a gap of 0. So with a fast local model, a pod started at the previous call is usually
+  not ready in time. Starting pods earlier, or keeping them warm, is what hides most cold
+  starts in the table above.
+- **Did the LLM follow the scenario?** In B, 25 of 30 sessions followed the PRD pipeline. In
+  25 of 30 B sessions the model sent several tool calls in one reply, so those calls reached
+  the gateway back to back, with no think gap. In A, only 12 of 30 sessions followed the
+  graph: 18 of 30 repeated a tool, and 19 of 30 ended without `finish` (the model still
+  answered in text after two simulated "continue" replies). Counts are from
+  `results/agent_runs/*_sessions.csv` and `*_steps.csv`.
+
+---
+
 ## Quickstart (kind, local)
 
 Needs Docker, [kind](https://kind.sigs.k8s.io/), kubectl, [Helm](https://helm.sh/), `make` and
