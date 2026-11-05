@@ -1,6 +1,6 @@
 """Inputs for `make demo` from a FRESH CLONE: no dataset download, only the committed samples.
 
-    python -m demo.prepare            # -> .demo/ (sessions) and models/lgbm-prd-demo-<sha>/ (bundle)
+    python -m demo.prepare    # -> .demo/ (sessions), models/lgbm-prd-demo-<sha>/ (bundle)
 
 1. SYNTHETIC PRD traces (traces/generate_synthetic.py --type prd) with think and service times
    drawn from the committed samples in data/samples/ (not from data/processed/, which a fresh
@@ -9,7 +9,8 @@
    path as `make model-all`) -> models/lgbm-prd-demo-<sha>/. It is a DEMO bundle: smaller
    training set than the shipped one, and SYNTHETIC like every prd bundle.
 3. N Scenario A (and B) TEST sessions drawn with gateway/scenario_sessions.draw (set prd), with
-   every think gap SHORTENED to at most --gap-cap-ms (tool service time to --service-cap-ms) so the demo finishes in minutes.
+   every think gap SHORTENED to at most --gap-cap-ms (tool service time to --service-cap-ms)
+   so the demo finishes in minutes.
    -> .demo/sessions.json
 
 FUNCTIONAL DEMO, NOT RESULTS: shortened gaps, kind cold starts, SYNTHETIC traces.
@@ -99,7 +100,8 @@ def main(argv: list[str] | None = None) -> int:
     for scen in calls:
         calls[scen]["sessions"] = {s: shorten(c, a.gap_cap_ms, a.service_cap_ms)
                                    for s, c in calls[scen]["sessions"].items()}
-    record["demo"] = {"gap_cap_ms": a.gap_cap_ms, "service_cap_ms": a.service_cap_ms, "label": "functional demo, not results",
+    record["demo"] = {"gap_cap_ms": a.gap_cap_ms, "service_cap_ms": a.service_cap_ms,
+                      "label": "functional demo, not results",
                       "think_and_service_times_from": "data/samples (committed samples)"}
     (a.out / "sessions.json").write_text(json.dumps(calls, separators=(",", ":")))
     (a.out / "sessions_record.json").write_text(json.dumps(record, indent=1) + "\n")
