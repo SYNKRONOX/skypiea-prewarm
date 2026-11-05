@@ -20,3 +20,6 @@ agent-demo:              ## agent on Scenario A+B via the gateway (LLM=scripted|
 
 agent-live:              ## STEP 2: live LLM (Ollama by default), A+B x scale_to_zero/keep_alive/predictive, N=10 each
 	PY=$(PY) N=$(or $(AGENT_N),10) demo/agent_live.sh
+
+demo-failures:           ## failure injection: predictor stopped, controller killed; calls must succeed
+	PY=$(PY) demo/failure_injection.sh
