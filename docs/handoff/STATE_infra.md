@@ -161,3 +161,12 @@ Running log, newest last (the master task runs unattended; see docs/handoff/AGEN
   `trigger`/`turn` (docs/predictor_contract.md); reason `hint:<ver>`, metrics
   skypiea_gateway_hints_total / _hint_warms_total, header X-Skypiea-Warm-Source (hint on
   only). Tests: tests/test_gateway_hint.py, tests/test_service_hint.py.
+- STEP 2 done: demo/live_stacks.sh deploys skypiea-base (stub, scale_to_zero, no monitoring)
+  and skypiea-pred (real predictor af000231bc7b, profile support|coding, turn hint enabled,
+  Prometheus/Grafana over both namespaces, live dashboard). First deploy 2 min 47 s (images
+  a5386d4 built with warm cache). Idle, both stacks: kind control-plane 0.72 GiB, worker
+  1.09 GiB, registry 60 MiB. Hint verified on kind: turn 1 -> support profile -> warm
+  user_lookup (p 0.50); baseline answers 404.
+  NOTE: at 23:02 the kind cluster AND the registry container did not exist any more (all
+  three containers were re-created by deploy/kind/up.sh); cause unknown (not this session).
+  The v1.1 skypiea-tools demo stack is therefore gone; `make demo` recreates it.
