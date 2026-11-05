@@ -39,20 +39,20 @@ install-hooks:
 	chmod +x .git/hooks/pre-commit
 
 data:
-	python -m traces.pipeline --source $(SOURCE)
+	$(PY) -m traces.pipeline --source $(SOURCE)
 
 data-all:
-	for s in $(SOURCES); do python -m traces.pipeline --source $$s || exit 1; done
+	for s in $(SOURCES); do $(PY) -m traces.pipeline --source $$s || exit 1; done
 
 samples:
-	python tools/make_sample.py --all
+	$(PY) tools/make_sample.py --all
 
 cluster: cluster-kind          # kind (1 control-plane + 1 worker) + local registry localhost:5001
 
 deploy: deploy-kind            # helm install skypiea (tools at 0, gateway, controller, monitoring)
 
 e1:
-	python -m experiments.run --config experiments/e1_predictor_accuracy.yaml
+	$(PY) -m experiments.run --config experiments/e1_predictor_accuracy.yaml
 
 clean-cluster: cluster-kind-down
 

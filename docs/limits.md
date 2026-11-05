@@ -63,9 +63,9 @@ imputation 2 to 4 TEST calls would cross a cold-start threshold. No timestamp is
 These counts come from an audit run on 2026-11-05 (`tests/test_nan_timing.py` checks the
 guard). They are not in a results file.
 
-**The simulator leaves things out.** It does not model the gateway's 150 ms hold (FR-9), and
-the AWS scenario runs from the infra branch are not in our results yet (TODO rows in
-`docs/results_summary.md`).
+**The simulator leaves things out.** It does not model the gateway's 150 ms hold (FR-9). The
+AWS scenario runs (gateway, controller and predictor on the real cluster) are reported
+separately in `docs/results_summary.md` and are small (see above).
 
 **The fresh-eyes review was skipped.** The planned Phase 11 review by someone who had not
 built the system was skipped for time. Nobody independent has checked these results.
