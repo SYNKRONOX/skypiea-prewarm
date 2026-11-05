@@ -1,0 +1,54 @@
+{
+ "generated_by": "python -m agent.vocab --image",
+ "image": "predictor:af000231bc7b",
+ "profiles": {
+  "coding": {
+   "cold_start_sha256": "00758310b4d6",
+   "git_commit": "af00023",
+   "model_version": "lgbm-coding-af00023",
+   "profile": "coding",
+   "source": "tracelab",
+   "synthetic": false,
+   "vocab_map": null,
+   "vocabulary": [
+    "<end>",
+    "agent",
+    "build",
+    "git",
+    "other",
+    "package",
+    "planning",
+    "read_file",
+    "run_tests",
+    "schedule",
+    "search",
+    "shell_io",
+    "shell_other",
+    "user_io",
+    "web",
+    "write_file"
+   ]
+  },
+  "support": {
+   "cold_start_sha256": "00758310b4d6",
+   "git_commit": "aabdfd2",
+   "model_version": "lgbm-support-aabdfd2",
+   "profile": "support",
+   "source": "tau2_bench",
+   "synthetic": null,
+   "vocab_map": null,
+   "vocabulary": [
+    "<end>",
+    "escalate",
+    "flight_search",
+    "other",
+    "reservation_book",
+    "reservation_cancel",
+    "reservation_lookup",
+    "reservation_modify",
+    "think",
+    "user_lookup"
+   ]
+  }
+ }
+}

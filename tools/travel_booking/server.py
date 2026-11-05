@@ -9,6 +9,7 @@ NAME = "travel_booking"
 FLIGHTS = pd.read_json(SUPPORT_DIR / "flights.json")
 RES = pd.read_json(SUPPORT_DIR / "reservations.json").set_index("reservation_id", drop=False)
 ROUTES = FLIGHTS.groupby(["origin", "destination"]).size()
+BY_FLIGHT = FLIGHTS.drop_duplicates("flight_no").set_index("flight_no", drop=False)
 
 mcp = create_server(NAME, "Search flights and manage reservations.")
 
@@ -16,9 +17,11 @@ mcp = create_server(NAME, "Search flights and manage reservations.")
 @mcp.tool(name=NAME)
 @instrument(NAME)
 async def travel_booking(action: str = "search", origin: str = "BLR", destination: str = "DEL",
-                         day: int = 0, reservation_id: str = "",
-                         service_ms: int | None = None) -> dict:
-    """action: search | lookup | modify | cancel | book."""
+                         day: int = 0, reservation_id: str = "", detail: bool = False,
+                         flight_no: str = "", service_ms: int | None = None) -> dict:
+    """action: search | lookup | modify | cancel | book.
+    detail=true (live console demo; default off): lookup/modify/cancel also return the owner
+    and the flight's route and schedule; modify/book take the new flight_no."""
     await burn(service_ms, "cpu")
     if action == "search":
         f = FLIGHTS[(FLIGHTS["origin"] == origin) & (FLIGHTS["destination"] == destination)]
@@ -36,6 +39,18 @@ async def travel_booking(action: str = "search", origin: str = "BLR", destinatio
         out["accepted"] = not (action == "modify" and r["cabin"] == "basic_economy")
     elif action == "book":
         out["accepted"] = True
+    if detail:
+        out["user_id"] = r["user_id"]
+        if r["flight_no"] in BY_FLIGHT.index:
+            f = BY_FLIGHT.loc[r["flight_no"]]
+            out.update(origin=f["origin"], destination=f["destination"], day=int(f["day"]),
+                       depart=f["depart"])
+        if action in ("modify", "book") and flight_no:
+            out["new_flight_no"] = flight_no
+            if flight_no in BY_FLIGHT.index:
+                g = BY_FLIGHT.loc[flight_no]
+                out.update(new_day=int(g["day"]), new_depart=g["depart"],
+                           new_origin=g["origin"], new_destination=g["destination"])
     return out
 
 

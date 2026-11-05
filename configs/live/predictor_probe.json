@@ -1,0 +1,300 @@
+{
+ "image": "predictor:af000231bc7b",
+ "generated_by": "python -m agent.vocab --image",
+ "note": "history with 3 s gaps and 200 ms calls; the live gaps differ",
+ "profiles": {
+  "support": {
+   "model_version": "lgbm-support-aabdfd2",
+   "rows": [
+    {
+     "after": [],
+     "next_in_flow": "user_lookup",
+     "mode": "ranker",
+     "top3": [
+      [
+       "user_lookup",
+       0.50025
+      ],
+      [
+       "reservation_lookup",
+       0.407206
+      ],
+      [
+       "flight_search",
+       0.017514
+      ]
+     ],
+     "warm": [
+      "user_lookup"
+     ]
+    },
+    {
+     "after": [
+      "user_lookup"
+     ],
+     "next_in_flow": "reservation_lookup",
+     "mode": "ranker",
+     "top3": [
+      [
+       "reservation_lookup",
+       0.841639
+      ],
+      [
+       "flight_search",
+       0.040182
+      ],
+      [
+       "reservation_book",
+       0.026729
+      ]
+     ],
+     "warm": [
+      "reservation_lookup"
+     ]
+    },
+    {
+     "after": [
+      "user_lookup",
+      "reservation_lookup"
+     ],
+     "next_in_flow": "flight_search",
+     "mode": "ranker",
+     "top3": [
+      [
+       "escalate",
+       0.446606
+      ],
+      [
+       "flight_search",
+       0.222548
+      ],
+      [
+       "reservation_lookup",
+       0.194892
+      ]
+     ],
+     "warm": [
+      "escalate"
+     ]
+    },
+    {
+     "after": [
+      "user_lookup",
+      "reservation_lookup",
+      "flight_search"
+     ],
+     "next_in_flow": "reservation_modify",
+     "mode": "ranker",
+     "top3": [
+      [
+       "flight_search",
+       0.650829
+      ],
+      [
+       "reservation_modify",
+       0.101112
+      ],
+      [
+       "reservation_cancel",
+       0.059571
+      ]
+     ],
+     "warm": [
+      "flight_search"
+     ]
+    },
+    {
+     "after": [
+      "user_lookup",
+      "reservation_lookup",
+      "flight_search",
+      "reservation_modify"
+     ],
+     "next_in_flow": null,
+     "mode": "prior",
+     "top3": [
+      [
+       "END",
+       0.759394
+      ],
+      [
+       "reservation_modify",
+       0.138009
+      ],
+      [
+       "reservation_cancel",
+       0.018325
+      ]
+     ],
+     "warm": []
+    }
+   ]
+  },
+  "coding": {
+   "model_version": "lgbm-coding-af00023",
+   "rows": [
+    {
+     "after": [],
+     "next_in_flow": "search",
+     "mode": "ranker",
+     "top3": [
+      [
+       "search",
+       0.379609
+      ],
+      [
+       "read_file",
+       0.286257
+      ],
+      [
+       "shell_other",
+       0.1545
+      ]
+     ],
+     "warm": [
+      "git",
+      "read_file",
+      "search",
+      "shell_other"
+     ]
+    },
+    {
+     "after": [
+      "search"
+     ],
+     "next_in_flow": "read_file",
+     "mode": "ranker",
+     "top3": [
+      [
+       "search",
+       0.537169
+      ],
+      [
+       "read_file",
+       0.35413
+      ],
+      [
+       "shell_other",
+       0.047221
+      ]
+     ],
+     "warm": [
+      "read_file",
+      "search"
+     ]
+    },
+    {
+     "after": [
+      "search",
+      "read_file"
+     ],
+     "next_in_flow": "write_file",
+     "mode": "ranker",
+     "top3": [
+      [
+       "read_file",
+       0.474986
+      ],
+      [
+       "search",
+       0.348593
+      ],
+      [
+       "shell_other",
+       0.063025
+      ]
+     ],
+     "warm": [
+      "read_file",
+      "search"
+     ]
+    },
+    {
+     "after": [
+      "search",
+      "read_file",
+      "write_file"
+     ],
+     "next_in_flow": "run_tests",
+     "mode": "ranker",
+     "top3": [
+      [
+       "write_file",
+       0.442677
+      ],
+      [
+       "read_file",
+       0.218053
+      ],
+      [
+       "search",
+       0.139033
+      ]
+     ],
+     "warm": [
+      "read_file",
+      "search",
+      "write_file"
+     ]
+    },
+    {
+     "after": [
+      "search",
+      "read_file",
+      "write_file",
+      "run_tests"
+     ],
+     "next_in_flow": "shell_other",
+     "mode": "prior",
+     "top3": [
+      [
+       "shell_io",
+       0.218864
+      ],
+      [
+       "run_tests",
+       0.202818
+      ],
+      [
+       "write_file",
+       0.197692
+      ]
+     ],
+     "warm": []
+    },
+    {
+     "after": [
+      "search",
+      "read_file",
+      "write_file",
+      "run_tests",
+      "shell_other"
+     ],
+     "next_in_flow": null,
+     "mode": "ranker",
+     "top3": [
+      [
+       "shell_other",
+       0.301811
+      ],
+      [
+       "read_file",
+       0.169274
+      ],
+      [
+       "shell_io",
+       0.130225
+      ]
+     ],
+     "warm": [
+      "read_file",
+      "run_tests",
+      "search",
+      "shell_io",
+      "shell_other"
+     ]
+    }
+   ]
+  }
+ }
+}

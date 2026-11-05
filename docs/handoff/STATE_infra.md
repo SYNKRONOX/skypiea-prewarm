@@ -146,3 +146,13 @@ Running log, newest last (the master task runs unattended; see docs/handoff/AGEN
   (new cluster, 270 s), agent-demo, demo-failures PASS. README Demo section.
 - FINAL: docs/handoff/AGENT_REPORT.md. Cluster left up (demo bundle prd-demo-25c176b8d6ba,
   gateway serves the model), port-forwards started from ~/skypiea-infra.
+
+## v1.2 Live Console (branch feat/live-console, from feat/agent) — IN PROGRESS
+
+- STEP 1 done (vocabulary): console tasks `airline` (support profile, tau2-bench) and
+  `codefix` (coding profile; manifest source tracelab, policy tuned on TraceLab + Copilot:
+  label says so) in agent/tasks/live.py; every LLM tool maps to a class in the real profile's
+  vocabulary (configs/live/predictor_vocab.json, generated from image af000231bc7b; test
+  tests/test_live_tasks.py). Coverage + abstain table in docs/LIVE_CONSOLE.md. Tools:
+  user_lookup `with_reservations`, travel_booking `detail`/`flight_no` (opt-in; defaults
+  unchanged; image tag changes because tools/ changed).

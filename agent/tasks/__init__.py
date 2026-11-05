@@ -10,7 +10,7 @@ sampled from the PRD scenario graphs): the coding profile's vocabulary has no fo
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 from agent.llm import FINISH
@@ -29,6 +29,16 @@ class Task:
     start: str
     edges: dict[str, set[str]]          # tool -> allowed next tools ("<end>" = may stop)
     canonical: list[str]
+    # Live-console tasks (optional; the PRD A/B tasks leave them empty, so nothing changes):
+    # LLM-facing tool name -> gateway tool class (a class the predictor's vocabulary knows),
+    # and fixed arguments added to every call of that tool (e.g. travel_booking's action).
+    aliases: dict[str, str] = field(default_factory=dict)
+    fixed_args: dict[str, dict[str, Any]] = field(default_factory=dict)
+    profile: str = PROFILE
+
+    def gateway_call(self, tool: str, args: dict[str, Any]) -> tuple[str, dict[str, Any]]:
+        """(tool class sent to the gateway, arguments) for an LLM tool call."""
+        return self.aliases.get(tool, tool), {**args, **self.fixed_args.get(tool, {})}
 
     def user_prompt(self, i: int) -> str:
         raise NotImplementedError
@@ -69,6 +79,10 @@ FINISH_TOOL = fn(FINISH, "Call this exactly once when the task is complete, with
 
 
 def get(scenario: str) -> Task:
+    """PRD tasks "A", "B"; live-console tasks "airline", "codefix"."""
     from agent.tasks.coding import TASK as B
     from agent.tasks.support_refund import TASK as A
+    if scenario in ("airline", "codefix"):
+        from agent.tasks.live import AIRLINE, CODEFIX
+        return {"airline": AIRLINE, "codefix": CODEFIX}[scenario]
     return {"A": A, "B": B}[scenario.upper()]
