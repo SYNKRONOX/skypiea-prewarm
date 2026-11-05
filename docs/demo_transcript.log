@@ -1,0 +1,80 @@
+Script started on 2026-11-05 22:09:23+00:00 [COMMAND="make demo" <not executed on terminal>]
+PY=.venv/bin/python demo/run.sh
+
+=== [0s] 1/8 kind cluster 'skypiea' (1 control-plane + 1 worker) + registry localhost:5001
+No kind clusters found.
+Creating cluster "skypiea" ...
+ ✓ Ensuring node image (kindest/node:v1.37.0) 🖼️
+ ✓ Waiting ≤ 2m0s for control-plane = Ready ⏳
+ • Ready after 9s 💚
+Set kubectl context to "kind-skypiea"
+You can now use your cluster with:
+
+kubectl cluster-info --context kind-skypiea
+
+Not sure what to do next? 😅  Check out https://kind.sigs.k8s.io/docs/user/quick-start/
+configmap/local-registry-hosting created
+NAME                    STATUS     ROLES           AGE   VERSION   INTERNAL-IP   EXTERNAL-IP   OS-IMAGE                       KERNEL-VERSION                              CONTAINER-RUNTIME
+skypiea-control-plane   Ready      control-plane   22s   v1.37.0   172.18.0.3    <none>        Debian GNU/Linux 13 (trixie)   6.18.54.1-microsoft-standard-WSL2 (amd64)   containerd://2.3.4
+skypiea-worker          NotReady   <none>          10s   v1.37.0   172.18.0.4    <none>        Debian GNU/Linux 13 (trixie)   6.18.54.1-microsoft-standard-WSL2 (amd64)   containerd://2.3.4
+
+=== [32s] 2/8 demo inputs from data/samples (SYNTHETIC prd bundle + Scenario A sessions)
+scenario A: 8 SYNTHETIC sessions, 19 calls, gaps capped at 6000 ms, service at 2000 ms
+scenario B: 8 SYNTHETIC sessions, 32 calls, gaps capped at 6000 ms, service at 2000 ms
+bundle models/lgbm-prd-demo-19bad07 (SYNTHETIC prd demo bundle)
+
+=== [34s] 3/8 images (tag 96a0735; predictor prd-demo-25c176b8d6ba); existing images are reused
+==> building skypiea/predictor:prd-demo-25c176b8d6ba (prd demo bundle only; profile prd)
+
+=== [44s] 4/8 push to localhost:5001
+pushed 16 tools, platform, predictor
+
+=== [60s] 5/8 deploy (profile prd, gateway -> stub predictor)
+deployed: images 96a0735, predictor prd-demo-25c176b8d6ba (profile prd), gateway serves the stub
+port-forwards up: gateway http://127.0.0.1:18080/mcp, controller :18081, stub :18082, model :18083, Grafana http://127.0.0.1:3000
+
+=== [165s] 6/8 replay PRD Scenario A (8 SYNTHETIC sessions, 4 at once) under scale_to_zero
+REAL-TIMING run: scenario A, dataset SYNTHETIC, 8 sessions, 4 at once, unscaled gaps, policies ['scale_to_zero'], images None None
+== A scale_to_zero: start (waited 0s for 0 replicas) {'stub_params': {}}
+   session syn_branchin done: 2 calls, 16s
+   session syn_branchin done: 2 calls, 16s
+   session syn_branchin done: 2 calls, 18s
+   session syn_branchin done: 3 calls, 25s
+   session syn_branchin done: 2 calls, 13s
+   session syn_branchin done: 2 calls, 11s
+   session syn_branchin done: 3 calls, 22s
+   session syn_branchin done: 3 calls, 13s
+POLICY {"dataset": "SYNTHETIC", "predictor_image": "", "platform_image": "", "scenario": "A", "policy": "scale_to_zero", "sessions": 8, "calls": 19, "ok": 19, "cold": 17, "cold_rate": 0.8947, "predicted_calls": 0, "added_ms_p50": 3662.9, "added_ms_p99": 6792.1, "held_ms_max": 152.1, "sessions_s": 38.0, "drain_s": 6.0, "idle_pod_s": 38.02, "metrics": {"skypiea_pod_seconds_idle_total": 38.02, "skypiea_scale_events_total": 12.0, "skypiea_scaleups_queued_total": 0.0, "skypiea_scaleups_expired_in_queue_total": 0.0, "skypiea_scale_refused_total": 0.0, "skypiea_scale_errors_total": 0.0, "skypiea_warm_requests_total": 17.0, "skypiea_gateway_prewarm_hits_total": 2.0, "skypiea_gateway_prewarm_misses_total": 17.0, "skypiea_gateway_predictor_errors_total": 0.0, "skypiea_gateway_not_ready_total": 0.0, "skypiea_gateway_predictor_latency_seconds_count": 19.0}, "setup": {"stub_params": {}}}
+FAILURES: none
+
+=== [209s] 7/8 gateway -> real predictor (profile prd); replay under predictive
+deployed: images 96a0735, predictor prd-demo-25c176b8d6ba (profile prd), gateway serves the model
+port-forwards up: gateway http://127.0.0.1:18080/mcp, controller :18081, stub :18082, model :18083, Grafana http://127.0.0.1:3000
+REAL-TIMING run: scenario A, dataset SYNTHETIC, 8 sessions, 4 at once, unscaled gaps, policies ['predictive'], images None None
+== A predictive: start (waited 0s for 0 replicas) {'model': {'model_version': 'lgbm-prd-demo-19bad07', 'profile': 'prd', 'cold_start_matches_bundle': True}}
+   session syn_branchin done: 2 calls, 8s
+   session syn_branchin done: 2 calls, 11s
+   session syn_branchin done: 2 calls, 13s
+   session syn_branchin done: 2 calls, 8s
+   session syn_branchin done: 3 calls, 17s
+   session syn_branchin done: 2 calls, 6s
+   session syn_branchin done: 3 calls, 12s
+   session syn_branchin done: 3 calls, 12s
+POLICY {"dataset": "SYNTHETIC", "predictor_image": "", "platform_image": "", "scenario": "A", "policy": "predictive", "sessions": 8, "calls": 19, "ok": 19, "cold": 4, "cold_rate": 0.2105, "predicted_calls": 11, "added_ms_p50": 0.0, "added_ms_p99": 2499.2, "held_ms_max": 151.1, "sessions_s": 28.4, "drain_s": 26.2, "idle_pod_s": 105.95, "metrics": {"skypiea_pod_seconds_idle_total": 105.95, "skypiea_scale_events_total": 6.0, "skypiea_scaleups_queued_total": 0.0, "skypiea_scaleups_expired_in_queue_total": 0.0, "skypiea_scale_refused_total": 0.0, "skypiea_scale_errors_total": 0.0, "skypiea_warm_requests_total": 28.0, "skypiea_gateway_prewarm_hits_total": 15.0, "skypiea_gateway_prewarm_misses_total": 4.0, "skypiea_gateway_predictor_errors_total": 0.0, "skypiea_gateway_not_ready_total": 0.0, "skypiea_gateway_predictor_latency_seconds_count": 19.0}, "setup": {"model": {"model_version": "lgbm-prd-demo-19bad07", "profile": "prd", "cold_start_matches_bundle": true}}, "model_decide_requests": 19.0}
+FAILURES: none
+
+=== [269s] 8/8 summary
+FUNCTIONAL DEMO, NOT RESULTS: kind cold starts (laptop), SYNTHETIC PRD sessions (profile prd), shortened think gaps
+
+| Scenario | Policy | sessions | calls | ok | cold rate | added p50 ms | added p99 ms | idle pod-s |
+|---|---|---|---|---|---|---|---|---|
+| A | scale_to_zero | 8 | 19 | 19 | 89.5% | 3,663 | 6,792 | 38 |
+| A | predictive | 8 | 19 | 19 | 21.1% | 0 | 2,499 | 106 |
+
+Done in 270s. Cluster left up. Port-forwards (127.0.0.1 only) are running:
+  bin/skypiea --context kind-skypiea status         # CLI
+  Grafana  http://127.0.0.1:3000             (anonymous viewer)
+  Gateway  http://127.0.0.1:18080/mcp        (make agent-demo uses it)
+Remove everything: make demo-clean
+
+Script done on 2026-11-05 22:13:53+00:00 [COMMAND_EXIT_CODE="0"]

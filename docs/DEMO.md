@@ -85,9 +85,11 @@ make demo-portforward                         # restart the port-forwards if the
 | What | Measured |
 |---|---|
 | `make demo`, cluster already up, images already built | 243 s (4 min 3 s): deploy about 55 s, each replay about 50-65 s, the switch to the model and draining back to 0 about 60 s |
-| `make demo` from a fresh clone (cluster deleted first; Docker build cache warm) | see "Fresh-clone check" below |
+| `make demo` from a fresh clone, **cluster created from scratch** (Docker build cache warm, registry kept) | 270 s (4 min 30 s): cluster 32 s, inputs 2 s, predictor image 10 s, push 16 s, deploy 105 s, scale_to_zero replay 44 s, switch + predictive replay 60 s |
+| `make setup` in a fresh clone (pip cache warm) | 35 s |
+| `make test` in a fresh clone | 352 passed in 111 s |
 | Building the images on a machine with no Docker cache | not measured here (this laptop's build cache was warm). Expect several minutes for each image tier, mostly `pip install` |
-| Docker memory, kind nodes | control-plane 0.7 GiB, worker 1.1 GiB while the agent ran (a few tools up); registry 24 MiB |
+| Docker memory, kind nodes | right after the fresh-clone checks: control-plane 0.92 GiB, worker 1.16 GiB, registry 52 MiB; during the live agent runs: 0.7 GiB and 1.1 GiB |
 | Image sizes (uncompressed, as `docker images` shows them) | light tools 265 MB (9 of them), medium 470 MB (4), heavy 625-634 MB (3), platform 400 MB, predictor 528 MB, `kindest/node` 1.34 GB, `registry:3` 87 MB. The images share their Python base layers, so the disk they take together is much less than the sum |
 | Disk inside the kind worker (containerd image store) | 3.5 GB, including older image tags from earlier work |
 
@@ -109,7 +111,20 @@ while one part of the platform is down. It then restores the stack:
    The new controller rebuilds its state from the Deployment annotations. Calls made in the
    meantime must still succeed.
 
-The result from our run is in the "Fresh-clone check" section below.
+Our run (fresh clone, 2026-11-05), `PASS: every call succeeded`:
+
+```
+== 1. predictor stopped (skypiea-model and skypiea-predictor scaled to 0)
+  order_lookup   ok=True cold=True added_ms=2832.2 wall_ms=2867
+  policy_check   ok=True cold=True added_ms=3977.5 wall_ms=4009
+  refund_issue   ok=True cold=True added_ms=1974.1 wall_ms=2004
+== 2. controller killed (pod deleted)
+  read_file      ok=True cold=True added_ms=1516.1 wall_ms=1554
+  run_tests      ok=True cold=True added_ms=3992.7 wall_ms=4031
+  format_diff    ok=True cold=True added_ms=1978.5 wall_ms=2016
+  post_comment   ok=True cold=True added_ms=1952.6 wall_ms=2000
+   controller back: 1/1 ready
+```
 
 ## Troubleshooting
 
@@ -121,6 +136,11 @@ The result from our run is in the "Fresh-clone check" section below.
   Desktop restarted.** Docker Desktop's port forward to the kind API server can go stale. Run
   `docker restart skypiea-control-plane skypiea-worker`; the cluster comes back with its state.
   We hit this on 2026-11-05.
+- **`ports are not available: ... /forwards/expose returned unexpected status: 500`** when
+  kind creates the cluster: Docker Desktop's port forwarding is broken for every container.
+  Restart Docker Desktop. From WSL, use the Windows binary, `<DockerDesktop
+  install>/resources/bin/docker.exe desktop restart`. Check that it works with
+  `docker run --rm -d -p 127.0.0.1:45999:5000 --name pf registry:3 && docker rm -f pf`.
 - **Ports in use.** The demo uses 5001 (registry), 18080-18083 (gateway, controller, stub,
   model) and 3000 (Grafana), all on 127.0.0.1. Find what holds a port with
   `ss -ltnp | grep :18080`. Change the gateway port with `GW_PORT=...`, or start without
@@ -150,6 +170,29 @@ The result from our run is in the "Fresh-clone check" section below.
 - **`helm` prints `client-side throttling` lines.** These are harmless.
 - **Start over:** `make demo-clean && make demo`.
 
-## Fresh-clone check
+## Fresh-clone check (2026-11-05)
 
-(Filled in after the verification run; see `docs/handoff/AGENT_REPORT.md`.)
+On the laptop above: `git clone` into a new directory, then `make setup` (new venv), `make
+test` (352 passed), `make lint`, `make check-sizes`, and the cluster deleted
+(`KEEP_REGISTRY=1 deploy/kind/down.sh`). Then `make demo` (rc 0, 270 s; table below),
+`make agent-demo` (scripted: 6/6 sessions finished in the graph order, every call ok, 3 min
+30 s), `make agent-demo LLM=openai-compatible AGENT_N=1` (Ollama llama3.1:8b, ok), and
+`make demo-failures` (PASS). Docker images were already in the local build cache, so the image
+builds were not timed from scratch.
+
+```
+| Scenario | Policy | sessions | calls | ok | cold rate | added p50 ms | added p99 ms | idle pod-s |
+|---|---|---|---|---|---|---|---|---|
+| A | scale_to_zero | 8 | 19 | 19 | 89.5% | 3,663 | 6,792 | 38 |
+| A | predictive | 8 | 19 | 19 | 21.1% | 0 | 2,499 | 106 |
+```
+
+The full terminal transcript of this run is a backup for a live presentation:
+[`docs/demo_transcript.log`](demo_transcript.log). It is a plain `script` log, because
+asciinema is not installed.
+
+The first attempt failed before kind could create the cluster: Docker Desktop answered
+`ports are not available ... /forwards/expose returned unexpected status: 500` for **every**
+published port, not only kind's. `docker desktop restart` from WSL failed, but the Windows CLI
+worked: `"/mnt/c/Users/<you>/AppData/Local/Programs/DockerDesktop/resources/bin/docker.exe"
+desktop restart`. After that restart, port publishing worked and the registry kept its images.
