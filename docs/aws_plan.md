@@ -346,6 +346,39 @@ Load tests: the functional Scenario A/B replay and a 20-50 concurrent-session te
 this 2-vCPU node. **NFR-4 (500 concurrent sessions) is covered by the simulator, not by
 this node.** We do not claim 500 sessions on 2 vCPUs.
 
+## Real-timing scenario runs (2026-11-04/05)
+
+Method (gateway/scenario_run.py, as an in-cluster Job; replay-job.sh CHECK=scenario):
+- **Sessions:** drawn by gateway/scenario_sessions.py, with ids recorded.
+  - Real traces (`results/scenario_sessions.json`): A = 20 tau2_bench test sessions (support profile),
+    B = 20 TraceLab test sessions of at most 600 s (coding profile).
+  - SYNTHETIC PRD scenarios (`results/scenario_sessions_prd_SYNTHETIC.json`): 20 + 20 `synthetic_prd` test
+    sessions (profile prd), with the same 600 s cap.
+- **Replay:** unscaled think gaps, batch by batch, 5 sessions at once.
+- **Policies:** 5. The baselines are the stub stand-ins; predictive is the real predictor
+  (`platform.predictor.serve=model`).
+- **Idle pod-seconds:** the controller counter, from just before a policy's set-up until every tool is back at 0.
+- **Image tags:** every row carries the predictor and platform image.
+- **Datasets:** real and SYNTHETIC results are separate files and never mixed.
+
+Data hygiene:
+- **Markov-1 warm-up:** one TraceLab train session (`codex:ecf838ae-048e-93f2-8940-85411d567e58`,
+  warm-up #48 of 300) has a call with `service_ms` = NaN although `has_timing` is true. It made B
+  Markov-1 fail 3 times at set-up, because httpx refuses NaN in JSON. Since 2026-11-05 the Markov-1
+  warm-up drops calls with non-finite timing and records how many (here 1 call, from warm-up #48). B
+  Markov-1 was then rerun once with every other parameter the same. The three failed attempts stay in
+  the CSV.
+- **40-session check:** the same class of bug stopped it. 5 of its 40 drawn TraceLab test sessions
+  contain 7 calls with NaN `service_ms`, and `int(NaN)` crashed the check 3 times. Not fixed overnight,
+  because the orders covered only the Markov-1 warm-up.
+- **Stub Markov-1:** it rounds probabilities to 6 decimals, so a ranked list can sum to 1.000002, which
+  is above the validator's 1e-6 tolerance. The gateway then rejects that answer (cold path; counted as
+  `predictor_errors{reason="contract"}`): 20 calls in A, 32 in B. The stub lives in the platform image,
+  which was not changed during the runs.
+
+Results: `results/scenario_aws_{calls,summary}.csv` (real), `results/scenario_aws_prd_SYNTHETIC_*`
+(SYNTHETIC) and `results/concurrent40_aws.csv`. The summary is in `docs/handoff/OVERNIGHT_REPORT.md`.
+
 ## Teardown: `make aws-destroy`
 
 1. It prints the backup command: `aws s3 sync s3://<bucket> ./aws-backup`.

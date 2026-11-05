@@ -1,0 +1,4 @@
+dataset,predictor_image,platform_image,policy,calls,ok,cold,wall_s,max_starting,limit,max_queued,polls,poll_errors,queued,dequeued,expired_in_queue,refused_by_caps,scale_errors,predictor_calls,predictor_errors,prewarm_hits,misses,not_ready,checks,failures,log
+real,predictor:af000231bc7b,platform:b652e6b,predictive,,,,,,,,,,,,,,,,,,,,,crashed: ValueError: cannot convert float NaN to integer (calls sent before the crash were not recorded),conc40_a1.log
+real,predictor:af000231bc7b,platform:b652e6b,predictive,,,,,,,,,,,,,,,,,,,,,crashed: ValueError: cannot convert float NaN to integer (calls sent before the crash were not recorded),conc40_a2.log
+real,predictor:af000231bc7b,platform:b652e6b,predictive,,,,,,,,,,,,,,,,,,,,,crashed: ValueError: cannot convert float NaN to integer (calls sent before the crash were not recorded),conc40_a3.log

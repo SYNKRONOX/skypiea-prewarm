@@ -73,6 +73,12 @@ def conc(paths: list[Path]) -> list[dict]:
                 for r in rows:
                     if r["log"] == p.name:
                         r["failures"] = ln[10:]
+        if not any(r["log"] == p.name for r in rows):   # crashed before any summary line
+            lines = [x for x in p.read_text().splitlines() if x.strip()]
+            err = next((x for x in reversed(lines) if "Error" in x), lines[-1] if lines else "")
+            rows.append({"policy": "predictive", "calls": "", "ok": "", "log": p.name,
+                         "failures": f"crashed: {err.strip()} (calls sent before the crash "
+                                     f"were not recorded)"})
     for r in rows:
         r["checks"] = "; ".join(r.get("checks", []))
     return rows

@@ -1,0 +1,11 @@
+dataset,predictor_image,platform_image,scenario,policy,sessions,calls,ok,cold,cold_rate,predicted_calls,added_ms_p50,added_ms_p99,held_ms_max,idle_pod_s,prewarm_hits,prewarm_misses,scaleups_queued,expired_in_queue,scale_events,predictor_errors,not_ready,model_decide_requests,sessions_s,drain_s,model_version,error,log
+SYNTHETIC,predictor:af000231bc7b,platform:b652e6b,A,predictive,20,42,42,5,0.119,22,0.0,2892.1,152.3,241.109,37.0,5.0,0.0,0.0,6.0,0.0,0.0,42.0,154.5,30.1,lgbm-prd-a7642d0,,PRDA_pred_a1.log
+SYNTHETIC,predictor:af000231bc7b,platform:b652e6b,A,scale_to_zero,20,42,42,8,0.1905,0,0.0,4861.4,152.9,142.613,34.0,8.0,0.0,0.0,6.0,0.0,0.0,,156.0,6.0,stub,,PRDA_stub_a1.log
+SYNTHETIC,predictor:af000231bc7b,platform:b652e6b,A,always_warm,20,42,42,0,0.0,22,0.0,0.1,0.0,4012.723,42.0,0.0,14.0,0.0,32.0,0.0,0.0,,184.1,99.9,stub,,PRDA_stub_a1.log
+SYNTHETIC,predictor:af000231bc7b,platform:b652e6b,A,keep_alive,20,42,42,8,0.1905,0,0.0,4836.3,151.2,233.588,34.0,8.0,0.0,0.0,6.0,0.0,0.0,,156.2,36.1,stub,,PRDA_stub_a1.log
+SYNTHETIC,predictor:af000231bc7b,platform:b652e6b,A,markov1,20,42,42,5,0.119,17,0.0,2377.7,151.2,248.868,37.0,5.0,0.0,0.0,6.0,0.0,0.0,,155.3,36.1,stub,,PRDA_stub_a1.log
+SYNTHETIC,predictor:af000231bc7b,platform:b652e6b,B,predictive,20,80,80,21,0.2625,60,0.0,4395.9,157.5,935.284,59.0,21.0,0.0,0.0,34.0,0.0,0.0,80.0,503.2,59.2,lgbm-prd-a7642d0,,PRDB_pred_a1.log
+SYNTHETIC,predictor:af000231bc7b,platform:b652e6b,B,scale_to_zero,20,80,80,36,0.45,0,0.0,5036.2,165.0,362.603,44.0,36.0,0.0,0.0,54.0,0.0,0.0,,500.0,6.0,stub,,PRDB_stub_a1.log
+SYNTHETIC,predictor:af000231bc7b,platform:b652e6b,B,always_warm,20,80,80,0,0.0,60,0.0,0.1,0.0,9115.654,80.0,0.0,14.0,0.0,32.0,0.0,0.0,,528.3,99.3,stub,,PRDB_stub_a1.log
+SYNTHETIC,predictor:af000231bc7b,platform:b652e6b,B,keep_alive,20,80,80,17,0.2125,0,0.0,5377.4,171.1,993.281,63.0,17.0,0.0,0.0,22.0,0.0,0.0,,498.3,36.1,stub,,PRDB_stub_a1.log
+SYNTHETIC,predictor:af000231bc7b,platform:b652e6b,B,markov1,20,80,80,18,0.225,60,0.0,4996.8,165.2,842.823,62.0,18.0,0.0,0.0,36.0,0.0,0.0,,503.3,36.1,stub,,PRDB_stub_a1.log

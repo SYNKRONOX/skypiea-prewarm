@@ -1,0 +1,14 @@
+dataset,predictor_image,platform_image,scenario,policy,sessions,calls,ok,cold,cold_rate,predicted_calls,added_ms_p50,added_ms_p99,held_ms_max,idle_pod_s,prewarm_hits,prewarm_misses,scaleups_queued,expired_in_queue,scale_events,predictor_errors,not_ready,model_decide_requests,sessions_s,drain_s,model_version,error,log
+real,predictor:aabdfd2a9a39,platform:b652e6b,A,predictive,20,116,116,18,0.1552,30,0.0,3647.5,152.5,633.008,98.0,18.0,0.0,0.0,34.0,0.0,0.0,116.0,303.3,36.1,lgbm-support-aabdfd2,,A_pred.log
+real,predictor:aabdfd2a9a39,platform:b652e6b,A,scale_to_zero,20,116,116,57,0.4914,0,66.9,6007.3,159.7,349.696,57.0,59.0,2.0,0.0,86.0,0.0,0.0,,334.0,6.0,stub,,A_stub.log
+real,predictor:aabdfd2a9a39,platform:b652e6b,A,always_warm,20,116,116,0,0.0,28,0.0,0.1,0.0,6534.346,116.0,0.0,14.0,0.0,32.0,0.0,0.0,,328.5,99.6,stub,,A_stub.log
+real,predictor:aabdfd2a9a39,platform:b652e6b,A,keep_alive,20,116,116,10,0.0862,44,0.0,3637.6,151.1,887.831,106.0,10.0,0.0,0.0,14.0,0.0,0.0,,298.9,36.1,stub,,A_stub.log
+real,predictor:aabdfd2a9a39,platform:b652e6b,A,markov1,20,116,116,18,0.1552,10,0.0,4120.8,151.9,623.555,98.0,18.0,0.0,0.0,32.0,20.0,0.0,,303.2,35.1,stub,,A_stub.log
+real,predictor:af000231bc7b,platform:b652e6b,B,markov1,20,319,319,93,0.2915,89,0.0,4356.3,189.2,1551.657,226.0,93.0,2.0,0.0,126.0,32.0,0.0,,924.3,36.2,stub,,B_m1fix_a1.log
+real,predictor:af000231bc7b,platform:b652e6b,B,predictive,20,319,319,18,0.0564,247,0.0,5572.3,152.8,2806.501,301.0,18.0,3.0,0.0,64.0,0.0,0.0,319.0,893.3,36.2,lgbm-coding-af00023,,B_pred_a1.log
+real,predictor:aabdfd2a9a39,platform:b652e6b,B,scale_to_zero,20,319,319,188,0.5893,0,2425.5,6080.3,169.5,986.387,131.0,188.0,9.0,0.0,200.0,0.0,0.0,,956.2,6.0,stub,,B_stub_a1.log
+real,predictor:aabdfd2a9a39,platform:b652e6b,B,always_warm,20,319,319,3,0.0094,181,0.0,1.5,397.2,14674.6,316.0,3.0,54.0,0.0,128.0,0.0,0.0,,935.2,97.8,stub,,B_stub_a1.log
+real,predictor:aabdfd2a9a39,platform:b652e6b,B,keep_alive,20,319,319,33,0.1034,141,0.0,5515.9,157.6,2216.27,286.0,33.0,1.0,0.0,48.0,0.0,0.0,,895.9,36.1,stub,,B_stub_a1.log
+real,predictor:aabdfd2a9a39,platform:b652e6b,B,markov1,,,,,,,,,,,,,,,,,,,,,,ValueError: Out of range float values are not JSON compliant: nan,B_stub_a1.log
+real,predictor:aabdfd2a9a39,platform:b652e6b,B,markov1,,,,,,,,,,,,,,,,,,,,,,ValueError: Out of range float values are not JSON compliant: nan,B_stub_a2.log
+real,predictor:aabdfd2a9a39,platform:b652e6b,B,markov1,,,,,,,,,,,,,,,,,,,,,,ValueError: Out of range float values are not JSON compliant: nan,B_stub_a3.log
