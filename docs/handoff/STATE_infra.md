@@ -140,5 +140,9 @@ Running log, newest last (the master task runs unattended; see docs/handoff/AGEN
   followed the graph, all calls ok), docs/AGENT.md. No new dependency (httpx). Design choice
   made after a 1-session smoke test and before any measured run: a fixed simulated-user
   "confirm, continue" reply (max 2 per session) when the 8B model answers in text.
-- STEP 2 running (started 21:54Z... local log results/agent_runs/live_run.log): `make agent-live`,
-  predictor a7642d03dd10 (shipped prd bundle), llama3.1:8b on Ollama, N=10 per cell.
+- STEP 2 done: `make agent-live` 21:54-22:04Z, 6/6 cells rc 0, predictor a7642d03dd10 (shipped
+  prd bundle), llama3.1:8b, N=10 per cell -> results/agent_runs/ (summary.csv/.md).
+- STEP 3 done: fresh clone ~/skypiea-fresh: setup, test 352 passed, ruff, check-sizes, make demo
+  (new cluster, 270 s), agent-demo, demo-failures PASS. README Demo section.
+- FINAL: docs/handoff/AGENT_REPORT.md. Cluster left up (demo bundle prd-demo-25c176b8d6ba,
+  gateway serves the model), port-forwards started from ~/skypiea-infra.
