@@ -170,3 +170,9 @@ Running log, newest last (the master task runs unattended; see docs/handoff/AGEN
   NOTE: at 23:02 the kind cluster AND the registry container did not exist any more (all
   three containers were re-created by deploy/kind/up.sh); cause unknown (not this session).
   The v1.1 skypiea-tools demo stack is therefore gone; `make demo` recreates it.
+- STEP 3/4 first version: console/ (app, engine, poller, stacks, llm_stream, static UI);
+  mirrored calls (concurrent|sequential), predictive result feeds the LLM, results compared;
+  first live autopilot airline run worked end to end (3 calls each stack, all ok). Found:
+  llama3.1 sometimes writes tool calls as JSON text -> flagged recovery (tool_call_from_text);
+  first starts on a NEW cluster include image pulls -> `live_stacks.sh up` pre-pulls the tool
+  images onto the worker (every start = cached start, as E0 "cached").

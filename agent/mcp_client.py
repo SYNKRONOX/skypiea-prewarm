@@ -36,6 +36,7 @@ class CallInfo:
     predicted: bool | None
     wall_ms: float
     error: str | None = None
+    warm_source: str | None = None   # "hint" | "call" (gateway with the turn hint on only)
 
 
 def _f(h: httpx.Headers, k: str) -> float | None:
@@ -104,7 +105,8 @@ class McpClient:
         if not ok:
             err = str(data.get("error") or "tool returned isError")[:200]
         info = CallInfo(ok, _b(h, "X-Skypiea-Cold"), _f(h, "X-Skypiea-Added-Ms"),
-                        _f(h, "X-Skypiea-Held-Ms"), _b(h, "X-Skypiea-Predicted"), wall, err)
+                        _f(h, "X-Skypiea-Held-Ms"), _b(h, "X-Skypiea-Predicted"), wall, err,
+                        h.get("X-Skypiea-Warm-Source"))
         return res, info
 
     def close(self) -> None:

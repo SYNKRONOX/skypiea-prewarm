@@ -58,6 +58,16 @@ images() {
   echo "images: tools/platform $TAG, predictor $PRED_IMAGE_TAG"
 }
 
+prepull() {   # every tool start is then a CACHED start (E0 "cached"), on both stacks alike
+  local node n=0
+  for node in $(kind get nodes --name "${CLUSTER:-skypiea}" | grep -v control-plane); do
+    for t in $TOOLS; do
+      docker exec "$node" crictl pull "$REG/skypiea/$t:$TAG" >/dev/null && n=$((n + 1))
+    done
+  done
+  echo "pre-pulled $n tool images onto the worker node (every start is a cached start)"
+}
+
 deploy_base() {
   helm_q upgrade --install skypiea-base charts/skypiea --kube-context "$CTX" -n "$BASE" \
     --create-namespace -f charts/skypiea/values-kind.yaml --set imageTag="$TAG" \
@@ -119,6 +129,7 @@ case "${1:-up}" in
 up)
   deploy/kind/up.sh >/dev/null
   images
+  prepull
   deploy_base
   deploy_pred "${2:-support}"
   pf ;;

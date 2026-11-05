@@ -39,12 +39,14 @@ flight reservations using tools only; never invent data. Typical flow: identify 
 (user_lookup), look up the reservation (reservation_lookup), search alternative flights \
 (flight_search), then change (reservation_modify) or cancel (reservation_cancel) the \
 reservation once the customer has confirmed. Ask the customer when you need a decision. If \
-you cannot help, hand over with transfer_to_human. Keep replies short."""
+you cannot help, hand over with transfer_to_human. Keep replies short. Call tools through \
+the tool-calling interface; never write a tool call as text."""
 
 CODEFIX_SYSTEM = """You are a coding agent working in the `minicalc` repository (Python). Use \
 the tools to find code (search), read files (read_file), change files (edit_file), run the \
 tests (run_tests) and run shell commands (shell). Work in small steps, run the tests after an \
-edit, and report briefly what you changed."""
+edit, and report briefly what you changed. Call tools through the tool-calling interface; \
+never write a tool call as text."""
 
 
 class Airline(Task):
