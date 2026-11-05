@@ -1,4 +1,4 @@
-.PHONY: test lint check-sizes install-hooks data data-all samples cluster deploy e1 clean-cluster
+.PHONY: setup lock test lint check-sizes install-hooks data data-all samples cluster deploy e1 clean-cluster
 
 # Infra targets (tool images, kind, AWS, E0, gateway/controller): see mk/infra.mk and docs/infra.md
 include mk/infra.mk
@@ -7,14 +7,32 @@ CLUSTER ?= skypiea
 SOURCE ?= tracelab
 SOURCES = tracelab copilot_2026 tau_bench tau2_bench bfcl
 
+# One venv for the whole repo (Python 3.12), installed from the lock file.
+PYTHON ?= python3.12
+CONSTRAINTS = -c deploy/platform/constraints.txt -c tools/common/constraints.txt \
+              -c services/predictor/requirements.lock
+
+setup:                   ## create .venv and install requirements.lock (runtime + dev)
+	test -x .venv/bin/python || $(PYTHON) -m venv .venv
+	.venv/bin/pip install -q --upgrade pip
+	.venv/bin/pip install -q -r requirements.lock
+	.venv/bin/pip check
+
+lock:                    ## re-resolve requirements-dev.txt against the image pins -> requirements.lock
+	.venv/bin/pip install -q -r requirements-dev.txt $(CONSTRAINTS)
+	.venv/bin/pip check
+	{ echo "# Full resolved set for .venv (pip freeze, Python 3.12), resolved against the image"; \
+	  echo "# constraint files. Regenerate: make lock.  Install: make setup."; \
+	  .venv/bin/pip freeze; } > requirements.lock
+
 test:
-	pytest -q
+	$(PY) -m pytest -q
 
 lint:
-	ruff check .
+	$(PY) -m ruff check .
 
 check-sizes:
-	python tools/check_sizes.py
+	$(PY) tools/check_sizes.py
 
 install-hooks:
 	cp tools/pre-commit.sh .git/hooks/pre-commit

@@ -1,0 +1,6 @@
+# Tests, lint and figures (on top of requirements.txt). Python 3.12.
+-r requirements.txt
+pytest==9.2.0
+hypothesis==6.170.14
+ruff==0.17.3
+matplotlib==3.11.2

@@ -1,7 +1,7 @@
 # Skypiea infrastructure: tool servers, clusters, E0
 
 Owner: Ch. Dhanunjaya. Make targets are in [`mk/infra.mk`](../mk/infra.mk) (included from the
-root Makefile). Laptop deps: `pip install -r requirements.txt -r requirements-infra.txt`.
+root Makefile). Laptop deps: `make setup` (one .venv from `requirements.lock`).
 
 ## Tool servers (`tools/`)
 

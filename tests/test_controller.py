@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import pytest  # noqa: E402
 
-pytest.importorskip("aiohttp", reason="pip install -r requirements-infra.txt")
-pytest.importorskip("prometheus_client", reason="pip install -r requirements-infra.txt")
-pytest.importorskip("kubernetes", reason="pip install -r requirements-infra.txt")
+pytest.importorskip("aiohttp", reason="make setup")
+pytest.importorskip("prometheus_client", reason="make setup")
+pytest.importorskip("kubernetes", reason="make setup")
 
 import asyncio
 

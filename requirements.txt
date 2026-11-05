@@ -1,9 +1,27 @@
-numpy
-pandas
-pyarrow
-scikit-learn
-lightgbm
-pyyaml
-pytest
-ruff
-requests
+# Runtime dependencies for the whole repo (Python 3.12): prediction engine, predictor
+# service, simulator, gateway, controller, E0 harness, CLI. Exact pins, no ranges.
+# Images pin their own subsets: services/predictor/requirements.txt,
+# deploy/platform/requirements.txt, tools/common/requirements-*.txt.
+# Dev/test tools: requirements-dev.txt.  Full resolved set: requirements.lock.
+#
+# prediction engine + predictor service
+numpy==2.5.4
+pandas==3.1.0
+pyarrow==26.0.0
+scikit-learn==1.9.1
+scipy==1.18.1
+lightgbm==4.7.0
+PyYAML==6.0.3
+# HTTP / service stack (shared by gateway, controller, predictor service)
+starlette==1.10.0
+uvicorn==0.54.0
+prometheus-client==0.26.0
+httpx==0.28.1
+aiohttp==3.14.5
+requests==2.34.2
+# Kubernetes operator, E0 harness, MCP tool servers
+kopf==1.45.2
+kubernetes==37.0.1
+mcp==2.3.0
+# CLI (bin/skypiea)
+click==8.5.0

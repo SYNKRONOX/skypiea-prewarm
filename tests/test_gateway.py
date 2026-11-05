@@ -5,9 +5,9 @@ from __future__ import annotations
 
 import pytest  # noqa: E402
 
-pytest.importorskip("httpx", reason="pip install -r requirements-infra.txt")
-pytest.importorskip("starlette", reason="pip install -r requirements-infra.txt")
-pytest.importorskip("prometheus_client", reason="pip install -r requirements-infra.txt")
+pytest.importorskip("httpx", reason="make setup")
+pytest.importorskip("starlette", reason="make setup")
+pytest.importorskip("prometheus_client", reason="make setup")
 
 import asyncio
 import json

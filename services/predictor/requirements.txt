@@ -1,4 +1,4 @@
-# Runtime dependencies of the service image only (subset of requirements-model.txt; resolved
+# Runtime dependencies of the service image only (subset of the root requirements.txt; resolved
 # against requirements.lock). Training-only packages (scikit-learn, pandas, pyarrow) are not
 # needed at serving time.
 numpy==2.5.4

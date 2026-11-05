@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest  # noqa: E402
 
-pytest.importorskip("httpx", reason="pip install -r requirements-infra.txt")
+pytest.importorskip("httpx", reason="make setup")
 
 import asyncio
 import json

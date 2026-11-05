@@ -14,7 +14,7 @@ from pathlib import Path
 
 import pytest
 
-pytest.importorskip("mcp", reason="pip install -r requirements-infra.txt")
+pytest.importorskip("mcp", reason="make setup")
 pytest.importorskip("pandas")
 
 ROOT = Path(__file__).resolve().parent.parent

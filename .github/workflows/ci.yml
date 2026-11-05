@@ -12,9 +12,10 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.12"
           cache: pip
-      - run: pip install pytest ruff numpy pandas pyarrow pyyaml
+          cache-dependency-path: requirements.lock
+      - run: pip install -r requirements.lock && pip check
       - run: python tools/check_sizes.py
       - run: ruff check .
       - run: pytest -q
