@@ -131,3 +131,14 @@ Running log, newest last (the master task runs unattended; see docs/handoff/AGEN
   plugin preinstall disabled (it filled the 512Mi emptyDir; 740 evicted pods on kind).
   kind note: after a Docker Desktop resume the API port forward returned EOF; `docker restart
   skypiea-control-plane skypiea-worker` fixed it.
+- STEP 0 done (2026-11-05 21:47 local): `make demo` ran end to end on the existing cluster in
+  243 s (warm build cache): Scenario A, 8 SYNTHETIC sessions, scale_to_zero 18/19 cold vs
+  predictive 4/19 cold, all 19/19 calls ok both times (functional demo, not results).
+  docs/DEMO.md written; fresh-clone verification pending (STEP 3).
+- STEP 1 done: agent/ (llm, mcp_client, loop, tasks A/B, run, platform harness, summarize,
+  probe), tests/test_agent.py (15 offline tests), `make agent-demo` (scripted: 6/6 sessions
+  followed the graph, all calls ok), docs/AGENT.md. No new dependency (httpx). Design choice
+  made after a 1-session smoke test and before any measured run: a fixed simulated-user
+  "confirm, continue" reply (max 2 per session) when the 8B model answers in text.
+- STEP 2 running (started 21:54Z... local log results/agent_runs/live_run.log): `make agent-live`,
+  predictor a7642d03dd10 (shipped prd bundle), llama3.1:8b on Ollama, N=10 per cell.
