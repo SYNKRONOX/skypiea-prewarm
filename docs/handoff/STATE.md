@@ -28,7 +28,8 @@ Last updated: 2026-11-04 (P1 decided: one profile per deployment; AWS cold-start
 | 64e65c9 | Cap sensitivity + final tables (results/sim_sensitivity.*), prd TEST check (results/sim_prd.csv.gz), docs claims rewritten, prd section, STATE |
 | af00023 | Adopt the retuned coding profile; frozen config kept as `frozen_profiles.coding_frozen`; bundle lgbm-coding-af00023 exported from here |
 | 0a26db4 | Docs: adoption (rule change, adopted after TEST was seen, frozen rows kept), session-id note, image af000231bc7b; STATE |
-| (this) | Results package: `sim/results_summary.py` (`make -f mk/model.mk results-summary`) -> docs/results_summary.md from committed results only; docs/numbers_and_sources.md; docs/limits.md; STATE |
+| dc83b48 | Results package: `sim/results_summary.py` (`make -f mk/model.mk results-summary`) -> docs/results_summary.md from committed results only; docs/numbers_and_sources.md; docs/limits.md; STATE |
+| (this) | NaN-timing audit (test_nan_timing.py, limits note); scenario cold-rate session-bootstrap CIs in results_summary (replayer *_calls.csv + *_summary.csv; infra inputs must be committed); STATE |
 
 ## Done
 
@@ -283,11 +284,31 @@ Last updated: 2026-11-04 (P1 decided: one profile per deployment; AWS cold-start
 - New docs files outside the original allowed list (results_summary, numbers_and_sources,
   limits) were created because the user asked for them by name.
 
+## 2026-11-05: NaN-timing audit; scenario CIs
+
+- Audit (no numbers changed, nothing rerun): the only non-finite timing in processed data is
+  TraceLab `service_ms`: 712 calls (train 269 / val 48 / test 395; 119 / 14 / 134 sessions),
+  stored as null (JSON) or NaN (parquet). No `t_offset_ms` is missing in a timed source (bfcl
+  and tau_bench have no timing at all). Every consumer treats it as unknown: to_episode maps
+  NaN/inf to None; graph gaps, sim batch ends and hideable use the slowest known call (0 ms
+  if none); the sim serves the call in 0 ms; the ranker feature is MISSING (-1); synthetic
+  generation drops/fills it. Effect: the next gap is ~87 ms too long (TEST median, train
+  median per tool imputed) for <= 524 TEST calls (0.23%); 2-4 cross a cold-start threshold.
+  Guard proven by tests/test_nan_timing.py. Window 1's 40-session draw is the infra
+  replayer's own sample (fixed there in 38c62ec), not our split counts.
+- results_summary scenarios(): reads the replayer's `*_calls.csv` (dataset, scenario, policy,
+  session, cold, added_ms, log) with the `*_summary.csv` next to it; cold rate with a 95%
+  session-level bootstrap CI (1,000 resamples, seed 0); idle pod-s is one run-level counter
+  (shared pods), so no session CI. Sessions per scenario are printed (A and B: 20 each).
+  Infra inputs must be committed in their repo (committed_elsewhere). Tested to scratch
+  against ~/skypiea-infra/results at 673e176; the committed page still has the TODO rows.
+
 ## Next
 
 1. Infra window: push skypiea/predictor:af000231bc7b; chart `predictor.profile` (coding |
    support | prd) -> `PREDICTOR_PROFILE`; mount the AWS cold-start file.
-2. After the merge: regenerate docs/results_summary.md with INFRA_RESULTS and SCENARIOS.
+2. After the merge: `make -f mk/model.mk results-summary INFRA_RESULTS=<results dir>
+   SCENARIOS='<results dir>/scenario_aws*_calls.csv'`, commit docs/results_summary.md.
 3. Open, not done: Phase 11 fresh-eyes review; shared-pool ablation.
 
 ## Rules for the next session (from the user)

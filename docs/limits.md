@@ -50,6 +50,19 @@ m7i-flex.large. The pricing is an assumption (`configs/model/pricing.yaml`), so 
 production cost or latency claims. The load-test latencies were measured on the laptop for the
 service alone, not end-to-end.
 
+**The AWS scenario runs are small.** Scenarios A and B each replay 20 sessions per policy
+(the count is printed in `docs/results_summary.md`), so the cold-rate CIs are wide and
+overlap for several policies. Idle pod-seconds there is one counter for the whole run, with
+pods shared by all 20 sessions, so it has no session-level CI.
+
+**Some TraceLab calls have no recorded run time.** 712 of 734,021 TraceLab calls (395 of
+225,290 in TEST) have no `service_ms`. They are kept and treated as taking 0 ms: a batch ends
+at its slowest known call. This makes the next think gap about 0.1 s too long (median 87 ms
+in TEST, using the train median per tool) for at most 0.23% of TEST calls; with that
+imputation 2 to 4 TEST calls would cross a cold-start threshold. No timestamp is missing.
+These counts come from an audit run on 2026-11-05 (`tests/test_nan_timing.py` checks the
+guard). They are not in a results file.
+
 **The simulator leaves things out.** It does not model the gateway's 150 ms hold (FR-9), and
 the AWS scenario runs from the infra branch are not in our results yet (TODO rows in
 `docs/results_summary.md`).

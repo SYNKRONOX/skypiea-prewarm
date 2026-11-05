@@ -2,7 +2,7 @@
 
     python -m sim.results_summary                          # make -f mk/model.mk results-summary
     python -m sim.results_summary --infra-results ~/skypiea-infra/results \
-        --scenarios 'results/replay/*.csv'                 # after the infra merge
+        --scenarios 'results/scenario_aws*_calls.csv'      # after the infra merge
 
 Every number in the output is read from a file under results/ (or the infra paths given);
 none is typed here. Each input must be tracked by git and unchanged against HEAD, so the page
@@ -14,7 +14,9 @@ reads p1_accuracy.csv.gz and p4_ranker.csv); service latency (loadtest.csv); war
 under kind, AWS without a cap and AWS with the cap (sim_sensitivity.csv.gz); cap sensitivity;
 oracle; baselines and FR-2 under AWS with the cap (sim_offline.csv.gz); hideable fractions
 (sim_hideable.csv); cold-call decomposition (sim_cold_decomp.csv); the SYNTHETIC prd profile
-(sim_prd.csv.gz); E0 cold starts and AWS scenario runs (infra).
+(sim_prd.csv.gz); E0 cold starts and AWS scenario runs (infra). Scenario cold rates carry a
+95% session-level bootstrap CI (1,000 resamples); idle pod-s is one run-level counter, so it
+has none. Infra inputs must be committed in their own repo too.
 """
 
 from __future__ import annotations
@@ -26,6 +28,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -55,6 +58,19 @@ def check_committed(paths: list[Path]) -> list[tuple[str, str]]:
             raise SystemExit(f"{rel} differs from HEAD; commit it first")
         out.append((rel, _git("log", "-1", "--format=%h", "--", rel)))
     return out
+
+
+def committed_elsewhere(path: Path) -> str:
+    """Last commit of an input outside this repo (the infra results); raises if the file is
+    untracked or changed there."""
+    def git(*a: str) -> subprocess.CompletedProcess[str]:
+        return subprocess.run(["git", "-C", str(path.parent), *a], capture_output=True,
+                              text=True)
+    if git("ls-files", "--error-unmatch", path.name).returncode:
+        raise SystemExit(f"{path} is not committed")
+    if git("status", "--porcelain", "--", path.name).stdout.strip():
+        raise SystemExit(f"{path} differs from HEAD of its repo; commit it first")
+    return git("log", "-1", "--format=%h", "--", path.name).stdout.strip()
 
 
 def _read(name: str) -> pd.DataFrame:
@@ -268,6 +284,8 @@ def e0(infra: Path | None) -> list[str]:
             f"{TODO}: pass --infra-results <path> after the merge"]]) + [""]
     rows = []
     s = {k: pd.read_csv(p, keep_default_na=False) for k, p in files.items() if p.exists()}
+    commits = ", ".join(f"`{p.name}` {committed_elsewhere(p)}" for p in files.values()
+                        if p.exists())
     for _, r in s["aws"].iterrows():
         p3 = s.get("aws_p3")
         q = None if p3 is None else p3[(p3.tool == r.tool) & (p3["mode"] == r["mode"])]
@@ -279,33 +297,77 @@ def e0(infra: Path | None) -> list[str]:
                      "-" if kk is None or kk.empty else _f(kk.total_median_ms.iloc[0], ".0f")])
     commit = s["aws"].git_commit.iloc[0]
     return head + [f"Source: `{files['aws']}` (E0 commit {commit}) and the parallel-3 and kind "
-                   "summaries next to it.", "",
+                   "summaries next to it. Files and last commits: " + commits + ".", "",
                    *_table(["Tool", "Tier", "Images", "n", "AWS median ms", "AWS p95 ms",
                             "AWS 3 at once median ms", "kind median ms"], rows), ""]
 
 
+BOOT_N, BOOT_SEED = 1000, 0
+
+
+def session_ci(d: pd.DataFrame, n: int = BOOT_N, seed: int = BOOT_SEED) -> tuple[float, float]:
+    """95% percentile CI of the cold rate (cold calls / calls), resampling sessions."""
+    g = d.groupby("session").cold_b.agg(["sum", "size"])
+    cold, calls = g["sum"].to_numpy(float), g["size"].to_numpy(float)
+    idx = np.random.default_rng(seed).integers(0, len(g), (n, len(g)))
+    rate = cold[idx].sum(1) / calls[idx].sum(1)
+    lo, hi = np.percentile(rate, [2.5, 97.5])
+    return float(lo), float(hi)
+
+
 def scenarios(pattern: str | None) -> list[str]:
+    """Replayer runs: one row per (dataset, scenario, policy, log), from the per-call CSVs
+    (``*_calls.csv``) and the run summaries next to them (``*_summary.csv``)."""
     head = ["## AWS scenario runs (infra replayer)", ""]
     paths = sorted(glob.glob(str(Path(pattern).expanduser()))) if pattern else []
     if not paths:
         return head + _table(["Item", "Status"], [[
             "Scenario A/B/C runs on AWS (replayer CSVs on feat/infra)",
-            f"{TODO}: pass --scenarios '<glob>' after the merge"]]) + [""]
+            f"{TODO}: pass --scenarios '<glob of *_calls.csv>' after the merge"]]) + [""]
     d = pd.concat([pd.read_csv(p, keep_default_na=False) for p in paths], ignore_index=True)
-    need = {"policy", "cold", "added_latency_ms"}
+    need = {"dataset", "scenario", "policy", "session", "cold", "added_ms", "log"}
     if not need <= set(d.columns):
         return head + [f"{TODO}: {len(paths)} files but columns {sorted(need)} not found", ""]
+    sums = [Path(p.replace("_calls.csv", "_summary.csv")) for p in paths]
+    commits = ", ".join(f"`{Path(p).name}` {committed_elsewhere(Path(p))}"
+                        for p in [*paths, *map(str, sums)] if Path(p).exists())
+    sm = pd.concat([pd.read_csv(p, keep_default_na=False) for p in sums if p.exists()],
+                   ignore_index=True) if any(p.exists() for p in sums) else pd.DataFrame()
+    if not sm.empty:
+        sm = sm[sm.error == ""]
     d["cold_b"] = d.cold.astype(str).str.lower().isin(["true", "1"])
-    d["added"] = pd.to_numeric(d.added_latency_ms, errors="coerce")
-    keys = [c for c in ("dataset", "policy") if c in d.columns]
-    rows = []
-    for k, g in d.groupby(keys):
-        k = k if isinstance(k, tuple) else (k,)
-        rows.append([*map(str, k), str(len(g)), _f(100 * (1 - g.cold_b.mean())),
-                     _f(g.added.quantile(0.5)), _f(g.added.quantile(0.95))])
-    return head + [f"Source: {len(paths)} files matching `{pattern}`.", "",
-                   *_table([*keys, "calls", "warm %", "added p50 ms", "added p95 ms"], rows),
-                   ""]
+    d["added"] = pd.to_numeric(d.added_ms, errors="coerce")
+    keys = ["dataset", "scenario", "policy", "log"]
+    rows, check = [], []
+    for k, g in sorted(d.groupby(keys), key=lambda kg: (kg[0][0] != "real", kg[0])):
+        lo, hi = session_ci(g)
+        r = sm[(sm[keys] == pd.Series(k, index=keys)).all(axis=1)] if not sm.empty else sm
+        idle = "-" if r.empty else _f(r.idle_pod_s.iloc[0], ",.0f")
+        p50, p99 = ((_f(g.added.quantile(q), ".0f") for q in (0.5, 0.99)) if r.empty else
+                    (_f(r[c].iloc[0], ".0f") for c in ("added_ms_p50", "added_ms_p99")))
+        if not r.empty and int(float(r.cold.iloc[0])) != int(g.cold_b.sum()):
+            check.append(f"{'/'.join(k)}: {int(g.cold_b.sum())} cold calls in the call file, "
+                         f"{r.cold.iloc[0]} in the summary")
+        rows.append([*k[:3], str(g.session.nunique()), str(len(g)),
+                     f"{_f(100 * g.cold_b.mean())} [{_f(100 * lo)}, {_f(100 * hi)}]",
+                     idle, "n/a (one run-level counter)",
+                     p50, p99])
+    n_sess = d.groupby(["dataset", "scenario"]).session.nunique()
+    note = "; ".join(f"{ds} {sc}: {n} sessions" for (ds, sc), n in n_sess.items())
+    out = head + [
+        f"Source: {len(paths)} files matching `{pattern}` and the `*_summary.csv` next to "
+        f"them ({commits}). Sessions per scenario: {note}. With so few sessions the CIs are "
+        "wide. SYNTHETIC rows replay traces sampled from the PRD graphs, not real sessions; "
+        "added p50/p99 are the run summaries' values.", "",
+        f"Cold rate: cold calls / calls, with a 95% session-level bootstrap CI ({BOOT_N:,} "
+        f"resamples of sessions with replacement, seed {BOOT_SEED}). Idle pod-s is the "
+        "controller's `skypiea_pod_seconds_idle_total` over the whole run; pods are shared by "
+        "all sessions of a run, so it cannot be split by session and has no session CI.", "",
+        *_table(["Dataset", "Scenario", "Policy", "sessions", "calls", "cold % [95% CI]",
+                 "idle pod-s", "idle CI", "added p50 ms", "added p99 ms"], rows), ""]
+    if check:
+        out += ["Mismatch between call files and summaries:", "", *[f"- {c}" for c in check], ""]
+    return out
 
 
 def build(infra: Path | None, pattern: str | None) -> str:
