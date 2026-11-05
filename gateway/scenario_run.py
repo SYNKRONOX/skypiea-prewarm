@@ -187,12 +187,23 @@ class Runner:
         (await c.post(f"{self.stub}/admin/policy", json={"name": pol, "params": params})
          ).raise_for_status()
         if pol == "markov1":
+            dropped = {}
             for k, calls in enumerate(train):
+                # data hygiene (2026-11-05): a train call with a non-finite t_ms/service_ms is
+                # dropped (its gap goes with it); counted and named in the setup info
+                clean = [x for x in calls
+                         if math.isfinite(x["t_ms"]) and math.isfinite(x["service_ms"])]
+                if len(clean) < len(calls):
+                    dropped[k] = len(calls) - len(clean)
+                if not clean:
+                    continue
                 r = await c.post(f"{self.stub}/decide", json={
-                    "session_id": f"warmup-{k}", "now_ms": calls[-1]["t_ms"],
-                    "history": history(calls)})
+                    "session_id": f"warmup-{k}", "now_ms": clean[-1]["t_ms"],
+                    "history": history(clean)})
                 r.raise_for_status()
             info["markov1_warmup_sessions"] = len(train)
+            info["markov1_warmup_dropped_calls"] = sum(dropped.values())
+            info["markov1_warmup_dropped_from"] = sorted(dropped)   # indexes into `train`
         if pol == "always_warm":
             st = (await c.get(f"{self.ctl}/v1/state")).json()
             for s in st:

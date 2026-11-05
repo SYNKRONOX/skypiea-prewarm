@@ -86,6 +86,7 @@ def main() -> int:
     a = ap.parse_args()
     L = a.logs
     real = sorted([L / "A_stub.log", L / "A_pred.log", *L.glob("B_stub_a*.log"),
+                   *L.glob("B_m1fix_a*.log"),
                    *L.glob("B_pred_a*.log")])
     prd = sorted([*L.glob("PRDA_*_a*.log"), *L.glob("PRDB_*_a*.log")])
     problems: list[str] = []

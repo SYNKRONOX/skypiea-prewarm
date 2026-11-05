@@ -98,3 +98,29 @@ def test_report_keeps_failed_calls_and_policy_errors(tmp_path):
     assert sr.main() == 0
     assert "predictor:t" in (tmp_path / "o_calls.csv").read_text()
     assert calls[0]["dataset"] == "real"     # old logs without the label are real-trace runs
+
+
+def test_markov1_warmup_drops_non_finite_calls():
+    import asyncio
+
+    from gateway.scenario_run import Runner
+
+    sent = []
+
+    class R:
+        def raise_for_status(self):
+            pass
+
+    class C:
+        async def post(self, url, json):
+            sent.append((url, json))
+            return R()
+
+    train = [[{"tool_class": "a", "t_ms": 0.0, "service_ms": 5.0, "batch_id": 0},
+              {"tool_class": "b", "t_ms": 10.0, "service_ms": float("nan"), "batch_id": 1}],
+             [{"tool_class": "c", "t_ms": 0.0, "service_ms": 1.0, "batch_id": 0}]]
+    r = Runner("gw", "ctl", "stub", "model", "B", 5, 0.0)
+    info = asyncio.run(r.setup(C(), "markov1", train, None))
+    assert info["markov1_warmup_dropped_calls"] == 1 and info["markov1_warmup_dropped_from"] == [0]
+    hist = [j["history"] for u, j in sent if u.endswith("/decide")]
+    assert [[h["tool_class"] for h in x] for x in hist] == [["a"], ["c"]]
