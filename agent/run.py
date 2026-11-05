@@ -52,6 +52,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--sessions", type=int, default=3)
     ap.add_argument("--first", type=int, default=0, help="index of the first session")
     ap.add_argument("--max-steps", type=int, default=8)
+    ap.add_argument("--max-nudges", type=int, default=2,
+                    help="simulated 'user confirms, continue' replies per session")
     ap.add_argument("--scripted-think-ms", type=float, default=3000.0)
     ap.add_argument("--gateway", default="http://127.0.0.1:18080/mcp")
     ap.add_argument("--controller", default="http://127.0.0.1:18081")
@@ -94,7 +96,8 @@ def main(argv: list[str] | None = None) -> int:
         llm = live or ScriptedLLM(task.scripted(i), think_ms=a.scripted_think_ms)
         mcp = McpClient(a.gateway)
         try:
-            res = run_session(llm, mcp, task, i, ctx, max_steps=a.max_steps)
+            res = run_session(llm, mcp, task, i, ctx, max_steps=a.max_steps,
+                              max_nudges=a.max_nudges)
         finally:
             mcp.close()
         steps += res.steps
@@ -102,7 +105,8 @@ def main(argv: list[str] | None = None) -> int:
         s = res.summary
         colds = sum(1 for r in res.steps if r["cold"] is True)
         print(f"[agent] session {s['session']}: {s['sequence'] or '-'} | end {s['end_reason']} "
-              f"| graph {'yes' if s['followed_graph'] else 'no'} | cold {colds}/{s['tool_calls']}"
+              f"| graph {'yes' if s['followed_graph'] else 'no'} | cold {colds}/{s['tool_calls']} "
+              f"| nudges {s['nudges']}"
               + (f" | {s['error'][:100]}" if s["error"] else ""), flush=True)
     sessions_s = time.monotonic() - t0
     if a.policy != "predictive":
@@ -119,7 +123,8 @@ def main(argv: list[str] | None = None) -> int:
     run = {"run_id": run_id, "scenario": a.scenario, "task": task.name, "policy": a.policy,
            "llm": llm_label, "model": model, "profile": profile, "label": label,
            "profile_note": tasks.PROFILE_NOTE, "sessions": a.sessions, "first": a.first,
-           "max_steps": a.max_steps, "started_utc": started, "sessions_s": round(sessions_s, 1),
+           "max_steps": a.max_steps, "max_nudges": a.max_nudges, "started_utc": started,
+           "sessions_s": round(sessions_s, 1),
            "waited_for_zero_s": round(waited, 1), "drain_s": round(drain, 1),
            "idle_pod_s": round(after["skypiea_pod_seconds_idle_total"]
                                - before["skypiea_pod_seconds_idle_total"], 1),

@@ -12,3 +12,8 @@ demo-clean:              ## stop port-forwards, delete the kind cluster + regist
 	deploy/kind/down.sh
 	rm -rf .demo models/lgbm-prd-demo-*
 	@echo "Docker images skypiea/* are kept (docker image prune / docker rmi to remove them)."
+
+LLM    ?= scripted
+POLICY ?= predictive
+agent-demo:              ## agent on Scenario A+B via the gateway (LLM=scripted|openai-compatible, POLICY, N)
+	PY=$(PY) LLM=$(LLM) POLICY=$(POLICY) N=$(or $(AGENT_N),3) demo/agent_demo.sh

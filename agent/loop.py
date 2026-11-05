@@ -22,8 +22,12 @@ STEP_FIELDS = ["run_id", "scenario", "policy", "llm", "model", "profile", "sessi
                "call_in_step", "think_ms", "tool", "ok", "cold", "predicted", "added_ms",
                "held_ms", "wall_ms", "args_dropped", "error"]
 SESSION_FIELDS = ["run_id", "scenario", "policy", "llm", "model", "profile", "session", "steps",
-                  "tool_calls", "sequence", "followed_graph", "canonical_order", "end_reason",
-                  "error"]
+                  "tool_calls", "sequence", "followed_graph", "canonical_order", "nudges",
+                  "end_reason", "error"]
+# Simulated user turn when the model answers in text instead of calling a tool (small models
+# often stop to ask the customer to confirm). Fixed text, at most `max_nudges` per session.
+NUDGE = ("(The user confirms and has nothing to add.) Continue the task using the tools. "
+         "Call `finish` when it is complete.")
 MAX_RESULT_CHARS = 1500
 
 
@@ -54,8 +58,13 @@ class SessionResult:
 
 
 def run_session(llm: Any, mcp: McpClient, task: Task, index: int, ctx: dict[str, Any],
-                max_steps: int = 8) -> SessionResult:
-    """One agent session. ``ctx`` holds the run labels (run_id, policy, llm, model, profile)."""
+                max_steps: int = 8, max_nudges: int = 2) -> SessionResult:
+    """One agent session. ``ctx`` holds the run labels (run_id, policy, llm, model, profile).
+
+    A text answer without tool calls (NoToolCallError) gets the fixed NUDGE as the user's
+    reply, at most ``max_nudges`` times; the next tool call's think_ms then includes the time
+    of the text answer(s), since that is the real gap the gateway sees. Each LLM request counts
+    as one step."""
     session = f"{task.scenario}{index:03d}"
     base = {"run_id": ctx["run_id"], "scenario": task.scenario, "policy": ctx["policy"],
             "llm": ctx["llm"], "model": ctx["model"], "profile": ctx["profile"],
@@ -66,10 +75,18 @@ def run_session(llm: Any, mcp: McpClient, task: Task, index: int, ctx: dict[str,
     seq: list[str] = []
     end, err = "step_limit", ""
     step = 0
+    nudges = 0
+    pending_ms = 0.0     # think time of text-only answers, added to the next tool call
     for step in range(1, max_steps + 1):
         try:
             reply = llm.step(messages, task.tools)
         except NoToolCallError as e:
+            if nudges < max_nudges:
+                nudges += 1
+                pending_ms += e.think_ms
+                messages.append({"role": "assistant", "content": e.content or ""})
+                messages.append({"role": "user", "content": NUDGE})
+                continue
             end, err = "no_tool_call", str(e)[:200]
             break
         except LLMError as e:
@@ -79,7 +96,7 @@ def run_session(llm: Any, mcp: McpClient, task: Task, index: int, ctx: dict[str,
         finished = False
         for k, tc in enumerate(reply.tool_calls):
             row = {**base, "step": step, "call_in_step": k,
-                   "think_ms": round(reply.think_ms, 1) if k == 0 else 0.0,
+                   "think_ms": round(reply.think_ms + pending_ms, 1) if k == 0 else 0.0,
                    "tool": _safe(tc.name), "ok": "", "cold": "", "predicted": "",
                    "added_ms": "", "held_ms": "", "wall_ms": "", "args_dropped": 0, "error": ""}
             if tc.name == FINISH:
@@ -103,10 +120,12 @@ def run_session(llm: Any, mcp: McpClient, task: Task, index: int, ctx: dict[str,
             out.steps.append(row)
             messages.append({"role": "tool", "tool_call_id": tc.id,
                              "content": render_result(res, info.ok, info.error)})
+        pending_ms = 0.0
         if finished:
             end = "finish"
             break
     out.summary = {**base, "steps": step, "tool_calls": len(seq), "sequence": ">".join(seq),
                    "followed_graph": task.follows_graph(seq),
-                   "canonical_order": seq == task.canonical, "end_reason": end, "error": err}
+                   "canonical_order": seq == task.canonical, "nudges": nudges,
+                   "end_reason": end, "error": err}
     return out

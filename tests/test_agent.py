@@ -182,6 +182,24 @@ def test_no_tool_call_ends_session_with_reason() -> None:
         "role": "assistant", "content": "hello"}}]}))
     res = run_session(llm, client(FakeGateway()), task, 0, CTX)
     assert res.summary["end_reason"] == "no_tool_call" and res.steps == []
+    assert res.summary["nudges"] == 2
+
+
+def test_text_answer_gets_one_nudge_then_tool_call_counts_its_think_time() -> None:
+    task = tasks.get("A")
+    answers = iter([
+        {"role": "assistant", "content": "Can you confirm?"},
+        {"role": "assistant", "content": "", "tool_calls": [{"id": "c1", "type": "function",
+         "function": {"name": "finish", "arguments": "{}"}}]}])
+    seen = []
+
+    def h(req: httpx.Request) -> httpx.Response:
+        seen.append(json.loads(req.content)["messages"])
+        return httpx.Response(200, json={"choices": [{"message": next(answers)}]})
+
+    res = run_session(_llm(h), client(FakeGateway()), task, 0, CTX)
+    assert res.summary["end_reason"] == "finish" and res.summary["nudges"] == 1
+    assert seen[1][-1]["role"] == "user" and "Continue" in seen[1][-1]["content"]
 
 
 def test_agent_imports_no_platform_internals() -> None:
@@ -190,3 +208,29 @@ def test_agent_imports_no_platform_internals() -> None:
     for p in pathlib.Path("agent").rglob("*.py"):
         src = p.read_text()
         assert not re.search(r"^\s*(from|import)\s+(gateway|controller)\b", src, re.M), p
+
+
+def test_summarize_counts_from_run_files(tmp_path) -> None:
+    from agent.loop import SESSION_FIELDS
+    from agent.run import write_csv
+    from agent.summarize import load, summarize
+
+    task = tasks.get("A")
+    gw = FakeGateway()
+    steps, sess = [], []
+    for i in range(2):
+        r = run_session(ScriptedLLM(task.scripted(i), think_ms=3000, sleep=False), client(gw),
+                        task, i, CTX)
+        steps += r.steps
+        sess.append(r.summary)
+    write_csv(tmp_path / "x_steps.csv", STEP_FIELDS, steps)
+    write_csv(tmp_path / "x_sessions.csv", SESSION_FIELDS, sess)
+    (tmp_path / "x_run.json").write_text(json.dumps({
+        "run_id": "x", "scenario": "A", "policy": "scale_to_zero", "model": "m", "llm": "scripted",
+        "idle_pod_s": 12.5, "started_utc": "t", "label": "L", "checks": []}))
+    rows, think = summarize(load(tmp_path, None))
+    (row,) = rows
+    assert row["ok_calls"] == 6 and row["cold_calls"] == 3        # first use of each tool
+    assert row["cold_rate_pct"] == 50.0 and row["followed_graph"] == 2
+    assert row["think_median_ms"] == 3000 and row["idle_pod_s"] == 12.5
+    assert think[0]["tool"] == "ALL" and think[0]["think_ge_cached_pct"] == 100.0

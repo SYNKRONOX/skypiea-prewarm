@@ -29,7 +29,13 @@ class LLMError(RuntimeError):
 
 
 class NoToolCallError(LLMError):
-    """The model answered without any tool call."""
+    """The model answered without any tool call. Carries its text (for the conversation only;
+    never recorded) and how long the request took."""
+
+    def __init__(self, msg: str, content: str | None = None, think_ms: float = 0.0):
+        super().__init__(msg)
+        self.content = content
+        self.think_ms = think_ms
 
 
 @dataclass(frozen=True)
@@ -118,7 +124,7 @@ class OpenAICompatibleLLM:
         if not calls:
             raise NoToolCallError(
                 "the model returned no tool calls (it must call a tool or `finish`); "
-                f"it answered with text of {len(content or '')} chars")
+                f"it answered with text of {len(content or '')} chars", content, think_ms)
         out = {"role": "assistant", "content": content or "",
                "tool_calls": [{"id": c.id, "type": "function",
                                "function": {"name": c.name, "arguments": c.raw_arguments}}
