@@ -1,0 +1,31 @@
+{
+ "run_id": "20261105T220241Z_B_predictive_openai-compatible",
+ "scenario": "B",
+ "task": "coding_review",
+ "policy": "predictive",
+ "llm": "openai-compatible",
+ "model": "llama3.1:8b",
+ "profile": "prd",
+ "label": "SYNTHETIC predictor profile prd; kind cold starts (laptop, lower bound); LLM llama3.1:8b; 10 sessions",
+ "profile_note": "predictor profile prd is SYNTHETIC (PRD scenario graphs), not trained on real agent traces",
+ "sessions": 10,
+ "first": 0,
+ "max_steps": 8,
+ "max_nudges": 2,
+ "started_utc": "2026-11-05T22:02:41+00:00",
+ "sessions_s": 45.2,
+ "waited_for_zero_s": 0.0,
+ "drain_s": 60.3,
+ "idle_pod_s": 306.7,
+ "controller_deltas": {
+  "skypiea_pod_seconds_idle_total": 306.688,
+  "skypiea_scale_events_total": 10.0,
+  "skypiea_warm_requests_total": 29.0
+ },
+ "model_decide_requests": 34.0,
+ "setup": {
+  "model_version": "lgbm-prd-a7642d0",
+  "profile": "prd"
+ },
+ "checks": []
+}

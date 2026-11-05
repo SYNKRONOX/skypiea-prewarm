@@ -1,0 +1,112 @@
+PY=.venv/bin/python N=10 demo/agent_live.sh
+[live] 2026-11-05T21:54:06Z model llama3.1:8b at http://localhost:11434/v1, predictor a7642d03dd10, N=10
+deployed: images 96a0735, predictor a7642d03dd10 (profile prd), gateway serves the stub
+port-forwards up: gateway http://127.0.0.1:18080/mcp, controller :18081, stub :18082, model :18083, Grafana http://127.0.0.1:3000
+[agent] run 20261105T215420Z_A_scale_to_zero_openai-compatible: scenario A (support_refund), policy scale_to_zero, 10 sessions
+[agent] SYNTHETIC predictor profile prd; kind cold starts (laptop, lower bound); LLM llama3.1:8b; 10 sessions
+[agent] session A000: order_lookup>policy_check | end finish | graph yes | cold 2/2 | nudges 2
+[agent] session A001: order_lookup>policy_check>refund_issue | end no_tool_call | graph yes | cold 3/3 | nudges 2 | the model returned no tool calls (it must call a tool or `finish`); it answered with text of 725 cha
+[agent] session A002: order_lookup>policy_check>refund_issue>policy_check>refund_issue | end no_tool_call | graph no | cold 2/5 | nudges 2 | the model returned no tool calls (it must call a tool or `finish`); it answered with text of 291 cha
+[agent] session A003: order_lookup>policy_check>refund_issue | end finish | graph yes | cold 3/3 | nudges 1
+[agent] session A004: order_lookup>policy_check>refund_issue>policy_check | end finish | graph no | cold 4/4 | nudges 2
+[agent] session A005: order_lookup>refund_issue>refund_issue | end no_tool_call | graph no | cold 2/3 | nudges 2 | the model returned no tool calls (it must call a tool or `finish`); it answered with text of 276 cha
+[agent] session A006: order_lookup>policy_check>refund_issue | end no_tool_call | graph yes | cold 3/3 | nudges 2 | the model returned no tool calls (it must call a tool or `finish`); it answered with text of 186 cha
+[agent] session A007: order_lookup>policy_check>refund_issue>policy_check | end finish | graph no | cold 3/4 | nudges 2
+[agent] session A008: order_lookup>refund_issue>refund_issue | end no_tool_call | graph no | cold 2/3 | nudges 2 | the model returned no tool calls (it must call a tool or `finish`); it answered with text of 188 cha
+[agent] session A009: order_lookup>policy_check>order_lookup | end no_tool_call | graph no | cold 3/3 | nudges 2 | the model returned no tool calls (it must call a tool or `finish`); it answered with text of 151 cha
+[agent] done: 33 ok calls, 27 cold, idle pod-s 172.8, graph followed 4/10; files results/agent_runs/20261105T215420Z_A_scale_to_zero_openai-compatible_*
+[agent] run 20261105T215641Z_B_scale_to_zero_openai-compatible: scenario B (coding_review), policy scale_to_zero, 10 sessions
+[agent] SYNTHETIC predictor profile prd; kind cold starts (laptop, lower bound); LLM llama3.1:8b; 10 sessions
+[agent] session B000: read_file>run_tests>format_diff>post_comment | end finish | graph yes | cold 4/4 | nudges 1
+[agent] session B001: read_file>run_tests>format_diff>post_comment | end finish | graph yes | cold 2/4 | nudges 0
+[agent] session B002: read_file>run_tests>format_diff>post_comment | end finish | graph yes | cold 2/4 | nudges 0
+[agent] session B003: read_file>run_tests>format_diff>post_comment | end finish | graph yes | cold 1/4 | nudges 0
+[agent] session B004: post_comment | end finish | graph no | cold 0/1 | nudges 0
+[agent] session B005: read_file>run_tests>format_diff>post_comment | end finish | graph yes | cold 0/4 | nudges 1
+[agent] session B006: read_file>run_tests>format_diff>post_comment | end finish | graph yes | cold 2/4 | nudges 0
+[agent] session B007: read_file>run_tests>format_diff>post_comment | end finish | graph yes | cold 1/4 | nudges 0
+[agent] session B008: read_file>run_tests>format_diff>post_comment | end finish | graph yes | cold 0/4 | nudges 0
+[agent] session B009: read_file>run_tests>format_diff>post_comment | end finish | graph yes | cold 0/4 | nudges 0
+[agent] done: 37 ok calls, 12 cold, idle pod-s 223.0, graph followed 9/10; files results/agent_runs/20261105T215641Z_B_scale_to_zero_openai-compatible_*
+[agent] run 20261105T215814Z_A_keep_alive_openai-compatible: scenario A (support_refund), policy keep_alive, 10 sessions
+[agent] SYNTHETIC predictor profile prd; kind cold starts (laptop, lower bound); LLM llama3.1:8b; 10 sessions
+[agent] session A000: order_lookup>policy_check | end finish | graph yes | cold 2/2 | nudges 2
+[agent] session A001: order_lookup>policy_check>refund_issue | end no_tool_call | graph yes | cold 1/3 | nudges 2 | the model returned no tool calls (it must call a tool or `finish`); it answered with text of 725 cha
+[agent] session A002: order_lookup>policy_check>refund_issue>policy_check>refund_issue | end no_tool_call | graph no | cold 0/5 | nudges 2 | the model returned no tool calls (it must call a tool or `finish`); it answered with text of 291 cha
+[agent] session A003: order_lookup>policy_check>refund_issue | end finish | graph yes | cold 0/3 | nudges 1
+[agent] session A004: order_lookup>policy_check>refund_issue>policy_check>refund_issue | end no_tool_call | graph no | cold 0/5 | nudges 2 | the model returned no tool calls (it must call a tool or `finish`); it answered with text of 419 cha
+[agent] session A005: order_lookup>refund_issue>refund_issue | end no_tool_call | graph no | cold 0/3 | nudges 2 | the model returned no tool calls (it must call a tool or `finish`); it answered with text of 311 cha
+[agent] session A006: order_lookup>policy_check>refund_issue | end no_tool_call | graph yes | cold 0/3 | nudges 2 | the model returned no tool calls (it must call a tool or `finish`); it answered with text of 186 cha
+[agent] session A007: order_lookup>refund_issue>refund_issue | end finish | graph no | cold 0/3 | nudges 2
+[agent] session A008: order_lookup>refund_issue>refund_issue | end no_tool_call | graph no | cold 0/3 | nudges 2 | the model returned no tool calls (it must call a tool or `finish`); it answered with text of 247 cha
+[agent] session A009: order_lookup>policy_check>order_lookup | end no_tool_call | graph no | cold 0/3 | nudges 2 | the model returned no tool calls (it must call a tool or `finish`); it answered with text of 176 cha
+[agent] done: 33 ok calls, 3 cold, idle pod-s 243.2, graph followed 4/10; files results/agent_runs/20261105T215814Z_A_keep_alive_openai-compatible_*
+[agent] run 20261105T215949Z_B_keep_alive_openai-compatible: scenario B (coding_review), policy keep_alive, 10 sessions
+[agent] SYNTHETIC predictor profile prd; kind cold starts (laptop, lower bound); LLM llama3.1:8b; 10 sessions
+[agent] session B000: read_file>run_tests>format_diff>post_comment | end finish | graph yes | cold 4/4 | nudges 0
+[agent] session B001: post_comment | end finish | graph no | cold 0/1 | nudges 0
+[agent] session B002: read_file>run_tests>format_diff>post_comment | end finish | graph yes | cold 0/4 | nudges 0
+[agent] session B003: read_file>run_tests>format_diff>post_comment | end finish | graph yes | cold 0/4 | nudges 1
+[agent] session B004: post_comment | end finish | graph no | cold 0/1 | nudges 0
+[agent] session B005: read_file>run_tests>format_diff>post_comment | end finish | graph yes | cold 0/4 | nudges 1
+[agent] session B006: read_file>run_tests>format_diff>post_comment | end finish | graph yes | cold 0/4 | nudges 0
+[agent] session B007: read_file>run_tests>format_diff>post_comment | end finish | graph yes | cold 0/4 | nudges 0
+[agent] session B008: read_file>run_tests>format_diff>post_comment | end finish | graph yes | cold 0/4 | nudges 0
+[agent] session B009: read_file>run_tests>format_diff>post_comment | end finish | graph yes | cold 0/4 | nudges 0
+[agent] done: 34 ok calls, 4 cold, idle pod-s 269.8, graph followed 8/10; files results/agent_runs/20261105T215949Z_B_keep_alive_openai-compatible_*
+deployed: images 96a0735, predictor a7642d03dd10 (profile prd), gateway serves the model
+port-forwards up: gateway http://127.0.0.1:18080/mcp, controller :18081, stub :18082, model :18083, Grafana http://127.0.0.1:3000
+[agent] run 20261105T220119Z_A_predictive_openai-compatible: scenario A (support_refund), policy predictive, 10 sessions
+[agent] SYNTHETIC predictor profile prd; kind cold starts (laptop, lower bound); LLM llama3.1:8b; 10 sessions
+[agent] session A000: order_lookup>policy_check | end finish | graph yes | cold 2/2 | nudges 2
+[agent] session A001: order_lookup>policy_check>refund_issue | end no_tool_call | graph yes | cold 0/3 | nudges 2 | the model returned no tool calls (it must call a tool or `finish`); it answered with text of 725 cha
+[agent] session A002: order_lookup>policy_check>refund_issue>policy_check>refund_issue | end no_tool_call | graph no | cold 0/5 | nudges 2 | the model returned no tool calls (it must call a tool or `finish`); it answered with text of 291 cha
+[agent] session A003: order_lookup>policy_check>refund_issue | end finish | graph yes | cold 0/3 | nudges 1
+[agent] session A004: order_lookup>policy_check>refund_issue>policy_check | end finish | graph no | cold 0/4 | nudges 2
+[agent] session A005: order_lookup>refund_issue>refund_issue | end no_tool_call | graph no | cold 0/3 | nudges 2 | the model returned no tool calls (it must call a tool or `finish`); it answered with text of 311 cha
+[agent] session A006: order_lookup>policy_check>refund_issue | end no_tool_call | graph yes | cold 0/3 | nudges 2 | the model returned no tool calls (it must call a tool or `finish`); it answered with text of 186 cha
+[agent] session A007: order_lookup>refund_issue>refund_issue | end finish | graph no | cold 0/3 | nudges 2
+[agent] session A008: order_lookup>refund_issue>refund_issue | end no_tool_call | graph no | cold 0/3 | nudges 2 | the model returned no tool calls (it must call a tool or `finish`); it answered with text of 247 cha
+[agent] session A009: order_lookup>policy_check>order_lookup | end no_tool_call | graph no | cold 0/3 | nudges 2 | the model returned no tool calls (it must call a tool or `finish`); it answered with text of 176 cha
+[agent] done: 32 ok calls, 2 cold, idle pod-s 201.6, graph followed 4/10; files results/agent_runs/20261105T220119Z_A_predictive_openai-compatible_*
+[agent] run 20261105T220241Z_B_predictive_openai-compatible: scenario B (coding_review), policy predictive, 10 sessions
+[agent] SYNTHETIC predictor profile prd; kind cold starts (laptop, lower bound); LLM llama3.1:8b; 10 sessions
+[agent] session B000: read_file>run_tests>format_diff>post_comment | end finish | graph yes | cold 4/4 | nudges 0
+[agent] session B001: post_comment | end finish | graph no | cold 0/1 | nudges 0
+[agent] session B002: read_file>run_tests>format_diff>post_comment | end finish | graph yes | cold 0/4 | nudges 0
+[agent] session B003: read_file>run_tests>format_diff>post_comment | end finish | graph yes | cold 0/4 | nudges 1
+[agent] session B004: post_comment | end finish | graph no | cold 0/1 | nudges 0
+[agent] session B005: read_file>run_tests>format_diff>post_comment | end finish | graph yes | cold 0/4 | nudges 1
+[agent] session B006: read_file>run_tests>format_diff>post_comment | end finish | graph yes | cold 0/4 | nudges 0
+[agent] session B007: read_file>run_tests>format_diff>post_comment | end finish | graph yes | cold 0/4 | nudges 0
+[agent] session B008: read_file>run_tests>format_diff>post_comment | end finish | graph yes | cold 1/4 | nudges 0
+[agent] session B009: read_file>run_tests>format_diff>post_comment | end finish | graph yes | cold 0/4 | nudges 0
+[agent] done: 34 ok calls, 5 cold, idle pod-s 306.7, graph followed 8/10; files results/agent_runs/20261105T220241Z_B_predictive_openai-compatible_*
+Source: `results/agent_runs/summary.csv` and `results/agent_runs/summary_think.csv` (python -m agent.summarize).
+
+**Labels:** kind cold starts (laptop: a lower bound), local 8B model, SYNTHETIC predictor profile `prd`, 10 sessions per cell. Real (unscaled) LLM think times. Not comparable with the AWS tables.
+
+| Scenario | Policy | sessions | ok calls | cold % | added p50 ms | added p99 ms | idle pod-s | LLM followed graph | canonical order | session ends |
+|---|---|---|---|---|---|---|---|---|---|---|
+| A | scale_to_zero | 10 | 33 | 81.8 | 2,522 | 4,158 | 173 | 4/10 | 3/10 | finish=4;no_tool_call=6 |
+| A | keep_alive | 10 | 33 | 9.1 | 0 | 3,250 | 243 | 4/10 | 3/10 | finish=3;no_tool_call=7 |
+| A | predictive | 10 | 32 | 6.2 | 0 | 2,663 | 202 | 4/10 | 3/10 | finish=4;no_tool_call=6 |
+| B | scale_to_zero | 10 | 37 | 32.4 | 0 | 3,947 | 223 | 9/10 | 9/10 | finish=10 |
+| B | keep_alive | 10 | 34 | 11.8 | 0 | 3,957 | 270 | 8/10 | 8/10 | finish=10 |
+| B | predictive | 10 | 34 | 14.7 | 0 | 2,957 | 307 | 8/10 | 8/10 | finish=10 |
+
+LLM think gap before each tool call (all policies pooled) vs that tool's median cold start in `configs/cold_start.yaml` (AWS; kind starts are shorter). A call that is not the first of a multi-call LLM reply has think gap 0. 'think >= cached' is the share of calls whose think gap alone could hide a cached cold start started at the previous call:
+
+| Tool | calls | think median ms | think p90 ms | cold start cached ms | cold start uncached ms | think >= cached | think >= uncached |
+|---|---|---|---|---|---|---|---|
+| ALL | 203 | 1,354 | 2,938 | - | - | 8% | 0% |
+| format_diff | 25 | 0 | 0 | 2,674 | 5,112 | 0% | 0% |
+| order_lookup | 33 | 457 | 743 | 2,743 | 6,310 | 0% | 0% |
+| policy_check | 29 | 1,418 | 2,035 | 3,651 | 8,258 | 0% | 0% |
+| post_comment | 30 | 0 | 1,024 | 2,574 | 4,474 | 0% | 0% |
+| read_file | 25 | 2,938 | 3,202 | 2,730 | 4,301 | 56% | 4% |
+| refund_issue | 36 | 1,481 | 2,504 | 2,572 | 4,610 | 6% | 0% |
+| run_tests | 25 | 0 | 0 | 3,791 | 8,366 | 0% | 0% |
+
+[live] 2026-11-05T22:04:28Z done rc=0
+exit=0

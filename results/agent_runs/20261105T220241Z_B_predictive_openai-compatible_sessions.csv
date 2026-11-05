@@ -1,0 +1,11 @@
+run_id,scenario,policy,llm,model,profile,session,steps,tool_calls,sequence,followed_graph,canonical_order,nudges,end_reason,error
+20261105T220241Z_B_predictive_openai-compatible,B,predictive,openai-compatible,llama3.1:8b,prd,B000,1,4,read_file>run_tests>format_diff>post_comment,True,True,0,finish,
+20261105T220241Z_B_predictive_openai-compatible,B,predictive,openai-compatible,llama3.1:8b,prd,B001,2,1,post_comment,False,False,0,finish,
+20261105T220241Z_B_predictive_openai-compatible,B,predictive,openai-compatible,llama3.1:8b,prd,B002,1,4,read_file>run_tests>format_diff>post_comment,True,True,0,finish,
+20261105T220241Z_B_predictive_openai-compatible,B,predictive,openai-compatible,llama3.1:8b,prd,B003,3,4,read_file>run_tests>format_diff>post_comment,True,True,1,finish,
+20261105T220241Z_B_predictive_openai-compatible,B,predictive,openai-compatible,llama3.1:8b,prd,B004,2,1,post_comment,False,False,0,finish,
+20261105T220241Z_B_predictive_openai-compatible,B,predictive,openai-compatible,llama3.1:8b,prd,B005,3,4,read_file>run_tests>format_diff>post_comment,True,True,1,finish,
+20261105T220241Z_B_predictive_openai-compatible,B,predictive,openai-compatible,llama3.1:8b,prd,B006,1,4,read_file>run_tests>format_diff>post_comment,True,True,0,finish,
+20261105T220241Z_B_predictive_openai-compatible,B,predictive,openai-compatible,llama3.1:8b,prd,B007,1,4,read_file>run_tests>format_diff>post_comment,True,True,0,finish,
+20261105T220241Z_B_predictive_openai-compatible,B,predictive,openai-compatible,llama3.1:8b,prd,B008,1,4,read_file>run_tests>format_diff>post_comment,True,True,0,finish,
+20261105T220241Z_B_predictive_openai-compatible,B,predictive,openai-compatible,llama3.1:8b,prd,B009,1,4,read_file>run_tests>format_diff>post_comment,True,True,0,finish,
