@@ -89,3 +89,54 @@ def test_pull_time_recovered_from_kubelet_event():
     assert e0.phases(r)["image_pull"] == 1800.0
     r2 = {"pull_event": 'Container image "x" already present on machine'}
     assert e0.pull_times(r2) == (0.0, None)
+
+
+def _row(**kw) -> dict:
+    return {k: kw.get(k, "") for k in e0.RUN_FIELDS}
+
+
+def test_resume_reads_units_and_cuts_partial_line(tmp_path):
+    import csv
+
+    p = tmp_path / "runs.csv"
+    with p.open("w", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=e0.RUN_FIELDS)
+        w.writeheader()
+        w.writerow(_row(run_params="P", round=0, group=0, mode="uncached", attempt=1))
+        w.writerow(_row(run_params="P", round=0, group=0, mode="cached", attempt=1,
+                        error="stalled: kubectl exec timed out after 420s"))
+        w.writerow(_row(run_params="P", round=0, group=0, mode="cached", attempt=2))
+        w.writerow(_row(run_params="P", round=0, group=1, mode="uncached", attempt=1,
+                        error="probe exit 1"))
+    with p.open("a") as f:
+        f.write("deadbeef,P,aws,ECR")              # killed mid-write
+    prev = e0.load_previous(p, "P")
+    assert prev[(0, 0, "uncached")] == {"ok": True, "attempts": 1, "rows": 1}
+    assert prev[(0, 0, "cached")]["ok"] and prev[(0, 0, "cached")]["attempts"] == 2
+    assert prev[(0, 1, "uncached")] == {"ok": False, "attempts": 1, "rows": 1}
+    assert p.read_text().endswith("\n") and "deadbeef" not in p.read_text()
+    with pytest.raises(SystemExit):
+        e0.load_previous(p, "other params")
+
+
+def test_stalled_run_becomes_error_rows_not_a_crash():
+    import subprocess
+
+    class Stalling:
+        ns = "skypiea-tools"
+
+        def wait_quiet(self, require):
+            return {"load1": 0.1, "noisy": False}
+
+        def k(self, *a, **kw):
+            raise subprocess.TimeoutExpired(["kubectl", "exec", "deploy/e0-probe"], 420)
+
+        def rmi_all_tools(self, keep):
+            return 0
+
+    cfg = {"warm_calls": 1, "service_ms": 0, "run_timeout_s": 180}
+    st, res = e0.run_unit(Stalling(), ["a", "b"], "cached", "probe", cfg, True)
+    assert st["load1"] == 0.1
+    assert [r["tool"] for r in res] == ["a", "b"]
+    assert all(r["error"].startswith("stalled: kubectl exec") and "420s" in r["error"]
+               for r in res)

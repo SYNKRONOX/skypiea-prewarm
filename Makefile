@@ -1,5 +1,8 @@
 .PHONY: test lint check-sizes install-hooks data data-all samples cluster deploy e1 clean-cluster
 
+# Infra targets (tool images, kind, AWS, E0, gateway/controller): see mk/infra.mk and docs/infra.md
+include mk/infra.mk
+
 CLUSTER ?= skypiea
 SOURCE ?= tracelab
 SOURCES = tracelab copilot_2026 tau_bench tau2_bench bfcl
@@ -26,17 +29,14 @@ data-all:
 samples:
 	python tools/make_sample.py --all
 
-cluster:
-	kind create cluster --name $(CLUSTER) --config deploy/kind/cluster.yaml
+cluster: cluster-kind          # kind (1 control-plane + 1 worker) + local registry localhost:5001
 
-deploy:
-	kubectl apply -f deploy/k8s/
+deploy: deploy-kind            # helm install skypiea (tools at 0, gateway, controller, monitoring)
 
 e1:
 	python -m experiments.run --config experiments/e1_predictor_accuracy.yaml
 
-clean-cluster:
-	kind delete cluster --name $(CLUSTER)
+clean-cluster: cluster-kind-down
 
--include mk/infra.mk
--include mk/model.mk
+# Prediction-engine targets (predictor, simulator, results summary): see mk/model.mk and docs/model.md
+include mk/model.mk

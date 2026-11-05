@@ -39,3 +39,16 @@ report medians over all runs and over quiet runs only.
 
 **kind pulls from a local registry container**, so its image-pull phase is a **lower bound**
 (no network distance). The AWS run pulls from ECR and gives the real number.
+
+## Gateway, controller, replayer, CLI, monitoring
+
+| What | Where | Docs |
+|---|---|---|
+| Gateway (one `/mcp` endpoint, 150 ms hold, predictor off the critical path) | `gateway/` | [gateway_controller.md](gateway_controller.md), [predictor_contract.md](predictor_contract.md) |
+| Scale-to-zero controller (kopf) | `controller/` | [gateway_controller.md](gateway_controller.md) |
+| Replayer (open loop, real gaps, per-call CSV) | `replayer/replay.py`, configs in `replayer/configs/` | module docstring; `results` mode requires gap/service scale 1 |
+| CLI | `bin/skypiea` (`status`, `policy get/set`, `sessions`, `trace`, `explain`) | uses the kubeconfig only (Kubernetes API proxy) |
+| Prometheus + Grafana | `charts/skypiea/templates/monitoring.yaml`, `files/skypiea-dashboard.json` | `make grafana-kind`; anonymous viewer; admin password in Secret `skypiea-grafana` |
+| AWS | `infra/aws/` | [aws_plan.md](aws_plan.md), [infra/aws/README.md](../infra/aws/README.md) |
+
+E0 runs without the controller and monitoring (`make deploy-kind-e0`; on AWS `PLATFORM=false`).

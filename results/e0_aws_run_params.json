@@ -1,0 +1,33 @@
+{
+ "run_id": "e0-20261104T142408Z-a24e540",
+ "git_commit": "a24e540",
+ "n": 10,
+ "started_utc": "2026-11-04T14:24:12Z",
+ "instance_type": "m7i-flex.large",
+ "availability_zone": "ap-south-1b",
+ "kernel": "7.0.0-1014-aws",
+ "python": "3.12.3",
+ "k3s": "k3s version v1.37.1+k3s1 (356c0254)",
+ "nproc": 2,
+ "stages": [
+  "parallel=1",
+  "parallel=3"
+ ],
+ "harness_args": [
+  "--target",
+  "aws",
+  "--on-node",
+  "--n",
+  "10",
+  "--modes",
+  "cached,uncached",
+  "--tools",
+  "all",
+  "--resume",
+  "--no-report",
+  "--git-commit",
+  "a24e540",
+  "--image-sizes",
+  "image_sizes.json"
+ ]
+}

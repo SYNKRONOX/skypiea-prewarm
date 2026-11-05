@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# skypiea CLI wrapper: bin/skypiea status | policy set <name> | trace <sid> | explain <sid>
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+PY="${PYTHON:-$( [ -x "$ROOT/.venv/bin/python" ] && echo "$ROOT/.venv/bin/python" || echo python3)}"
+PYTHONPATH="$ROOT${PYTHONPATH:+:$PYTHONPATH}" exec "$PY" -m skypiea_cli "$@"

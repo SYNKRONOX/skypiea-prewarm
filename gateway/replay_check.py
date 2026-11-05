@@ -4,6 +4,10 @@ is a result (all reported timings come from the AWS run).
 
     python -m gateway.replay_check [--policies all] [--sessions-dir ~/skypiea-model/data/processed]
 
+On AWS it runs INSIDE the cluster as a Job (no laptop tunnel; infra/aws/scripts/replay-job.sh):
+    python -m gateway.replay_check --export-sessions sessions.json     # laptop, needs pandas
+    python replay_check.py --in-cluster --sessions-json sessions.json   # in the Job pod
+
 Sessions are read (read-only) from the synthetic PRD traces: Scenario A = first
 synthetic_branching session with the full order_lookup -> policy_check -> refund_issue chain,
 Scenario B = first synthetic_deterministic session. Think gaps are scaled by --gap-scale (0.2).
@@ -27,7 +31,6 @@ from contextlib import contextmanager
 from pathlib import Path
 
 import httpx
-import pandas as pd
 
 POLICIES = ["scale_to_zero", "always_warm", "keep_alive", "markov1", "predictive", "oracle"]
 META = {"io.modelcontextprotocol/protocolVersion": "2026-07-28",
@@ -41,7 +44,10 @@ def free_port() -> int:
 
 
 @contextmanager
-def port_forward(ctx: str, ns: str, svc: str, remote: int):
+def port_forward(ctx: str | None, ns: str, svc: str, remote: int):
+    if ctx is None:   # in-cluster: the Service DNS name, no port-forward
+        yield f"http://{svc}.{ns}.svc:{remote}"
+        return
     port = free_port()
     p = subprocess.Popen(["kubectl", "--context", ctx, "-n", ns, "port-forward", f"svc/{svc}",
                           f"{port}:{remote}"], stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
@@ -59,6 +65,8 @@ def port_forward(ctx: str, ns: str, svc: str, remote: int):
 
 
 def load_session(path: Path, want: list[str] | None) -> list[dict]:
+    import pandas as pd
+
     d = pd.read_parquet(path, columns=["session_id", "tool", "t_offset_ms", "service_ms"])
     for _, g in d.groupby("session_id", sort=True):
         if want is None or list(g["tool"]) == want:
@@ -104,10 +112,14 @@ def wait_all_ready(ctl: str, timeout_s: float) -> None:
     raise SystemExit("always_warm: not every tool became ready")
 
 
-def predict_warms(ctl: str) -> float:
+def metric_sum(ctl: str, name: str, match: str = "") -> float:
     text = httpx.get(f"{ctl}/metrics", timeout=5).text
     return sum(float(ln.rsplit(" ", 1)[1]) for ln in text.splitlines()
-               if ln.startswith("skypiea_warm_requests_total") and 'reason="predict"' in ln)
+               if (ln.startswith(name + "{") or ln.startswith(name + " ")) and match in ln)
+
+
+def predict_warms(ctl: str) -> float:
+    return metric_sum(ctl, "skypiea_warm_requests_total", 'reason="predict"')
 
 
 def replay(gw: str, calls: list[dict], label: str) -> list[dict]:
@@ -147,21 +159,31 @@ def main() -> int:
     ap.add_argument("--gap-scale", type=float, default=0.2)
     ap.add_argument("--train-sessions", type=int, default=3)
     ap.add_argument("--out", default=None, help="write per-call JSON lines here (not results/)")
+    ap.add_argument("--in-cluster", action="store_true",
+                    help="use the Service DNS names directly (run as a Job in the namespace)")
+    ap.add_argument("--sessions-json", help="Scenario A/B calls exported by --export-sessions")
+    ap.add_argument("--export-sessions", metavar="FILE",
+                    help="write the Scenario A/B calls (tool, offset, service_ms) and exit")
     a = ap.parse_args()
-    sd = Path(a.sessions_dir)
-    scen = {
-        "A": schedule(load_session(sd / "synthetic_branching" / "calls.parquet",
-                                   ["order_lookup", "policy_check", "refund_issue"]),
-                      a.gap_scale),
-        "B": schedule(load_session(sd / "synthetic_deterministic" / "calls.parquet", None),
-                      a.gap_scale),
-    }
+    if a.sessions_json:
+        raw = json.loads(Path(a.sessions_json).read_text())
+    else:
+        sd = Path(a.sessions_dir)
+        raw = {"A": load_session(sd / "synthetic_branching" / "calls.parquet",
+                                 ["order_lookup", "policy_check", "refund_issue"]),
+               "B": load_session(sd / "synthetic_deterministic" / "calls.parquet", None)}
+    if a.export_sessions:
+        Path(a.export_sessions).write_text(json.dumps(raw))
+        print(f"wrote {a.export_sessions}: A {len(raw['A'])} calls, B {len(raw['B'])} calls")
+        return 0
+    scen = {k: schedule(v, a.gap_scale) for k, v in raw.items()}
+    ctx = None if a.in_cluster else a.context
     policies = POLICIES if a.policies == "all" else a.policies.split(",")
-    print("FUNCTIONAL CHECK ONLY (shared laptop): latencies below are not results.\n")
+    print("FUNCTIONAL CHECK ONLY: latencies below are not results.\n")
     failures, all_rows = [], []
-    with port_forward(a.context, a.namespace, "skypiea-gateway", 80) as gw, \
-            port_forward(a.context, a.namespace, "skypiea-controller", 8081) as ctl, \
-            port_forward(a.context, a.namespace, "skypiea-predictor", 80) as pred:
+    with port_forward(ctx, a.namespace, "skypiea-gateway", 80) as gw, \
+            port_forward(ctx, a.namespace, "skypiea-controller", 8081) as ctl, \
+            port_forward(ctx, a.namespace, "skypiea-predictor", 80) as pred:
         for pol in policies:
             waited = wait_all_zero(ctl, 300)
             params = {"ttl_s": 90} if pol == "always_warm" else {}
@@ -178,6 +200,7 @@ def main() -> int:
                     for sc in scen.values():
                         replay(gw, [{**c, "gap_ms": 0} for c in sc], "train")
                 wait_all_zero(ctl, 120)
+            q_before = metric_sum(ctl, "skypiea_scaleups_queued_total")
             before = predict_warms(ctl)
             rows = []
             for label, calls in scen.items():
@@ -187,8 +210,10 @@ def main() -> int:
                 row["policy"] = pol
             all_rows += rows
             cold = [r["cold"] for r in rows]
+            q_all = metric_sum(ctl, "skypiea_scaleups_queued_total")
             print(f"== {pol} (waited {waited:.0f}s for all tools at 0; predict warms: "
-                  f"{n_pred:.0f})")
+                  f"{n_pred:.0f}; scale-ups queued during the sessions: {q_all - q_before:.0f}, "
+                  f"since start: {q_all:.0f})")
             for row in rows:
                 print(f"   {row['scenario']} {row['i']} {row['tool_class']:13s} "
                       f"gap={row['gap_ms']:>5}ms ok={row['ok']} cold={row['cold']} "

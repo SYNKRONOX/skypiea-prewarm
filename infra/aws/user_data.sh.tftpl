@@ -6,8 +6,8 @@ exec > >(tee -a /var/log/skypiea-bootstrap.log) 2>&1
 export DEBIAN_FRONTEND=noninteractive
 snap install aws-cli --classic   # for ECR tokens via the instance role (no keys on disk)
 
-# --- k3s (pinned). The API cert always carries the DNS SAN "kubernetes"; the laptop
-# kubeconfig sets tls-server-name: kubernetes, so a new public IP after stop/start is fine.
+# --- k3s (pinned). The API (6443) is reachable only through an SSM port-forward from the
+# laptop (no inbound security-group rule); the laptop kubeconfig points at 127.0.0.1.
 curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION='${k3s_version}' sh -s - server \
   --disable traefik --disable servicelb --disable metrics-server \
   --write-kubeconfig-mode 600 \

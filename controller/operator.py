@@ -35,6 +35,8 @@ def _cfg() -> PoolConfig:
         max_per_tool=int(e("SKYPIEA_MAX_PER_TOOL", "3")),
         max_total=int(e("SKYPIEA_MAX_TOTAL", "20")),
         always_warm=e("SKYPIEA_ALWAYS_WARM", "false").lower() == "true",
+        max_scaleups_per_node=int(e("SKYPIEA_MAX_SCALEUPS_PER_NODE", "2")),
+        nodes=int(e("SKYPIEA_NODES", "1")),
     )
 
 

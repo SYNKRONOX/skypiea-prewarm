@@ -1,10 +1,6 @@
 output "instance_id" {
-  value = aws_instance.node.id
-}
-
-output "instance_ip" {
-  description = "Public IP (changes after stop/start; `make aws-start` refreshes the kubeconfig)"
-  value       = aws_instance.node.public_ip
+  description = "SSM target for `make aws-tunnel`, `aws-shell` and E0 node commands"
+  value       = aws_instance.node.id
 }
 
 output "ecr_registry" {

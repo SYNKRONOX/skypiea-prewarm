@@ -5,6 +5,7 @@
 # Prefix for image names, with trailing slash: "<registry>/" -> <registry>/skypiea/<tool>:<tag>
 registry: ""
 imageTag: latest          # set by make: --set imageTag=$(tools/image_tag.sh)
+platformImageTag: ""      # optional: platform image (gateway/controller/predictor) tag; "" = imageTag
 imagePullSecrets: []
 
 replicas: 0               # initial count only; afterwards the Skypiea controller owns replicas
@@ -21,6 +22,8 @@ readinessProbe:
 #   requests 16 pods: 9x(50m,96Mi) + 4x(50m,192Mi) + 3x(75m,256Mi) = 875m, 2400Mi
 #   +6 heavy copies:                                       + 450m, 1536Mi  => 1325m, 3936Mi
 #   + platform (gateway, controller, predictor):            + 200m,  352Mi  => 1525m, 4288Mi
+#   + monitoring (prometheus, grafana):                     + 150m,  448Mi  => 1675m, 4736Mi
+#   (E0 runs with platform and monitoring disabled.)
 # On the 2 vCPU VM, heavy tools starting together compete for CPU (see docs/infra.md).
 # CPU limit is one full core so startup (CPU-bound imports) is not artificially throttled.
 resources:
@@ -74,16 +77,53 @@ platform:
     maxPerTool: 3
     maxTotal: 20
     alwaysWarm: false        # always-warm baseline
+    # Pods starting at once per node (0 = no limit); excess scale-ups queue by due time.
+    # E0 on AWS (2 vCPU): 3 at once = 5.5 s median cached vs 2.7 s alone. See
+    # docs/gateway_controller.md.
+    maxScaleUpsPerNode: 2
+    nodes: 1                 # schedulable nodes (the controller has no cluster-wide RBAC)
     resources:
       requests: {cpu: 50m, memory: 128Mi}
       limits: {cpu: 500m, memory: 256Mi}
   predictor:
-    enabled: true            # placeholder until the model branch's service is merged
-    url: ""                  # set to use an external predictor instead of the placeholder
+    enabled: true            # stub (stand-in policies: scale_to_zero, always_warm, keep_alive, markov1)
+    url: ""                  # set to use an external predictor instead of stub/model
     policy: scale_to_zero
+    # Which predictor the gateway calls: stub (the baselines above) or model (the real
+    # predictor, feat/model services/predictor; needs image.tag). Both run when image.tag is set.
+    serve: stub
+    # Real predictor: one image holds both bundles; profile selects one (P1, docs/model.md):
+    # support = Scenario A, coding = Scenario B, prd = SYNTHETIC PRD A/B demo. Its cold-start
+    # file is passed at deploy time:
+    #   --set-file platform.predictor.coldStartYaml=configs/cold_start.yaml
+    image: {repository: skypiea/predictor, tag: ""}   # "" = not deployed
+    profile: support
+    coldStartYaml: ""
     resources:
       requests: {cpu: 50m, memory: 96Mi}
       limits: {cpu: 500m, memory: 192Mi}
+    modelResources:          # measured idle RSS 51-62 MiB per profile (docker stats, laptop)
+      requests: {cpu: 100m, memory: 128Mi}
+      limits: {cpu: "1", memory: 512Mi}
+
+# Monitoring: Prometheus (scrapes every pod with a skypiea.io/metrics-port annotation in this
+# namespace) and Grafana with the Skypiea dashboard provisioned (files/skypiea-dashboard.json).
+# ClusterIP only: kubectl port-forward svc/skypiea-grafana 3000 (anonymous Viewer). The admin
+# password is generated at install into Secret skypiea-grafana and never stored in the repo.
+monitoring:
+  enabled: true
+  scrapeInterval: 5s          # tool pods live seconds to minutes
+  retention: 2d
+  prometheus:
+    image: prom/prometheus:v3.15.1@sha256:fa3302279710be2f21a8301ec17a8b4f2301fd829bd113839b3b6b02b6f191a2
+    resources:
+      requests: {cpu: 100m, memory: 256Mi}
+      limits: {cpu: 500m, memory: 512Mi}
+  grafana:
+    image: grafana/grafana:13.3.0@sha256:488984b716c0862639f91a698adbe2862677a5a07bad42da5f03f3030883b205
+    resources:            # 256Mi was OOM-killed on kind during Grafana 13's first-start migrations
+      requests: {cpu: 50m, memory: 192Mi}
+      limits: {cpu: 500m, memory: 512Mi}
 
 # Long-running in-cluster client used by E0 (experiments/e0_cold_start.py) so that the first
 # MCP call is measured from inside the cluster.

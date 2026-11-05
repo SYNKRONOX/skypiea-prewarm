@@ -3,6 +3,12 @@ contract validation and the placeholder policies. All timings here are functiona
 
 from __future__ import annotations
 
+import pytest  # noqa: E402
+
+pytest.importorskip("httpx", reason="pip install -r requirements-infra.txt")
+pytest.importorskip("starlette", reason="pip install -r requirements-infra.txt")
+pytest.importorskip("prometheus_client", reason="pip install -r requirements-infra.txt")
+
 import asyncio
 import json
 
@@ -386,4 +392,32 @@ def test_connect_failures_give_up_after_connect_retry_s():
         r = await post(gw, call("shell"))
         assert r.json()["error"]["code"] == -32002
         assert gw.inflight["shell"] == 0
+    asyncio.run(go())
+
+
+def test_session_introspection_predicted_flag_and_decision_log():
+    async def go():
+        gw, _, _, _ = make(predictor=FakePredictor(GOOD), ready={"order_lookup": 1,
+                                                                  "policy_check": 1})
+        r1 = await post(gw, call("order_lookup"), sid="x")
+        assert r1.headers["X-Skypiea-Predicted"] == "0"          # nothing predicted yet
+        r2 = await post(gw, call("policy_check", 2), sid="x")
+        assert r2.headers["X-Skypiea-Predicted"] == "1"          # previous decision warmed it
+        assert float(r2.headers["X-Skypiea-Added-Ms"]) >= 0
+        async with httpx.AsyncClient(transport=httpx.ASGITransport(gw.app(background=False)),
+                                     base_url="http://g") as c:
+            s = (await c.get("/v1/sessions/x")).json()
+            assert [x["tool_class"] for x in s["calls"]] == ["order_lookup", "policy_check"]
+            assert [x["predicted"] for x in s["calls"]] == [False, True]
+            d = s["decisions"][0]
+            assert d["outcome"] == "ok" and d["model_version"] == "fake-1"
+            assert d["decisions"][0]["tool_class"] == "policy_check"
+            gw.predictor = FakePredictor(fail=httpx.ConnectError("down"))
+            await post(gw, call("order_lookup", 3), sid="x")
+            s = (await c.get("/v1/sessions/x")).json()
+            assert s["decisions"][-1]["outcome"] == "error:ConnectError"
+            assert (await c.get("/v1/sessions")).json()["sessions"][0]["calls"] == 3
+            await c.delete("/mcp", headers={"Mcp-Session-Id": "x"})
+            gw.sessions.purge()
+            assert (await c.get("/v1/sessions/x")).status_code == 404
     asyncio.run(go())

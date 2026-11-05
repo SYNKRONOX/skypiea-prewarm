@@ -1,0 +1,19 @@
+# Installed by infra/aws/scripts/e0-node.sh start as /etc/systemd/system/skypiea-e0.service.
+# Not enabled at boot: a stop/start of the instance does not rerun E0 by itself.
+[Unit]
+Description=Skypiea E0 cold-start job (run @RUN_ID@)
+After=k3s.service network-online.target
+StartLimitIntervalSec=3600
+StartLimitBurst=5
+
+[Service]
+Type=simple
+WorkingDirectory=@DIR@
+ExecStart=/bin/bash @DIR@/infra/aws/scripts/e0-node-job.sh
+Restart=on-failure
+RestartSec=30
+# 3 = upload failed: wait for a human, do not loop
+RestartPreventExitStatus=3
+Environment=PYTHONUNBUFFERED=1
+StandardOutput=append:@DIR@/job.log
+StandardError=append:@DIR@/job.log

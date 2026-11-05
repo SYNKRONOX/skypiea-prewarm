@@ -76,7 +76,7 @@ within a second.
 
 | Endpoint | Body | Effect |
 |---|---|---|
-| `POST /v1/warm` | `{tool_class, copies, ttl_s \| null, reason}` | Keep >= `copies` pods of that class's server until TTL after its last use. Returns `{server, accepted, requested}`. |
+| `POST /v1/warm` | `{tool_class, copies, ttl_s \| null, reason, start_in_ms?}` | Keep >= `copies` pods of that class's server until TTL after its last use. Returns `{server, accepted, requested}`. |
 | `POST /v1/inflight` | `{gateway_id, counts: {server: n}}` | Calls in flight per server (stale after 30 s). |
 | `GET /v1/state` | | Pool state per server (debugging, functional checks). |
 | `GET /healthz` | | 503 until the pool has been rebuilt from the cluster. |
@@ -105,11 +105,58 @@ within a second.
 - **Stuck Pending**: replicas > 0 with no Ready pod for 120 s sets
   `skypiea_pending_stuck{tool}=1`; the gateway fails such calls after its cold timeout.
 - **Always-warm baseline**: `platform.controller.alwaysWarm=true` keeps 1 replica per tool.
+- **Concurrent scale-ups per node**: `maxScaleUpsPerNode` (default **2**; 0 = no limit),
+  multiplied by `nodes` (default 1; the chart sets it because the controller has no
+  cluster-wide RBAC to count nodes). At most that many pods may be *starting* at once
+  (replicas set but not Ready). The details, and the measured E0 numbers behind them, are in
+  the next section.
+
+### Why at most 2 scale-ups at once per node (E0 on AWS)
+
+E0 on the 2-vCPU m7i-flex.large (run `e0-20261104T142408Z-a24e540`, n=10 per tool and mode,
+`results/e0_aws*_summary.csv`), median ms:
+
+| | total | image_pull | app_init | total p95 |
+|---|---|---|---|---|
+| 1 pod at a time, cached | 2734 | 0 | 1211 | 3779 |
+| 3 pods at once, cached | 5541 | 0 | 3672 | 6681 |
+| 1 pod at a time, uncached | 5360 | 2723 | 1226 | 8400 |
+| 3 pods at once, uncached | 9020 | 3464 | 3444 | 13186 |
+
+- Starting three pods together roughly doubles every cold start, even with the image cached:
+  2.7 s becomes 5.5 s. Almost all of the extra time is `app_init` (1.2 s becomes 3.7 s), which
+  is CPU-bound Python start-up shared by three processes on 2 vCPUs.
+- The same parallel-3 run on the 24-core laptop (kind) kept `app_init` at 0.74 s, so this is
+  CPU contention on the node, not the code.
+- With 3 at once, each of the 3 waits about 5.5 s. With a limit of 2, the first two take less
+  than that and the third starts as soon as a slot frees.
+- The limit equals the vCPU count. The node was not measured with exactly 2 at once. The
+  value is a setting, and the queue metrics show when it bites.
+
+Queue rules:
+- Excess scale-ups wait in a queue ordered by when they are due: request time +
+  `start_in_ms` (the gateway already delays a predictive warm by its `start_in_ms`, so
+  arrival order is due order; the controller also accepts `start_in_ms` directly).
+- On a tie, a server with a call already waiting goes first, then first come, first served.
+- The queue holds pods, so a server that wants 2 more and gets 1 slot keeps 1 queued.
+- **Nothing is dropped silently:**
+  - every queued scale-up is counted in `skypiea_scaleups_queued_total{tool}`;
+  - its wait is recorded in `skypiea_scaleup_queue_wait_seconds`, and the queue length in
+    `skypiea_scaleup_queue_depth`;
+  - a queued request whose warm TTL ends before it got a slot is counted in
+    `skypiea_scaleups_expired_in_queue_total{tool}` and logged;
+  - `GET /v1/state` shows `queued` per server.
+- A pod stuck Pending for longer than 120 s (`skypiea_pending_stuck`) stops holding a slot,
+  so one broken image cannot block every other tool.
+- A call to a cold tool still waits in the gateway (up to its cold timeout, 120 s), so a
+  queued demand scale-up delays the call but does not fail it.
 
 Metrics: `skypiea_pod_seconds_idle_total{tool}` (Ready pod-seconds with no call in flight),
 `skypiea_scale_events_total{tool,dir,reason}`, `skypiea_warm_pool_size{tool}`,
 `skypiea_scale_refused_total{tool,reason}`, `skypiea_scale_errors_total{tool}`,
-`skypiea_pending_stuck{tool}`, `skypiea_warm_requests_total{tool,reason}`.
+`skypiea_pending_stuck{tool}`, `skypiea_warm_requests_total{tool,reason}`,
+`skypiea_scaleup_queue_depth`, `skypiea_scaleups_queued_total{tool}`,
+`skypiea_scaleup_queue_wait_seconds`, `skypiea_scaleups_expired_in_queue_total{tool}`.
 
 ### RBAC (namespaced only)
 
@@ -173,3 +220,14 @@ make kind-integration             # Scenario A + B through the gateway under eac
 `make kind-integration` reads one Scenario A and one Scenario B session from the synthetic
 traces in the model worktree (read-only) and replays them with think gaps x0.2. On the shared
 laptop its latencies are **functional checks only**; reported timings come from AWS.
+
+## Known limitation: session id forwarded unchanged (2026-11-04)
+
+The gateway forwards the client's `Mcp-Session-Id` to the predictor's `/decide` as
+`session_id`, unchanged. The predictor (image aabdfd2a9a39 and later) degrades to
+`mode=none` (no decisions) when the id is outside `^[A-Za-z0-9_.-]{1,64}$`: one `:`
+is enough, as seen with TraceLab ids like `codex:…`. Such sessions get the cold path
+(FR-4 fail-open: plain scale-to-zero), with no error. The real-timing runs are not
+affected: the replayer sends a fresh uuid4 hex id per session. Planned fix (not done; no
+gateway change during the runs): send an opaque hash of the id (contract proposal P2,
+docs/model.md).

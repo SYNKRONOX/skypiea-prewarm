@@ -1,0 +1,12 @@
+# FUNCTIONAL check on kind (shared laptop): gaps scaled down; never report these numbers.
+mode: functional
+sessions_path: ~/skypiea-model/data/processed/synthetic_branching/calls.parquet
+n_sessions: 4
+split: test
+seed: 0
+arrival: {mode: poisson, rate_per_s: 0.5}
+gap_scale: 0.2
+service_scale: 0.2
+policy: {name: markov1, params: {tau: 0.6}}
+out: /tmp/skypiea-replay/{run_id}.csv
+end_sessions: false   # keep sessions in the gateway (idle purge 600 s) for skypiea trace/explain

@@ -19,6 +19,7 @@ Policies (select with SKYPIEA_POLICY or POST /admin/policy {"name": ..., "params
 
 from __future__ import annotations
 
+import math
 import os
 import time
 from collections import Counter, defaultdict
@@ -54,7 +55,9 @@ def _answer(name: str, ranked: dict[str, float], decisions: list[dict], t0: floa
     tot = sum(ranked.values())
     if tot > 1.0:
         ranked = {k: v / tot for k, v in ranked.items()}
-    return {"ranked": [{"tool_class": k, "p": round(v, 6)}
+    # floor to 6 decimals (2026-11-05): rounding could push the sum just above 1, which the
+    # gateway's contract check rejects; flooring keeps sum(ranked) <= 1
+    return {"ranked": [{"tool_class": k, "p": math.floor(v * 1e6) / 1e6}
                        for k, v in sorted(ranked.items(), key=lambda kv: -kv[1])],
             "decisions": decisions, "model_version": f"stub-{name}",
             "latency_ms": round((time.perf_counter() - t0) * 1000, 3)}

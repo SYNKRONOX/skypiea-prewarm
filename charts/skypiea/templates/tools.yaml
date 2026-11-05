@@ -30,6 +30,8 @@ spec:
       labels:
         {{- include "skypiea.labels" $ctx | nindent 8 }}
         skypiea.io/tier: {{ $tool.tier }}
+      annotations:
+        skypiea.io/metrics-port: "8080"
     spec:
       automountServiceAccountToken: false
       enableServiceLinks: false

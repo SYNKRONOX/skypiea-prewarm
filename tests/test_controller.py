@@ -2,6 +2,12 @@
 
 from __future__ import annotations
 
+import pytest  # noqa: E402
+
+pytest.importorskip("aiohttp", reason="pip install -r requirements-infra.txt")
+pytest.importorskip("prometheus_client", reason="pip install -r requirements-infra.txt")
+pytest.importorskip("kubernetes", reason="pip install -r requirements-infra.txt")
+
 import asyncio
 
 import pytest
@@ -51,7 +57,7 @@ def test_later_warm_extends_and_takes_max_copies():
 
 
 def test_per_tool_and_cluster_caps_refuse_and_count():
-    p = pool(max_per_tool=2, max_total=3)
+    p = pool(max_per_tool=2, max_total=3, max_scaleups_per_node=0)   # caps only
     assert p.warm("user_lookup", 5, 60, now=0) == 2
     assert ("user_lookup", 3, "per_tool_cap") in p.refused
     assert p.warm("order_lookup", 2, 60, now=0) == 1   # only 1 left in the cluster
@@ -130,9 +136,78 @@ def test_pending_stuck_detected():
 
 
 def test_always_warm_baseline():
-    p = pool(always_warm=True)
+    p = pool(always_warm=True, max_scaleups_per_node=0)
     assert apply(p, 0) == {s: 1 for s in SERVERS}
     assert apply(p, 1000) == {}
+
+
+def ready(p: WarmPool, server: str, now: float) -> None:
+    p.observe(server, p.s[server].live, p.s[server].live, now)
+
+
+def test_scaleups_limited_per_node_and_queued_by_due_time():
+    p = pool(max_scaleups_per_node=2, nodes=1)
+    p.warm("run_tests", 1, 60, now=0, start_in_ms=900)
+    p.warm("user_lookup", 1, 60, now=0, start_in_ms=100)
+    p.warm("order_lookup", 1, 60, now=0, start_in_ms=500)
+    # 2 slots: the two that are due first start, the third waits (not dropped)
+    assert apply(p, 0) == {"user_lookup": 1, "order_lookup": 1}
+    assert p.queue == [("run_tests", 1)] and p.queued == ["run_tests"]
+    assert apply(p, 1) == {}                        # both still starting: no free slot
+    ready(p, "user_lookup", 2)                      # one became Ready -> slot frees
+    assert apply(p, 2) == {"run_tests": 1}
+    assert p.queue == [] and p.dequeued == [("run_tests", 2)]
+
+
+def test_limit_scales_with_nodes_and_zero_means_unlimited():
+    for kw, n in (({"max_scaleups_per_node": 2, "nodes": 2}, 3),
+                  ({"max_scaleups_per_node": 0}, 3), ({"max_scaleups_per_node": 1}, 1)):
+        p = pool(**kw)
+        for s in SERVERS:
+            p.warm(s, 1, 60, now=0)
+        assert len(apply(p, 0)) == n
+
+
+def test_waiting_call_goes_first_on_a_tie_and_expired_wish_is_counted():
+    p = pool(max_scaleups_per_node=1, default_ttl_s=5, purge_s=1)
+    p.warm("order_lookup", 1, 5, now=0)
+    p.warm("user_lookup", 1, 5, now=0)
+    p.report_inflight("gw", {"user_lookup": 1}, now=0)   # a call is waiting on it
+    assert apply(p, 0) == {"user_lookup": 1}
+    assert p.queue == [("order_lookup", 1)]
+    # order_lookup's warm (ttl 5 + purge 1) ends before any slot frees: counted, not silent
+    assert apply(p, 7) == {}
+    assert p.expired == [("order_lookup", 7)] and p.queue == []
+
+
+def test_stuck_pod_does_not_hold_a_slot_forever():
+    p = pool(max_scaleups_per_node=1, pending_warn_s=120)
+    p.warm("run_tests", 1, 600, now=0)
+    assert apply(p, 0) == {"run_tests": 1}
+    p.observe("run_tests", 1, 0, now=0)              # never becomes Ready
+    p.warm("user_lookup", 1, 600, now=1)
+    assert apply(p, 1) == {}
+    assert apply(p, 121) == {"user_lookup": 1}       # run_tests is stuck -> slot released
+
+
+def test_service_exposes_queue_metrics():
+    async def go():
+        clock = Clock(0)
+        svc = ControllerService(FakeScaler(), PoolConfig(max_scaleups_per_node=1),
+                                clock=clock, wall=lambda: 0.0)
+        svc.warm("user_lookup", 1, 60, "predict:markov1", start_in_ms=0)
+        svc.warm("order_lookup", 1, 60, "predict:markov1", start_in_ms=200)
+        await svc.tick()
+        from prometheus_client import generate_latest
+        text = generate_latest(svc.metrics.registry).decode()
+        assert "skypiea_scaleup_queue_depth 1.0" in text
+        assert 'skypiea_scaleups_queued_total{tool="order_lookup"} 1.0' in text
+        svc.pool.observe("user_lookup", 1, 1, clock())
+        await svc.tick()
+        text = generate_latest(svc.metrics.registry).decode()
+        assert "skypiea_scaleup_queue_depth 0.0" in text
+        assert "skypiea_scaleup_queue_wait_seconds_count 1.0" in text
+    asyncio.run(go())
 
 
 # ---------------- service: HTTP API, scaler failures, restart mid-scale ----------------

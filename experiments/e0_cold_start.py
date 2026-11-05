@@ -5,7 +5,7 @@
 
 Per tool (or group of --parallel tools), mode and repetition (order shuffled per round, seed 0):
   uncached: delete ALL tool images from every schedulable node (kind: docker exec <node>
-            crictl rmi; aws: ssh <vm> sudo k3s crictl rmi) so the pod must pull every layer
+            crictl rmi; aws: k3s crictl rmi over SSM) so the pod must pull every layer
             (tool images share base and dependency layers; the probe uses another base);
   cached:   image already on the node (a tool's uncached run goes first in each round, so the
             image is present; the kubelet event confirms which case actually happened -> mode_ok).
@@ -35,6 +35,12 @@ medians over all runs and over quiet runs only.
 kind pulls from a local registry container: its image_pull is a LOWER BOUND (no network
 distance). AWS pulls from ECR in the same region: the real number.
 
+Robustness (needed for unattended AWS runs on the node, `--on-node`): every kubectl/crictl
+call has a hard timeout; a run that errors or stalls is recorded with its `error` and `attempt`
+and then re-run (up to --max-attempts) after the tools are scaled back to 0 and the probe is
+restarted; with --resume a restarted job skips units already done in its own runs CSV; a
+progress file (done/total, ETA, last error) is rewritten after every unit.
+
 Outputs results/e0_<target>[_p<K>]_runs.csv, ..._summary.csv, ....png. Numbers are reported as
 measured: nothing is smoothed, clipped or dropped. Failed runs stay in the runs CSV with an
 `error` and are excluded (and counted) in the summary.
@@ -48,6 +54,7 @@ import json
 import os
 import random
 import re
+import shlex
 import subprocess
 import sys
 import time
@@ -64,10 +71,13 @@ HUAWEI = ROOT / "data" / "processed" / "huawei_coldstart" / "coldstart.parquet"
 PULL_SOURCE = {"kind": "local registry, lower bound", "aws": "ECR same region"}
 QUIET_FRACTION = 0.6
 QUIET_WAIT_S = 60
+KUBECTL_TIMEOUT_S = 60     # every short kubectl call (get, scale, rollout restart)
+NODE_CMD_TIMEOUT_S = 180   # crictl on the node (rmi of all tool images uses --timeout 120s)
+MAX_ATTEMPTS = 3
 
 
 def sh(args: list[str], check: bool = True,
-       timeout: float | None = 600) -> subprocess.CompletedProcess:
+       timeout: float = KUBECTL_TIMEOUT_S) -> subprocess.CompletedProcess:
     return subprocess.run(args, capture_output=True, text=True, check=check, timeout=timeout)
 
 
@@ -76,21 +86,24 @@ class Target:
 
     def __init__(self, name: str, cfg: dict, args: argparse.Namespace):
         self.name, self.ns = name, cfg["namespace"]
+        self.on_node = bool(getattr(args, "on_node", False))
         if name == "kind":
             self.kubectl = ["kubectl", "--context", cfg["kind"]["context"]]
+        elif self.on_node:
+            # running ON the single k3s node (as root): local kubectl and crictl, no SSM
+            self.kubectl = ["k3s", "kubectl"]
         else:
             kc = os.path.expanduser(args.kubeconfig or cfg["aws"]["kubeconfig"])
             self.kubectl = ["kubectl", "--kubeconfig", kc]
-            self.ssh_host = args.ssh_host or self._tf_output("instance_ip")
-            self.ssh = ["ssh", "-o", "BatchMode=yes", "-o", "StrictHostKeyChecking=accept-new",
-                        "-i", os.path.expanduser(args.ssh_key or cfg["aws"]["ssh_key"]),
-                        f"{cfg['aws']['ssh_user']}@{self.ssh_host}"]
+            # No SSH: node commands go through SSM Session Manager (infra/aws/scripts/node-run.sh)
+            self.node_run = str(ROOT / "infra" / "aws" / "scripts" / "node-run.sh")
+            self.instance_id = args.instance_id or self._tf_output("instance_id")
 
     @staticmethod
     def _tf_output(key: str) -> str:
         return sh(["terraform", f"-chdir={ROOT / 'infra' / 'aws'}", "output", "-raw", key]).stdout
 
-    def k(self, *args: str, check: bool = True, timeout: float | None = 600):
+    def k(self, *args: str, check: bool = True, timeout: float = KUBECTL_TIMEOUT_S):
         return sh([*self.kubectl, "-n", self.ns, *args], check=check, timeout=timeout)
 
     def schedulable_nodes(self) -> list[str]:
@@ -100,8 +113,20 @@ class Target:
 
     def node_cmd(self, node: str, cmd: list[str]) -> subprocess.CompletedProcess:
         if self.name == "kind":
-            return sh(["docker", "exec", node, *cmd], check=False)
-        return sh([*self.ssh, "sudo", "k3s", *cmd], check=False)  # single-node k3s
+            return sh(["docker", "exec", node, *cmd], check=False, timeout=NODE_CMD_TIMEOUT_S)
+        if self.on_node:
+            return sh(["k3s", *cmd], check=False, timeout=NODE_CMD_TIMEOUT_S)
+        return self._ssm(" ".join(shlex.quote(c) for c in ["k3s", *cmd]))  # single-node k3s
+
+    def _ssm(self, command: str, check: bool = False) -> subprocess.CompletedProcess:
+        env = {**os.environ, "SKYPIEA_INSTANCE_ID": self.instance_id}
+        p = subprocess.run([self.node_run, command], capture_output=True, text=True, env=env,
+                           timeout=300)
+        if p.returncode == 125:   # SSM itself failed (not the command): never silently ignore
+            raise RuntimeError(f"SSM node command failed: {p.stderr.strip()}")
+        if check and p.returncode != 0:
+            raise RuntimeError(f"node command {command!r} exited {p.returncode}: {p.stdout}")
+        return p
 
     def rmi(self, image: str) -> str:
         msgs = []
@@ -122,27 +147,33 @@ class Target:
             p = self.node_cmd(node, ["crictl", "images", "-o", "json"])
             if p.returncode != 0:
                 raise RuntimeError(f"crictl images on {node} failed: {p.stderr.strip()}")
+            ids, names = [], []
             for img in json.loads(p.stdout).get("images", []):
                 tags = [t for t in img.get("repoTags") or [] if "/skypiea/" in t]
                 if tags and keep not in tags:
-                    r = self.node_cmd(node, ["crictl", "rmi", img["id"]])
-                    if r.returncode != 0:
-                        raise RuntimeError(f"crictl rmi {tags} on {node}: {r.stderr.strip()}")
-                    n += 1
+                    ids.append(img["id"])
+                    names += tags
+            if ids:  # one call per node (on AWS every node command is an SSM session)
+                r = self.node_cmd(node, ["crictl", "--timeout", "120s", "rmi", *ids])
+                if r.returncode != 0:
+                    raise RuntimeError(f"crictl rmi {names} on {node}: "
+                                       f"{(r.stderr or r.stdout).strip()}")
+                n += len(ids)
         return n
 
     def stats(self) -> dict:
         """Load on the machine that runs the node(s): the laptop for kind, the VM for AWS."""
-        if self.name == "kind":
+        if self.name == "kind" or self.on_node:
             with open("/proc/meminfo") as f:
                 mem = {ln.split(":")[0]: ln.split()[1] for ln in f}
-            running = sh(["docker", "ps", "-q"], check=False).stdout.split()
+            ps = ["docker", "ps", "-q"] if self.name == "kind" else ["k3s", "crictl", "ps", "-q"]
+            running = sh(ps, check=True, timeout=NODE_CMD_TIMEOUT_S).stdout.split()
             return {"load1": round(os.getloadavg()[0], 2), "cpus": os.cpu_count(),
                     "mem_avail_mb": int(mem["MemAvailable"]) // 1024,
                     "running_containers": len(running)}
-        p = sh([*self.ssh, "nproc; cut -d' ' -f1 /proc/loadavg; "
-                "awk '/MemAvailable/{print int($2/1024)}' /proc/meminfo; "
-                "sudo k3s crictl ps -q | wc -l"], check=True)
+        p = self._ssm("nproc; cut -d' ' -f1 /proc/loadavg; "
+                      "awk '/MemAvailable/{print int($2/1024)}' /proc/meminfo; "
+                      "k3s crictl ps -q | wc -l", check=True)
         cpus, load1, mem, running = p.stdout.split()
         return {"load1": float(load1), "cpus": int(cpus), "mem_avail_mb": int(mem),
                 "running_containers": int(running)}
@@ -198,7 +229,7 @@ def phases(r: dict) -> dict:
 
 
 RUN_FIELDS = (["git_commit", "run_params", "target", "pull_source", "parallel", "round",
-               "group", "tool", "tier", "mode",
+               "group", "tool", "tier", "mode", "attempt",
                "mode_ok", "noisy", "load1", "cpus", "mem_avail_mb", "running_containers",
                "quiet_wait_s", "node", "pod", "image", "image_digest", "image_bytes_local",
                "pulled_image_bytes", "wall_t0", "rmi"]
@@ -233,6 +264,72 @@ def run_group(tgt: Target, tools: list[str], mode: str, probe_image: str,
         out = [{"tool": t, "error": msg} for t in tools]
     by_tool = {r.get("tool"): r for r in out}
     return [{**by_tool.get(t, {"error": "no result from probe"}), "rmi": rmi[t]} for t in tools]
+
+
+class UnitFailed(Exception):
+    pass
+
+
+def run_unit(tgt: Target, group: list[str], mode: str, probe_image: str, cfg: dict,
+             require_quiet: bool) -> tuple[dict, list[dict]]:
+    """wait_quiet + run_group; a harness-level failure (timeout, kubectl/crictl error) becomes
+    an error result for every tool of the group instead of ending the job."""
+    st: dict = {}
+    try:
+        st = tgt.wait_quiet(require_quiet)
+        return st, run_group(tgt, group, mode, probe_image, cfg)
+    except subprocess.TimeoutExpired as e:
+        cmd = " ".join(e.cmd) if isinstance(e.cmd, list) else str(e.cmd)
+        msg = f"stalled: {cmd[:160]} timed out after {e.timeout:.0f}s"
+    except (RuntimeError, OSError, subprocess.CalledProcessError, ValueError) as e:
+        msg = f"harness: {type(e).__name__}: {str(e)[:300]}"
+    return st, [{"tool": t, "error": msg} for t in group]
+
+
+def recover(tgt: Target, deploy_of: dict[str, str], group: list[str]) -> None:
+    """After a failed attempt: tools of the group back to 0 and gone, fresh probe pod.
+    Raises if the cluster cannot be brought back (the job then exits and is restarted)."""
+    tgt.k("scale", "deploy", *[deploy_of[t] for t in group], "--replicas=0")
+    tgt.k("rollout", "restart", "deploy/e0-probe")
+    tgt.k("rollout", "status", "deploy/e0-probe", "--timeout=180s", timeout=200)
+    for t in group:
+        tgt.k("wait", "--for=delete", "pod", "-l", f"skypiea.io/tool={t}", "--timeout=180s",
+              timeout=200)
+
+
+def load_previous(runs_csv: Path, run_params: str) -> dict:
+    """Units in an existing runs CSV: {(round, group, mode): {"ok": bool, "attempts": int}}.
+    A unit is ok when one attempt has a row for every tool of the group and none has an error.
+    A trailing partial line (job killed mid-write) is cut off; nothing else is changed."""
+    raw = runs_csv.read_bytes()
+    if raw and not raw.endswith(b"\n"):
+        runs_csv.write_bytes(raw[: raw.rfind(b"\n") + 1])
+    with runs_csv.open(newline="") as f:
+        rd = csv.DictReader(f)
+        if rd.fieldnames != RUN_FIELDS:
+            sys.exit(f"{runs_csv.name}: columns differ from this harness; not resuming")
+        rows = list(rd)
+    other = {r["run_params"] for r in rows} - {run_params}
+    if other:
+        sys.exit(f"{runs_csv.name} holds runs with other parameters {sorted(other)}; "
+                 "not resuming")
+    att: dict = {}
+    for r in rows:
+        key = (int(r["round"]), int(r["group"]), r["mode"])
+        att.setdefault(key, {}).setdefault(r["attempt"] or "1", []).append(r)
+    out = {}
+    for key, by_att in att.items():
+        k = max(len(v) for v in by_att.values())
+        ok = any(len(v) == k and all(not r["error"] for r in v) for v in by_att.values())
+        out[key] = {"ok": ok, "attempts": len(by_att), "rows": k}
+    return out
+
+
+def write_progress(path: Path, **kw) -> None:
+    kw["updated_at"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    tmp = path.with_suffix(".json.tmp")
+    tmp.write_text(json.dumps(kw, indent=1) + "\n")
+    os.replace(tmp, path)
 
 
 def _stats(s) -> dict:
@@ -399,12 +496,24 @@ def main() -> None:
                     help=f"wait up to {QUIET_WAIT_S}s for load1 <= {QUIET_FRACTION:.0%} of "
                          "cores before each run; flag the run noisy otherwise")
     ap.add_argument("--kubeconfig")
-    ap.add_argument("--ssh-host")
-    ap.add_argument("--ssh-key")
+    ap.add_argument("--instance-id", help="aws: SSM target (default: terraform output)")
     ap.add_argument("--append", action="store_true",
                     help="append to the existing runs CSV instead of starting a new one")
     ap.add_argument("--report-only", action="store_true",
                     help="re-make summary/figure from the existing runs CSV")
+    ap.add_argument("--on-node", action="store_true",
+                    help="aws: the harness runs ON the k3s node (local k3s kubectl/crictl)")
+    ap.add_argument("--resume", action="store_true",
+                    help="continue the existing runs CSV: skip units already done")
+    ap.add_argument("--no-report", action="store_true",
+                    help="measure only (no pandas/matplotlib needed); report later with "
+                         "--report-only")
+    ap.add_argument("--max-attempts", type=int, default=MAX_ATTEMPTS,
+                    help="attempts per unit (tool group x mode x round) before moving on")
+    ap.add_argument("--git-commit", help="commit to record (when the harness runs from an "
+                    "exported tree without git)")
+    ap.add_argument("--image-sizes", help="JSON {tool: bytes} of the local (laptop) images, "
+                    "for image_bytes_local when docker is not available")
     a = ap.parse_args()
     cfg = yaml.safe_load(CFG_PATH.read_text())
     seed = cfg["seed"] if a.seed is None else a.seed
@@ -412,10 +521,12 @@ def main() -> None:
     res.mkdir(exist_ok=True)
     stem = f"e0_{a.target}" + (f"_p{a.parallel}" if a.parallel > 1 else "")
     runs_csv = res / f"{stem}_runs.csv"
-    dirty = sh(["git", "-C", str(ROOT), "status", "--porcelain", "--", "experiments/",
-                "tools/", "charts/"], check=False).stdout.strip()
-    git_commit = sh(["git", "-C", str(ROOT), "rev-parse", "--short", "HEAD"]).stdout.strip() \
-        + ("-dirty" if dirty else "")
+    dirty = "" if a.git_commit else sh(
+        ["git", "-C", str(ROOT), "status", "--porcelain", "--", "experiments/", "tools/",
+         "charts/"], check=False).stdout.strip()
+    git_commit = a.git_commit or (
+        sh(["git", "-C", str(ROOT), "rev-parse", "--short", "HEAD"]).stdout.strip()
+        + ("-dirty" if dirty else ""))
     run_params = (f"n={a.n} modes={a.modes} tools={a.tools} parallel={a.parallel} seed={seed} "
                   f"require_quiet={a.require_quiet} warm_calls={cfg['warm_calls']} "
                   f"service_ms={cfg['service_ms']} timeout_s={cfg['run_timeout_s']}")
@@ -431,6 +542,8 @@ def main() -> None:
         image_of = {d["metadata"]["labels"]["skypiea.io/tool"]:
                     d["spec"]["template"]["spec"]["containers"][0]["image"] for d in deploys
                     if d["metadata"]["name"] != "e0-probe"}
+        deploy_of = {d["metadata"]["labels"]["skypiea.io/tool"]: d["metadata"]["name"]
+                     for d in deploys if d["metadata"]["name"] != "e0-probe"}
         probe_image = next(d["spec"]["template"]["spec"]["containers"][0]["image"]
                            for d in deploys if d["metadata"]["name"] == "e0-probe")
         missing = [t for t in tools if t not in image_of]
@@ -445,58 +558,107 @@ def main() -> None:
                 if d["metadata"]["name"] != "e0-probe" and d["spec"].get("replicas")]
         if busy:
             sys.exit(f"not at 0 replicas: {busy}")
-        tgt.k("rollout", "status", "deploy/e0-probe", "--timeout=120s")
-        local_size = {}
-        for t in tools:
-            ref = f"skypiea/{t}:{image_of[t].rsplit(':', 1)[1]}"
-            p = sh(["docker", "image", "inspect", ref, "--format", "{{.Size}}"], check=False)
-            local_size[t] = int(p.stdout) if p.returncode == 0 else None
+        tgt.k("rollout", "status", "deploy/e0-probe", "--timeout=120s", timeout=150)
+        if a.image_sizes:
+            sizes = json.loads(Path(a.image_sizes).read_text())
+            local_size = {t: sizes.get(t) for t in tools}
+        else:
+            local_size = {}
+            for t in tools:
+                ref = f"skypiea/{t}:{image_of[t].rsplit(':', 1)[1]}"
+                p = sh(["docker", "image", "inspect", ref, "--format", "{{.Size}}"],
+                       check=False)
+                local_size[t] = int(p.stdout) if p.returncode == 0 else None
 
         rng = random.Random(seed)
-        new = not (a.append and runs_csv.exists())
+        prev = load_previous(runs_csv, run_params) if a.resume and runs_csv.exists() else {}
+        new = not ((a.append or a.resume) and runs_csv.exists())
+        progress = res / f"{stem}_progress.json"
+        n_groups = len(groups_for_round(tools, a.parallel))
+        total_units = a.n * n_groups * len(modes)
+        prog = {"stem": stem, "run_params": run_params, "git_commit": git_commit,
+                "units_total": total_units, "units_done": 0, "units_ok": 0,
+                "units_given_up": 0, "error_rows": 0, "attempts_this_process": 0,
+                "last_error": None, "last_error_at": None, "eta_min": None,
+                "state": "running", "started_at": time.strftime("%Y-%m-%dT%H:%M:%SZ",
+                                                                 time.gmtime())}
         with runs_csv.open("w" if new else "a", newline="") as f:
             w = csv.DictWriter(f, fieldnames=RUN_FIELDS, extrasaction="ignore")
             if new:
                 w.writeheader()
-            n_groups = len(groups_for_round(tools, a.parallel))
-            total_runs = a.n * n_groups * len(modes)
-            done = 0
-            t_start = time.monotonic()
+            t_start, run_here = time.monotonic(), 0
             for rnd in range(a.n):
                 order = tools[:]
-                rng.shuffle(order)
+                rng.shuffle(order)   # always, so a resumed job sees the same order
                 for gi, group in enumerate(groups_for_round(order, a.parallel)):
                     for mode in modes:
-                        st = tgt.wait_quiet(a.require_quiet)
-                        results = run_group(tgt, group, mode, probe_image, cfg)
-                        for tool, r in zip(group, results, strict=True):
-                            ph = phases(r)
-                            row = {**{k: r.get(k) for k in RUN_FIELDS}, **st, **{
-                                "git_commit": git_commit, "run_params": run_params,
-                                "target": a.target, "pull_source": PULL_SOURCE[a.target],
-                                "parallel": a.parallel, "round": rnd, "group": gi,
-                                "tool": tool, "tier": servers[tool]["tier"], "mode": mode,
-                                "image": image_of[tool], "image_bytes_local": local_size[tool],
-                                "mode_ok": (r.get("image_cached") == (mode == "cached"))
-                                if "image_cached" in r else None,
-                                "warnings": " | ".join(r.get("warnings", [])) or None,
-                                **{f"{k}_ms": v for k, v in ph.items()},
-                            }}
-                            if row["error"] is None and ph["total"] is None:
-                                row["error"] = "incomplete timestamps: " + ",".join(
-                                    k for k in ("t_scheduled", "t_proc_start", "t_health_ok",
-                                                "t_ready", "t_first_ok", "pull_ms")
-                                    if r.get(k) is None)
-                            w.writerow(row)
-                            print(f"  r{rnd} {tool:18s} {mode:9s} total={row['total_ms']} "
-                                  f"pull={row['image_pull_ms']} init={row['app_init_ms']} "
-                                  f"mode_ok={row['mode_ok']} load1={st['load1']}"
-                                  f"{' NOISY' if st['noisy'] else ''} {row['error'] or ''}",
-                                  flush=True)
-                        f.flush()
-                        done += 1
-                        eta = (time.monotonic() - t_start) / done * (total_runs - done)
-                        print(f"[{done}/{total_runs} eta {eta / 60:.0f} min]", flush=True)
+                        unit = prev.get((rnd, gi, mode), {"ok": False, "attempts": 0})
+                        attempt = unit["attempts"]
+                        ok = unit["ok"]
+                        while not ok and attempt < a.max_attempts:
+                            attempt += 1
+                            prog["attempts_this_process"] += 1
+                            st, results = run_unit(tgt, group, mode, probe_image, cfg,
+                                                   a.require_quiet)
+                            errors = []
+                            for tool, r in zip(group, results, strict=True):
+                                ph = phases(r)
+                                row = {**{k: r.get(k) for k in RUN_FIELDS}, **st, **{
+                                    "git_commit": git_commit, "run_params": run_params,
+                                    "target": a.target, "pull_source": PULL_SOURCE[a.target],
+                                    "parallel": a.parallel, "round": rnd, "group": gi,
+                                    "tool": tool, "tier": servers[tool]["tier"], "mode": mode,
+                                    "attempt": attempt,
+                                    "image": image_of[tool],
+                                    "image_bytes_local": local_size[tool],
+                                    "mode_ok": (r.get("image_cached") == (mode == "cached"))
+                                    if "image_cached" in r else None,
+                                    "warnings": " | ".join(r.get("warnings", [])) or None,
+                                    **{f"{k}_ms": v for k, v in ph.items()},
+                                }}
+                                if row["error"] is None and ph["total"] is None:
+                                    row["error"] = "incomplete timestamps: " + ",".join(
+                                        k for k in ("t_scheduled", "t_proc_start",
+                                                    "t_health_ok", "t_ready", "t_first_ok",
+                                                    "pull_ms")
+                                        if r.get(k) is None)
+                                if row["error"]:
+                                    errors.append(f"{tool}: {row['error']}")
+                                w.writerow(row)
+                                print(f"  r{rnd} {tool:18s} {mode:9s} a{attempt} "
+                                      f"total={row['total_ms']} "
+                                      f"pull={row['image_pull_ms']} init={row['app_init_ms']} "
+                                      f"mode_ok={row['mode_ok']} load1={st.get('load1')}"
+                                      f"{' NOISY' if st.get('noisy') else ''} "
+                                      f"{row['error'] or ''}", flush=True)
+                            f.flush()
+                            os.fsync(f.fileno())
+                            ok = not errors
+                            if errors:
+                                prog["error_rows"] += len(errors)
+                                prog["last_error"] = (f"r{rnd} g{gi} {mode} a{attempt}: "
+                                                      + "; ".join(errors))[:600]
+                                prog["last_error_at"] = time.strftime("%Y-%m-%dT%H:%M:%SZ",
+                                                                      time.gmtime())
+                                print(f"  attempt {attempt} failed; recovering", flush=True)
+                                recover(tgt, deploy_of, group)
+                            run_here += 1
+                        prog["units_done"] += 1
+                        prog["units_ok" if ok else "units_given_up"] += 1
+                        left = total_units - prog["units_done"]
+                        if run_here:
+                            prog["eta_min"] = round(
+                                (time.monotonic() - t_start) / run_here * left / 60, 1)
+                        write_progress(progress, **prog)
+                        print(f"[{prog['units_done']}/{total_units} "
+                              f"eta {prog['eta_min']} min]", flush=True)
+        prog["state"] = "done"
+        prog["eta_min"] = 0
+        write_progress(progress, **prog)
+        if a.no_report:
+            print(f"measured {stem}: {prog['units_ok']}/{total_units} units ok, "
+                  f"{prog['units_given_up']} given up after {a.max_attempts} attempts")
+            return
 
     import pandas as pd
 

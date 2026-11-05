@@ -3,6 +3,12 @@ with the predictor placeholder reached over HTTP. Functional only; no timing is 
 
 from __future__ import annotations
 
+import pytest  # noqa: E402
+
+pytest.importorskip("httpx", reason="pip install -r requirements-infra.txt")
+pytest.importorskip("starlette", reason="pip install -r requirements-infra.txt")
+pytest.importorskip("uvicorn", reason="pip install -r requirements-infra.txt")
+
 import asyncio
 import json
 import os

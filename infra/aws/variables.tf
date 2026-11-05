@@ -5,21 +5,7 @@ variable "region" {
 
 variable "instance_type" {
   type    = string
-  default = "m7i-flex.large" # 2 vCPU / 8 GiB; checked free-tier eligible before apply
-}
-
-variable "my_ip_cidr" {
-  description = "Your public IP as a /32. The ONLY source allowed for SSH (22) and k3s API (6443)."
-  type        = string
-  validation {
-    condition     = can(regex("^\\d+\\.\\d+\\.\\d+\\.\\d+/32$", var.my_ip_cidr))
-    error_message = "my_ip_cidr must be a single IPv4 address as /32 (never 0.0.0.0/0)."
-  }
-}
-
-variable "ssh_public_key_path" {
-  type    = string
-  default = "~/.ssh/skypiea-aws.pub"
+  default = "m7i-flex.large" # 2 vCPU / 8 GiB; free-tier eligible on this account (checked)
 }
 
 variable "k3s_version" {
@@ -28,12 +14,11 @@ variable "k3s_version" {
 }
 
 variable "root_volume_gb" {
-  type    = number
-  default = 30
-}
-
-variable "bucket_force_destroy" {
-  description = "Allow `terraform destroy` to delete the bucket even if it holds objects."
-  type        = bool
-  default     = false
+  description = "Root gp3 size. 20 GB: measured peak use about 9 GB (see docs/aws_plan.md), which keeps the disk under the kubelet image-GC threshold (85%) so cached E0 runs never lose images to GC."
+  type        = number
+  default     = 20
+  validation {
+    condition     = var.root_volume_gb >= 12
+    error_message = "Below 12 GB the measured peak (about 9 GB) crosses the kubelet image-GC threshold (85%)."
+  }
 }

@@ -1,0 +1,4 @@
+2026-11-04T14:24:12Z E0 sequential: start (attempt of the unit: systemd restarts resume)
+2026-11-04T15:32:24Z E0 sequential: done
+2026-11-04T15:32:24Z E0 parallel-3: start
+2026-11-04T16:42:04Z E0 parallel-3: done
