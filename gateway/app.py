@@ -63,6 +63,9 @@ class GatewayConfig:
     purge_interval_s: float = 10.0
     inflight_report_s: float = 1.0
     connect_retry_s: float = 3.0
+    # Turn-start prewarm hint (POST /v1/hint). Off by default: the endpoint then answers 404
+    # and nothing else changes. See docs/predictor_contract.md ("Turn-start hint").
+    turn_hint: bool = False
     gateway_id: str = field(default_factory=lambda: uuid.uuid4().hex[:8])
 
 
@@ -96,6 +99,10 @@ class Metrics:
         self.connect_retries = Counter("skypiea_gateway_connect_retries_total",
                                        "Upstream connect retries", ["tool"], registry=r)
         self.sessions = Gauge("skypiea_gateway_sessions", "Live sessions", registry=r)
+        self.hints = Counter("skypiea_gateway_hints_total", "Turn-start hints received "
+                             "(only with the turn hint enabled)", registry=r)
+        self.hint_warms = Counter("skypiea_gateway_hint_warms_total", "Warm requests sent "
+                                  "because of a turn-start hint", ["tool"], registry=r)
 
 
 def _rpc_error(id_: Any, code: int, msg: str, status: int = 200) -> JSONResponse:
@@ -162,6 +169,10 @@ class Gateway:
             return
         t0 = self.clock()
         entry = {"after_call": len(req.history) - 1, "t_ms": round(req.now_ms, 1)}
+        source = "call"
+        if req.trigger is not None:
+            entry.update(trigger=req.trigger, turn=req.turn)
+            source = "hint"
         try:
             resp = await asyncio.wait_for(self.predictor.decide(req), self.cfg.predictor_timeout_s)
         except Exception as e:  # never let the predictor hurt the gateway (FR-4)
@@ -172,11 +183,13 @@ class Gateway:
             if reason in ("contract", "other"):
                 log.warning("predictor %s: %r", reason, e)
             session.last_warm = set()
+            session.last_warm_source = None
             session.decisions.append({**entry, "outcome": f"error:{reason}",
                                       "detail": str(e)[:200]})
             return
         self.metrics.pred_latency.observe(self.clock() - t0)
         session.last_warm = {d.tool_class for d in resp.decisions if d.warm and d.copies > 0}
+        session.last_warm_source = source
         session.decisions.append({
             **entry, "outcome": "ok", "model_version": resp.model_version,
             "latency_ms": resp.latency_ms,
@@ -186,8 +199,11 @@ class Gateway:
                           for d in resp.decisions]})
         for d in resp.decisions:
             if d.warm and d.copies > 0:
+                if source == "hint":
+                    self.metrics.hint_warms.labels(d.tool_class).inc()
                 self._spawn(self._warm_later(d.tool_class, d.copies, d.ttl_s, d.start_in_ms,
-                                             f"predict:{resp.model_version}"))
+                                             f"{'hint' if source == 'hint' else 'predict'}:"
+                                             f"{resp.model_version}"))
 
     async def _warm_later(self, cls: str, copies: int, ttl_s: int | None, start_in_ms: int,
                           reason: str) -> None:
@@ -206,7 +222,10 @@ class Gateway:
         route = self.router.resolve(name)
         session = self.sessions.get(sid)
         t_arrive = self.clock()
+        if session.opened_by_hint and not session.history and session.inflight == 0:
+            session.created = t_arrive   # same session clock as without a hint
         predicted = route.tool_class in session.last_warm
+        warm_source = session.last_warm_source if predicted else None
         batch = session.start_call()
         self._inflight_delta(route.server, +1)
         cold, held_ms, info = False, 0.0, {}
@@ -249,15 +268,49 @@ class Gateway:
             "batch_id": batch, "t_start_ms": round((t_arrive - session.created) * 1e3, 1),
             "t_end_ms": round((t_end - session.created) * 1e3, 1), "cold": cold,
             "held_ms": round(held_ms, 1), "added_ms": round(added_ms, 1),
-            "predicted": predicted, "ok": not is_err})
+            "predicted": predicted, "warm_source": warm_source, "ok": not is_err})
         session.history.append(HistoryItem(route.tool_class, (t_arrive - session.created) * 1e3,
                                            (t_end - session.created) * 1e3, is_err, batch))
         req = DecideRequest(sid, (t_end - session.created) * 1e3, list(session.history),
                             list(session.oracle))
         self._spawn(self._predict(session, req))
         info = {"cold": cold, "held_ms": round(held_ms, 1), "tool_class": route.tool_class,
-                "server": route.server, "added_ms": round(added_ms, 1), "predicted": predicted}
+                "server": route.server, "added_ms": round(added_ms, 1), "predicted": predicted,
+                "warm_source": warm_source}
         return result, info
+
+    # ---------------- turn-start hint (off by default) ----------------
+    async def hint(self, request: Request) -> Response:
+        """POST /v1/hint {"turn": <int>} with the Mcp-Session-Id header. Metadata only: any
+        other field is refused (400), so message text can never be sent. Asks the predictor
+        with the session's history (empty for a new session) and trigger "turn_start", off the
+        request path; answers 202 at once."""
+        if not self.cfg.turn_hint:
+            return JSONResponse({"error": "turn hint disabled"}, status_code=404)
+        sid = request.headers.get(SESSION_HEADER)
+        if not sid:
+            return JSONResponse({"error": f"{SESSION_HEADER} header required"}, status_code=400)
+        try:
+            body = json.loads(await request.body() or b"{}")
+        except json.JSONDecodeError:
+            return JSONResponse({"error": "body is not JSON"}, status_code=400)
+        if (not isinstance(body, dict) or set(body) - {"turn"}
+                or not isinstance(body.get("turn", 0), int)
+                or isinstance(body.get("turn"), bool)):
+            return JSONResponse({"error": 'body must be {"turn": <int>} (metadata only)'},
+                                status_code=400)
+        new = sid not in self.sessions._s
+        session = self.sessions.get(sid)
+        if new:
+            session.opened_by_hint = True
+        session.hints += 1
+        self.metrics.hints.inc()
+        now_ms = 0.0 if not session.history else (self.clock() - session.created) * 1e3
+        req = DecideRequest(sid, now_ms, list(session.history), list(session.oracle),
+                            trigger="turn_start", turn=body.get("turn"))
+        self._spawn(self._predict(session, req))
+        return JSONResponse({"accepted": True, "session_id": sid}, status_code=202,
+                            headers={SESSION_HEADER: sid})
 
     async def _forward(self, route, fwd: dict[str, Any], headers: dict[str, str]) -> dict[str, Any]:
         """Send to a ready pod address (EndpointSlice) if known, else to the Service. On a
@@ -326,6 +379,8 @@ class Gateway:
                     hdr["X-Skypiea-Held-Ms"] = str(info["held_ms"])
                     hdr["X-Skypiea-Added-Ms"] = str(info["added_ms"])
                     hdr["X-Skypiea-Predicted"] = "1" if info["predicted"] else "0"
+                    if self.cfg.turn_hint and info.get("warm_source"):
+                        hdr["X-Skypiea-Warm-Source"] = info["warm_source"]
             return JSONResponse(result, headers=hdr)
         if method == "tools/list":
             return JSONResponse({"jsonrpc": "2.0", "id": body["id"], "result": self.tools_list()},
@@ -371,6 +426,7 @@ class Gateway:
         return Starlette(routes=[
             HttpRoute("/mcp", self.mcp, methods=["POST", "DELETE"]),
             HttpRoute("/healthz", self.healthz, methods=["GET"]),
+            HttpRoute("/v1/hint", self.hint, methods=["POST"]),
             HttpRoute("/metrics", self.metrics_ep, methods=["GET"]),
             HttpRoute("/v1/sessions", self.list_sessions, methods=["GET"]),
             HttpRoute("/v1/sessions/{sid}", self.get_session, methods=["GET"]),

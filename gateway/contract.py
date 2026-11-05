@@ -38,12 +38,21 @@ class DecideRequest:
     now_ms: float
     history: list[HistoryItem]
     oracle: list[OracleHint] = field(default_factory=list)
+    # Optional (contract v1.1, backward compatible): why the gateway asks. None = after a tool
+    # result (v1; the fields are then not sent at all). "turn_start" = a turn-start hint from
+    # the client (metadata only: the turn number, never message text).
+    trigger: str | None = None
+    turn: int | None = None
 
     def to_json(self) -> dict[str, Any]:
         out = {"session_id": self.session_id, "now_ms": self.now_ms,
                "history": [asdict(h) for h in self.history]}
         if self.oracle:
             out["oracle"] = [asdict(o) for o in self.oracle]
+        if self.trigger is not None:
+            out["trigger"] = self.trigger
+            if self.turn is not None:
+                out["turn"] = self.turn
         return out
 
     @staticmethod
@@ -55,6 +64,7 @@ class DecideRequest:
                      for h in d.get("history", [])],
             oracle=[OracleHint(str(o["tool_class"]), float(o["in_ms"]))
                     for o in d.get("oracle", []) or []],
+            trigger=d.get("trigger"), turn=d.get("turn"),
         )
 
 

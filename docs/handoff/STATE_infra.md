@@ -156,3 +156,8 @@ Running log, newest last (the master task runs unattended; see docs/handoff/AGEN
   tests/test_live_tasks.py). Coverage + abstain table in docs/LIVE_CONSOLE.md. Tools:
   user_lookup `with_reservations`, travel_booking `detail`/`flight_no` (opt-in; defaults
   unchanged; image tag changes because tools/ changed).
+- STEP 3b gateway part done: POST /v1/hint behind `platform.gateway.turnHint` /
+  SKYPIEA_TURN_HINT (default off: 404, nothing else changes); contract v1.1 optional
+  `trigger`/`turn` (docs/predictor_contract.md); reason `hint:<ver>`, metrics
+  skypiea_gateway_hints_total / _hint_warms_total, header X-Skypiea-Warm-Source (hint on
+  only). Tests: tests/test_gateway_hint.py, tests/test_service_hint.py.

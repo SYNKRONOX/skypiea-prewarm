@@ -30,6 +30,33 @@ implementation and validator are `gateway/contract.py` and `gateway/predictor.py
 
 Metadata only: no prompts, arguments or results are ever sent.
 
+### Optional fields (v1.1, backward compatible): turn-start hint
+
+| Field | Meaning |
+|---|---|
+| `trigger` | Absent = asked after a tool result (v1, unchanged: v1 requests never carry it). `"turn_start"` = a client's turn-start hint (`POST /v1/hint` on the gateway). |
+| `turn` | Optional with `trigger`: the client's turn number (an integer). |
+
+The gateway sends the hint request with the session's history so far, which is empty for a
+new session. A v1 predictor ignores both fields (the model service's `parse_request` drops
+unknown fields) and answers from the history. On an empty history the shipped `support` and
+`coding` bundles answer with the first-tool distribution they learned from training (for
+example support: user_lookup 0.50, reservation_lookup 0.41; see
+`configs/live/predictor_probe.json`). The answer has the same shape and rules as below. The
+gateway applies its decisions like any other (reason `hint:<model_version>` at the
+controller).
+
+The hint is **off by default**. The chart value is `platform.gateway.turnHint: false`, and
+the env var `SKYPIEA_TURN_HINT=1` turns it on. While it is off, `POST /v1/hint` answers 404
+and the gateway behaves exactly as before. The hint body must be exactly `{"turn": <int>}`
+and the session id comes in the `Mcp-Session-Id` header. Any other field is refused (400), so
+message text cannot reach the predictor. With the hint on, a call that a hint's decision
+predicted carries `X-Skypiea-Warm-Source: hint` (or `call` when the latest decision came
+after a tool result). The gateway counts hints in `skypiea_gateway_hints_total` and their warm
+requests in `skypiea_gateway_hint_warms_total{tool}`. For a session that a hint opened, the
+session clock restarts at its first call, so `t_*_ms` and `now_ms` are the same as without a
+hint.
+
 ## Response
 
 ```json

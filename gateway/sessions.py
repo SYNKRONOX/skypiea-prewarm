@@ -24,6 +24,11 @@ class Session:
     calls: list[dict[str, Any]] = field(default_factory=list)
     decisions: deque = field(default_factory=lambda: deque(maxlen=50))
     last_warm: set[str] = field(default_factory=set)  # classes warmed by the latest decision
+    # turn-start hint (off by default): what set last_warm ("call" | "hint"), and whether the
+    # session was opened by a hint (its clock then restarts at the first call)
+    last_warm_source: str | None = None
+    opened_by_hint: bool = False
+    hints: int = 0
 
     def start_call(self) -> int:
         """Calls that overlap an in-flight call of the same session share its batch."""
