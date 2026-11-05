@@ -82,6 +82,16 @@ def totals(calls: list[dict[str, Any]], idle_delta: dict[str, dict[str, float]],
     return out
 
 
+def llm_content(res: Any, info: Any) -> str:
+    """What the LLM sees. On a tool error, the tool's own message (e.g. a validation error),
+    so the model can correct its arguments. Conversation only: never recorded or exported."""
+    if not info.ok and isinstance(res, dict):
+        text = " ".join(c.get("text", "") for c in res.get("content", []) if isinstance(c, dict))
+        if text:
+            return json.dumps({"error": text[:500]})
+    return render_result(res, info.ok, info.error)
+
+
 def result_key(res: Any) -> str:
     if isinstance(res, dict):
         res = res.get("structuredContent", res.get("content"))
@@ -184,7 +194,8 @@ class Conversation:
                        error="unknown tool (not sent)")
             return {"rec": rec, "args": {}, "content": json.dumps({"error": "unknown tool"})}
         allowed = task.params(tc.name)
-        args = {a: v for a, v in tc.arguments.items() if a in allowed}
+        # null = "not given" (small models send null for optional parameters)
+        args = {a: v for a, v in tc.arguments.items() if a in allowed and v is not None}
         cls, gargs = task.gateway_call(tc.name, args)
         await self.publish({"type": "call_start", "turn": self.turn, "reply": self.reply,
                             "pos": pos, "tool": tc.name, "tool_class": cls})
@@ -203,7 +214,7 @@ class Conversation:
         rec["tool_class"] = cls
         rec["results_match"] = result_key(got["base"][0]) == result_key(got["pred"][0])
         res, info = got["pred"][0], got["pred"][1]
-        return {"rec": rec, "args": args, "content": render_result(res, info.ok, info.error)}
+        return {"rec": rec, "args": args, "content": llm_content(res, info)}
 
     def _server(self, cls: str) -> str:
         tm = yaml.safe_load((ROOT / "tools" / "tool_map.yaml").read_text())

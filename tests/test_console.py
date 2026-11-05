@@ -284,3 +284,25 @@ def test_app_routes_offline() -> None:
         assert cl.post("/api/chat", json={"text": "  "}).status_code == 400
         r = cl.get("/api/export.csv")
         assert r.status_code == 200 and r.text.splitlines()[0] == ",".join(CSV_FIELDS)
+
+
+def test_null_arguments_are_dropped_and_tool_errors_reach_the_llm() -> None:
+    from types import SimpleNamespace
+
+    from console.engine import llm_content
+
+    gws = {"base": FakeGW("base"), "pred": FakeGW("pred")}
+
+    async def publish(ev):
+        pass
+    conv = Conversation(AIRLINE, ScriptedStreamingLLM([[("flight_search", {
+        "origin": "GOI", "destination": "HYD", "day": None})]]),
+        {"base": FakeStack("base"), "pred": FakeStack("pred")}, NullPoller(), publish,
+        {"mirror": "concurrent", "hint": False, "baseline_policy": "scale_to_zero"},
+        mcp_factory=factory(gws))
+    asyncio.run(conv.user_turn("x"))
+    assert gws["pred"].seen[0][2] == {"origin": "GOI", "destination": "HYD", "action": "search"}
+    err = {"content": [{"type": "text", "text": "day: Input should be a valid integer"}],
+           "isError": True}
+    out = llm_content(err, SimpleNamespace(ok=False, error="tool returned isError"))
+    assert "valid integer" in out
