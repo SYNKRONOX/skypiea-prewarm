@@ -120,3 +120,14 @@ Commits `a8567cc` (replayer, CLI, gateway session introspection), `0b24053` (mon
 - CI (.github/workflows, not changed on this branch) installs only pytest ruff numpy pandas
   pyarrow pyyaml: the gateway/controller/replayer/CLI/MCP tests skip there (importorskip).
   To run them in CI, add `pip install -r requirements-infra.txt` and a helm binary.
+
+## v1.1 (branch feat/agent, from main fa2437d): demo + live-LLM agent — IN PROGRESS
+
+Running log, newest last (the master task runs unattended; see docs/handoff/AGENT_REPORT.md at the end).
+
+- STEP 0 started 2026-11-05: `make demo` (mk/demo.mk, demo/run.sh). A fresh clone has no
+  data/processed, so `python -m demo.prepare` builds the SYNTHETIC prd demo bundle and the PRD
+  Scenario A sessions from the committed samples (data/samples) in ~5 s. Chart fix: Grafana
+  plugin preinstall disabled (it filled the 512Mi emptyDir; 740 evicted pods on kind).
+  kind note: after a Docker Desktop resume the API port forward returned EOF; `docker restart
+  skypiea-control-plane skypiea-worker` fixed it.

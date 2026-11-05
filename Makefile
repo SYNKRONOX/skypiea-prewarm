@@ -58,3 +58,6 @@ clean-cluster: cluster-kind-down
 
 # Prediction-engine targets (predictor, simulator, results summary): see mk/model.mk and docs/model.md
 include mk/model.mk
+
+# Demo (kind, functional) and the live-LLM agent demo: see mk/demo.mk, docs/DEMO.md, docs/AGENT.md
+include mk/demo.mk

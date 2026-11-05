@@ -42,3 +42,7 @@ docs/*.pdf
 
 # The full accuracy log is committed gzipped (results/p1_accuracy.csv.gz)
 results/p1_accuracy.csv
+
+# Demo scratch (make demo) and locally built model bundles
+.demo/
+models/lgbm-*/

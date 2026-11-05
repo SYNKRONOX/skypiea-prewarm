@@ -204,6 +204,10 @@ spec:
             - {name: GF_ANALYTICS_CHECK_FOR_UPDATES, value: "false"}
             - {name: GF_ANALYTICS_CHECK_FOR_PLUGIN_UPDATES, value: "false"}
             - {name: GF_NEWS_NEWS_FEED_ENABLED, value: "false"}
+            # Grafana 13 downloads ~540 MB of plugins in the background into /var/lib/grafana,
+            # which overflowed the 512Mi emptyDir and got the pod evicted in a loop on kind
+            # (740 evicted pods, 2026-11-05). The dashboard needs only built-in panels.
+            - {name: GF_PLUGINS_PREINSTALL_DISABLED, value: "true"}
             - {name: GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH, value: /var/lib/grafana/dashboards/skypiea-dashboard.json}
           readinessProbe:
             httpGet: {path: /api/health, port: http}
