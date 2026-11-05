@@ -233,4 +233,4 @@ def test_summarize_counts_from_run_files(tmp_path) -> None:
     assert row["ok_calls"] == 6 and row["cold_calls"] == 3        # first use of each tool
     assert row["cold_rate_pct"] == 50.0 and row["followed_graph"] == 2
     assert row["think_median_ms"] == 3000 and row["idle_pod_s"] == 12.5
-    assert think[0]["tool"] == "ALL" and think[0]["think_ge_cached_pct"] == 100.0
+    assert think[0]["tool"] == "ALL" and think[0]["think_ge_cached_pct"] == 66.7  # 3651 > 3000
