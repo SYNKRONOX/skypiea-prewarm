@@ -140,9 +140,8 @@ Source: [`results/scenario_aws_summary.csv`](results/scenario_aws_summary.csv) a
   whole run; pods are shared by all sessions, so it has no session CI. Added latency is what
   the gateway added to each call.
 - The runs come from two nights on two platform images: b652e6b (overnight) and 38c62ec
-  (morning: keep-alive 10 s / 60 s and a Markov-1 rerun). The overnight Markov-1 stub rounded
-  its probabilities and some answers were rejected; it is marked "rounding-handicapped" in the
-  results file. The rerun with a floored stub changed little.
+  (morning: keep-alive 10 s / 60 s and a Markov-1 rerun). The overnight Markov-1 rows are
+  marked † (see the footnote under the table). The rerun with a floored stub changed little.
 
 | Scenario | Policy | calls | cold % [95% CI] | idle pod-s | added p50 ms | added p99 ms | platform |
 |---|---|---|---|---|---|---|---|
@@ -150,18 +149,20 @@ Source: [`results/scenario_aws_summary.csv`](results/scenario_aws_summary.csv) a
 | A | keep-alive 30 s | 116 | 8.6 [3.8, 14.5] | 888 | 0 | 3638 | b652e6b |
 | A | keep-alive 10 s | 116 | 15.5 [9.7, 23.2] | 578 | 0 | 3866 | 38c62ec |
 | A | keep-alive 60 s | 116 | 7.8 [2.9, 13.4] | 999 | 0 | 3714 | 38c62ec |
-| A | Markov-1 top-1 (floored stub) | 116 | 16.4 [11.0, 23.1] | 588 | 0 | 4801 | 38c62ec |
-| A | Markov-1 top-1 (old stub, rounding-handicapped) | 116 | 15.5 [10.6, 21.4] | 624 | 0 | 4121 | b652e6b |
+| A | Markov-1 top-1 (floored-stub rerun) | 116 | 16.4 [11.0, 23.1] | 588 | 0 | 4801 | 38c62ec |
+| A | Markov-1 top-1 † | 116 | 15.5 [10.6, 21.4] | 624 | 0 | 4121 | b652e6b |
 | A | **predictive (Skypiea)** | 116 | 15.5 [10.2, 21.8] | 633 | 0 | 3648 | b652e6b |
 | A | scale-to-zero | 116 | 49.1 [40.6, 58.8] | 350 | 67 | 6007 | b652e6b |
 | B | always-warm | 319 | 0.9 [0.0, 3.4] | 14,675 | 0 | 2 | b652e6b |
 | B | keep-alive 30 s | 319 | 10.3 [6.1, 16.7] | 2,216 | 0 | 5516 | b652e6b |
 | B | keep-alive 10 s | 319 | 23.5 [17.1, 31.3] | 1,549 | 0 | 4981 | 38c62ec |
 | B | keep-alive 60 s | 319 | 6.6 [3.1, 11.8] | 2,744 | 0 | 4888 | 38c62ec |
-| B | Markov-1 top-1 (old stub, rounding-handicapped) | 319 | 29.2 [23.7, 35.1] | 1,552 | 0 | 4356 | b652e6b |
-| B | Markov-1 top-1 (floored stub) | 319 | 28.8 [21.9, 35.9] | 1,538 | 0 | 4988 | 38c62ec |
+| B | Markov-1 top-1 † | 319 | 29.2 [23.7, 35.1] | 1,552 | 0 | 4356 | b652e6b |
+| B | Markov-1 top-1 (floored-stub rerun) | 319 | 28.8 [21.9, 35.9] | 1,538 | 0 | 4988 | 38c62ec |
 | B | **predictive (Skypiea)** | 319 | 5.6 [2.3, 10.6] | 2,807 | 0 | 5572 | b652e6b |
 | B | scale-to-zero | 319 | 58.9 [44.2, 74.1] | 986 | 2426 | 6080 | b652e6b |
+
+† Rounding-handicapped run: the old Markov-1 stub rounded its ranked probabilities and answers that summed to more than 1 were rejected. The `note` column of `results/scenario_aws_summary.csv` says: "rounding-handicapped (stub rounded ranked p; sum > 1 answers rejected)". The floored-stub rerun (platform 38c62ec) is the unmarked Markov-1 row of the same scenario.
 
 What the table shows:
 
@@ -288,14 +289,16 @@ predictive is colder than keep-alive 30 s.
 |---|---|---|---|---|---|---|---|
 | A | always-warm | 42 | 0.0 [0.0, 0.0] | 4,013 | 0 | 0 | b652e6b |
 | A | keep-alive 30 s | 42 | 19.0 [7.7, 32.6] | 234 | 0 | 4836 | b652e6b |
-| A | Markov-1 top-1 (old stub, rounding-handicapped) | 42 | 11.9 [2.6, 22.5] | 249 | 0 | 2378 | b652e6b |
+| A | Markov-1 top-1 † | 42 | 11.9 [2.6, 22.5] | 249 | 0 | 2378 | b652e6b |
 | A | **predictive (Skypiea)** | 42 | 11.9 [2.6, 22.5] | 241 | 0 | 2892 | b652e6b |
 | A | scale-to-zero | 42 | 19.0 [7.7, 32.6] | 143 | 0 | 4861 | b652e6b |
 | B | always-warm | 80 | 0.0 [0.0, 0.0] | 9,116 | 0 | 0 | b652e6b |
 | B | keep-alive 30 s | 80 | 21.2 [8.8, 33.8] | 993 | 0 | 5377 | b652e6b |
-| B | Markov-1 top-1 (old stub, rounding-handicapped) | 80 | 22.5 [16.2, 28.7] | 843 | 0 | 4997 | b652e6b |
+| B | Markov-1 top-1 † | 80 | 22.5 [16.2, 28.7] | 843 | 0 | 4997 | b652e6b |
 | B | **predictive (Skypiea)** | 80 | 26.2 [21.2, 30.0] | 935 | 0 | 4396 | b652e6b |
 | B | scale-to-zero | 80 | 45.0 [30.0, 58.8] | 363 | 0 | 5036 | b652e6b |
+
+† Rounding-handicapped run: the old Markov-1 stub rounded its ranked probabilities and answers that summed to more than 1 were rejected. The `note` column of `results/scenario_aws_prd_SYNTHETIC_summary.csv` says: "rounding-handicapped (stub rounded ranked p; sum > 1 answers rejected)". These SYNTHETIC runs were not rerun with the floored stub.
 
 Simulator, held-out SYNTHETIC TEST. Source: [`results/sim_prd.csv.gz`](results/sim_prd.csv.gz), via
 [`docs/results_summary.md`](docs/results_summary.md) ("SYNTHETIC prd profile"). Warm % / idle pod-s per 1k calls.

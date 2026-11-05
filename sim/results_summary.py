@@ -338,7 +338,7 @@ def scenarios(pattern: str | None) -> list[str]:
     d["cold_b"] = d.cold.astype(str).str.lower().isin(["true", "1"])
     d["added"] = pd.to_numeric(d.added_ms, errors="coerce")
     keys = ["dataset", "scenario", "policy", "log"]
-    rows, check = [], []
+    rows, check, flagged, reruns = [], [], {}, set()
     for k, g in sorted(d.groupby(keys), key=lambda kg: (kg[0][0] != "real", kg[0])):
         lo, hi = session_ci(g)
         r = sm[(sm[keys] == pd.Series(k, index=keys)).all(axis=1)] if not sm.empty else sm
@@ -348,7 +348,14 @@ def scenarios(pattern: str | None) -> list[str]:
         if not r.empty and int(float(r.cold.iloc[0])) != int(g.cold_b.sum()):
             check.append(f"{'/'.join(k)}: {int(g.cold_b.sum())} cold calls in the call file, "
                          f"{r.cold.iloc[0]} in the summary")
-        rows.append([*k[:3], str(g.session.nunique()), str(len(g)),
+        run_note = "" if r.empty or "note" not in r else str(r.note.iloc[0])
+        policy = k[2]
+        if "rounding-handicapped" in run_note:
+            policy += " †"
+            flagged.setdefault(run_note, []).append(f"{k[0]} {k[1]}")
+        elif k[2] == "markov1" and not r.empty and "platform_image" in r:
+            reruns.add(str(r.platform_image.iloc[0]))
+        rows.append([*k[:2], policy, str(g.session.nunique()), str(len(g)),
                      f"{_f(100 * g.cold_b.mean())} [{_f(100 * lo)}, {_f(100 * hi)}]",
                      idle, "n/a (one run-level counter)",
                      p50, p99])
@@ -365,6 +372,11 @@ def scenarios(pattern: str | None) -> list[str]:
         "all sessions of a run, so it cannot be split by session and has no session CI.", "",
         *_table(["Dataset", "Scenario", "Policy", "sessions", "calls", "cold % [95% CI]",
                  "idle pod-s", "idle CI", "added p50 ms", "added p99 ms"], rows), ""]
+    for run_note, runs in flagged.items():
+        out += [f"† Rounding-handicapped run ({', '.join(runs)}). The run summary's `note` "
+                f"column says: \"{run_note}\". Where a scenario has a second Markov-1 row "
+                f"without †, that row is the rerun with the floored stub "
+                f"({', '.join(sorted(reruns))}).", ""]
     if check:
         out += ["Mismatch between call files and summaries:", "", *[f"- {c}" for c in check], ""]
     return out
