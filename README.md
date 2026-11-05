@@ -469,6 +469,8 @@ Terraform state is local and git-ignored. See "Terraform state" in `docs/aws_pla
 | `make deploy-kind-e0` / `make e0-kind` / `make e0-kind-parallel` | E0 cold starts on kind |
 | `make kind-integration` | Functional Scenario A/B replay through the gateway |
 | `make grafana-kind` | Grafana on http://127.0.0.1:3000 |
+| `make demo` / `make demo-failures` / `make demo-clean` | Whole stack on kind from a fresh clone, failure injection, teardown ([`docs/DEMO.md`](docs/DEMO.md)) |
+| `make agent-demo [LLM=openai-compatible]` / `make agent-live` | Agent through the gateway; live-LLM runs ([`docs/AGENT.md`](docs/AGENT.md)) |
 | `make model-all` | Tune on VAL, simulate on TEST, export bundles (needs `data/processed`) |
 | `make predictor-image` | Build the predictor image with the three bundles |
 | `make results-summary INFRA_RESULTS=results SCENARIOS='results/scenario_aws*_calls.csv'` | Rebuild `docs/results_summary.md` from committed results |
@@ -486,6 +488,8 @@ Terraform state is local and git-ignored. See "Terraform state" in `docs/aws_pla
 | [`skypiea_cli/`](skypiea_cli/), [`bin/skypiea`](bin/skypiea) | CLI |
 | [`traces/`](traces/), [`data/`](data/) | Trace schema, converters, pipeline; dataset notes (data is not committed) |
 | [`replayer/`](replayer/) | Open-loop trace replayer |
+| [`agent/`](agent/) | Tool-calling agent (OpenAI-compatible or scripted LLM) that uses the gateway's `POST /mcp` only |
+| [`demo/`](demo/) | `make demo` scripts: inputs from the committed samples, deploy, port-forwards, failure injection |
 | [`tools/`](tools/) | 16 MCP tool servers and images; `tools/tool_map.yaml` (class -> server) |
 | [`charts/skypiea/`](charts/skypiea/), [`deploy/`](deploy/) | Helm chart; kind cluster and platform image |
 | [`infra/aws/`](infra/aws/) | Terraform: EC2 k3s (SSM only), ECR, S3 |
@@ -493,7 +497,7 @@ Terraform state is local and git-ignored. See "Terraform state" in `docs/aws_pla
 | [`configs/`](configs/) | Tool classes, vocabularies, model/policy configs, measured cold starts |
 | [`results/`](results/) | Committed result files |
 | [`docs/`](docs/) | Design, results, limits, handoff notes |
-| [`mk/`](mk/) | Make targets: `infra.mk`, `model.mk` (included from the root Makefile) |
+| [`mk/`](mk/) | Make targets: `infra.mk`, `model.mk`, `demo.mk` (included from the root Makefile) |
 
 ## License
 
