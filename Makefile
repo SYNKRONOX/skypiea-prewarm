@@ -1,4 +1,5 @@
-.PHONY: doctor secret-sweep setup lock test lint check-sizes install-hooks data data-all samples cluster deploy e1 clean-cluster
+.DEFAULT_GOAL := help
+.PHONY: help doctor secret-sweep setup lock test lint check-sizes install-hooks data data-all samples cluster deploy e1 clean-cluster
 
 # Infra targets (tool images, kind, AWS, E0, gateway/controller): see mk/infra.mk and docs/infra.md
 include mk/infra.mk
@@ -11,6 +12,10 @@ SOURCES = tracelab copilot_2026 tau_bench tau2_bench bfcl
 PYTHON ?= python3.12
 CONSTRAINTS = -c deploy/platform/constraints.txt -c tools/common/constraints.txt \
               -c services/predictor/requirements.lock
+
+help:                    ## list the make targets with their one-line description
+	@grep -hE '^[a-zA-Z0-9_-]+:.*## ' Makefile mk/*.mk | sort | \
+	  awk -F':.*## ' '{printf "  %-24s %s\n", $$1, $$2}'
 
 DOCTOR_MODE ?= all
 doctor:                  ## check OS, Docker (running, memory), kind, kubectl, helm, Python 3.12, disk, ports, Ollama
@@ -35,36 +40,36 @@ lock:                    ## re-resolve requirements-dev.txt against the image pi
 	  echo "# constraint files. Regenerate: make lock.  Install: make setup."; \
 	  .venv/bin/pip freeze; } > requirements.lock
 
-test:
+test:                    ## pytest (committed samples only; no datasets, no Docker)
 	$(PY) -m pytest -q
 
-lint:
+lint:                    ## ruff check .
 	$(PY) -m ruff check .
 
-check-sizes:
+check-sizes:             ## fail if a tracked file is over 50 MB
 	$(PY) tools/check_sizes.py
 
-install-hooks:
+install-hooks:           ## git pre-commit hook: block files over 50 MB
 	cp tools/pre-commit.sh .git/hooks/pre-commit
 	chmod +x .git/hooks/pre-commit
 
-data:
+data:                    ## one dataset raw -> data/processed/$(SOURCE) (needs data/download.py first)
 	$(PY) -m traces.pipeline --source $(SOURCE)
 
-data-all:
+data-all:                ## every dataset raw -> data/processed/ (needs the downloads)
 	for s in $(SOURCES); do $(PY) -m traces.pipeline --source $$s || exit 1; done
 
-samples:
+samples:                 ## rebuild data/samples/ from data/processed/
 	$(PY) tools/make_sample.py --all
 
-cluster: cluster-kind          # kind (1 control-plane + 1 worker) + local registry localhost:5001
+cluster: cluster-kind    ## kind (1 control-plane + 1 worker) + local registry localhost:5001
 
-deploy: deploy-kind            # helm install skypiea (tools at 0, gateway, controller, monitoring)
+deploy: deploy-kind      ## push images, helm install (tools at 0, gateway, controller, stub predictor, monitoring)
 
-e1:
+e1:                      ## E1 next-tool accuracy (needs data/processed)
 	$(PY) -m experiments.run --config experiments/e1_predictor_accuracy.yaml
 
-clean-cluster: cluster-kind-down
+clean-cluster: cluster-kind-down  ## delete the kind cluster and its registry
 
 # Prediction-engine targets (predictor, simulator, results summary): see mk/model.mk and docs/model.md
 include mk/model.mk
