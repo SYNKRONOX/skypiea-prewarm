@@ -63,7 +63,9 @@ conversation never mixes two models.
 ### Skye's behaviour (Skypiea Air)
 
 - **Verification first** (email or booking code) before anything about a customer is shown or
-  changed. Unchanged.
+  changed. `find_customer` also accepts the email or code when the customer gives it with
+  their name, and then verifies by the same rule (both small models never called
+  `verify_customer` in that case).
 - **One active booking:** if the verified customer has exactly one confirmed booking, booking
   tools use it when the model leaves the code out; with several, the tool returns the
   customer's codes and Skye must ask which one. A wrong code returns the customer's valid
@@ -155,45 +157,58 @@ autopilot, with its typing model). Nothing is pre-recorded.
 | Demo | Act | Lines (customer side) |
 |---|---|---|
 | Skypiea Air | 1: a new customer books a trip | new customer Nova Quill, SKA → SKE on 2026-12-07, Saver, confirm, add a bag |
-| Skypiea Air | 2: change the schedule | Tara Patel (one active booking), later flight on the same route, confirm (truth check visible) |
-| Skypiea Air | 3: kill the predictor mid-conversation | Dev Singh; the predictor is scaled to 0 after turn 1 (bag, offers) and restarted when the act ends |
+| Skypiea Air | 2: change the schedule | Tara Patel (two active bookings; the customer names 5TGTBP), later flight on the same route, confirm (truth check visible) |
+| Skypiea Air | 3: kill the predictor mid-conversation | Dev Singh (one active booking: Skye may leave the code out); the predictor is scaled to 0 after turn 1 (bag, offers) and restarted when the act ends |
 | Code fix | Act: fix the failing merge_sort test | fix and run the tests, which files changed, then an out-of-repository question |
 
 ## Model bake-off
 
-`python -m console.bakeoff --models llama3.1:8b,qwen2.5:7b --reps 2 --out results/live_bakeoff`
-(files: one JSON report, calls CSV and turns CSV per conversation, `summary.csv`,
-`summary.md`). The same five scripted personas for each model (new customer books a trip,
-change schedule, cancel and refund, offers, failed verification), 2 conversations each,
-hint off, 2026-11-06 18:00-18:40 UTC. **Demo runs, not results** (n = 10 conversations per
-model; scripted customer; live model, tools and stacks).
+`python -m console.bakeoff --models llama3.1:8b,qwen2.5:7b --reps 2 --out <dir>` (one JSON
+report, calls CSV and turns CSV per conversation, `summary.csv`, `summary.md`). The same five
+scripted personas for each model (new customer books a trip, change schedule, cancel and
+refund, offers, failed verification), 2 conversations each, hint off. **Demo runs, not
+results** (n = 10 conversations per model per version; scripted customer; live model, tools
+and stacks). It was run three times on 2026-11-06 because the bake-off itself exposed
+problems that were then fixed; every version is kept as recorded:
 
-| | llama3.1:8b | qwen2.5:7b |
+| Version | Directory | Skye / tools at that time |
 |---|---|---|
-| Task completed (judged from the database and write log) | **8 / 10** | 6 / 10 |
-| by persona: new customer / change / cancel+refund / offers / failed verification | 2 / 2 / 2 / 0 / 2 | 0 / 2 / 2 / 0 / 2 |
-| First-try valid tool calls (mean per conversation) | 0.88 | 0.87 |
-| Booking codes invented by the model (1) | 4 | 2 |
-| Prices quoted that no tool returned | 0 | 0 |
-| Truth badges ("Not done: ...") | **0** | 4 (all true: claimed a booking twice and a promo twice that did not happen) |
-| Tool calls written as text | 0 | 0 |
-| `transfer_to_human` called | 10 / 10 (8 not needed) | 0 / 10 |
-| LLM think time per reply: median of conversation medians / largest p95 | 0.95 s / 9.08 s | 0.81 s / 25.17 s (2) |
+| v1 (18:00-18:40 UTC) | `results/live_bakeoff/` | W1 tools; verification only through verify_customer |
+| v2 (21:10-21:35 UTC) | `results/live_bakeoff_v2/` | + prompt nudge "verify right away" (W1-18) |
+| v3 (21:45-22:30 UTC) | `results/live_bakeoff_v3/` | + find_customer verifies with a given email/code (W1-20); **current** |
 
-(1) The recorded `invented_codes` field also counted the customer's own wrong code ZZZZZZ in
-the failed-verification persona (turn 3, one per conversation, both models); it is subtracted
-here (recorded files unchanged; the report now separates `unknown_codes_from_customer`).
-(2) The 25 s reply is qwen's first conversation right after the model switch, consistent with
-the model loading (not verified).
+| | llama3.1:8b v1 / v2 / v3 | qwen2.5:7b v1 / v2 / v3 |
+|---|---|---|
+| Task completed (judged from the database and write log) | 8 / 6 / **9** of 10 | 6 / 8 / **8** of 10 |
+| v3 by persona: new customer, change, cancel+refund, offers, failed verification | 2, 1, 2, 2, 2 | 0, 2, 2, 2, 2 |
+| First-try valid tool calls (mean per conversation) | 0.88 / 0.84 / 0.93 | 0.87 / 0.93 / 0.93 |
+| Booking codes invented by the model (1) | 4 / 5 / 4 | 2 / 0 / 0 |
+| False "done" claims (true "Not done" badges) (2) | 0 / 1 / 1 | 4 / 2 / 2 |
+| Prices quoted that no tool returned ("Not from a tool") | 0 / 0 / 3 | 0 / 0 / 4 |
+| `transfer_to_human` without being asked (3) | 8 / 8 / 8 | 0 / 0 / 0 |
+| Tool calls written as text | 0 / 0 / 0 | 0 / 0 / 0 |
+| LLM think time per reply, v3: median of conversation medians / largest p95 (4) | 0.96 s / 51.4 s | 0.85 s / 7.8 s |
 
-**Default: llama3.1:8b** (unchanged), chosen by correctness: more tasks completed and no false
-"done" claim. Its weak spot is an unneeded hand-over to a human at the end of most
-conversations. Both models failed the offers persona: neither called `verify_customer` after
-the customer gave the email, and the promo call was refused ("not verified"). Time saved by
-Skypiea was not used to choose.
+(1) Codes the database never had and the customer never typed. In v1 the recorded field
+also counted the customer's own wrong code ZZZZZZ (failed verification, one per
+conversation); it is subtracted here. From v2 on the report separates
+`unknown_codes_from_customer`. (2) All "Not done" badges were checked against the write
+logs. Three qwen badges "Not done: the booking was not changed" (offers, v2 r2 and v3 r1, r2)
+were a rule false positive ("your booking has been updated with the promo code"), fixed
+afterwards (W1-21); they are not counted here. (3) Of 10 hand-overs per version; the 2 in
+the failed-verification persona are allowed by the rules and not counted. (4) The large p95s
+are the first conversation right after a model switch (llama v3 new_customer r1, qwen v1
+new_customer r1, 25.2 s), consistent with the model loading (not verified).
 
-Story acts and the out-of-scope persona with each model: `results/live_stories/` (see
-`docs/handoff/W1_REPORT.md`).
+**Default: llama3.1:8b** (unchanged), chosen by correctness, not by time saved: over the
+three versions it completed 23 of 30 tasks (qwen 22) and made 2 false "done" claims (qwen 8:
+it repeatedly told a new customer the trip was booked when only a quote existed). Its weak
+spots: it invents booking codes (the tools refuse them) and hands over to a human at the end
+of most conversations; qwen does neither. The difference in completed tasks is within
+run-to-run variance (v1 and v2 disagreed). qwen2.5:7b is one click away in the Model dropdown.
+
+Story acts and the out-of-scope persona with each model: `results/live_stories/` (earlier
+runs in `v1/`, `v2/`, `superseded/`, each with a README); see `docs/handoff/W1_REPORT.md`.
 
 ## Mapping to the predictor's vocabulary
 
