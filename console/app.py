@@ -75,7 +75,7 @@ class Console:
         self.mcp_factory = mcp_factory
         self.settings = {"mirror": "concurrent", "hint": False,
                          "baseline_policy": "scale_to_zero", "demo": "airline",
-                         "autopilot": False, "busy": None}
+                         "autopilot": False, "autopilot_stopping": False, "busy": None}
         self.conv: Conversation | None = None
         self.previous: Conversation | None = None
         self.tasks: set[asyncio.Task] = set()
@@ -147,16 +147,19 @@ class Console:
         await self.hub.publish({"type": "conversation", "id": conv.id})
         await conv.user_turn(text, source)
 
-    async def autopilot(self) -> None:
-        self.settings["autopilot"] = True
+    async def autopilot(self, turns: int | None = None) -> None:
+        """Play the prepared script as the human side (the LLM stays live). `autopilot` stays
+        true until the loop has really ended; a stop request only sets `autopilot_stopping`
+        (the current turn finishes first)."""
+        self.settings.update(autopilot=True, autopilot_stopping=False)
         await self.publish_settings()
         try:
-            for msg in SCRIPTS[self.settings["demo"]]:
-                if not self.settings["autopilot"]:
+            for i, msg in enumerate(SCRIPTS[self.settings["demo"]]):
+                if self.settings["autopilot_stopping"] or (turns is not None and i >= turns):
                     break
                 await self.chat(msg, "autopilot")
         finally:
-            self.settings["autopilot"] = False
+            self.settings.update(autopilot=False, autopilot_stopping=False)
             await self.publish_settings()
 
     async def drain(self) -> bool:
@@ -301,13 +304,17 @@ def make_app(console: Console) -> Starlette:
         c.spawn(c.chat(text))
         return JSONResponse({"accepted": True}, status_code=202)
 
-    async def autopilot(_: Request) -> Response:
+    async def autopilot(request: Request) -> Response:
         if c.settings["autopilot"]:
-            c.settings["autopilot"] = False      # stops after the current turn
+            c.settings["autopilot_stopping"] = True      # stops after the current turn
             await c.publish_settings()
             return JSONResponse({"autopilot": "stopping after this turn"})
-        c.spawn(c.autopilot())
-        return JSONResponse({"autopilot": "started"}, status_code=202)
+        turns = (await body(request)).get("turns")
+        if turns is not None and (not isinstance(turns, int) or isinstance(turns, bool)
+                                  or turns < 1):
+            return JSONResponse({"error": "turns must be a positive integer"}, status_code=400)
+        c.spawn(c.autopilot(turns))
+        return JSONResponse({"autopilot": "started", "turns": turns}, status_code=202)
 
     async def action(request: Request) -> Response:
         name = request.path_params["name"]

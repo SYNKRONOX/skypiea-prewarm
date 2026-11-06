@@ -99,12 +99,8 @@ def main(argv: list[str] | None = None) -> int:
                  "predictor down")
         model_before = (lis.last("slow") or {}).get("model", {})
         t0 = time.time()
-        c.post(f"{URL}/api/autopilot")
+        c.post(f"{URL}/api/autopilot", json={"turns": a.turns} if a.turns else {})
         wait(lambda: settings(c)["autopilot"], 30, "autopilot start")
-        if a.turns:
-            wait(lambda: len([e for e in lis.events if e["type"] == "turn_end"
-                              and e.get("ts", 0) >= t0]) >= a.turns, 1800, "turns")
-            c.post(f"{URL}/api/autopilot")          # stop after the current turn
         wait(lambda: not settings(c)["autopilot"], 1800, "autopilot end")
         time.sleep(3)                         # last predictor refresh / totals
         state = c.get(f"{URL}/api/state").json()

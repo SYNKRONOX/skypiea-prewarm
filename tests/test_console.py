@@ -373,3 +373,25 @@ def test_records_keep_conversation_order_across_turns() -> None:
     assert [c["tool"] for c in conv.calls] == ["user_lookup", "reservation_lookup",
                                                "flight_search", "reservation_modify"]
     assert sorted(conv.args) == [0, 1, 2, 3]
+
+
+def test_autopilot_runs_n_turns_and_stays_on_until_done() -> None:
+    from console.app import Console
+
+    gws = {"base": FakeGW("base"), "pred": FakeGW("pred")}
+    llm = ScriptedStreamingLLM([[("user_lookup", {})], [("reservation_lookup", {})],
+                                [("flight_search", {})]])
+    c = Console(llm, base=FakeStack("base"), pred=FakeStack("pred"), start_poller=False,
+                mcp_factory=factory(gws))
+    c.poller = NullPoller()
+    seen = []
+
+    async def go():
+        c.new_conversation()
+        t = asyncio.create_task(c.autopilot(turns=1))
+        await asyncio.sleep(0)
+        seen.append(c.settings["autopilot"])
+        await t
+    asyncio.run(go())
+    assert seen == [True] and c.settings["autopilot"] is False
+    assert c.conv.turn == 1 and [x["tool"] for x in c.conv.calls] == ["user_lookup"]

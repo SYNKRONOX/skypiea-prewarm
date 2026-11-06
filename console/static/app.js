@@ -41,7 +41,8 @@ function applySettings(st) {
   $("base-title").textContent = "(baseline: " + (st.baseline_policy === "keep_alive_30" ?
     "keep-alive 30 s" : "scale-to-zero") + ")";
   $("b-auto").hidden = !st.autopilot;
-  $("btn-auto").textContent = st.autopilot ? "Stop autopilot ■" : "Autopilot ▶";
+  $("btn-auto").textContent = st.autopilot ? (st.autopilot_stopping ? "Stopping after this turn…" :
+    "Stop autopilot ■") : "Autopilot ▶";
   $("b-busy").hidden = !st.busy; $("b-busy").textContent = st.busy || "";
   for (const b of ["btn-reset", "btn-replay", "btn-kill", "btn-restart"]) $(b).disabled = !!st.busy;
   $("demo").value = st.demo;
