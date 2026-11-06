@@ -8,6 +8,9 @@ is in [`CHANGELOG.md`](../CHANGELOG.md).
 - [`../PRD.md`](../PRD.md): the original PRD v1.1, unchanged (emails removed).
 - [`PRD_STATUS.md`](PRD_STATUS.md): every FR, NFR, PRD experiment and scope item: Met / Partly met / Changed / Not done, with evidence.
 - [`../dev.md`](../dev.md): developer guide: request path, ports and metrics, folders, components, tests, how to add a tool, policy or dataset.
+- [`TESTING.md`](TESTING.md): every check (doctor, tests, lint, size check, secret sweep, demo, end to end, CI): what it proves and how to reproduce it.
+- [`training_data.md`](training_data.md): sessions and calls per split for each predictor profile (generated from the split reports).
+- [`../CONTRIBUTING.md`](../CONTRIBUTING.md), [`../SECURITY.md`](../SECURITY.md): how to report a problem or a vulnerability.
 
 ## Results and claims
 
@@ -32,16 +35,20 @@ is in [`CHANGELOG.md`](../CHANGELOG.md).
 
 ## Demos (kind, laptop; demo runs, not results)
 
-- [`DEMO.md`](DEMO.md): `make demo` and `make live`: commands, timings, the 7-minute presenter script, troubleshooting.
+- [`LIVE_DEMO.md`](LIVE_DEMO.md): the Live Console's Skypiea Air presentation view: how to run it, what is on the screen, the truth panel.
+- [`DEMO.md`](DEMO.md): `make demo` and `make live`: commands, timings, the presenter script, troubleshooting.
 - [`AGENT.md`](AGENT.md): the tool-calling agent through the gateway (`make agent-demo`, `make agent-live`).
 - [`LIVE_CONSOLE.md`](LIVE_CONSOLE.md): Live Console design: vocabularies, two stacks, mirrored execution, hint, panels, lead-time options.
-- [`PORTABLE_MODELS.md`](PORTABLE_MODELS.md): proposal for distributing the predictor bundles (`make fetch-models`).
+- [`PORTABLE_MODELS.md`](PORTABLE_MODELS.md): how the predictor bundles are distributed (`make fetch-models`, release v1.2 asset).
+- [`MODELS_ATTRIBUTION.md`](MODELS_ATTRIBUTION.md): attribution and licences of the predictor bundles.
 - [`live_backup/README.md`](live_backup/README.md): one recorded Live Console session, for a presentation fallback.
 - [`demo_transcript.log`](demo_transcript.log): terminal transcript of a `make demo` run.
-<!-- Reserved: LIVE_DEMO.md (added by the live-demo session). -->
 
 ## Handoff reports (dated working notes)
 
+- [`handoff/W2_REPORT.md`](handoff/W2_REPORT.md): red-team readiness pass (doctor, AWS guards, CI e2e, README tiers), with [`DECISIONS_W2`](handoff/DECISIONS_W2.md), [`CHANGES_W2`](handoff/CHANGES_W2.md), [`REQUESTS_W2`](handoff/REQUESTS_W2.md) and [`SELF_REDTEAM`](handoff/SELF_REDTEAM.md).
+- [`handoff/CONSOLE_SUPPORT_REPORT.md`](handoff/CONSOLE_SUPPORT_REPORT.md): support console (Skypiea Air, Skye, truth panel) build and verification.
+- [`handoff/PHASE_A_HANDOFF.md`](handoff/PHASE_A_HANDOFF.md) and [`handoff/DECISIONS.md`](handoff/DECISIONS.md): Phase A of the support console (branch `feat/console-support`) and its decision log.
 - [`handoff/FINAL_DOCS_REPORT.md`](handoff/FINAL_DOCS_REPORT.md): this final documentation pass: what changed and which numbers and links were checked.
 - [`handoff/LEADTIME_REPORT.md`](handoff/LEADTIME_REPORT.md): lookahead in the simulator and the 36-conversation lead-time grid.
 - [`handoff/LIVE_CONSOLE_REPORT.md`](handoff/LIVE_CONSOLE_REPORT.md): Live Console build and verification runs, bugs found, risks.

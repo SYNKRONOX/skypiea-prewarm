@@ -3,9 +3,28 @@
 Each entry names the tag or branch it describes. Numbers are in the files linked from
 [`README.md`](README.md); none are repeated here.
 
-## v1.2: lead time and the support console (in progress, merged if ready)
+## v1.2: lead time, the support console, red-team readiness
 
-Untagged. Not published as a release at the time of writing.
+Untagged. **The GitHub Release v1.2 with the model archive was not published** when this was
+written (2026-11-06: `make fetch-models` got HTTP 404).
+
+**Red-team readiness (branch `feat/redteam-ready`):**
+
+- `make doctor`: OS/WSL, Docker running and its memory, kind, kubectl, Helm, Python 3.12, disk,
+  RAM, ports, bundles, optional LLM endpoint; an exact fix per failure. `make demo` and
+  `make live` run it first and stop before changing anything.
+- AWS safety: every AWS target refuses before any aws/Terraform call without the CLIs,
+  credentials and local state; creating targets also need `AWS_CONFIRM=yes`.
+- `make fetch-models`: release URL from a configured slug (`MODELS_REPO`, default
+  `SYNKRONOX/skypiea-prewarm`), GitHub-origin fallback, clearer "not available" message.
+- CI: new `e2e` job (kind on a clean runner, `make demo`, scripted agent, tools back to 0).
+- Cluster, registry and ports overridable for every kind script (`CLUSTER`, `REG_PORT`,
+  `PF_BASE`, `GRAFANA_PORT`, ...); clear messages when a port is taken or the cluster stops.
+- `make help` (default goal), `make clean-images`, `make secret-sweep`.
+- Docs: README rewritten as an install-and-use guide in tiers with Known limitations,
+  troubleshooting and FAQ; `docs/TESTING.md`; generated `docs/training_data.md`; issue
+  templates, `CONTRIBUTING.md`, `SECURITY.md`. Self red-team log:
+  `docs/handoff/SELF_REDTEAM.md`.
 
 **Lead time (merged into `main`, 9d62db2):**
 
@@ -23,7 +42,7 @@ Untagged. Not published as a release at the time of writing.
 - Portable models proposal (`docs/PORTABLE_MODELS.md`) and `make fetch-models` (no default URL
   in this step).
 
-**Support console (branch `feat/console-support`, in progress; merged if ready):**
+**Support console (branch `feat/console-support`, merged into `main`):**
 
 - Skypiea Air: a fictional, seeded mock airline database inside the console, with session
   tools (verification, confirmation, refund rules) and demo personas.
@@ -33,8 +52,9 @@ Untagged. Not published as a release at the time of writing.
 - `make fetch-models` downloads the GitHub Release v1.2 asset (predictor bundles +
   `SHA256SUMS`), verifies the archive and every file, and says clearly when the release is not
   published. `docs/MODELS_ATTRIBUTION.md`.
-- Phase B (UI, in progress): a customer-facing chat view and a truth panel that shows the
-  session database's real state, so claims by the model can be checked on screen.
+- Phase B (UI): a customer-facing chat view and a truth panel that shows the session
+  database's real state, so claims by the model can be checked on screen
+  ([`docs/LIVE_DEMO.md`](docs/LIVE_DEMO.md)).
 - Known issue: the 8B model can claim actions it did not take.
 
 ## v1.1: demo, live agent, Live Console (tag `v1.1`, 2026-11-06)

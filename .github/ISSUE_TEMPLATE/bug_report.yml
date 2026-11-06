@@ -1,0 +1,57 @@
+name: Bug report
+description: Something in the README, a make target or the docs is broken, confusing or untrue
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for testing Skypiea. Please check README "Known limitations" first: those are
+        known gaps. Security problems: see SECURITY.md (do not open a public issue).
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: |
+        Paste the full output of `make doctor` (it lists OS, Docker and its memory, kind,
+        kubectl, helm, Python, disk and ports), plus `git rev-parse --short HEAD`.
+      render: text
+    validations:
+      required: true
+  - type: dropdown
+    id: tier
+    attributes:
+      label: Which README tier?
+      options:
+        - "Tier 0: tests only"
+        - "Tier 1: local demo (make demo)"
+        - "Tier 2: Live Console (make live)"
+        - "Tier 3: AWS"
+        - "Docs only (a claim, number, link or path)"
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: The exact commands, from a fresh clone if you can.
+      placeholder: |
+        1. git clone ... && cd skypiea-prewarm
+        2. make setup
+        3. make demo
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected
+      description: What the README or docs say should happen (quote or link the line).
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual
+      description: What happened instead. Paste the last 30-50 lines of output.
+      render: text
+    validations:
+      required: true
