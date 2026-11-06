@@ -462,8 +462,8 @@ class Conversation:
 
     def refresh_sidebar(self) -> None:
         """After verification, a new booking or any successful write: give Skye the verified
-        customer's facts the way a CRM shows them to a support agent (one system message,
-        replaced when it changes; after the tool results, never between them)."""
+        customer's facts the way a CRM shows them to a support agent (appended to the system
+        prompt, replaced when it changes)."""
         b = self.backend
         if b is None or not getattr(b, "sidebar_due", False):
             return
@@ -471,11 +471,12 @@ class Conversation:
         text = b.sidebar()
         if not text:
             return
-        if self._sidebar_msg is not None and self._sidebar_msg in self.messages:
-            self.messages.remove(self._sidebar_msg)
-        self._sidebar_msg = {"role": "system", "content": "CUSTOMER SIDEBAR (booking system, "
-                             "current; use only these facts and tool results):\n" + text}
-        self.messages.append(self._sidebar_msg)
+        # in the TOP system message (replaced in place): a system message in the middle of
+        # the conversation made llama3.1 start replies with a stray "assistant" (W1 smoke)
+        self._sidebar_msg = {"text": text}
+        self.messages[0] = {"role": "system", "content": self.task.system + "\n\nCUSTOMER "
+                            "SIDEBAR (booking system, current; use only these facts and tool "
+                            "results):\n" + text}
         numbers_in(text, self.facts)
 
     def check_claims(self, text: str) -> dict[str, Any] | None:

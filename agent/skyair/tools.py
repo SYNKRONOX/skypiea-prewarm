@@ -340,6 +340,12 @@ class Session:
                         "belongs to an existing customer: verify them with verify_customer "
                         "first. Nothing was booked."}
             cid, cname = None, name_n.title()
+        dup = next((c for c in self.codes_of(cid, active_only=True)
+                    if f["flight_no"] in self.bookings[c]["flights"]), None) if cid else None
+        if dup:
+            return {"error": "duplicate", "booked": False, "booking_code": dup,
+                    "message": f"The customer already has booking {dup} on this flight; "
+                               "nothing new was booked."}
         price = self.fare_prices(f["flight_no"], n)[fare_key]
         rules = self.db["fare_rules"][fare_key]
         view = self._flight_view(f["flight_no"])

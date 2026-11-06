@@ -94,6 +94,9 @@ def test_new_customer_finds_books_and_manages_a_trip_and_reset_clears_it() -> No
                       customer_confirmed=True)
     assert r["booked"] and r["new_customer"] and s.verified == r["customer_id"]
     code = r["booking_code"]
+    again = s.book_flight(fno, "Flex", customer_confirmed=True)       # "yes, I confirm" twice
+    assert again["error"] == "duplicate" and again["booking_code"] == code
+    assert len(s.new_bookings) == 1
     assert code not in {b["booking_code"] for b in pristine()["bookings"]}
     assert r["flight"]["seat"] == seat_for(code, fno)
     assert s.get_booking()["booking_code"] == code                  # one active booking
@@ -174,14 +177,11 @@ def test_engine_sidebar_vocab_note_and_price_badge() -> None:
                                   "baseline_policy": "scale_to_zero"}, mcp_factory=factory(gws))
     asyncio.run(conv.user_turn("hi"))
     sys_msgs = [m["content"] for m in conv.messages if m["role"] == "system"]
-    assert any(m.startswith("CUSTOMER SIDEBAR") and one["codes"][0] in m for m in sys_msgs)
-    # the sidebar never sits between a reply's tool calls and their tool results
-    ms = conv.messages
-    for k, m in enumerate(ms):
-        if m["role"] == "tool":
-            assert ms[k - 1]["role"] == "tool" or ms[k - 1].get("tool_calls")
-    k = next(k for k, m in enumerate(ms) if m["content"].startswith("CUSTOMER SIDEBAR"))
-    assert ms[k - 1]["role"] == "tool"
+    # the sidebar is part of the top system message (no system message mid-conversation
+    # except the truth note)
+    top = conv.messages[0]["content"]
+    assert "CUSTOMER SIDEBAR" in top and one["codes"][0] in top and top.startswith("You are Skye")
+    assert sum("CUSTOMER SIDEBAR" in m for m in sys_msgs) == 1
     offers = next(c for c in conv.calls if c["tool"] == "list_offers")
     assert offers["tool_class"] == "promo_code_lookup" and offers.get("out_of_vocab")
     assert "no prediction, normal behaviour" in offers["note"]
