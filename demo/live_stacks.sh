@@ -111,7 +111,8 @@ deploy_base() {
   helm_q upgrade --install skypiea-base charts/skypiea --kube-context "$CTX" -n "$BASE" \
     --create-namespace -f charts/skypiea/values-kind.yaml --set imageTag="$TAG" \
     --set platform.enabled=true --set e0Probe.enabled=false --set monitoring.enabled=false \
-    --set platform.predictor.policy=scale_to_zero $(map_args) --wait --timeout 10m
+    --set platform.predictor.policy=scale_to_zero $(map_args) \
+    --set platform.gateway.earlyConnect="${BASE_EARLY_CONNECT:-false}" --wait --timeout 10m
   echo "deployed $BASE (baseline: stub predictor, scale_to_zero)"
 }
 
@@ -185,6 +186,10 @@ profile|lookahead)
     echo "lookahead 2 needs the console predictor image (bundles in \$BUNDLES_DIR)" >&2; exit 1
   fi
   deploy_pred "${PROFILE:-support}" "${LOOKAHEAD:-1}"
+  pf ;;
+early)    # BASELINE gateway early connect true|false (demo/early_connect_ab.py)
+  [ -f "$STATE" ] && . "$STATE"
+  BASE_EARLY_CONNECT="${2:?true|false}" deploy_base
   pf ;;
 pf) pf ;;
 pf-stop) pf_stop; echo "port-forwards stopped" ;;
