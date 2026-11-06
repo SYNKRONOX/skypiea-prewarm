@@ -65,7 +65,7 @@ def _publish(rel: Path, blob: bytes, sha: str | None = None) -> None:
 def test_not_published_yet_gives_a_clear_message(server, tmp_path) -> None:
     _, url = server
     p = _run(_repo(tmp_path), url)
-    assert p.returncode == 2 and "not published yet" in p.stderr
+    assert p.returncode == 2 and "not available" in p.stderr and "Nothing was changed" in p.stderr
 
 
 def test_refuses_plain_http_to_other_hosts(tmp_path) -> None:
@@ -104,3 +104,51 @@ def test_real_archive_round_trip(server, tmp_path) -> None:
     assert p.returncode == 0, p.stderr
     assert (repo / "models" / "lgbm-support-aabdfd2" / "MANIFEST.json").exists()
     assert (repo / "models" / "ATTRIBUTION.md").exists()
+
+
+def _dry(repo, **env):
+    e = {k: v for k, v in os.environ.items() if k not in ("MODELS_BASE_URL", "MODELS_REPO")}
+    return subprocess.run(["bash", "demo/fetch_models.sh"], cwd=repo, capture_output=True,
+                          text=True, env={**e, "FETCH_DRY_RUN": "1", **env})
+
+
+def _git_origin(repo: Path, url: str) -> None:
+    subprocess.run(["git", "init", "-q"], cwd=repo, check=True)
+    subprocess.run(["git", "remote", "add", "origin", url], cwd=repo, check=True)
+
+
+def test_default_url_comes_from_the_configured_slug(tmp_path) -> None:
+    repo = _repo(tmp_path)
+    _git_origin(repo, "git@gitlab.com:someone/fork.git")      # origin is ignored by default
+    p = _dry(repo)
+    assert p.returncode == 0, p.stderr
+    assert p.stdout.strip() == ("https://github.com/SYNKRONOX/skypiea-prewarm/releases/"
+                                f"download/v1.2/{ASSET}")
+
+
+def test_models_repo_override(tmp_path) -> None:
+    p = _dry(_repo(tmp_path), MODELS_REPO="team/fork")
+    assert p.stdout.strip().startswith("https://github.com/team/fork/releases/download/v1.2/")
+
+
+@pytest.mark.parametrize("origin", ["git@github.com:team/fork.git",
+                                    "https://github.com/team/fork.git",
+                                    "https://github.com/team/fork"])
+def test_empty_slug_falls_back_to_github_origin(tmp_path, origin) -> None:
+    repo = _repo(tmp_path)
+    _git_origin(repo, origin)
+    p = _dry(repo, MODELS_REPO="")
+    assert p.returncode == 0, p.stderr
+    assert p.stdout.strip().startswith("https://github.com/team/fork/releases/download/v1.2/")
+
+
+def test_empty_slug_with_non_github_origin_is_refused(tmp_path) -> None:
+    repo = _repo(tmp_path)
+    _git_origin(repo, "https://gitlab.com/team/fork.git")
+    p = _dry(repo, MODELS_REPO="")
+    assert p.returncode == 1 and "not a GitHub URL" in p.stderr
+
+
+def test_bad_slug_is_refused(tmp_path) -> None:
+    p = _dry(_repo(tmp_path), MODELS_REPO="a/b/c; rm")
+    assert p.returncode == 1 and "<owner>/<repo>" in p.stderr
