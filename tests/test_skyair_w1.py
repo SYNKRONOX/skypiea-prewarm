@@ -225,6 +225,7 @@ def test_report_metrics_and_scenario_check() -> None:
     assert r["invented_prices"] == 1 and r["llm_model"] == "m1" and r["llm_replies"] == 4
     assert scenario_done("failed_verification", conv.backend, conv.writes, conv.calls) is False
     assert "| m1 | 1 | 1 / 1 |" in table([{**r, "rep": 1}])
+    assert "no calls" in table([{**r, "rep": 1, "first_try_valid": None}])   # out of scope
 
 
 def test_a_wrong_code_the_customer_typed_is_not_counted_as_invented() -> None:

@@ -205,7 +205,8 @@ def table(rows: list[dict]) -> str:
         th95 = [r["think_ms_p95"] for r in rs if r["think_ms_p95"] is not None]
         lines.append(
             f"| {m} | {len(rs)} | {sum(1 for r in rs if r['completed'])} / {len(rs)} | "
-            f"{sum(ftv) / len(ftv):.2f} | {sum(r['invented_codes'] for r in rs)} | "
+            f"{(f'{sum(ftv) / len(ftv):.2f}' if ftv else 'no calls')} | "
+            f"{sum(r['invented_codes'] for r in rs)} | "
             f"{sum(r['invented_prices'] for r in rs)} | {sum(r['truth_badges'] for r in rs)} | "
             f"{sum(r['text_calls'] for r in rs)} | "
             f"{(nearest_rank(th, 50) or 0) / 1000:.2f} s / {(max(th95) if th95 else 0) / 1000:.2f}"

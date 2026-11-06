@@ -631,7 +631,9 @@ def make_app(console: Console) -> Starlette:
 
     async def report_ep(request: Request) -> Response:
         from console.bakeoff import report
-        conv = c.conv if (c.conv and c.conv.calls) else (c.previous or c.conv)
+        # the current conversation once it has a turn (a conversation without tool calls,
+        # e.g. out of scope, is still the one to report); before that, the previous one
+        conv = c.conv if (c.conv and c.conv.turn) else (c.previous or c.conv)
         if conv is None:
             return JSONResponse({"error": "no conversation"}, status_code=404)
         sc = request.query_params.get("scenario")
