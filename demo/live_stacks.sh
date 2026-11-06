@@ -199,9 +199,11 @@ pf) pf ;;
 pf-stop) pf_stop; echo "port-forwards stopped" ;;
 down)
   pf_stop
-  helm uninstall skypiea-pred --kube-context "$CTX" -n "$PRED" 2>/dev/null || true
-  helm uninstall skypiea-base --kube-context "$CTX" -n "$BASE" 2>/dev/null || true
-  kubectl --context "$CTX" delete ns "$PRED" "$BASE" --wait=false 2>/dev/null || true
-  echo "both stacks removed" ;;
+  n=0
+  helm uninstall skypiea-pred --kube-context "$CTX" -n "$PRED" >/dev/null 2>&1 && n=$((n + 1))
+  helm uninstall skypiea-base --kube-context "$CTX" -n "$BASE" >/dev/null 2>&1 && n=$((n + 1))
+  kubectl --context "$CTX" delete ns "$PRED" "$BASE" --wait=false >/dev/null 2>&1 || true
+  if [ $n = 0 ]; then echo "no live stacks were installed (context $CTX): nothing to remove"
+  else echo "removed $n live stack(s) (context $CTX)"; fi ;;
 *) echo "usage: $0 up [support|coding] | profile support|coding | pf | pf-stop | down" >&2; exit 2 ;;
 esac
