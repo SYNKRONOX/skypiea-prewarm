@@ -75,6 +75,9 @@ On the WSL2 laptop of [`DEMO.md`](DEMO.md) (Prerequisites), 2026-11-06, branch
 | What | Result |
 |---|---|
 | `make test` (in this checkout) | 461 passed, 6 skipped in 129 s (pytest's own timer) |
+| `make test` on the final branch code | 472 passed, 6 skipped in 148 s |
+| `demo/ci_e2e.sh` again on the final code, cluster `skypiea-rt` already up | PASS in 282 s (`make demo` 137 s, scripted agent 145 s) |
+| `make setup` / `make test` in a fresh clone (new folder, clean venv) | 39 s / 474 passed, 2 skipped in 135 s |
 | `demo/ci_e2e.sh` on a new cluster `skypiea-rt` (warm Docker build cache, all 16 tool images, platform and predictor rebuilt for a new tag) | PASS in 448 s: doctor 1 s, `make demo` 301 s, scripted agent 145 s, all 16 tool Deployments at 0 replicas 1 s later |
 
 The `make demo` table of that run (kind, SYNTHETIC sessions: a functional demo, not results):

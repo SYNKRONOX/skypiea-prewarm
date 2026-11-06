@@ -16,3 +16,5 @@
 | 12 | `make aws-apply` without `AWS_CONFIRM` on a machine that has the aws CLI and Terraform | none: refused before any call, exit 1. `make aws-plan` was NOT run here: with credentials present it would call AWS | - | - |
 | 13 | README Tier 1 from the fresh clone (test cluster variables, ports 29080+/3400 because the first checkout's forwards held 28080+): `make demo` a second time on an existing cluster | none: reused cluster and images, both replays `FAILURES: none`, 153 s, exit 0 | - | - |
 | 14 | `bin/skypiea --context <ctx> status` and `make demo-failures` from the fresh clone | none: status table printed; failure injection "PASS: every call succeeded" | - | - |
+| 15 | `make demo-clean` twice (test cluster) | none blocking: both exit 0 and the cluster, registry and `.demo/` are gone; the second run says "removed registry" although none was left (R8, `deploy/`), and the message pointed to `docker rmi` instead of `make clean-images` | message now names `make clean-images` | (this commit) |
+| 16 | Final `demo/ci_e2e.sh` on the final code (test cluster reused) | none: PASS in 282 s | - | - |

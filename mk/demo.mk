@@ -11,7 +11,7 @@ demo-clean:              ## stop port-forwards, delete the kind cluster + regist
 	-demo/portforward.sh stop
 	deploy/kind/down.sh
 	rm -rf .demo models/lgbm-prd-demo-*
-	@echo "Docker images skypiea/* are kept (docker image prune / docker rmi to remove them)."
+	@echo "Docker images skypiea/* are kept (make clean-images removes them)."
 
 LLM    ?= scripted
 POLICY ?= predictive
