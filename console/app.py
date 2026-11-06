@@ -489,7 +489,9 @@ def make_app(console: Console) -> Starlette:
                 return JSONResponse({"error": f"name: {sorted(DEMOS)}"}, status_code=400)
             c.spawn(c.switch_demo(d["name"]))
         else:
-            return JSONResponse({"error": "unknown action"}, status_code=404)
+            return JSONResponse({"error": f"unknown action {name!r}", "actions": [
+                "reset", "replay", "policy", "hint", "typing", "mirror", "predictor", "demo",
+                "lookahead", "cpm"]}, status_code=404)
         return JSONResponse({"ok": True, "settings": c.settings}, status_code=202)
 
     async def personas_ep(_: Request) -> Response:

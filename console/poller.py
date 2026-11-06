@@ -35,6 +35,7 @@ class Poller:
         self.errors: dict[str, str | None] = dict.fromkeys(clients)
         self.model: dict[str, Any] = {}
         self.policy: dict[str, Any] = {}
+        self.links: dict[str, str] = {}       # gateway reachability (port-forward health)
         self._last_slow = 0.0
 
     # ---------------- pure helpers (tested offline) ----------------
@@ -114,8 +115,14 @@ class Poller:
                 self.policy = await self.clients["base"].policy()
             except Exception:  # noqa: BLE001
                 self.policy = {"error": "unreachable"}
+            for key, cl in self.clients.items():
+                try:
+                    r = await cl.http.get(f"{cl.s.gateway}/healthz", timeout=2)
+                    self.links[key] = "ok" if r.status_code == 200 else f"http {r.status_code}"
+                except Exception as e:  # noqa: BLE001
+                    self.links[key] = f"down ({type(e).__name__})"
             await self.publish({"type": "slow", "idle": self.idle, "model": self.model,
-                                "baseline_policy": self.policy})
+                                "baseline_policy": self.policy, "links": self.links})
 
     async def run(self) -> None:
         while True:

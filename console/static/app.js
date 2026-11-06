@@ -15,6 +15,9 @@ function el(tag, cls, text) {
 }
 const fmtMs = (v) => (v === null || v === undefined) ? "–" :
   (v >= 1000 ? (v / 1000).toFixed(2) + " s" : Math.round(v) + " ms");
+// money: never scientific notation; tiny amounts as "<$0.00001", small ones with 5 decimals
+const fmtUsd = (v) => (v === null || v === undefined) ? "–" : v === 0 ? "$0.00" :
+  v < 0.00001 ? "<$0.00001" : v < 0.01 ? "$" + v.toFixed(5) : "$" + v.toFixed(2);
 const fmtN = (v, d = 0) => (v === null || v === undefined) ? "–" : Number(v).toFixed(d);
 
 async function post(path, body) {
@@ -195,7 +198,7 @@ function renderTotals(T) {
                tile(k, fmtMs(x.added_p50_ms), "added p50 (n=" + x.n_added + ")"),
                tile(k, fmtMs(x.added_p95_ms), "added p95 (n=" + x.n_added + ")"),
                tile(k, fmtN(x.idle_pod_s, 1) + " s", "idle pod-seconds"),
-               tile(k, "$" + (x.idle_cost_usd || 0).toExponential(2), "est. idle cost (assumption)"));
+               tile(k, fmtUsd(x.idle_cost_usd || 0), "est. idle cost (assumption)"));
   }
 }
 
@@ -298,7 +301,12 @@ function handle(ev) {
     case "settings": applySettings(ev.settings); break;
     case "status": status(ev.text, ev.level); break;
     case "pods": renderGrid(ev.grid); break;
-    case "slow": onModel(ev.model); break;
+    case "slow":
+      onModel(ev.model);
+      if (ev.links && Object.values(ev.links).some((v) => v !== "ok"))
+        status("connection: baseline gateway " + ev.links.base + ", Skypiea gateway " +
+               ev.links.pred + " (port-forwards restart by themselves; else run make live-pf)", "warn");
+      break;
     case "totals": renderTotals(ev.totals); break;
     case "predictor": renderPredictor(ev.decisions || []); break;
     case "reset": case "conversation":

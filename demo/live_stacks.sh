@@ -137,12 +137,16 @@ deploy_pred() {   # profile [lookahead]
 
 pf_stop() {
   for f in "$PFDIR"/*.pid; do
-    if [ -e "$f" ]; then kill "$(cat "$f")" 2>/dev/null || true; rm -f "$f"; fi
+    if [ -e "$f" ]; then
+      kill -- -"$(cat "$f")" 2>/dev/null || kill "$(cat "$f")" 2>/dev/null || true
+      rm -f "$f"
+    fi
   done
   return 0
 }
-fwd() {   # name ns svc local remote
-  nohup kubectl --context "$CTX" -n "$2" port-forward --address 127.0.0.1 "svc/$3" "$4:$5" \
+fwd() {   # name ns svc local remote: SUPERVISED (restarts within ~1 s when the pod is replaced)
+  setsid nohup bash -c "while true; do kubectl --context '$CTX' -n '$2' port-forward \
+    --address 127.0.0.1 'svc/$3' '$4:$5'; echo \"port-forward exited; restarting\"; sleep 1; done" \
     >"$PFDIR/$1.log" 2>&1 &
   echo $! >"$PFDIR/$1.pid"
 }
