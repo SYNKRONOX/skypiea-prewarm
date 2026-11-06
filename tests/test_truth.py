@@ -90,3 +90,24 @@ def test_truth_in_the_engine_agree_disagree_and_correction() -> None:
     assert "Not done: the booking was not changed" in csv and "truth_verdict" in csv
     assert any(e["type"] == "truth" for e in events)
     assert any(e["type"] == "booking" for e in events)
+
+
+def test_booking_endpoint_and_chat_view() -> None:
+    pytest.importorskip("starlette")
+    from starlette.testclient import TestClient
+
+    from console.app import Console, chat_view, make_app
+    from console.llm_stream import ScriptedStreamingLLM
+    from tests.test_console import FakeStack
+
+    c = Console(ScriptedStreamingLLM([]), base=FakeStack("base"), pred=FakeStack("pred"),
+                start_poller=False)
+    with TestClient(make_app(c)) as cl:
+        r = cl.get("/api/skyair/state").json()
+        assert r["writes"] == [] and r["truth"] == []
+        assert "Booking record" in cl.get("/").text
+    v = chat_view([{"role": "system", "content": "x"}, {"role": "user", "content": "hi"},
+                   {"role": "assistant", "content": ""}, {"role": "tool", "content": "{}"},
+                   {"role": "assistant", "content": "Hello"}])
+    assert v == [{"role": "user", "text": "hi", "turn": 1},
+                 {"role": "assistant", "text": "Hello", "turn": 1}]

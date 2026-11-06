@@ -350,13 +350,15 @@ function handle(ev) {
       S.llmModel = ev.llm_model; S.pricing = ev.pricing;
       applySettings(ev.settings); applyDemo(ev.demo);
       resetView(ev.conversation && ev.conversation.id);
-      { const cv = ev.conversation || {}, last = {};
-        for (const m of cv.chat || []) {
-          const b = addMsg(m.role === "user" ? "user" : "agent", m.text, m.role === "user" ? "Customer · turn " + m.turn : "Skye");
-          if (m.role !== "user") last[m.turn] = b; }
+      { const cv = ev.conversation || {}, last = {}, calls = cv.calls || [], chat = cv.chat || [];
+        const turns = [...new Set([...chat.map((m) => m.turn), ...calls.map((c) => c.turn)])].sort((a, b) => a - b);
+        for (const t of turns) {     // user text, then the turn's tool calls, then Skye's text
+          for (const m of chat.filter((x) => x.turn === t && x.role === "user")) addMsg("user", m.text, "Customer · turn " + t);
+          for (const c of calls.filter((x) => x.turn === t)) onCall(c);
+          for (const m of chat.filter((x) => x.turn === t && x.role !== "user")) last[t] = addMsg("agent", m.text, "Skye");
+        }
         for (const t of cv.truth || []) { S.lastAgent = last[t.turn]; onTruth(t); }
         S.lastAgent = null; }
-      for (const c of (ev.conversation ? ev.conversation.calls : [])) onCall(c);
       for (const t of (ev.conversation ? ev.conversation.turns || [] : [])) renderTurn(t);
       for (const a of (ev.conversation ? ev.conversation.abandoned || [] : [])) renderAbandoned(a);
       if (ev.conversation) { renderTotals(ev.conversation.totals);
