@@ -176,3 +176,7 @@ Running log, newest last (the master task runs unattended; see docs/handoff/AGEN
   llama3.1 sometimes writes tool calls as JSON text -> flagged recovery (tool_call_from_text);
   first starts on a NEW cluster include image pulls -> `live_stacks.sh up` pre-pulls the tool
   images onto the worker (every start = cached start, as E0 "cached").
+- STEP 7 first pass found a FAIRNESS BUG in the mirror (wait for both stacks -> the predictive
+  stack got the slow baseline's time as lead time). Two runs discarded (kept, marked INVALID,
+  in results/live_console_demo/invalid_wait_for_both_mirror/). Fixed with the gap-matched
+  baseline lane (1fe5fdf), tested. Verification restarts from a new fresh clone.
