@@ -1,13 +1,21 @@
 """Mirrored conversation engine of the Live Console.
 
 One conversation = one MCP session id, used on BOTH gateways. Every tool call the LLM makes is
-sent to the baseline stack and to the predictive stack with the same arguments:
-  concurrent (default): both at once - most visual; the two stacks' pod starts can compete
-                        for the node (recorded per call as start contention);
-  sequential:           predictive first, then baseline - no contention between the two
-                        calls (the predictive stack's own warm-ups may still be starting).
-The conversation continues with the PREDICTIVE stack's result. The mock tools are
-deterministic, so both results should be identical; any difference is flagged.
+sent to the predictive stack and to the baseline stack with the same arguments. The
+conversation runs on the PREDICTIVE stack (the LLM sees its result); the baseline repeats each
+call in its own lane with the SAME GAP: a baseline call is issued exactly as long after the
+baseline's previous call ended as the predictive call was after the predictive stack's previous
+call ended (the LLM think time, and between turns the human's time). So neither stack gets
+extra lead time from the other being slower. Both gaps are recorded per call.
+  concurrent (default): the baseline lane runs alongside the conversation - most visual; the
+                        two stacks' pod starts can compete for the node (recorded per call as
+                        start contention);
+  sequential:           the predictive stack runs the turn live; when the turn ends the
+                        baseline repeats that turn's calls (same gaps; a turn's first baseline
+                        call can come later than its gap, recorded) before the next turn may
+                        start - no overlap between the two stacks' calls.
+The mock tools are deterministic, so both results should be identical; any difference is
+flagged.
 
 Recorded per call (metadata only: no prompts, arguments or results are stored):
 turn, LLM reply id and position in the reply, LLM think time before the reply, tool and
@@ -43,7 +51,7 @@ CSV_FIELDS = ["conversation", "turn", "reply", "pos_in_reply", "replay", "llm_mo
               "hint",
               "baseline_policy", "profile", "results_match"] + [
     f"{s}_{f}" for s in ("base", "pred") for f in (
-        "wall_ms", "added_ms", "held_ms", "cold", "predicted", "warm_source", "ok",
+        "gap_ms", "wall_ms", "added_ms", "held_ms", "cold", "predicted", "warm_source", "ok",
         "contention_max_starting", "contention_samples")]
 
 
@@ -121,6 +129,46 @@ def evaluate_decisions(session: dict[str, Any]) -> list[dict[str, Any]]:
     return out
 
 
+class BaseLane:
+    """The baseline stack's own timeline (see the module docstring). ``gate`` holds the lane
+    while it is cleared (sequential mode: during the predictive turn)."""
+
+    def __init__(self, call_fn, clock):
+        self.call_fn, self.clock = call_fn, clock
+        self.q: asyncio.Queue = asyncio.Queue()
+        self.gate = asyncio.Event()
+        self.gate.set()
+        self.last_end: float | None = None
+        self.task = asyncio.create_task(self.run())
+
+    def submit(self, cls: str, args: dict[str, Any], gap_s: float | None) -> asyncio.Future:
+        fut = asyncio.get_running_loop().create_future()
+        self.q.put_nowait((cls, args, gap_s, fut))
+        return fut
+
+    async def run(self) -> None:
+        while True:
+            cls, args, gap_s, fut = await self.q.get()
+            try:
+                await self.gate.wait()
+                if self.last_end is not None and gap_s is not None:
+                    wait = self.last_end + gap_s - self.clock()
+                    if wait > 0:
+                        await asyncio.sleep(wait)
+                res, info, t0, t1 = await self.call_fn("base", cls, args)
+                gap = None if self.last_end is None else t0 - self.last_end
+                self.last_end = t1
+                fut.set_result((res, info, t0, t1, gap))
+            except Exception as e:  # noqa: BLE001 - delivered to the waiting call record
+                if not fut.done():
+                    fut.set_exception(e)
+            finally:
+                self.q.task_done()
+
+    async def drain(self) -> None:
+        await self.q.join()
+
+
 class Conversation:
     def __init__(self, task: Task, llm: Any, stacks: dict[str, Any], poller: Any, publish,
                  settings: dict[str, Any], clock=time.monotonic, mcp_factory=None):
@@ -137,6 +185,9 @@ class Conversation:
         self.reply = 0
         self.calls: list[dict[str, Any]] = []
         self.args: dict[int, dict[str, Any]] = {}   # in memory only (replay); never exported
+        self.pred_last_end: float | None = None
+        self._lane: BaseLane | None = None
+        self._pending: list[asyncio.Task] = []
         self.lock = asyncio.Lock()
         self.t0 = clock()
         self.idle0 = {k: dict(v) for k, v in poller.idle.items()}
@@ -150,14 +201,22 @@ class Conversation:
         res, info = await asyncio.to_thread(self.clients[key].call_tool, cls, args)
         return res, info, t0, self.clock()
 
-    async def mirror(self, cls: str, args: dict[str, Any]) -> dict[str, tuple]:
+    def lane(self) -> BaseLane:
+        loop = asyncio.get_running_loop()
+        if self._lane is None or self._lane.task.get_loop() is not loop:
+            self._lane = BaseLane(self._call_one, self.clock)
+        return self._lane
+
+    async def end_of_turn(self) -> None:
+        """Let the baseline lane finish this turn's calls (sequential: start it now), and wait
+        for every call record of the turn."""
+        lane = self.lane()
+        lane.gate.set()
+        await lane.drain()
         if self.settings["mirror"] == "sequential":
-            pred = await self._call_one("pred", cls, args)
-            base = await self._call_one("base", cls, args)
-        else:
-            base, pred = await asyncio.gather(self._call_one("base", cls, args),
-                                              self._call_one("pred", cls, args))
-        return {"base": base, "pred": pred}
+            lane.gate.clear()
+        pending, self._pending = self._pending, []
+        await asyncio.gather(*pending)
 
     async def predictor_refresh(self, delay_s: float = 0.4) -> None:
         await asyncio.sleep(delay_s)   # the gateway asks the predictor off the call path
@@ -199,10 +258,20 @@ class Conversation:
         cls, gargs = task.gateway_call(tc.name, args)
         await self.publish({"type": "call_start", "turn": self.turn, "reply": self.reply,
                             "pos": pos, "tool": tc.name, "tool_class": cls})
-        got = await self.mirror(cls, gargs)
-        for key, (_res, info, t0, t1) in got.items():
+        lane = self.lane()
+        if self.settings["mirror"] == "sequential":
+            lane.gate.clear()
+        p_res, p_info, p0, p1 = await self._call_one("pred", cls, gargs)
+        p_gap = None if self.pred_last_end is None else p0 - self.pred_last_end
+        self.pred_last_end = p1
+        fut = lane.submit(cls, gargs, p_gap)
+        rec["server"] = self._server(cls)
+        rec["tool_class"] = cls
+
+        def put(key: str, info: Any, t0: float, t1: float, gap: float | None) -> None:
             c = self.poller.contention(t0, t1)
-            rec.update({f"{key}_wall_ms": round(info.wall_ms, 1), f"{key}_added_ms":
+            rec.update({f"{key}_gap_ms": None if gap is None else round(gap * 1000, 1),
+                        f"{key}_wall_ms": round(info.wall_ms, 1), f"{key}_added_ms":
                         info.added_ms, f"{key}_held_ms": info.held_ms, f"{key}_cold": info.cold,
                         f"{key}_predicted": info.predicted,
                         f"{key}_warm_source": info.warm_source, f"{key}_ok": info.ok,
@@ -210,11 +279,20 @@ class Conversation:
                         f"{key}_contention_max_starting": c["max_starting"],
                         f"{key}_contention_samples": c["samples"],
                         f"{key}_t_s": round(t0 - self.t0, 3)})
-        rec["server"] = self._server(cls)
-        rec["tool_class"] = cls
-        rec["results_match"] = result_key(got["base"][0]) == result_key(got["pred"][0])
-        res, info = got["pred"][0], got["pred"][1]
-        return {"rec": rec, "args": args, "content": llm_content(res, info)}
+
+        put("pred", p_info, p0, p1, p_gap)
+
+        async def finish() -> dict[str, Any]:
+            try:
+                b_res, b_info, b0, b1, b_gap = await fut
+                put("base", b_info, b0, b1, b_gap)
+                rec["results_match"] = result_key(b_res) == result_key(p_res)
+            except Exception as e:  # noqa: BLE001
+                rec.update(base_ok=False, base_error=f"{type(e).__name__}"[:100],
+                           results_match=None)
+            return rec
+        return {"rec": rec, "args": args, "content": llm_content(p_res, p_info),
+                "finish": finish}
 
     def _server(self, cls: str) -> str:
         tm = yaml.safe_load((ROOT / "tools" / "tool_map.yaml").read_text())
@@ -223,9 +301,26 @@ class Conversation:
                 return s
         return tm["fallback"]
 
-    async def _emit_call(self, rec: dict[str, Any], args: dict[str, Any]) -> None:
-        self.args[len(self.calls)] = args
+    def _track(self, out: dict[str, Any]) -> None:
+        """Emit the call record once the baseline lane has repeated the call; slots are
+        reserved now so records keep the conversation's order."""
+        idx = len(self.calls) + len(self._pending)
+        if "finish" not in out:          # not sent (unknown tool)
+            self._pending.append(asyncio.create_task(self._emit_call(out["rec"], out["args"],
+                                                                     idx)))
+            return
+
+        async def done() -> None:
+            rec = await out["finish"]()
+            await self._emit_call(rec, out["args"], idx)
+        self._pending.append(asyncio.create_task(done()))
+
+    async def _emit_call(self, rec: dict[str, Any], args: dict[str, Any],
+                         idx: int | None = None) -> None:
+        rec["seq"] = len(self.calls) if idx is None else idx
+        self.args[rec["seq"]] = args
         self.calls.append(rec)
+        self.calls.sort(key=lambda c: c["seq"])
         await self.publish({"type": "call", "call": rec})
         await self.publish({"type": "totals", "totals": totals(self.calls, self.idle_delta(),
                                                                pricing())})
@@ -264,7 +359,11 @@ class Conversation:
                                                from_text=getattr(r, "from_text", False))
                     self.messages.append({"role": "tool", "tool_call_id": tc.id,
                                           "content": out["content"]})
-                    await self._emit_call(out["rec"], out["args"])
+                    self._track(out)
+            if self.settings["mirror"] == "sequential":
+                await self.publish({"type": "status_turn", "turn": self.turn,
+                                    "text": "baseline repeating this turn's calls (same gaps)"})
+            await self.end_of_turn()
             await self.publish({"type": "turn_end", "turn": self.turn})
 
     async def replay(self, calls: list[dict[str, Any]]) -> None:
@@ -276,6 +375,9 @@ class Conversation:
         async with self.lock:
             for c in calls:
                 if c["turn"] != self.turn:
+                    if self.turn:
+                        await self.end_of_turn()
+                        await self.publish({"type": "turn_end", "turn": self.turn})
                     self.turn = c["turn"]
                     await self.publish({"type": "turn_start", "turn": self.turn,
                                         "source": "replay", "text": "(replay)",
@@ -287,7 +389,8 @@ class Conversation:
                     self.reply += 1
                 tc = ToolCall("r", c["tool"], c.get("_args", {}), "{}")
                 out = await self.tool_call(tc, c["think_ms"], c["pos_in_reply"], replay=True)
-                await self._emit_call(out["rec"], out["args"])
+                self._track(out)
+            await self.end_of_turn()
             await self.publish({"type": "turn_end", "turn": self.turn})
 
     def close(self) -> None:

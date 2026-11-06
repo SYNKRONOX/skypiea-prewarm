@@ -8,6 +8,7 @@ import asyncio
 import csv
 import io
 import json
+import time
 
 import httpx
 import pytest
@@ -31,11 +32,13 @@ from console.poller import Poller  # noqa: E402
 
 # ---------------------------------------------------------------- fakes
 class FakeGW:
-    """Gateway double: first call of a class is cold (2500 ms added); records arguments."""
+    """Gateway double: first call of a class is cold (2500 ms added, and `cold_s` of real
+    waiting); records arguments and request times."""
 
-    def __init__(self, name: str, result_extra: dict | None = None):
+    def __init__(self, name: str, result_extra: dict | None = None, cold_s: float = 0.0):
         self.name, self.seen, self.warm = name, [], set()
         self.extra = result_extra or {}
+        self.cold_s, self.times = cold_s, []
 
     def __call__(self, req: httpx.Request) -> httpx.Response:
         if req.method == "DELETE":
@@ -45,6 +48,10 @@ class FakeGW:
         self.seen.append((req.headers.get(SESSION_HEADER), name, body["params"]["arguments"]))
         cold = name not in self.warm
         self.warm.add(name)
+        t0 = time.monotonic()
+        if cold and self.cold_s:
+            time.sleep(self.cold_s)
+        self.times.append((t0, time.monotonic()))
         return httpx.Response(200, headers={
             SESSION_HEADER: req.headers.get(SESSION_HEADER, "x"),
             "X-Skypiea-Cold": "1" if cold else "0",
@@ -306,3 +313,41 @@ def test_null_arguments_are_dropped_and_tool_errors_reach_the_llm() -> None:
            "isError": True}
     out = llm_content(err, SimpleNamespace(ok=False, error="tool returned isError"))
     assert "valid integer" in out
+
+
+def test_baseline_lane_sees_the_same_gaps_as_the_predictive_stack() -> None:
+    """A slow (cold) baseline must not give the predictive stack extra lead time, and the
+    baseline must get the same gap after its own previous call."""
+    gws = {"base": FakeGW("base", cold_s=0.4), "pred": FakeGW("pred")}
+
+    async def publish(ev):
+        pass
+    llm = ScriptedStreamingLLM([[("user_lookup", {}), ("reservation_lookup", {}),
+                                 ("flight_search", {})]])
+    conv = Conversation(AIRLINE, llm, {"base": FakeStack("base"), "pred": FakeStack("pred")},
+                        NullPoller(), publish, {"mirror": "concurrent", "hint": False,
+                                                "baseline_policy": "scale_to_zero"},
+                        mcp_factory=factory(gws))
+    asyncio.run(conv.user_turn("x"))
+    assert len(conv.calls) == 3 and [c["seq"] for c in conv.calls] == [0, 1, 2]
+    for c in conv.calls[1:]:
+        assert c["base_gap_ms"] == pytest.approx(c["pred_gap_ms"], abs=60)
+    # the predictive stack did not wait for the slow baseline: its calls are back to back
+    p = gws["pred"].times
+    assert p[2][0] - p[0][0] < 0.4
+
+
+def test_sequential_mode_runs_the_baseline_after_the_turn_without_overlap() -> None:
+    gws = {"base": FakeGW("base", cold_s=0.1), "pred": FakeGW("pred", cold_s=0.1)}
+
+    async def publish(ev):
+        pass
+    llm = ScriptedStreamingLLM([[("user_lookup", {}), ("reservation_lookup", {})]])
+    conv = Conversation(AIRLINE, llm, {"base": FakeStack("base"), "pred": FakeStack("pred")},
+                        NullPoller(), publish, {"mirror": "sequential", "hint": False,
+                                                "baseline_policy": "scale_to_zero"},
+                        mcp_factory=factory(gws))
+    asyncio.run(conv.user_turn("x"))
+    last_pred_end = gws["pred"].times[-1][1]
+    assert all(t0 >= last_pred_end for t0, _ in gws["base"].times)
+    assert conv.calls[1]["base_gap_ms"] == pytest.approx(conv.calls[1]["pred_gap_ms"], abs=60)

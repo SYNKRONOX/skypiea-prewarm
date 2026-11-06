@@ -116,6 +116,7 @@ function callTags(c, k) {
   if (!c[k + "_ok"]) add("FAILED " + (c[k + "_error"] || ""), "bad");
   add(c[k + "_cold"] ? "cold" : "warm", c[k + "_cold"] ? "cold" : "warm");
   add("added " + fmtMs(c[k + "_added_ms"]));
+  if (c[k + "_gap_ms"] !== null && c[k + "_gap_ms"] !== undefined) add("gap " + fmtMs(c[k + "_gap_ms"]));
   if (c[k + "_held_ms"]) add("held " + fmtMs(c[k + "_held_ms"]));
   if (c[k + "_predicted"]) add(c[k + "_warm_source"] === "hint" ? "warmed by hint" : "predicted",
                                c[k + "_warm_source"] === "hint" ? "hint" : "");
@@ -280,6 +281,7 @@ function handle(ev) {
       break;
     case "call_start": status("calling " + ev.tool + " on both stacks…"); break;
     case "call": onCall(ev.call); break;
+    case "status_turn": status(ev.text); break;
     case "turn_end": status("your turn"); break;
     case "error": status(ev.where + ": " + ev.detail, "error"); break;
   }

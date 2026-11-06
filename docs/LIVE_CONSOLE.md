@@ -118,12 +118,25 @@ Resource use on the laptop (docs/DEMO.md has the table): both stacks idle take a
 ## 3. Mirrored execution
 
 Each tool call the LLM makes goes to **both** gateways with the same arguments and the same
-MCP session id (`console/engine.py`):
+MCP session id (`console/engine.py`). The conversation runs on the **predictive** stack, and
+the LLM sees its result. The baseline repeats every call in its own lane **with the same
+gap**: a baseline call is issued exactly as long after the baseline's previous call ended as
+the predictive call was after the predictive stack's previous call ended. That gap is the LLM's
+think time, and between turns the human's time. Both gaps are recorded per call
+(`pred_gap_ms`, `base_gap_ms`) and shown in the timeline.
 
-- **concurrent** (default): both at once. This is the most visual mode, but the two stacks'
-  pod starts compete for the node.
-- **sequential**: predictive first, then baseline. The two calls cannot compete with each
-  other (other starts can still be running).
+Why: our first design waited for both stacks before the LLM's next step. When the baseline
+was cold and therefore slower, the predictive stack's warm-up got the baseline's extra time as
+free lead time. In a verification run this turned a 2.5 s wait into 0.5 s. We discarded those
+runs (see the report) and changed the design.
+
+- **concurrent** (default): the baseline lane runs alongside the conversation. This is the
+  most visual mode; the two stacks' pod starts can compete for the node (recorded).
+- **sequential**: the predictive stack runs the turn live. When the turn ends, the baseline
+  repeats that turn's calls with the same gaps before the next turn may start. The stacks'
+  calls never overlap. A turn's first baseline call can come later than its gap (recorded),
+  which can only make the baseline colder under keep-alive. Under scale-to-zero it makes no
+  difference once the pod is gone.
 
 The conversation continues with the predictive stack's result. The mock tools are
 deterministic, so both results should be identical; the console compares them and flags
