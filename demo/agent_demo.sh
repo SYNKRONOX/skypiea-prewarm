@@ -25,9 +25,19 @@ if [ "$LLM" = openai-compatible ]; then
     exit 1; }
 fi
 rc=0
+mkdir -p "$OUT"
 for S in A B; do
-  "$PY" -m agent.run --scenario "$S" --policy "$POLICY" --llm "$LLM" --sessions "$N" \
-    --out-dir "$OUT" "${URLS[@]}" || rc=1
+  err="$OUT/agent_${S}.stderr"
+  if ! "$PY" -m agent.run --scenario "$S" --policy "$POLICY" --llm "$LLM" --sessions "$N" \
+      --out-dir "$OUT" "${URLS[@]}" 2> >(tee "$err" | grep -v -e '^Traceback' -e '^  ' >&2); then
+    rc=1
+    if grep -q Traceback "$err"; then
+      echo "!! scenario $S stopped: $(grep -E '^[A-Za-z_.]+(Error|Exception)' "$err" | tail -1)" >&2
+      echo "   The gateway or the cluster stopped answering (Docker stopped or restarted?)." >&2
+      echo "   Check with make doctor; then make demo-portforward, or re-run make demo." >&2
+      echo "   Full Python trace: $err" >&2
+    fi
+  fi
 done
 "$PY" -m agent.summarize --dir "$OUT" --llm "$LLM" >/dev/null && \
   echo "summary: $OUT/summary.md (functional demo, not results)"
