@@ -60,6 +60,9 @@ tools:
 # E0 must run WITHOUT the controller (it scales tools itself): --set platform.enabled=false.
 platform:
   enabled: true
+  # Live console only (configs/live/console_tool_map.yaml): class -> server overrides on the
+  # gateway and controller. Empty = tools/tool_map.yaml unchanged (every result, AWS).
+  classOverrides: {}
   gateway:
     replicas: 1
     holdMs: 150              # FR-9

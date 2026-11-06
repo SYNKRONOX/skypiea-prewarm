@@ -406,7 +406,11 @@ class Gateway:
                              "decisions": list(s.decisions)})
 
     async def healthz(self, _: Request) -> Response:
-        return JSONResponse({"status": "ok", "sessions": len(self.sessions)})
+        body = {"status": "ok", "sessions": len(self.sessions)}
+        from tools.common.toolmap import env_overrides
+        if ov := env_overrides():          # live console mapping only; absent otherwise
+            body["class_overrides"] = ov
+        return JSONResponse(body)
 
     async def metrics_ep(self, _: Request) -> Response:
         self.metrics.sessions.set(len(self.sessions))

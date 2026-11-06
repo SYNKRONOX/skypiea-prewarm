@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+import os
 import re
 from dataclasses import dataclass
 from functools import lru_cache
@@ -59,9 +61,39 @@ def parse(cfg: dict) -> ToolMap:
     return ToolMap(servers, cfg["fallback"], pats)
 
 
+OVERRIDES_ENV = "SKYPIEA_CLASS_OVERRIDES"
+
+
+def apply_overrides(cfg: dict, overrides: dict[str, str]) -> dict:
+    """Move each class to the named server (live console mapping; empty = unchanged)."""
+    if not overrides:
+        return cfg
+    servers = {n: {**s, "classes": [c for c in s.get("classes", []) if c not in overrides]}
+               for n, s in cfg["servers"].items()}
+    for cls, server in overrides.items():
+        if server not in servers:
+            raise ValueError(f"override {cls!r} -> unknown server {server!r}")
+        servers[server]["classes"].append(cls)
+    return {**cfg, "servers": servers}
+
+
+def env_overrides() -> dict[str, str]:
+    raw = os.environ.get(OVERRIDES_ENV, "")
+    if not raw:
+        return {}
+    d = json.loads(raw)
+    if not isinstance(d, dict) or not all(isinstance(k, str) and isinstance(v, str)
+                                          for k, v in d.items()):
+        raise ValueError(f"{OVERRIDES_ENV} must be a JSON object of class -> server")
+    return d
+
+
 @lru_cache(maxsize=1)
 def load(path: str | Path = TOOL_MAP_PATH) -> ToolMap:
-    return parse(yaml.safe_load(Path(path).read_text(encoding="utf-8")))
+    """tools/tool_map.yaml, with the console-only class overrides of SKYPIEA_CLASS_OVERRIDES
+    applied if that variable is set (it is not, except on the live console's stacks)."""
+    cfg = yaml.safe_load(Path(path).read_text(encoding="utf-8"))
+    return parse(apply_overrides(cfg, env_overrides()))
 
 
 def k8s_name(server: str) -> str:

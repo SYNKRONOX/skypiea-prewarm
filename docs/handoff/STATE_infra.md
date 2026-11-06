@@ -197,3 +197,10 @@ Running log, newest last (the master task runs unattended; see docs/handoff/AGEN
   profile only if at the shipped threshold its VAL equal-idle margin over the lookahead-1
   curve is > 0 with the 95% session-bootstrap CI above 0, and its margin over keep-alive is not
   below lookahead 1's. TEST once afterwards, reported regardless.
+- Lookahead VAL done (results/sim_lookahead_val.md): support +0.00 vs la1 (all extra classes
+  map to travel_booking, already warmed); coding la2 vs keep-alive +3.02 [2.01, 4.00] < la1
+  +3.56 [2.66, 4.58], la2 idle outside the la1 curve. Rule: NOT adopted, no variant. TEST once
+  next. Data: ~/skypiea-model/data/processed (read-only).
+- Console mapping (configs/live/console_tool_map.yaml) via SKYPIEA_CLASS_OVERRIDES / chart
+  platform.classOverrides (default empty, default render identical); search gets opt-in
+  flight args; predictor PREDICTOR_DECIDE_OVERRIDES (lookahead only, after golden check).

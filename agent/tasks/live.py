@@ -24,9 +24,15 @@ sample repository; an edit is not visible to later calls (each tool runs in its 
 
 from __future__ import annotations
 
+from dataclasses import fields
+from pathlib import Path
 from typing import Any
 
+import yaml
+
 from agent.tasks import Task, fn
+
+CONSOLE_MAP = Path(__file__).resolve().parents[2] / "configs" / "live" / "console_tool_map.yaml"
 
 PROFILE_LABELS = {
     "support": "support profile, trained on tau2-bench traces",
@@ -146,3 +152,23 @@ CODEFIX = CodeFix(
     aliases={"edit_file": "write_file", "shell": "shell_other"})
 
 SCRIPTS = {"airline": AIRLINE_SCRIPT, "codefix": CODEFIX_SCRIPT}
+
+
+class AirlineConsoleMap(Airline):
+    """The airline task for stacks deployed with the console mapping
+    (configs/live/console_tool_map.yaml): flight_search runs on the `search` server, the
+    handover (class escalate) on `generic_fallback`. Same LLM-facing tools and classes."""
+
+    def gateway_call(self, tool: str, args: dict[str, Any]) -> tuple[str, dict[str, Any]]:
+        if tool == "transfer_to_human":
+            return "escalate", {"tool_name": "transfer_to_human", "tool_class": "escalate",
+                                "arguments": {"summary": args.get("body", "")}}
+        return super().gateway_call(tool, args)
+
+
+def console_overrides() -> dict[str, str]:
+    return dict(yaml.safe_load(CONSOLE_MAP.read_text())["overrides"])
+
+
+AIRLINE_CM = AirlineConsoleMap(**{**{f.name: getattr(AIRLINE, f.name) for f in fields(AIRLINE)},
+                                  "scenario": "airline_cm", "name": "airline_support_cm"})

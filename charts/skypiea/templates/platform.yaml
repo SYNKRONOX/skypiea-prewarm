@@ -73,6 +73,9 @@ spec:
           ports: [{name: api, containerPort: 8081}]
           env:
             - {name: SKYPIEA_NAMESPACE, value: {{ $ns | quote }}}
+            {{- with $p.classOverrides }}
+            - {name: SKYPIEA_CLASS_OVERRIDES, value: {{ toJson . | quote }}}
+            {{- end }}
             - {name: SKYPIEA_DEFAULT_TTL_S, value: {{ $p.controller.defaultTtlS | quote }}}
             - {name: SKYPIEA_PURGE_S, value: {{ $p.controller.purgeS | quote }}}
             - {name: SKYPIEA_MIN_DWELL_S, value: {{ $p.controller.minDwellS | quote }}}
@@ -164,6 +167,9 @@ spec:
           ports: [{name: http, containerPort: 8080}]
           env:
             - {name: SKYPIEA_NAMESPACE, value: {{ $ns | quote }}}
+            {{- with $p.classOverrides }}
+            - {name: SKYPIEA_CLASS_OVERRIDES, value: {{ toJson . | quote }}}
+            {{- end }}
             - {name: SKYPIEA_HOLD_MS, value: {{ $p.gateway.holdMs | quote }}}
             - {name: SKYPIEA_COLD_TIMEOUT_S, value: {{ $p.gateway.coldTimeoutS | quote }}}
             - {name: SKYPIEA_DEMAND_TTL_S, value: {{ $p.gateway.demandTtlS | quote }}}

@@ -1,0 +1,14 @@
+# Console-only class -> server overrides for the Live Console's airline demo (make live).
+# NOT used by any result, by AWS, or by the default chart: tools/tool_map.yaml stays the
+# mapping of record. With tools/tool_map.yaml alone, the five airline classes all run on ONE
+# server (travel_booking), so after the first airline call every other one is warm and
+# prediction cannot show anything. The console mapping spreads them over distinct servers:
+#   user_lookup                                   -> user_lookup     (unchanged)
+#   reservation_lookup / _modify / _cancel        -> travel_booking  (unchanged)
+#   flight_search                                 -> search          (console mapping)
+#   escalate (transfer_to_human)                  -> generic_fallback (console mapping)
+# Applied through SKYPIEA_CLASS_OVERRIDES on the gateway and controller of BOTH stacks
+# (chart value platform.classOverrides; demo/live_stacks.sh, LIVE_CONSOLE_MAP=1 by default).
+overrides:
+  flight_search: search
+  escalate: generic_fallback

@@ -21,12 +21,36 @@ FILE_SIZES = LINES.groupby("path").size()
 mcp = create_server(NAME, "Search the sample repository.")
 
 
+def _flights(origin: str, destination: str, day: int) -> dict:
+    """Flight search for the live console mapping; the table is read on first use only, so
+    the server's startup is unchanged."""
+    from tools.common.data import SUPPORT_DIR
+
+    global _FLIGHTS
+    if _FLIGHTS is None:
+        _FLIGHTS = pd.read_json(SUPPORT_DIR / "flights.json")
+    f = _FLIGHTS[(_FLIGHTS["origin"] == origin) & (_FLIGHTS["destination"] == destination)]
+    if day:
+        f = f[f["day"] == day]
+    f = f[f["seats_left"] > 0].sort_values(["price", "flight_no"]).head(5)
+    return {"action": "search", "origin": origin, "destination": destination,
+            "flights": f[["flight_no", "day", "depart", "price", "cabin"]].to_dict("records")}
+
+
+_FLIGHTS = None
+
+
 @mcp.tool(name=NAME)
 @instrument(NAME)
 async def search(query: str = "def", regex: bool = False, glob: str = "",
-                 max_results: int = 20, service_ms: int | None = None) -> dict:
-    """Find lines matching query (substring, or regex if regex=true); or list files by glob."""
+                 max_results: int = 20, origin: str = "", destination: str = "", day: int = 0,
+                 action: str = "", service_ms: int | None = None) -> dict:
+    """Find lines matching query (substring, or regex if regex=true); or list files by glob.
+    Live console mapping only (flight_search -> search): with origin and destination, search
+    flights instead (same data and answer as travel_booking's search). Off by default."""
     await burn(service_ms, "io")
+    if origin and destination:
+        return _flights(origin, destination, day)
     if glob:
         files = [p for p in FILE_SIZES.index if fnmatch.fnmatch(p, glob)]
         return {"glob": glob, "files": files}

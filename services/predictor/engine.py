@@ -22,7 +22,7 @@ import json
 import math
 import time
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass, fields
+from dataclasses import dataclass, fields, replace
 from pathlib import Path
 from typing import Any
 
@@ -109,6 +109,24 @@ class Bundle:
     @property
     def vocabulary(self) -> tuple[str, ...]:
         return tuple(self.manifest["vocabulary"])
+
+
+DECIDE_OVERRIDE_KEYS = ("lookahead",)
+
+
+def with_decide_overrides(b: Bundle, overrides: Mapping[str, Any]) -> Bundle:
+    """The bundle served with decide-config overrides (live console: lookahead=2). Applied
+    AFTER the bundle was verified with its own decide.yaml (golden answers); only the keys in
+    DECIDE_OVERRIDE_KEYS are allowed. Empty overrides return the bundle unchanged."""
+    if not overrides:
+        return b
+    bad = set(overrides) - set(DECIDE_OVERRIDE_KEYS)
+    if bad:
+        raise BundleError(f"decide overrides not allowed: {sorted(bad)}")
+    cfg = b.cfg.with_(**overrides)
+    if cfg.lookahead not in (1, 2):
+        raise BundleError("lookahead must be 1 or 2")
+    return replace(b, cfg=cfg, decider=Decider(b.ladder, b.decider.graph, b.decider.cold, cfg))
 
 
 def sha256(b: bytes) -> str:

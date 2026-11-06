@@ -68,6 +68,7 @@ from services.predictor.engine import (
     load_bundle,
     read_folder,
     warmup_p99_ms,
+    with_decide_overrides,
 )
 from services.predictor.schema import MAX_BODY_BYTES, TooLarge, parse_request
 
@@ -252,6 +253,16 @@ def _decide_sync(st: State, raw: bytes) -> tuple[int, dict[str, Any]]:
     return 200, out
 
 
+def decide_overrides() -> dict[str, Any]:
+    """PREDICTOR_DECIDE_OVERRIDES: JSON object, unset by default (the bundle's own policy).
+    Live console only, e.g. {"lookahead": 2}; reported in /healthz."""
+    raw = os.environ.get("PREDICTOR_DECIDE_OVERRIDES", "")
+    d = json.loads(raw) if raw else {}
+    if not isinstance(d, dict):
+        raise ValueError("PREDICTOR_DECIDE_OVERRIDES must be a JSON object")
+    return d
+
+
 def make_app(settings: Settings | None = None) -> Starlette:
     settings = settings or Settings.from_env()
     metrics = Metrics()
@@ -265,6 +276,7 @@ def make_app(settings: Settings | None = None) -> Starlette:
                 b = load_bundle(read_folder(Path(settings.model_path)), st.cold)
                 if settings.profile is not None and b.manifest.get("profile") != settings.profile:
                     raise BundleError(f"bundle is not for profile {settings.profile}")
+                b = with_decide_overrides(b, decide_overrides())
                 st.serve(b)
                 metrics.reloads.labels("startup_ok").inc()
             except (BundleError, OSError) as e:
@@ -294,6 +306,9 @@ def make_app(settings: Settings | None = None) -> Starlette:
                 "previous_version": st.previous.version if st.previous is not None else None,
                 "degraded_count": st.degraded_count,
                 "cold_start_matches_bundle": b.cold_match if b is not None else None}
+        if b is not None and decide_overrides():   # live console only; absent otherwise
+            body["decide_overrides"] = decide_overrides()
+            body["lookahead"] = b.cfg.lookahead
         return JSONResponse(body, status_code=200 if b is not None else 503)
 
     async def prom(request: Request) -> Response:
@@ -334,7 +349,8 @@ def make_app(settings: Settings | None = None) -> Starlette:
                 if st.cold is None:
                     raise Refused("no cold-start file loaded")
                 cold = st.cold
-                b = await run_in_threadpool(lambda: load_bundle(fetch(uri, settings), cold))
+                b = await run_in_threadpool(lambda: with_decide_overrides(
+                    load_bundle(fetch(uri, settings), cold), decide_overrides()))
                 p99 = await run_in_threadpool(_warmup, b)
                 if not math.isfinite(p99) or p99 > RELOAD_P99_MS:
                     raise Refused(f"warm-up p99 {p99:.1f} ms is over {RELOAD_P99_MS} ms")
