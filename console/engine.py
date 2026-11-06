@@ -48,7 +48,7 @@ ROOT = Path(__file__).resolve().parent.parent
 MAX_STEPS = 8
 CSV_FIELDS = ["conversation", "turn", "reply", "pos_in_reply", "replay", "llm_model",
               "think_ms", "tool_call_from_text", "tool", "tool_class", "server", "mirror_mode",
-              "hint", "hint_mode", "lookahead", "console_map",
+              "hint", "hint_mode", "lookahead", "console_map", "note",
               "baseline_policy", "profile", "results_match"] + [
     f"{s}_{f}" for s in ("base", "pred") for f in (
         "gap_ms", "wall_ms", "added_ms", "held_ms", "cold", "predicted", "warm_source", "ok",
@@ -194,6 +194,11 @@ class Conversation:
         self.typing_t: float | None = None            # first keystroke of the coming turn
         self.typing_hinted: set[int] = set()           # turns that got their typing hint
         self.turns: list[dict[str, Any]] = []          # per-turn records (lead time, 1st call)
+        # Skypiea Air: the conversation's own mock database session (writes persist here)
+        self.backend = None
+        if task.scenario == "skyair":
+            from agent.skyair.tools import Session
+            self.backend = Session()
         self.abandoned: list[dict[str, Any]] = []      # typing hints whose turn never came
         self.lock = asyncio.Lock()
         self.t0 = clock()
@@ -287,14 +292,17 @@ class Conversation:
             "hint_mode": self.hint_mode(), "lookahead": self.settings.get("lookahead", 1),
             "console_map": bool(self.settings.get("console_map")),
             "baseline_policy": self.settings["baseline_policy"], "profile": task.profile}
-        if tc.name not in task.tool_names:
-            rec.update(tool_class=None, server=None, results_match=None,
-                       error="unknown tool (not sent)")
-            return {"rec": rec, "args": {}, "content": json.dumps({"error": "unknown tool"})}
-        allowed = task.params(tc.name)
-        # null = "not given" (small models send null for optional parameters)
-        args = {a: v for a, v in tc.arguments.items() if a in allowed and v is not None}
-        cls, gargs = task.gateway_call(tc.name, args)
+        unknown = tc.name not in task.tool_names
+        if unknown:
+            # still sent through both gateways (class "other": outside the vocabulary, so the
+            # predictor abstains); the LLM is told the tool does not exist
+            args, cls, gargs = {}, "other", {}
+            rec["note"] = "unknown tool: no prediction, normal behaviour"
+        else:
+            allowed = task.params(tc.name)
+            # null = "not given" (small models send null for optional parameters)
+            args = {a: v for a, v in tc.arguments.items() if a in allowed and v is not None}
+            cls, gargs = task.gateway_call(tc.name, args)
         await self.publish({"type": "call_start", "turn": self.turn, "reply": self.reply,
                             "pos": pos, "tool": tc.name, "tool_class": cls})
         lane = self.lane()
@@ -333,8 +341,14 @@ class Conversation:
                 rec.update(base_ok=False, base_error=f"{type(e).__name__}"[:100],
                            results_match=None)
             return rec
-        return {"rec": rec, "args": args, "content": llm_content(p_res, p_info),
-                "finish": finish}
+        if unknown:
+            content = json.dumps({"error": f"unknown tool {tc.name!r}; available: "
+                                  f"{task.tool_names}"})
+        elif self.backend is not None:       # Skypiea Air: answer from the session database
+            content = json.dumps(self.backend.call(tc.name, args), default=str)[:3000]
+        else:
+            content = llm_content(p_res, p_info)
+        return {"rec": rec, "args": args, "content": content, "finish": finish}
 
     def _server(self, cls: str) -> str:
         tm = yaml.safe_load((ROOT / "tools" / "tool_map.yaml").read_text())
@@ -380,7 +394,9 @@ class Conversation:
             mode = self.hint_mode()
             await self.publish({"type": "turn_start", "turn": self.turn, "source": source,
                                 "text": text, "hint": mode != "off", "hint_mode": mode})
-            if mode == "enter":
+            # typing mode also re-sends at Enter: the lead-time runs showed typing can outlast
+            # the 30 s warm window of the typing hint (docs/handoff/LEADTIME_REPORT.md)
+            if mode in ("enter", "typing"):
                 await self.send_hint(self.turn, "enter")
             n_calls_before = self._next_seq
             self.messages.append({"role": "user", "content": text})

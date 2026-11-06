@@ -82,6 +82,9 @@ def get(scenario: str) -> Task:
     """PRD tasks "A", "B"; live-console tasks "airline", "codefix"."""
     from agent.tasks.coding import TASK as B
     from agent.tasks.support_refund import TASK as A
+    if scenario == "skyair":
+        from agent.tasks.skye import SKYE
+        return SKYE
     if scenario in ("airline", "codefix", "airline_cm"):
         from agent.tasks.live import AIRLINE, AIRLINE_CM, CODEFIX
         return {"airline": AIRLINE, "codefix": CODEFIX, "airline_cm": AIRLINE_CM}[scenario]

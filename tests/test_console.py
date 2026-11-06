@@ -444,12 +444,14 @@ def test_typing_hint_once_per_turn_plus_open_hint_and_lead_time() -> None:
         await conv.typing_started()            # turn 2
         await conv.user_turn("b", "presenter")
     asyncio.run(go())
-    assert stacks["pred"].hints == [(conv.sid, 1), (conv.sid, 1), (conv.sid, 2)]
+    # open + typing for turn 1, and the Enter re-send of every turn (typing can outlast TTL)
+    assert stacks["pred"].hints == [(conv.sid, 1), (conv.sid, 1), (conv.sid, 1),
+                                    (conv.sid, 2), (conv.sid, 2)]
     assert stacks["base"].hints == []
     t1, t2 = conv.turns
-    assert t1["hint_sources"] == "open+typing" and t1["lead_ms"] >= 200
+    assert t1["hint_sources"] == "open+typing+enter" and t1["lead_ms"] >= 200
     assert t1["typing_ms"] >= 200 and t1["first_tool"] == "user_lookup"
-    assert t2["hint_sources"] == "typing" and t2["hint_mode"] == "typing"
+    assert t2["hint_sources"] == "typing+enter" and t2["hint_mode"] == "typing"
 
 
 def test_enter_mode_hints_at_send_and_off_never() -> None:

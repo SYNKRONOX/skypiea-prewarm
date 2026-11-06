@@ -44,7 +44,7 @@ from console.stacks import BASE, BASELINE_POLICIES, PRED, StackClient, kubectl
 ROOT = Path(__file__).resolve().parent.parent
 STATIC = Path(__file__).resolve().parent / "static"
 EXPORTS = ROOT / ".live" / "exports"
-DEMOS = {"airline": "support", "codefix": "coding"}
+DEMOS = {"airline": "support", "codefix": "coding", "skyair": "support"}
 DRAIN_TIMEOUT_S = 180
 # Autopilot typing model (an ASSUMPTION, not a measurement): the scripted customer "types"
 # each message at 200 characters per minute (about 40 words per minute) before it is sent,
@@ -92,7 +92,8 @@ class Console:
         # hint_mode: off | enter (hint when the message is sent) | typing (first keystroke
         # of each turn, and when a conversation opens). "hint" mirrors it for old clients.
         self.settings = {"mirror": "concurrent", "hint": False, "hint_mode": "off",
-                         "baseline_policy": "scale_to_zero", "demo": "airline",
+                         "baseline_policy": "scale_to_zero",
+                         "demo": os.environ.get("CONSOLE_DEMO", "skyair"),
                          "autopilot": False, "autopilot_stopping": False, "busy": None,
                          "lookahead": 1, "console_map": None,
                          "autopilot_cpm": AUTOPILOT_CPM}
@@ -491,6 +492,11 @@ def make_app(console: Console) -> Starlette:
             return JSONResponse({"error": "unknown action"}, status_code=404)
         return JSONResponse({"ok": True, "settings": c.settings}, status_code=202)
 
+    async def personas_ep(_: Request) -> Response:
+        from agent.skyair.tools import personas
+        return JSONResponse({"airline": "Skypiea Air (fictional)", "agent": "Skye",
+                             "personas": personas()})
+
     async def export(request: Request) -> Response:
         name, text = await c.export("turns" if request.url.path.endswith("turns.csv")
                                     else "calls")
@@ -506,9 +512,10 @@ def make_app(console: Console) -> Starlette:
         except httpx.HTTPError:
             await c.status("baseline stub not reachable: run `make live-pf`", "error")
         h = await c.model_health()
-        for demo, prof in DEMOS.items():
-            if h.get("profile") == prof:
-                c.settings["demo"] = demo
+        # keep the configured demo if the predictor serves its profile, else the first match
+        if DEMOS.get(c.settings["demo"]) != h.get("profile"):
+            c.settings["demo"] = next((d for d, p in DEMOS.items() if p == h.get("profile")),
+                                      c.settings["demo"])
         await c.detect()
         c.new_conversation()
 
@@ -521,6 +528,7 @@ def make_app(console: Console) -> Starlette:
 
     return Starlette(routes=[
         Route("/", index), Route("/events", events), Route("/api/state", state),
+        Route("/api/personas", personas_ep),
         Route("/api/chat", chat, methods=["POST"]),
         Route("/api/autopilot", autopilot, methods=["POST"]),
         Route("/api/export.csv", export), Route("/api/export_turns.csv", export),
