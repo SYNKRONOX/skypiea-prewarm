@@ -221,9 +221,10 @@ model invents is sent as "other": no prediction, normal behaviour.
 
 ## Known limits of this demo
 
-- The kind stacks run the pre-W1 gateway image: the live CSV's `*_held_ms` still uses the old
-  definition (call arrival to resume, can exceed 150 ms) and `*_hold_late_ms` is empty. The
-  FR-9 fix is in the code and tested (`docs/PRD_STATUS.md` FR-9).
+- The W1 gateway (FR-9 `held_ms` <= 150 ms plus `hold_late_ms`) runs on the kind stacks since
+  the fresh-clone `make live` of 2026-11-06 ~22:50 UTC. The bake-off and story runs recorded
+  before that used the previous gateway image: their `*_held_ms` is the old definition (call
+  arrival to resume, can exceed 150 ms) and `*_hold_late_ms` is empty.
 - Small models make mistakes the tools refuse (wrong codes, missing verification); the truth
   check is rule-based and can miss claims.
 - The mock database lives in the console process; a console restart resets every session.
