@@ -492,3 +492,7 @@ if (new URLSearchParams(location.search).has("snapshot")) {
 } else {
   connect();
 }
+// ?details=1 / ?help=1 open the drawer / the help overlay (screenshots)
+{ const q = new URLSearchParams(location.search);
+  if (q.has("details")) $("drawer").hidden = false;
+  if (q.has("help")) $("help").hidden = false; }

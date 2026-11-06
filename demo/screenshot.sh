@@ -4,7 +4,7 @@
 # writes through C:/Users/<you>/AppData/Local/Temp.   demo/screenshot.sh docs/img/x.png [W H]
 set -euo pipefail
 out="${1:?output png}"; W="${2:-1920}"; H="${3:-1080}"
-url="http://127.0.0.1:8090/?snapshot=1${THEME:+&theme=$THEME}"
+url="http://127.0.0.1:8090/?snapshot=1${THEME:+&theme=$THEME}${EXTRA:+&$EXTRA}"
 chrome="${CHROME:-$(command -v chromium || command -v chromium-browser || command -v google-chrome || true)}"
 if [ -z "$chrome" ] && [ -x "/mnt/c/Program Files/Google/Chrome/Application/chrome.exe" ]; then
   chrome="/mnt/c/Program Files/Google/Chrome/Application/chrome.exe"
