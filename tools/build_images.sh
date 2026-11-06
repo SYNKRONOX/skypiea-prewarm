@@ -9,7 +9,8 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 TAG="${TAG:-$(tools/image_tag.sh)}"
-TOOLS="${TOOLS:-$(python3 -c 'import yaml;print(" ".join(yaml.safe_load(open("tools/tool_map.yaml"))["servers"]))')}"
+PY="${PY:-$( [ -x .venv/bin/python ] && echo .venv/bin/python || echo python3)}"
+TOOLS="${TOOLS:-$("$PY" -c 'import yaml;print(" ".join(yaml.safe_load(open("tools/tool_map.yaml"))["servers"]))')}"
 
 for t in $TOOLS; do
   echo "==> building skypiea/${t}:${TAG}"
@@ -17,7 +18,7 @@ for t in $TOOLS; do
   DOCKER_BUILDKIT=1 docker build --quiet --file "tools/${t}/Dockerfile" \
     --tag "skypiea/${t}:${TAG}" --label "org.opencontainers.image.revision=${TAG}" tools/ >/dev/null
   size=$(docker image inspect "skypiea/${t}:${TAG}" --format '{{.Size}}')
-  printf '    %-18s %6.0f MB  (%ss)\n' "$t" "$(echo "$size / 1000000" | bc -l)" "$(( $(date +%s) - start ))"
+  printf '    %-18s %6.0f MB  (%ss)\n' "$t" "$(awk -v s="$size" 'BEGIN{print s/1000000}')" "$(( $(date +%s) - start ))"
 done
 
 # The E0 in-cluster probe (not a tool; same tag).
