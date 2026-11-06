@@ -204,3 +204,7 @@ Running log, newest last (the master task runs unattended; see docs/handoff/AGEN
 - Console mapping (configs/live/console_tool_map.yaml) via SKYPIEA_CLASS_OVERRIDES / chart
   platform.classOverrides (default empty, default render identical); search gets opt-in
   flight args; predictor PREDICTOR_DECIDE_OVERRIDES (lookahead only, after golden check).
+- Lookahead TEST (once): same picture (results/sim_lookahead_test.md). la1 TEST points equal
+  the README's published simulator rows (harness cross-check). No profile variant added.
+- Portable models: bundles 4.0 MB, archive 1.0 MB (docs/PORTABLE_MODELS.md); make
+  fetch-models (no default URL). NOT published/committed: user decision.
