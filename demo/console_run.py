@@ -64,7 +64,10 @@ def main(argv: list[str] | None = None) -> int:
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--name", required=True)
     ap.add_argument("--demo", choices=["airline", "codefix"], default="airline")
-    ap.add_argument("--hint", choices=["on", "off"], default="off")
+    ap.add_argument("--hint", choices=["on", "off", "enter", "typing"], default="off",
+                    help="on = enter (the Enter-time hint)")
+    ap.add_argument("--lookahead", type=int, choices=[1, 2], default=None,
+                    help="switch the predictive stack's lookahead first (helm)")
     ap.add_argument("--mirror", choices=["concurrent", "sequential"], default="concurrent")
     ap.add_argument("--policy", choices=["scale_to_zero", "keep_alive_30"],
                     default="scale_to_zero")
@@ -84,8 +87,15 @@ def main(argv: list[str] | None = None) -> int:
             time.sleep(1)
             wait(lambda: not settings(c)["busy"] and settings(c)["demo"] == a.demo, 900,
                  "demo switch")
+        if a.lookahead is not None and settings(c).get("lookahead", 1) != a.lookahead:
+            c.post(f"{URL}/api/lookahead", json={"value": a.lookahead})
+            time.sleep(1)
+            wait(lambda: not settings(c)["busy"], 900, "lookahead switch")
+            if settings(c).get("lookahead", 1) != a.lookahead:
+                raise SystemExit("lookahead switch failed")
         c.post(f"{URL}/api/policy", json={"key": a.policy})
-        c.post(f"{URL}/api/hint", json={"on": a.hint == "on"})
+        mode = {"on": "enter"}.get(a.hint, a.hint)
+        c.post(f"{URL}/api/hint", json={"mode": mode})
         c.post(f"{URL}/api/mirror", json={"mode": a.mirror})
         n_reset = len([e for e in lis.events if e["type"] == "reset"])
         c.post(f"{URL}/api/reset")
@@ -105,6 +115,7 @@ def main(argv: list[str] | None = None) -> int:
         time.sleep(3)                         # last predictor refresh / totals
         state = c.get(f"{URL}/api/state").json()
         csv_text = c.get(f"{URL}/api/export.csv").text
+        turns_csv = c.get(f"{URL}/api/export_turns.csv").text
         if a.kill_predictor:
             c.post(f"{URL}/api/predictor", json={"action": "restart"})
             time.sleep(1)
@@ -113,8 +124,15 @@ def main(argv: list[str] | None = None) -> int:
     evs = [e for e in lis.events if e.get("ts", 0) >= t0 - 1]
     (out / "events.jsonl").write_text("".join(json.dumps(e, default=str) + "\n" for e in evs))
     (out / "export.csv").write_text(csv_text)
+    (out / "turns.csv").write_text(turns_csv)
     conv = state["conversation"] or {}
-    summary = {"name": a.name, "demo": a.demo, "hint": a.hint, "mirror": a.mirror,
+    st = state["settings"]
+    summary = {"name": a.name, "demo": a.demo, "hint": a.hint,
+               "hint_mode": st.get("hint_mode"), "lookahead": st.get("lookahead", 1),
+               "console_map": st.get("console_map"),
+               "autopilot_typing_model_cpm": st.get("autopilot_cpm"),
+               "turns": conv.get("turns", []), "abandoned": conv.get("abandoned", []),
+               "mirror": a.mirror,
                "baseline_policy": a.policy, "llm_model": state["llm_model"],
                "profile_label": state["demo"]["profile_label"],
                "model": (state["last"].get("slow") or {}).get("model", {}).get("model_version"),
