@@ -1,0 +1,31 @@
+backup session 29102cd76589: demo airline, hint on, mirror concurrent, baseline scale_to_zero, support profile, trained on tau2-bench traces (lgbm-support-aabdfd2), LLM llama3.1:8b
+  t1 r1.0 user_lookup        think   655.7 | base 1905.9 cold=True gap=None | pred 894.5 cold=True predicted=True src=hint gap=None
+  t1 r2.0 reservation_lookup think   350.8 | base 2649.2 cold=True gap=354.1 | pred 2657.0 cold=True predicted=True src=call gap=353.7
+  t1 r3.0 flight_search      think   546.9 | base 14.7 cold=False gap=551.9 | pred 7.0 cold=False predicted=False src=None gap=551.0
+  t2 r4.0 reservation_lookup think   442.1 | base 31.4 cold=False gap=1464.3 | pred 28.7 cold=False predicted=False src=None gap=1463.1
+  t2 r5.0 reservation_modify think  1094.6 | base 29.1 cold=False gap=1101.0 | pred 29.9 cold=False predicted=False src=None gap=1100.6
+  t3 r6.0 transfer_to_human  think   434.6 | base 2374.9 cold=True gap=1462.3 | pred 32.7 cold=False predicted=False src=None gap=1461.2
+{
+ "base": {
+  "calls": 6,
+  "ok": 5,
+  "wait_ms": 6990.5,
+  "cold": 3,
+  "added_p50_ms": 1873.6,
+  "added_p95_ms": 2620.8,
+  "n_added": 5,
+  "idle_pod_s": 15.9,
+  "idle_cost_usd": 1.1107859365866548e-05
+ },
+ "pred": {
+  "calls": 6,
+  "ok": 5,
+  "wait_ms": 3642.8,
+  "cold": 2,
+  "added_p50_ms": 0.0,
+  "added_p95_ms": 2629.4,
+  "n_added": 5,
+  "idle_pod_s": 31.9,
+  "idle_cost_usd": 2.2326541897319802e-05
+ }
+}
