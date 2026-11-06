@@ -8,70 +8,118 @@
 </head>
 <body>
 <header>
-  <h1>Skypiea Live Console</h1>
-  <div class="badges">
+  <div class="brand" aria-label="Skypiea Air (fictional airline)">
+    <svg class="mark" viewBox="0 0 40 40" aria-hidden="true">
+      <circle cx="20" cy="20" r="18" fill="var(--accent)"/>
+      <path d="M8 24 C14 14, 26 12, 33 15 L22 19 L27 28 L23 29 L17 21 L11 24 Z" fill="var(--bg)"/>
+    </svg>
+    <span class="word">Skypiea<b>Air</b></span>
+    <span class="sub">Live Console</span>
+  </div>
+  <div class="controls">
     <label class="sel">Demo
       <select id="demo"><option value="skyair">Skypiea Air (Skye)</option>
         <option value="airline">Airline support (basic)</option>
         <option value="codefix">Code fix</option></select></label>
-    <span class="badge" id="b-profile">profile</span>
-    <span class="badge" id="b-mirror">mirror</span>
-    <span class="badge" id="b-hint">hint</span>
-    <span class="badge" id="b-la">lookahead</span>
-    <span class="badge" id="b-map" hidden>console mapping</span>
-    <span class="badge" id="b-auto" hidden>AUTOPILOT</span>
-    <span class="badge warn" id="b-busy" hidden></span>
-  </div>
-  <div class="buttons">
-    <button id="btn-reset" title="Wait until both stacks are at 0 pods, then start a new conversation">Reset to zero</button>
-    <label class="sel">Baseline
+    <label class="sel" title="What the Normal stack does with an idle pod">Normal
       <select id="policy"><option value="scale_to_zero">scale-to-zero</option>
         <option value="keep_alive_30">keep-alive 30 s</option></select></label>
-    <label class="sel" title="Metadata-only turn hint to the predictive gateway: never, when the message is sent, or at the first keystroke of each turn (and when a conversation opens)">Hint
+    <label class="sel" title="Metadata-only turn hint to the Skypiea gateway (never the text)">Hint
       <select id="hintmode"><option value="off">off</option><option value="enter">at Enter</option>
-        <option value="typing">at typing start</option></select></label>
-    <button id="btn-la" class="toggle" title="Predictor lookahead: also warm the most likely tool two steps ahead (helm, 30-60 s)">Lookahead: 1</button>
-    <button id="btn-mirror" class="toggle" title="Concurrent: both stacks at once. Sequential: predictive first, then baseline (no contention between them)">Mirror: concurrent</button>
+        <option value="typing">on typing</option></select></label>
     <button id="btn-kill" class="danger" title="Scale the predictor to 0: calls must still succeed (fallback = scale-to-zero)">Kill predictor</button>
     <button id="btn-restart" title="Scale the predictor back to 1">Restart predictor</button>
-    <button id="btn-replay" title="Replay the last conversation's calls on both stacks with the recorded gaps (no LLM)">Replay last</button>
-    <a class="button" id="btn-export" href="/api/export.csv">Export CSV</a>
-    <a class="button" id="btn-export-turns" href="/api/export_turns.csv">Turns CSV</a>
-    <button id="btn-theme" title="Light / dark">◐</button>
+    <span class="badge warn" id="b-busy" hidden></span>
+    <span class="badge" id="b-auto" hidden>AUTOPILOT</span>
+    <span id="health" class="health" title="checking…"><i class="hdot"></i><span id="health-txt">checking</span></span>
+    <button id="btn-details" class="ghost" aria-expanded="false">Details</button>
+    <button id="btn-theme" class="ghost icon" title="Light / dark theme" aria-label="Theme">◐</button>
+    <button id="btn-help" class="ghost icon" title="How Skypiea works" aria-label="Help">?</button>
   </div>
 </header>
-<div id="status" class="status">connecting…</div>
+<div id="status" class="status" role="status">connecting…</div>
 <main>
-  <section id="chat-col">
-    <h2>Conversation <small id="conv-id"></small></h2>
-    <div id="chat"></div>
+  <section id="left" class="card">
+    <div class="chat-head">
+      <h2>Chat with Skye <small id="conv-id"></small></h2>
+      <details id="persona"><summary>Personas</summary><div id="persona-list" class="cap">loading…</div></details>
+    </div>
+    <div id="chat" aria-live="polite"><div class="empty" id="chat-empty">Say hello to Skye, or press Autopilot.<br><span class="cap">Skye is a fictional Skypiea Air assistant (local LLM). The airline data is a mock database.</span></div></div>
+    <div id="booking" class="booking">
+      <div class="bk-head"><b>Booking record</b> <span class="cap">straight from the Skypiea Air database</span></div>
+      <div id="bk-body" class="cap">No verified customer yet.</div>
+      <div id="bk-log" class="bk-log"></div>
+    </div>
     <form id="chat-form">
-      <textarea id="chat-input" rows="2" placeholder="Type as the customer / developer… (Enter to send)"></textarea>
+      <textarea id="chat-input" rows="2" placeholder="Write as the customer… (Enter to send)"></textarea>
       <div class="row">
-        <button type="submit" id="btn-send">Send</button>
-        <button type="button" id="btn-auto" title="Plays the prepared script as the human side; the LLM is live">Autopilot ▶</button>
+        <button type="submit" id="btn-send" class="primary">Send</button>
+        <button type="button" id="btn-reset" title="Wait until both stacks are at 0 pods, then start a new conversation">Reset</button>
+        <button type="button" id="btn-auto" title="Plays a prepared customer; the LLM is live">Autopilot ▶</button>
       </div>
     </form>
   </section>
-  <section class="stack" id="col-base">
-    <h2><span class="dot base"></span>Normal <small id="base-title">(baseline)</small></h2>
-    <div class="tiles" id="tiles-base"></div>
-    <div class="timeline" id="tl-base"></div>
-    <h3>Pods <small>(controller state, polled every 0.25 s)</small></h3>
-    <div class="grid" id="grid-base"></div>
-  </section>
-  <section class="stack" id="col-pred">
-    <h2><span class="dot pred"></span>Skypiea <small>(predictive)</small></h2>
-    <div class="tiles" id="tiles-pred"></div>
-    <div class="timeline" id="tl-pred"></div>
-    <h3>Pods <small>(controller state, polled every 0.25 s)</small></h3>
-    <div class="grid" id="grid-pred"></div>
-    <h3>Turns <small>(lead time = hint to Enter; first call per turn)</small></h3>
-    <div id="turns"></div>
-    <h3>Predictor <small id="pred-health"></small></h3>
-    <div id="predictor"></div>
+  <section id="right">
+    <div id="summary" class="card summary">
+      <p id="sum-text" class="big">No tool calls yet. Ask Skye something to start.</p>
+      <div class="sum-row"><span id="sum-n" class="cap"></span><span id="sum-saved" class="saved"></span></div>
+    </div>
+    <div class="cols">
+      <div class="card col"><h3><i class="sw base"></i>Normal <small id="base-title">(scale-to-zero)</small></h3>
+        <div class="rows" id="tl-base"><div class="empty cap">Tool calls appear here.</div></div></div>
+      <div class="card col"><h3><i class="sw pred"></i>Skypiea <small>(predictive)</small></h3>
+        <div class="rows" id="tl-pred"><div class="empty cap">Tool calls appear here.</div></div>
+        <div id="ticker" class="ticker cap">Thinking: waiting for the first call.</div></div>
+    </div>
+    <div id="explain" class="explain cap" hidden></div>
   </section>
 </main>
+<aside id="drawer" hidden>
+  <div class="drawer-head"><h2>Details</h2><button id="btn-close" class="ghost icon" aria-label="Close">✕</button></div>
+  <div class="drawer-body">
+    <p class="cap">Badges: <span class="badge" id="b-profile">profile</span> <span class="badge" id="b-mirror">mirror</span> <span class="badge" id="b-hint">hint</span> <span class="badge" id="b-la">lookahead</span> <span class="badge" id="b-map" hidden>console mapping</span></p>
+    <h3>Totals</h3>
+    <div class="two"><div><b>Normal</b><div class="tiles" id="tiles-base"></div></div>
+      <div><b>Skypiea</b><div class="tiles" id="tiles-pred"></div></div></div>
+    <h3>Pods <small>(controller state, polled every 0.25 s)</small></h3>
+    <div class="two"><div><b>Normal</b><div class="grid" id="grid-base"></div></div>
+      <div><b>Skypiea</b><div class="grid" id="grid-pred"></div></div></div>
+    <h3>Predictor <small id="pred-health"></small></h3>
+    <div id="predictor"></div>
+    <h3>Turns <small>(hint lead time = hint to Enter; first call per turn; abandoned turns)</small></h3>
+    <div id="turns"></div>
+    <h3>Think window</h3>
+    <div id="think-list" class="cap"></div>
+    <h3>Advanced toggles</h3>
+    <div class="row wrap">
+      <button id="btn-la" class="toggle" title="Also warm the most likely tool two steps ahead (helm, 30-60 s)">Lookahead: 1</button>
+      <button id="btn-mirror" class="toggle" title="Concurrent: both stacks at once. Sequential: Skypiea first, then Normal (no contention)">Mirror: concurrent</button>
+      <button id="btn-replay" title="Replay the last conversation's calls on both stacks with the recorded gaps (no LLM)">Replay last</button>
+    </div>
+    <p class="cap">Lookahead 2 warms more pods (higher idle cost); measured in docs/handoff/LEADTIME_REPORT.md. Concurrent mirroring shares one laptop node between both stacks (the "node: n starting" tags show contention). There is no early-connect toggle in this console.</p>
+    <h3>Vocabulary mapping</h3>
+    <p class="cap">The predictor knows the airline support vocabulary. Skye's refund is counted as a cancellation (reservation_cancel) and added baggage as a modification (reservation_modify); customer lookup and verification are user_lookup. Unknown tools are sent as "other": no prediction.</p>
+    <h3>Truth check</h3>
+    <p class="cap">After each Skye reply, simple rules look for "done" claims (changed, cancelled, refunded, baggage added) and compare them with the writes that really succeeded in that turn. It can miss unusual phrasings. Skye's text is never edited.</p>
+    <h3>Links and exports</h3>
+    <div class="row wrap"><a class="button" id="btn-export" href="/api/export.csv">Calls CSV</a>
+      <a class="button" id="btn-export-turns" href="/api/export_turns.csv">Turns CSV</a>
+      <a class="button" id="btn-grafana" target="_blank" rel="noopener">Grafana</a></div>
+  </div>
+</aside>
+<div id="help" class="overlay" hidden>
+  <div class="card help">
+    <h2>How Skypiea works</h2>
+    <ol>
+      <li>Every tool Skye uses runs in its own container that sleeps when idle (scale to zero), so the first call has to wait for it to start.</li>
+      <li>While the LLM is still thinking, Skypiea's predictor guesses the next tool from the names and timing of the calls so far, and starts that container early.</li>
+      <li>If the guess is right, the call finds a warm container. The Normal column shows the same calls without prediction.</li>
+    </ol>
+    <p><b>Cost:</b> starting containers early keeps them warm longer, which costs idle time. The summary shows both the time saved and the extra warm time; time saved can be negative.</p>
+    <p><b>Setup:</b> Tool containers are real and cold-start for real; the airline data is a mock database inside the console; the predictor sees only tool names and timing.</p>
+    <div class="row"><button id="btn-help-close" class="primary">Got it</button></div>
+  </div>
+</div>
 <footer id="footer"></footer>
 <script src="/static/app.js"></script>
 </body>

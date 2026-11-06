@@ -56,6 +56,17 @@ AUTOPILOT_CPM = int(os.environ.get("CONSOLE_AUTOPILOT_CPM", "200"))
 ABANDON_WINDOW_S = 40.0
 
 
+def chat_view(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """User and assistant text per turn (for re-drawing the chat after a reload)."""
+    out, turn = [], 0
+    for m in messages:
+        if m.get("role") == "user":
+            turn += 1
+        if m.get("role") in ("user", "assistant") and (m.get("content") or "").strip():
+            out.append({"role": m["role"], "text": m["content"], "turn": turn})
+    return out
+
+
 class NoCacheStatic(StaticFiles):
     """Static files with Cache-Control: no-cache (a browser never runs an old console UI)."""
 
@@ -148,7 +159,7 @@ class Console:
                     "id": conv.id, "turn": conv.turn, "calls": conv.calls,
                     "turns": conv.turns, "abandoned": conv.abandoned,
                     "booking": truth.state(conv.backend), "writes": conv.writes[-12:],
-                    "truth": conv.truth,
+                    "truth": conv.truth, "chat": chat_view(conv.messages),
                     "totals": totals(conv.calls, conv.idle_delta(), pricing())},
                 "last": self.hub.last}
 

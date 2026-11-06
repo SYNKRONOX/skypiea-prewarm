@@ -52,7 +52,7 @@ function applySettings(st) {
   $("base-title").textContent = "(baseline: " + (st.baseline_policy === "keep_alive_30" ?
     "keep-alive 30 s" : "scale-to-zero") + ")";
   $("b-auto").hidden = !st.autopilot;
-  $("b-auto").textContent = "AUTOPILOT" + (st.autopilot_cpm ? " (typing model " + st.autopilot_cpm + " chars/min, assumption)" : "");
+  $("b-auto").textContent = "Autopilot"; $("b-auto").title = st.autopilot_cpm ? "typing model " + st.autopilot_cpm + " chars/min (assumption)" : "";
   $("btn-auto").textContent = st.autopilot ? (st.autopilot_stopping ? "Stopping after this turn…" :
     "Stop autopilot ■") : "Autopilot ▶";
   $("b-busy").hidden = !st.busy; $("b-busy").textContent = st.busy || "";
@@ -67,129 +67,181 @@ function applyDemo(d) {
 }
 
 function footer() {
-  const f = $("footer"); f.textContent = "";
   const m = S.model || {};
-  const parts = [
-    "Local kind cluster on a laptop (cold starts are lower than on AWS; one node shared by both stacks).",
-    "LLM: " + (S.llmModel || "?") + " (local, temperature 0).",
-    "Predictor: " + (S.demo.profile_label || "?") + " — " + (m.model_version || "not reachable") + ".",
-    "Mock tool servers. Demo runs, not results.",
-  ];
-  if (S.pricing) parts.push("Cost = idle pod-s × CPU request × $" + S.pricing.vcpu_second_usd +
-    "/vCPU-s (" + S.pricing.status + ": " + S.pricing.source + ").");
-  f.textContent = parts.join("  ");
-  const lg = el("div", "legend");
-  for (const [c, t] of [["--warm", "warm (pod ready on arrival)"], ["--cold", "cold (waited for a start)"],
-                        ["--start", "starting"], ["--hint", "warmed by turn-start hint"]]) {
-    const s = el("span"); const sw = el("span", "sw"); sw.style.background = `var(${c})`;
-    s.append(sw, t); lg.append(s);
-  }
-  f.append(lg);
+  $("footer").textContent = "Local laptop cluster (kind; cold starts are lower than on AWS) · LLM " +
+    (S.llmModel || "?") + " (local) · Predictor: " + (S.demo.profile_label || "?") + ", " +
+    (m.model_version || "not reachable") + " · Demo runs, not results.";
 }
+
+// ---------------- plain words ----------------
+const PLAIN = { find_customer: "Find customer", verify_customer: "Verify customer",
+  get_customer_details: "Customer details", get_booking: "Get booking",
+  search_flights: "Search flights", change_flight: "Change flight", cancel_booking: "Cancel booking",
+  add_baggage: "Add baggage", issue_refund: "Issue refund", transfer_to_human: "Transfer to a human",
+  user_lookup: "Look up customer", reservation_lookup: "Get booking", flight_search: "Search flights",
+  reservation_modify: "Change booking", reservation_cancel: "Cancel booking", escalate: "Transfer to a human" };
+const plain = (t) => PLAIN[t] || String(t || "?").replace(/_/g, " ").replace(/^./, (x) => x.toUpperCase());
+const secs = (ms) => (ms / 1000).toFixed(2) + " s";
 
 // ---------------- chat ----------------
-function addMsg(kind, text, who, extraCls) {
-  const m = el("div", "msg " + kind + (extraCls ? " " + extraCls : ""));
-  m.append(el("span", "who", who), document.createTextNode(text || ""));
+function chatEmpty(show) { const e = $("chat-empty"); if (e) e.hidden = !show; }
+function addMsg(kind, text, who) {
+  chatEmpty(false); dropTyping();
+  const m = el("div", "msg " + kind);
+  if (who) m.append(el("span", "who", who));
+  m.append(document.createTextNode(text || ""));
   $("chat").append(m); $("chat").scrollTop = 1e9; return m;
 }
-
-function thinkSvg(think, cold) {
-  const W = 300, max = Math.max(think || 0, cold || 0, 1);
-  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-  svg.setAttribute("viewBox", `0 0 ${W} 34`); svg.setAttribute("preserveAspectRatio", "none");
-  const bar = (y, v, color) => { const r = document.createElementNS(svg.namespaceURI, "rect");
-    r.setAttribute("x", 0); r.setAttribute("y", y); r.setAttribute("height", 13);
-    r.setAttribute("width", Math.max(1, W * (v || 0) / max)); r.setAttribute("fill", color);
-    svg.append(r); };
-  bar(1, think, "var(--think)"); if (cold !== null) bar(19, cold, "var(--cold)");
-  return svg;
+function pill(text, cls) {
+  chatEmpty(false);
+  let row = $("chat").lastElementChild;
+  if (!row || !row.classList.contains("pills")) { row = el("div", "pills"); $("chat").append(row); }
+  const p = el("span", "pill " + (cls || ""), text); row.append(p); $("chat").scrollTop = 1e9; return p;
 }
+function showTyping() { if (S.typingEl) return; chatEmpty(false);
+  S.typingEl = el("div", "typing"); S.typingEl.setAttribute("aria-label", "Skye is typing");
+  S.typingEl.append(el("i"), el("i"), el("i")); $("chat").append(S.typingEl); $("chat").scrollTop = 1e9; }
+function dropTyping() { if (S.typingEl) { S.typingEl.remove(); S.typingEl = null; } }
 
-function thinkWindow(c) {
-  const box = el("div", "think");
-  if (c.pos_in_reply > 0) {
-    box.textContent = "Batched: sent in the same LLM reply as the previous call (think gap 0). " +
-      "Prediction cannot help between calls sent in the same reply.";
-    return box;
-  }
+function thinkLine(c) {
+  if (c.pos_in_reply > 0) return "Batch: sent in the same LLM reply as the previous call (think gap 0).";
   const cold = c.base_cold ? c.base_added_ms : null;
-  let txt = "LLM think " + fmtMs(c.think_ms) + " vs baseline cold start for this call: ";
-  if (cold === null) txt += "not measurable (the baseline call found a warm pod).";
-  else if (c.think_ms >= cold) txt += fmtMs(cold) + " → the think time could hide a start begun at the previous call.";
-  else txt += fmtMs(cold) + " → too short to hide it.";
-  box.append(document.createTextNode(txt));
-  box.append(thinkSvg(c.think_ms, cold));
-  return box;
-}
-
-function callTags(c, k) {
-  const t = el("div", "tags");
-  const add = (txt, cls) => t.append(el("span", "tag " + (cls || ""), txt));
-  if (!c[k + "_ok"]) add("FAILED " + (c[k + "_error"] || ""), "bad");
-  add(c[k + "_cold"] ? "cold" : "warm", c[k + "_cold"] ? "cold" : "warm");
-  add("added " + fmtMs(c[k + "_added_ms"]));
-  if (c[k + "_gap_ms"] !== null && c[k + "_gap_ms"] !== undefined) add("gap " + fmtMs(c[k + "_gap_ms"]));
-  if (k === "base" && c.base_gap_ms !== null && c.pred_gap_ms !== null &&
-      c.base_gap_ms - c.pred_gap_ms > 100)
-    add("gap +" + fmtMs(c.base_gap_ms - c.pred_gap_ms) + " vs Skypiea (waited for the LLM)", "bad");
-  if (c[k + "_held_ms"]) add("held " + fmtMs(c[k + "_held_ms"]));
-  if (c[k + "_predicted"]) add(c[k + "_warm_source"] === "hint" ? "warmed by hint" : "predicted",
-                               c[k + "_warm_source"] === "hint" ? "hint" : "");
-  const ms = c[k + "_contention_max_starting"];
-  if (ms !== null && ms !== undefined)
-    add("node: " + ms + " starting (n=" + c[k + "_contention_samples"] + " samples)");
+  let t = "LLM think " + fmtMs(c.think_ms) + " vs Normal cold start ";
+  if (cold === null) t += "(not measurable: Normal found a warm pod).";
+  else t += fmtMs(cold) + (c.think_ms >= cold ? ": long enough to hide a start begun at the previous call."
+                                              : ": too short to hide it.");
   return t;
 }
 
 function onCall(c) {
   S.calls.push(c);
   delete S.pending[c.reply + ":" + c.pos_in_reply];
-  // chat: the call inside its reply group
-  let grp = S.replyEl;
-  if (!grp || grp.dataset.reply !== String(c.reply)) {
-    grp = el("div", "reply"); grp.dataset.reply = c.reply;
-    grp.append(el("div", "note", "LLM reply " + c.reply + (c.replay ? " (replay)" : "")));
-    $("chat").append(grp); S.replyEl = grp;
-  }
-  const row = el("div", "call");
-  row.append(el("span", "tool", c.tool + (c.tool_class && c.tool_class !== c.tool ? " → " + c.tool_class : "")));
-  row.append(el("span", "", c.results_match === false ? "RESULTS DIFFER" :
-                            ("base " + fmtMs(c.base_wall_ms) + " · skypiea " + fmtMs(c.pred_wall_ms))));
-  row.append(thinkWindow(c));
-  if (c.tool_call_from_text) row.append(el("div", "think",
-    "The model wrote this call as JSON text instead of a tool call; the console recovered it."));
-  grp.append(row);
-  const n = grp.querySelectorAll(".call").length;
-  grp.querySelector(".note").textContent = "LLM reply " + c.reply + (c.replay ? " (replay)" : "") +
-    (n > 1 ? " — batch of " + n + " calls: prediction cannot help between calls sent in the same reply" : "");
-  $("chat").scrollTop = 1e9;
+  const bad = c.note || c.results_match === false || !c.pred_ok;
+  pill("⚙ " + plain(c.tool) + (c.note ? " (unknown tool)" : "") +
+       (c.tool_call_from_text ? " (recovered from text)" : ""), bad ? "bad" : "");
+  const tl = $("think-list");
+  if (tl) { const d = el("div", "dec", "t" + c.turn + " " + plain(c.tool) + ": " + thinkLine(c)); tl.prepend(d); }
   renderTimelines();
+}
+
+function explain(c, k) {
+  if (c.note) return plain(c.tool) + ": unknown tool, nothing to predict; it behaved like Normal.";
+  const ms = fmtMs(c[k + "_wall_ms"]), added = fmtMs(c[k + "_added_ms"]);
+  if (k === "base") return c.base_cold ? plain(c.tool) + ": cold. The pod was started on demand, adding " + added + " (" + ms + " in total)."
+    : plain(c.tool) + ": warm. The pod was still up from an earlier call (" + ms + ").";
+  if (c.pos_in_reply > 0 && c.pred_cold) return plain(c.tool) + ": batch. It was sent in the same reply as the previous call, so there was nothing to predict in between; cold, " + added + " added.";
+  if (c.pred_predicted && !c.pred_cold) return plain(c.tool) + ": started early because it was predicted " +
+    (c.pred_warm_source === "hint" ? "by the turn-start hint" : "after the previous call") +
+    (c.pos_in_reply === 0 ? " (the LLM thought for " + fmtMs(c.think_ms) + ")" : "") + "; warm on arrival, " + ms + ".";
+  if (c.pred_predicted && c.pred_cold) return plain(c.tool) + ": predicted, but too late. The pod was still starting: " +
+    added + " added after " + fmtMs(c.think_ms) + " of LLM think time.";
+  if (!c.pred_cold) return plain(c.tool) + ": warm. The pod was still up from an earlier call (" + ms + ").";
+  return plain(c.tool) + ": not predicted. Cold start, " + added + " added.";
 }
 
 function renderTimelines() {
   const max = Math.max(1000, ...S.calls.flatMap((c) => [c.base_wall_ms || 0, c.pred_wall_ms || 0]));
   for (const k of ["base", "pred"]) {
     const tl = $("tl-" + k); tl.textContent = "";
+    if (!S.calls.length) { tl.append(el("div", "empty cap", "Tool calls appear here.")); continue; }
     for (const c of S.calls) {
-      if (!c.tool_class) continue;
-      const r = el("div", "trow");
-      r.append(el("span", "lbl", "t" + c.turn + " r" + c.reply + "." + c.pos_in_reply + " " + c.tool));
-      const bar = el("div", "bar " + (c[k + "_cold"] ? "cold" : "warm"));
-      bar.style.width = (100 * (c[k + "_wall_ms"] || 0) / max) + "%";
-      const w = el("div", "wait"); w.style.width = "100%"; bar.append(w);
-      bar.title = "wall " + fmtMs(c[k + "_wall_ms"]) + ", gateway added " + fmtMs(c[k + "_added_ms"]);
-      r.append(bar, el("span", "ms", fmtMs(c[k + "_wall_ms"])), callTags(c, k));
+      const r = el("div", "trow"); r.tabIndex = 0;
+      const ok = c[k + "_ok"] !== false && c[k + "_wall_ms"] !== undefined;
+      r.append(el("span", "lbl", plain(c.tool)), el("span", "ms", ok ? fmtMs(c[k + "_wall_ms"]) : "failed"));
+      const st = !ok ? "none" : c[k + "_cold"] ? "cold" : "warm";
+      const bb = el("div", "barbox"); const bar = el("div", "bar " + st);
+      bar.style.width = (85 * (c[k + "_wall_ms"] || 0) / max) + "%";
+      bb.append(bar, el("span", "wl " + st, st === "warm" ? "● warm" : st === "cold" ? "▲ cold" : "✕ failed"));
+      r.append(bb);
+      const show = () => { const x = $("explain"); x.hidden = false;
+        x.textContent = (k === "base" ? "Normal · " : "Skypiea · ") + explain(c, k);
+        document.querySelectorAll(".trow.sel").forEach((e) => e.classList.remove("sel")); r.classList.add("sel"); };
+      r.onclick = show; r.onkeydown = (e) => { if (e.key === "Enter") show(); };
       tl.append(r);
     }
     tl.scrollTop = 1e9;
   }
 }
 
+function renderSummary(T) {
+  const b = T && T.base, p = T && T.pred;
+  if (!b || !p || !p.ok) { $("sum-text").textContent = "No tool calls yet. Ask Skye something to start.";
+    $("sum-n").textContent = ""; $("sum-saved").textContent = ""; return; }
+  const d = b.wait_ms - p.wait_ms, w = p.idle_pod_s - b.idle_pod_s;
+  const dc = (p.idle_cost_usd || 0) - (b.idle_cost_usd || 0);
+  $("sum-text").textContent = "This conversation: you waited " + secs(b.wait_ms) + " on tools with Normal and " +
+    secs(p.wait_ms) + " with Skypiea (" + secs(Math.abs(d)) + (d >= 0 ? " less" : " more") + "). " +
+    "Skypiea kept pods warm " + Math.abs(w).toFixed(1) + " s " + (w >= 0 ? "longer" : "shorter") +
+    " (cost " + (dc >= 0 ? "+" : "−") + fmtUsd(Math.abs(dc)) + ", estimate).";
+  $("sum-n").textContent = "n = " + p.ok + " tool call" + (p.ok === 1 ? "" : "s") + " · demo run, not a result";
+  const s = $("sum-saved"); s.textContent = "time saved " + (d >= 0 ? "+" : "−") + secs(Math.abs(d));
+  s.className = "saved " + (d >= 0 ? "pos" : "neg");
+}
+
+function renderBooking(st, writes) {
+  const body = $("bk-body"); body.textContent = "";
+  if (!st || !st.available) { body.textContent = "Booking record is shown for the Skypiea Air demo."; }
+  else if (!st.verified) { body.textContent = "No verified customer yet."; }
+  else {
+    body.append(el("div", "bk", st.verified.name + " · " + st.verified.customer_id + " (verified)"));
+    for (const b of st.bookings) {
+      const d = el("div", "bk"); d.append(el("b", "", b.booking_code + " "));
+      d.append(el("span", b.status === "cancelled" ? "st-cancelled" : "", b.status));
+      d.append(document.createTextNode(" · " + b.fare + " · " + b.bags + " bag(s) · paid $" + b.paid +
+        (b.refunded ? " · refunded" : "") + " · " +
+        b.flights.map((f) => f.flight_no + " " + f.origin + "→" + f.destination + " " + f.date + " " + f.depart +
+          (f.status !== "scheduled" ? " (" + f.status + ")" : "")).join(", ")));
+      body.append(d);
+    }
+  }
+  const log = $("bk-log"); log.textContent = "";
+  for (const w of [...(writes || [])].reverse()) {
+    const d = el("div"); d.append(el("span", "w-" + w.outcome, w.outcome === "success" ? "✓ done" :
+      w.outcome === "quote" ? "… asked to confirm" : "✕ refused"));
+    d.append(document.createTextNode(" " + w.tool + " (turn " + w.turn + "): " + w.what)); log.append(d);
+  }
+}
+
+function onTruth(t) {
+  const m = S.lastAgent; if (!m || !t) return;
+  if (t.verdict === "not_done") for (const b of t.badges) m.append(el("span", "truth", "⚠ " + b));
+  else if (t.verdict === "agree") m.append(el("span", "truth ok", "✓ matches the booking record"));
+  if (t.earlier && t.earlier.length) m.append(el("span", "truth ok", "✓ done in an earlier turn"));
+}
+
+function renderTicker(decs) {
+  const box = $("ticker"); box.textContent = "";
+  const starting = Object.values(S.grid.pred || {}).some((c) => c.state === "starting");
+  if (starting) { const r = el("span", "ring"); r.title = "a Skypiea pod is starting"; box.append(r); }
+  if (S.model && S.model.status && S.model.status !== "ok") {
+    box.append(document.createTextNode("Predictor is down: Skypiea behaves like scale-to-zero; calls still work.")); return; }
+  const d = (decs || S.decs || []).slice(-1)[0];
+  if (!d) { box.append(document.createTextNode("Thinking: waiting for the first call.")); return; }
+  if (d.outcome !== "ok") { box.append(document.createTextNode("Predictor: " + d.outcome)); return; }
+  const top = (d.top3 || []).slice(0, 2).map((x) => plain(x.tool_class) + " " + Math.round(100 * x.p) + "%").join(", ");
+  box.append(document.createTextNode("Next likely: " + (top || "?") + " → " +
+    ((d.warmed || []).length ? "warming " + d.warmed.map(plain).join(", ") : "not confident: nothing warmed") +
+    (starting ? " (pod starting)" : "")));
+}
+
+function renderHealth() {
+  const parts = [], now = Date.now();
+  const cl = S.podsT && now - S.podsT < 5000; parts.push("cluster " + (cl ? "ok" : "no data"));
+  const pr = S.model && S.model.status === "ok"; parts.push("predictor " + (pr ? "ok" : "down"));
+  parts.push("LLM " + (S.llmState || "not used yet"));
+  const links = S.links && Object.values(S.links).some((v) => v !== "ok");
+  if (links) parts.push("gateway link down");
+  const h = $("health"); h.title = parts.join(" · ");
+  const bad = !cl || S.llmState === "error", warn = !pr || links;
+  h.className = "health " + (bad ? "bad" : warn ? "warn" : "ok");
+  $("health-txt").textContent = bad ? "problem" : warn ? "degraded" : "healthy";
+}
+setInterval(renderHealth, 2000);
+
 function tile(k, v, sub) { const t = el("div", "tile"); t.append(el("div", "v", v), el("div", "k", sub)); return t; }
 
 function renderTotals(T) {
-  S.totals = T;
+  S.totals = T; renderSummary(T);
   for (const k of ["base", "pred"]) {
     const x = (T || {})[k]; const box = $("tiles-" + k); box.textContent = "";
     if (!x) continue;
@@ -203,7 +255,7 @@ function renderTotals(T) {
 }
 
 function renderGrid(grid) {
-  S.grid = grid;
+  S.grid = grid; S.podsT = Date.now(); renderTicker();
   for (const k of ["base", "pred"]) {
     const g = $("grid-" + k); g.textContent = "";
     for (const [name, c] of Object.entries(grid[k] || {})) {
@@ -219,6 +271,7 @@ function renderGrid(grid) {
 }
 
 function renderPredictor(decs) {
+  S.decs = decs; renderTicker(decs);
   const box = $("predictor"); box.textContent = "";
   for (const d of [...decs].reverse()) {
     const r = el("div", "dec");
@@ -245,7 +298,7 @@ function onModel(m) {
   $("pred-health").textContent = ok ? "(" + m.model_version + ", profile " + m.profile + ", up)" :
     "(DOWN: " + ((m && m.status) || "?") + " — the gateway falls back to scale-to-zero)";
   $("pred-health").className = ok ? "" : "no";
-  footer();
+  footer(); renderTicker();
 }
 
 function renderTurn(t) {
@@ -278,8 +331,13 @@ function renderAbandoned(a) {
 }
 
 function resetView(convId) {
-  S.calls = []; S.replyEl = null; S.agentEl = null;
+  S.calls = []; S.replyEl = null; S.agentEl = null; S.lastAgent = null; S.decs = []; S.typingEl = null;
   $("chat").textContent = ""; $("predictor").textContent = ""; $("turns").textContent = "";
+  $("think-list").textContent = ""; $("explain").hidden = true;
+  const e = el("div", "empty"); e.id = "chat-empty";
+  e.append("Say hello to Skye, or press Autopilot.", el("br"),
+           el("span", "cap", "Skye is a fictional Skypiea Air assistant (local LLM). The airline data is a mock database."));
+  $("chat").append(e); renderBooking({ available: (S.demo.name || "skyair") === "skyair" }, []); renderTicker([]);
   S.typing = false; S.typingT = null;
   renderTimelines(); renderTotals(null);
   $("conv-id").textContent = convId ? "(" + convId + ")" : "";
@@ -292,17 +350,24 @@ function handle(ev) {
       S.llmModel = ev.llm_model; S.pricing = ev.pricing;
       applySettings(ev.settings); applyDemo(ev.demo);
       resetView(ev.conversation && ev.conversation.id);
+      { const cv = ev.conversation || {}, last = {};
+        for (const m of cv.chat || []) {
+          const b = addMsg(m.role === "user" ? "user" : "agent", m.text, m.role === "user" ? "Customer · turn " + m.turn : "Skye");
+          if (m.role !== "user") last[m.turn] = b; }
+        for (const t of cv.truth || []) { S.lastAgent = last[t.turn]; onTruth(t); }
+        S.lastAgent = null; }
       for (const c of (ev.conversation ? ev.conversation.calls : [])) onCall(c);
       for (const t of (ev.conversation ? ev.conversation.turns || [] : [])) renderTurn(t);
       for (const a of (ev.conversation ? ev.conversation.abandoned || [] : [])) renderAbandoned(a);
-      if (ev.conversation) renderTotals(ev.conversation.totals);
+      if (ev.conversation) { renderTotals(ev.conversation.totals);
+        renderBooking(ev.conversation.booking, ev.conversation.writes); }
       for (const e of Object.values(ev.last || {})) handle(e);
       break;
     case "settings": applySettings(ev.settings); break;
     case "status": status(ev.text, ev.level); break;
     case "pods": renderGrid(ev.grid); break;
     case "slow":
-      onModel(ev.model);
+      onModel(ev.model); S.links = ev.links;
       if (ev.links && Object.values(ev.links).some((v) => v !== "ok"))
         status("connection: baseline gateway " + ev.links.base + ", Skypiea gateway " +
                ev.links.pred + " (port-forwards restart by themselves; else run make live-pf)", "warn");
@@ -315,30 +380,34 @@ function handle(ev) {
       break;
     case "turn_start":
       S.agentEl = null; S.replyEl = null;
-      addMsg("user", ev.text, (ev.source === "autopilot" ? "AUTOPILOT customer" :
-             ev.source === "replay" ? "replay" : "presenter") + " · turn " + ev.turn,
-             ev.source === "autopilot" ? "autopilot" : "");
+      addMsg("user", ev.text, (ev.source === "autopilot" ? "Autopilot customer" :
+             ev.source === "replay" ? "Replay" : "Customer") + " · turn " + ev.turn);
       break;
     case "hint":
-      addMsg("agent", "turn hint (" + (ev.source || "enter") + ") sent to the predictive gateway (HTTP " +
-             ev.status + "): metadata only, never the text", "hint · turn " + ev.turn);
+      pill("hint sent (" + (ev.source || "enter") + "): metadata only", "hint");
       break;
+    case "booking": renderBooking(ev.state, ev.writes); break;
+    case "truth": onTruth(ev.truth); break;
     case "turn": renderTurn(ev.turn_record); break;
     case "abandoned": renderAbandoned(ev.abandoned); break;
-    case "llm_start": status("LLM thinking…"); break;
+    case "llm_start": status("Skye is thinking…"); showTyping(); break;
     case "llm_delta":
-      if (!S.agentEl) S.agentEl = addMsg("agent", "", "agent (" + S.llmModel + ")");
+      dropTyping();
+      if (!S.agentEl) { S.agentEl = addMsg("agent", "", "Skye"); S.lastAgent = S.agentEl; }
       S.agentEl.append(document.createTextNode(ev.text)); $("chat").scrollTop = 1e9; break;
     case "llm_reply":
-      status("LLM reply in " + fmtMs(ev.think_ms) + (ev.n_calls ? ": " + ev.n_calls + " tool call(s)" : ""));
-      if (S.agentEl && ev.n_calls) S.agentEl = null;
-      if (!ev.n_calls) S.agentEl = null;
+      dropTyping(); S.llmState = "ok"; renderHealth();
+      status("Skye replied in " + fmtMs(ev.think_ms) + (ev.n_calls ? ": " + ev.n_calls + " tool call(s)" : ""));
+      if (S.agentEl && S.agentEl.textContent.trim() === "Skye") S.agentEl.remove();
+      S.agentEl = null;
       break;
     case "call_start": status("calling " + ev.tool + " on both stacks…"); break;
     case "call": onCall(ev.call); break;
     case "status_turn": status(ev.text); break;
     case "turn_end": status("your turn"); break;
-    case "error": status(ev.where + ": " + ev.detail, "error"); break;
+    case "error": dropTyping();
+      if (ev.where === "llm") { S.llmState = "error"; renderHealth(); }
+      status((ev.where === "llm" ? "The language model did not answer: " : ev.where + ": ") + ev.detail, "error"); break;
   }
 }
 
@@ -367,6 +436,30 @@ $("chat-input").addEventListener("input", (e) => {
 $("chat-input").addEventListener("keydown", (e) => {
   if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); $("chat-form").requestSubmit(); }
 });
+$("btn-details").onclick = () => { const d = $("drawer"); d.hidden = !d.hidden;
+  $("btn-details").setAttribute("aria-expanded", String(!d.hidden)); };
+$("btn-close").onclick = () => { $("drawer").hidden = true; };
+$("btn-help").onclick = () => { $("help").hidden = false; $("btn-help-close").focus(); };
+$("btn-help-close").onclick = () => { $("help").hidden = true; };
+$("help").onclick = (e) => { if (e.target === $("help")) $("help").hidden = true; };
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") { $("help").hidden = true; $("drawer").hidden = true; } });
+$("btn-grafana").href = location.protocol + "//" + location.hostname + ":3001/";
+async function loadPersonas() {
+  const box = $("persona-list");
+  try {
+    const r = await (await fetch("/api/personas")).json(); box.textContent = "";
+    box.append(el("div", "cap", "Fictional customers of " + r.airline + ". Click a request to put it in the input."));
+    for (const p of r.personas) {
+      const d = el("div", "persona");
+      d.append(el("b", "", p.name), el("div", "cap", [p.email, p.booking_code, p.fare, p.note].filter(Boolean).join(" · ")));
+      for (const q of p.requests || []) { const b = el("button", "", q); b.type = "button";
+        b.onclick = () => { const i = $("chat-input"); i.value = q; i.dispatchEvent(new Event("input")); i.focus();
+          $("persona").open = false; }; d.append(b); }
+      box.append(d);
+    }
+  } catch (e) { box.textContent = "Personas are not available right now."; }
+}
+loadPersonas();
 $("btn-auto").onclick = () => post("/api/autopilot");
 $("btn-reset").onclick = () => post("/api/reset");
 $("btn-replay").onclick = () => post("/api/replay");
