@@ -321,6 +321,9 @@ $("btn-theme").onclick = () => {
     (!r.classList.contains("light") && matchMedia("(prefers-color-scheme: dark)").matches);
   r.classList.toggle("dark", !dark); r.classList.toggle("light", dark);
 };
+// ?theme=light|dark forces a theme (screenshots); otherwise the system setting / ◐ button
+{ const th = new URLSearchParams(location.search).get("theme");
+  if (th === "light" || th === "dark") document.documentElement.classList.add(th); }
 // ?snapshot=1: render the current state once (no live stream), e.g. for screenshots/printing
 if (new URLSearchParams(location.search).has("snapshot")) {
   fetch("/api/state").then((r) => r.json()).then((st) => {
