@@ -4,8 +4,8 @@
 
 Starts the predictor service in this process (uvicorn on 127.0.0.1, a free port, the real
 bundles under models/ and configs/cold_start.yaml), keeps THREADS client threads sending
-/decide continuously, and performs three reloads (to the coding bundle, back to the support bundle, and the support
-bundle again; each verified by the service's own warm-up p99 gate) while they run. For each
+/decide continuously, and performs three reloads (to the coding bundle, back to the support
+bundle, and the support bundle again; each verified by the service's own warm-up p99 gate) while they run. For each
 reload one extra "spanning" request uploads half its body, waits until the reload has
 finished, then sends the rest: it is in flight for the whole reload. Recorded:
 

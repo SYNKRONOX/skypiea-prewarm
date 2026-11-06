@@ -58,6 +58,39 @@ CSV_FIELDS = ["conversation", "turn", "reply", "pos_in_reply", "replay", "llm_mo
         "contention_max_starting", "contention_samples")]
 
 
+_VOCAB: dict[str, set[str]] = {}
+
+
+def vocabulary(profile: str) -> set[str] | None:
+    """Tool classes the real predictor profile knows (configs/live/predictor_vocab.json)."""
+    if not _VOCAB:
+        try:
+            d = json.loads((ROOT / "configs" / "live" / "predictor_vocab.json").read_text())
+            _VOCAB.update({p: set(v.get("vocabulary") or []) for p, v in d["profiles"].items()})
+        except (OSError, ValueError, KeyError):
+            return None
+    return _VOCAB.get(profile)
+
+
+def numbers_in(obj: Any, out: set[float] | None = None) -> set[float]:
+    """Every number in a tool result (for the price check; kept in memory only)."""
+    out = set() if out is None else out
+    if isinstance(obj, bool):
+        return out
+    if isinstance(obj, (int, float)):
+        out.add(round(float(obj), 2))
+    elif isinstance(obj, dict):
+        for v in obj.values():
+            numbers_in(v, out)
+    elif isinstance(obj, (list, tuple)):
+        for v in obj:
+            numbers_in(v, out)
+    elif isinstance(obj, str):
+        for m in re.finditer(r"\$\s?(\d+(?:\.\d{1,2})?)", obj):
+            out.add(round(float(m.group(1)), 2))
+    return out
+
+
 def nearest_rank(xs: list[float], q: float) -> float | None:
     if not xs:
         return None
@@ -238,6 +271,8 @@ class Conversation:
             from agent.skyair.tools import Session
             self.backend = Session()
         self.writes: list[dict[str, Any]] = []         # truth panel: real write attempts
+        self.facts: set[float] = set()                 # numbers tool results returned (prices)
+        self._sidebar_msg: dict[str, Any] | None = None  # Skye's customer sidebar message
         self.truth: list[dict[str, Any]] = []          # truth panel: claim checks per turn
         self.abandoned: list[dict[str, Any]] = []      # typing hints whose turn never came
         self.lock = asyncio.Lock()
@@ -346,6 +381,13 @@ class Conversation:
             # null = "not given" (small models send null for optional parameters)
             args = {a: v for a, v in raw.items() if a in allowed and v is not None}
             cls, gargs = task.gateway_call(tc.name, args)
+            vocab = vocabulary(task.profile)
+            if vocab is not None and cls not in vocab:
+                # a real tool of this demo, but outside the predictor's vocabulary: the
+                # predictor cannot rank it (it abstains); the call itself works as usual
+                rec["note"] = (f"unknown tool for the predictor (class {cls} is not in the "
+                               f"{task.profile} vocabulary): no prediction, normal behaviour")
+                rec["out_of_vocab"] = True
         await self.publish({"type": "call_start", "turn": self.turn, "reply": self.reply,
                             "pos": pos, "tool": tc.name, "tool_class": cls})
         lane = self.lane()
@@ -393,6 +435,7 @@ class Conversation:
                                   f"{task.tool_names}"})
         elif self.backend is not None:       # Skypiea Air: answer from the session database
             result = self.backend.call(tc.name, args)
+            numbers_in(result, self.facts)
             content = json.dumps(result, default=str)[:3000]
             await self._log_write(tc.name, args, result)
         else:
@@ -409,6 +452,24 @@ class Conversation:
         await self.publish({"type": "booking", "state": truth.state(self.backend),
                             "writes": self.writes[-12:]})
 
+    def refresh_sidebar(self) -> None:
+        """After verification, a new booking or any successful write: give Skye the verified
+        customer's facts the way a CRM shows them to a support agent (one system message,
+        replaced when it changes; after the tool results, never between them)."""
+        b = self.backend
+        if b is None or not getattr(b, "sidebar_due", False):
+            return
+        b.sidebar_due = False
+        text = b.sidebar()
+        if not text:
+            return
+        if self._sidebar_msg is not None and self._sidebar_msg in self.messages:
+            self.messages.remove(self._sidebar_msg)
+        self._sidebar_msg = {"role": "system", "content": "CUSTOMER SIDEBAR (booking system, "
+                             "current; use only these facts and tool results):\n" + text}
+        self.messages.append(self._sidebar_msg)
+        numbers_in(text, self.facts)
+
     def check_claims(self, text: str) -> dict[str, Any] | None:
         """Rule-based check of the final reply of a turn against this turn's real writes."""
         if self.backend is None:
@@ -416,6 +477,10 @@ class Conversation:
         tw = [w for w in self.writes if w["turn"] == self.turn]
         ew = [w for w in self.writes if w["turn"] < self.turn]
         res = {"turn": self.turn, **truth.check(text, tw, ew)}
+        pr = truth.check_prices(text, self.facts)
+        res.update(prices=pr["amounts"], prices_unsourced=pr["unsourced"],
+                   price_verdict=pr["verdict"])
+        res["badges"] = res["badges"] + pr["badges"]
         prev = next((t for t in reversed(self.truth) if t.get("note_sent")), None)
         if prev is not None and prev.get("corrected") is None and prev["turn"] < self.turn:
             # did the reply after the system note correct itself? (heuristic, logged)
@@ -425,11 +490,18 @@ class Conversation:
             for row in self.turns:
                 if row["turn"] == prev["turn"]:
                     row["truth_corrected"] = prev["corrected"]
-        if res["verdict"] == "not_done" and self.settings.get("truth_note", True):
-            self.messages.append({"role": "system", "content": (
-                "Booking system note: your last reply said something was done ("
-                + ", ".join(res["claims"]) + ") but no such change succeeded. Tell the "
-                "customer plainly in your next reply that it was NOT done.")})
+        notes = []
+        if res["verdict"] == "not_done":
+            notes.append("your last reply said something was done (" + ", ".join(res["claims"])
+                         + ") but no such change succeeded. Tell the customer plainly in your "
+                         "next reply that it was NOT done.")
+        if pr["unsourced"]:
+            notes.append("your last reply quoted " + ", ".join(f"${a:g}" for a in pr["unsourced"])
+                         + ", which no tool returned. Quote prices and fees only from tool "
+                         "results or the customer sidebar; correct this in your next reply.")
+        if notes and self.settings.get("truth_note", True):
+            self.messages.append({"role": "system", "content": "Booking system note: "
+                                  + " Also, ".join(notes)})
             res["note_sent"] = True
             res["corrected"] = None
         self.truth.append(res)
@@ -524,6 +596,7 @@ class Conversation:
                     self.messages.append({"role": "tool", "tool_call_id": tc.id,
                                           "content": out["content"]})
                     self._track(out)
+                self.refresh_sidebar()
             if self.settings["mirror"] == "sequential":
                 await self.publish({"type": "status_turn", "turn": self.turn,
                                     "text": "baseline repeating this turn's calls (same gaps)"})
@@ -540,6 +613,7 @@ class Conversation:
         first = next((c for c in self.calls if c["seq"] >= first_seq and c.get("tool_class")),
                      None)
         row = {"conversation": self.id, "turn": self.turn, "source": source,
+               "llm_model": getattr(self.llm, "model", ""),
                "hint_mode": mode, "hint_sources": "+".join(h["source"] for h in hints),
                "lead_ms": round(max(0.0, t_enter - early[0]["t"]) * 1000, 1) if early else None,
                "typing_ms": None if typing_ms is None else round(typing_ms, 1),
@@ -551,7 +625,10 @@ class Conversation:
         if tr is not None:
             row.update(truth_claims="+".join(tr["claims"]), truth_verdict=tr["verdict"],
                        truth_badge=" | ".join(tr["badges"]),
-                       truth_note_sent=bool(tr.get("note_sent")))
+                       truth_note_sent=bool(tr.get("note_sent")),
+                       truth_price_verdict=tr.get("price_verdict"),
+                       truth_prices_unsourced="+".join(f"{a:g}" for a in
+                                                       tr.get("prices_unsourced", [])))
         if first:
             for k in ("base", "pred"):
                 row.update({f"{k}_first_wall_ms": first.get(f"{k}_wall_ms"),
@@ -616,7 +693,8 @@ TURN_FIELDS = ["conversation", "turn", "source", "hint_mode", "hint_sources", "l
                "base_first_wall_ms", "base_first_cold", "pred_first_wall_ms", "pred_first_cold",
                "pred_first_predicted", "pred_first_warm_source", "pred_first_warm",
                "truth_claims", "truth_verdict", "truth_badge", "truth_note_sent",
-               "truth_corrected"]
+               "truth_corrected", "truth_price_verdict", "truth_prices_unsourced",
+               "llm_model"]
 
 
 def to_csv(calls: list[dict[str, Any]], fields: list[str] | None = None) -> str:
