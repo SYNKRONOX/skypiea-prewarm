@@ -1,6 +1,6 @@
 # W1 report: demo polish (branch feat/demo-polish)
 
-Autonomous run, 2026-11-06 17:28 to about 23:10 UTC. Branch `feat/demo-polish`, created from
+Autonomous run, 2026-11-06 17:28 to 23:00 UTC. Branch `feat/demo-polish`, created from
 `main` (da67ce7). Nothing was pushed, merged, tagged or published. No AWS was used. No package
 was added (no change to requirements.in or the lock). Decisions with their reasons:
 `DECISIONS.md` (W1-1 to W1-22). Every user-visible change: `CHANGES_W1.md`. Requests to the
@@ -62,7 +62,9 @@ Earlier versions of these runs are kept with READMEs (`results/live_stories/v1`,
 
 ## Verification
 
-- Worktree, final tree: `make test`, ruff and `make check-sizes`: see "Final state".
+- Worktree, final tree (22:56 UTC): `make test` **475 passed** (the 2 tests skipped in the
+  clone need `models/`, which is git-ignored); ruff clean; `make check-sizes` OK (1,035
+  tracked files).
 - **Fresh clone** (`.live/fresh_w1`, inside the repo, git-ignored, cloned at b1d7f53, new
   venv): `make setup` OK (45 s); `make test` **473 passed, 2 skipped** (2 min 14 s); ruff
   clean; `make check-sizes` OK (1,034 tracked files). `BUNDLES_DIR=<repo>/models make live`:
