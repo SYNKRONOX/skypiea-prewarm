@@ -134,6 +134,56 @@ def run(models: list[str], scenarios: list[str], reps: int, out: Path, hint: str
     return rows
 
 
+def run_stories(models: list[str], demo: str, out: Path) -> list[dict]:
+    """Every story act of `demo` once per model (POST /api/story); same files as run()."""
+    import httpx
+
+    from agent.tasks.stories import stories
+    c = httpx.Client(base_url=URL, timeout=60)
+
+    def st() -> dict:
+        return c.get("/api/state").json()
+    out.mkdir(parents=True, exist_ok=True)
+    if st()["settings"]["demo"] != demo:
+        c.post("/api/demo", json={"name": demo})
+        time.sleep(2)
+        _wait(lambda: not st()["settings"]["busy"] and st()["settings"]["demo"] == demo, 900,
+              "demo switch")
+    rows = []
+    for model in models:
+        if st()["settings"].get("llm_model") != model:
+            c.post("/api/model", json={"id": f"ollama:{model}"})
+            time.sleep(1)
+            _wait(lambda m=model: not st()["settings"]["busy"]
+                  and st()["settings"].get("llm_model") == m, 600, f"model {model}")
+        for act in stories(demo):
+            t0 = time.time()
+            r = c.post("/api/story", json={"act": act["act"]})
+            if r.status_code >= 400:
+                raise SystemExit(f"story {act['act']}: {r.text[:200]}")
+            _wait(lambda: st()["settings"].get("story"), 60, "story start")
+            _wait(lambda: not st()["settings"].get("story"), 2400, "story end")
+            time.sleep(3)
+            rep_ = c.get("/api/report").json()
+            rep_.update(act=act["act"], title=act["title"], demo=demo,
+                        wall_s=round(time.time() - t0, 1))
+            stt = st()
+            rep_["predictor_after"] = ((stt.get("last") or {}).get("slow") or {}).get(
+                "model", {}).get("status")
+            rep_["calls_ok"] = {k: sum(1 for x in (stt.get("conversation") or {}).get(
+                "calls", []) if x.get(f"{k}_ok")) for k in ("base", "pred")}
+            name = f"story_{demo}_act{act['act']}__{model.replace(':', '_')}"
+            (out / f"{name}.json").write_text(json.dumps(rep_, indent=2) + "\n")
+            (out / f"{name}_calls.csv").write_text(c.get("/api/export.csv").text)
+            (out / f"{name}_turns.csv").write_text(c.get("/api/export_turns.csv").text)
+            (out / f"{name}_state.json").write_text(json.dumps(stt, indent=1, default=str))
+            rows.append(rep_)
+            print(f"{model} {demo} act {act['act']}: calls {rep_['calls']} ok {rep_['calls_ok']}"
+                  f" badges {rep_['truth_badges']} predictor_after {rep_['predictor_after']}",
+                  flush=True)
+    return rows
+
+
 FIELDS = ["llm_model", "scenario", "rep", "turns", "calls", "first_try_valid", "calls_valid",
           "invented_codes", "invented_prices", "truth_badges", "not_done_badges", "text_calls",
           "handover", "completed", "think_ms_p50", "think_ms_p95", "think_ms_total", "wall_s",
@@ -173,7 +223,12 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--hint", default="off", choices=["off", "enter", "typing"])
     ap.add_argument("--out", type=Path, default=Path("results/live_bakeoff"))
     ap.add_argument("--table-only", action="store_true", help="rebuild summary from --out")
+    ap.add_argument("--stories", default=None, help="run every story act of this demo "
+                    "(skyair|codefix) once per model instead of the personas")
     a = ap.parse_args(argv)
+    if a.stories:
+        run_stories(a.models.split(","), a.stories, a.out)
+        return 0
     if a.table_only:
         rows = [json.loads(p.read_text()) for p in sorted(a.out.glob("*__r*.json"))]
     else:
