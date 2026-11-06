@@ -81,17 +81,32 @@ class Session:
 
     def verify_customer(self, name: str = "", customer_id: str = "", email: str = "",
                         booking_code: str = "") -> dict:
-        cands = [c for c in self.customers.values()
-                 if (customer_id and c["customer_id"] == customer_id)
-                 or (not customer_id and name and c["name"].lower() == name.strip().lower())]
-        for c in cands:
-            ok_mail = bool(email) and email.strip().lower() == c["email"]
-            b = self.bookings.get(booking_code.strip().upper()) if booking_code else None
-            if ok_mail or (b is not None and b["customer_id"] == c["customer_id"]):
-                self.verified = c["customer_id"]
-                return {"verified": True, "customer_id": c["customer_id"], "name": c["name"]}
-        return {"verified": False, "message": "I could not verify this customer with those "
-                "details. Politely say so; do not share any account information."}
+        """Identity proof = an email address or a booking code. The customer is found FROM the
+        proof; a given name must match it, and a given customer_id must not name a DIFFERENT
+        real customer (an id that does not exist at all, e.g. one the model made up, is
+        ignored)."""
+        refuse = {"verified": False, "message": "I could not verify this customer with those "
+                  "details. Politely say so; do not share any account information."}
+        found = None
+        if email:
+            found = next((c for c in self.customers.values()
+                          if c["email"] == email.strip().lower()), None)
+        if found is None and booking_code:
+            b = self.bookings.get(booking_code.strip().upper())
+            found = self.customers.get(b["customer_id"]) if b else None
+        if found is None:
+            return refuse
+        if name and found["name"].lower() != name.strip().lower():
+            return refuse
+        if customer_id and customer_id in self.customers and customer_id != found["customer_id"]:
+            return refuse
+        if email and booking_code:      # both given: both must belong to this customer
+            b = self.bookings.get(booking_code.strip().upper())
+            if email.strip().lower() != found["email"] or not b or \
+                    b["customer_id"] != found["customer_id"]:
+                return refuse
+        self.verified = found["customer_id"]
+        return {"verified": True, "customer_id": found["customer_id"], "name": found["name"]}
 
     def get_customer_details(self, customer_id: str = "") -> dict:
         err = self._need(customer_id or self.verified)

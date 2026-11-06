@@ -124,3 +124,20 @@ def test_skye_in_the_console_engine() -> None:
     assert "unknown tool" in tool_msgs[3]
     assert conv.calls[3]["note"] == "unknown tool: no prediction, normal behaviour"
     assert p["email"] not in json.dumps(conv.calls)
+
+
+def test_verification_ignores_made_up_ids_but_not_contradictions() -> None:
+    p, s = _persona(), Session()
+    assert s.verify_customer(name=p["name"], customer_id="12345", email=p["email"])["verified"]
+    s = Session()
+    assert s.verify_customer(email=p["email"].upper(), booking_code=p["booking_code"].lower()
+                             )["verified"]
+    other = next(c for c in pristine()["customers"] if c["name"] != p["name"])
+    assert not Session().verify_customer(name=other["name"], email=p["email"])["verified"]
+    assert not Session().verify_customer(customer_id=other["customer_id"],
+                                         email=p["email"])["verified"]
+    wrong = next(b for b in pristine()["bookings"] if b["customer_id"] != other["customer_id"]
+                 and b["customer_id"] != Session().verify_customer(email=p["email"])[
+                     "customer_id"])
+    assert not Session().verify_customer(email=p["email"],
+                                         booking_code=wrong["booking_code"])["verified"]

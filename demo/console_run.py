@@ -63,7 +63,7 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--name", required=True)
-    ap.add_argument("--demo", choices=["airline", "codefix"], default="airline")
+    ap.add_argument("--demo", choices=["airline", "codefix", "skyair"], default="airline")
     ap.add_argument("--hint", choices=["on", "off", "enter", "typing"], default="off",
                     help="on = enter (the Enter-time hint)")
     ap.add_argument("--lookahead", type=int, choices=[1, 2], default=None,
