@@ -13,7 +13,9 @@ NOTHING IS EXECUTED. ``run_tests`` is a SIMULATED test runner (labelled so every
   OWN trusted reference behaviour for f;
 - the reference behaviour of merge_sort follows the current source: while ``_merge`` drops
   the right-hand tail (the planted bug: no ``right[j:]`` / loop over ``right`` after the main
-  loop) it behaves like the buggy code, after a fix like a correct merge sort. quick_sort and
+  loop) it behaves like the buggy code, after a fix like a correct merge sort; if the code
+  changed in a way the runner cannot judge (merge_sort no longer uses ``_merge``), its
+  merge_sort asserts are "not evaluated". quick_sort and
   binary_search keep their (correct) reference behaviour; a changed function body is
   reported as such, not run;
 - a test with an assert it cannot evaluate is "not evaluated" (never a pass); a test with no
@@ -69,6 +71,26 @@ def _binary_search(xs: list, t: Any) -> int:
         else:
             hi = mid - 1
     return -1
+
+
+def merge_state(source: str) -> str:
+    """"fixed" | "buggy" | "unknown". buggy = the planted structure is still there:
+    merge_sort calls _merge, and _merge keeps no right-hand tail after its main loop.
+    unknown = the code changed in a way this simulated runner cannot judge (e.g. merge_sort no
+    longer uses _merge): its tests are then "not evaluated", never failed or passed."""
+    try:
+        tree = ast.parse(source)
+    except SyntaxError:
+        return "unknown"
+    fns = {n.name: n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef)}
+    ms, mg = fns.get("merge_sort"), fns.get("_merge")
+    if ms is None or mg is None:
+        return "unknown"
+    calls = {n.func.id for n in ast.walk(ms) if isinstance(n, ast.Call)
+             and isinstance(n.func, ast.Name)}
+    if "_merge" not in calls or not any(isinstance(st, ast.While) for st in mg.body):
+        return "unknown"
+    return "fixed" if merge_is_fixed(source) else "buggy"
 
 
 def merge_is_fixed(source: str) -> bool:
@@ -185,7 +207,20 @@ class Session:
                             for p, n in sorted(changed.items())],
                 "edits": self.edits[-8:], "runs": self.runs[-6:],
                 "merge_sort_fixed": merge_is_fixed(self.files.get("sortkit/sorting.py", "")),
-                "runner": SIMULATED}
+                "merge_sort_state": merge_state(self.files.get("sortkit/sorting.py", "")),
+                "diff": self.diff(), "runner": SIMULATED}
+
+    def diff(self, max_lines: int = 60) -> list[str]:
+        """Unified diff of the changed files against the pristine repository."""
+        import difflib
+        base = pristine()["files"]
+        out: list[str] = []
+        for p in sorted(self.files):
+            if self.files[p] != base.get(p):
+                out += list(difflib.unified_diff(
+                    base.get(p, "").splitlines(), self.files[p].splitlines(),
+                    f"a/{p}", f"b/{p}", n=1, lineterm=""))
+        return out[:max_lines]
 
 
 # ---------------------------------------------------------------- the simulated runner
@@ -203,11 +238,11 @@ def simulate(files: dict[str, str], selector: str = "") -> dict[str, Any]:
             return {"runner": SIMULATED, "collection_error": f"SyntaxError in {p} line "
                     f"{e.lineno}: {e.msg}", "passed": 0, "failed": 0, "not_evaluated": 0,
                     "tests": []}
-    fixed = merge_is_fixed(files.get("sortkit/sorting.py", ""))
+    mstate = merge_state(files.get("sortkit/sorting.py", ""))
     pristine_files = pristine()["files"]
     changed_impl = sorted(p for p in ("sortkit/search.py",)
                           if files.get(p) != pristine_files.get(p))
-    impl = {"merge_sort": sorted if fixed else _merge_sort_buggy,
+    impl = {"merge_sort": {"fixed": sorted, "buggy": _merge_sort_buggy}.get(mstate),
             "quick_sort": sorted, "binary_search": _binary_search}
     tests = []
     for p, tree in trees.items():
@@ -224,6 +259,10 @@ def simulate(files: dict[str, str], selector: str = "") -> dict[str, Any]:
            "passed": sum(t["outcome"] == "passed" for t in tests),
            "failed": sum(t["outcome"] == "failed" for t in tests),
            "not_evaluated": sum(t["outcome"] == "not evaluated" for t in tests)}
+    if mstate == "unknown":
+        out["note_merge_sort"] = ("sortkit/sorting.py changed in a way the simulated runner "
+                                  "cannot judge (merge_sort no longer uses the original _merge "
+                                  "loop): merge_sort asserts are not evaluated")
     if changed_impl:
         out["note"] = (f"{', '.join(changed_impl)} changed: the simulated runner keeps its "
                        "reference behaviour for binary_search (code is never run)")
@@ -257,6 +296,8 @@ def _check(t: ast.expr, impl: dict) -> tuple[bool, str] | None:
         args = [ast.literal_eval(x) for x in call.args]
         want = ast.literal_eval(t.comparators[0])
     except (ValueError, TypeError, SyntaxError, MemoryError, RecursionError):
+        return None
+    if impl.get(call.func.id) is None:          # behaviour unknown: not evaluated
         return None
     try:
         got = impl[call.func.id](*args)

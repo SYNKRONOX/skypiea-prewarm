@@ -303,7 +303,11 @@ function renderRepo(st) {
   const ch = el("div", "bk"); ch.append(el("b", "", "Files changed: "));
   ch.append(document.createTextNode(r.changed.length ? r.changed.map((c) => c.path + " (" + c.edits + " edit" + (c.edits === 1 ? "" : "s") + ")").join(", ") : "none"));
   body.append(ch);
-  for (const e of (r.edits || []).slice(-4)) { const d = el("div", "pass-changes"); d.append(el("div", "", "↻ " + e.path + ": " + e.summary)); body.append(d); }
+  if (r.merge_sort_state === "unknown") body.append(el("div", "cap", "merge_sort changed in a way the simulated runner cannot judge: its tests are \"not evaluated\"."));
+  if ((r.diff || []).length) { const pre = el("pre", "diff");
+    for (const ln of r.diff) pre.append(el("span", ln.startsWith("+") && !ln.startsWith("+++") ? "add" :
+      ln.startsWith("-") && !ln.startsWith("---") ? "del" : "", ln + "\n"));
+    body.append(pre); }
 }
 
 function onTruth(t) {

@@ -135,6 +135,9 @@ main { flex: 1; min-height: 0; display: grid; grid-template-columns: 40fr 60fr;
 .pass-changes { font-size: var(--t-cap); color: var(--hint); font-weight: 600; padding-top: 2px; }
 .story-row { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
 button.story { border-color: var(--hint); color: var(--hint); font-weight: 700; }
+pre.diff { font-size: 12px; background: var(--card); border: 1px solid var(--line); border-radius: 8px;
+  padding: 4px 8px; margin: 4px 0; overflow: auto; max-height: 18vh; }
+pre.diff .add { color: var(--warm); } pre.diff .del { color: var(--bad); }
 .pill.nov { color: var(--muted); border-style: dashed; }
 .bk-log { font-size: var(--t-cap); margin-top: 4px; }
 .bk-log div { padding: 2px 0; border-top: 1px dashed var(--line); }

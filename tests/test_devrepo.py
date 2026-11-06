@@ -120,3 +120,18 @@ def test_codefix_in_the_engine_uses_the_repo_and_sends_no_content() -> None:
     st = truth.state(conv.backend)
     assert st["repo"]["merge_sort_fixed"] and conv.truth == []
     assert "result.extend" not in json.dumps(conv.calls)
+
+
+def test_a_rewrite_the_runner_cannot_judge_is_not_evaluated_and_diff_is_shown() -> None:
+    from agent.devrepo import merge_state
+    s = Session()
+    assert merge_state(s.files["sortkit/sorting.py"]) == "buggy"
+    s.edit_file("sortkit/sorting.py", "    return _merge(left, right)\n",
+                "    return sorted(left + right)\n")
+    r = s.run_tests("merge")
+    assert merge_state(s.files["sortkit/sorting.py"]) == "unknown"
+    out = {t["id"].split("::")[1]: t["outcome"] for t in r["tests"]}
+    assert set(out.values()) == {"not evaluated"} and r["failed"] == 0 and r["passed"] == 0
+    assert "note_merge_sort" in r
+    d = s.state()["diff"]
+    assert "+    return sorted(left + right)" in d and d[0].startswith("--- a/sortkit")
