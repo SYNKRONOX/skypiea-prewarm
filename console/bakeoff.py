@@ -215,6 +215,10 @@ def table(rows: list[dict]) -> str:
     return head + "\n".join(lines) + "\n"
 
 
+def _reports(out: Path) -> list[Path]:
+    return sorted(x for x in out.glob("*__r*.json") if not x.name.endswith("_state.json"))
+
+
 def main(argv: list[str] | None = None) -> int:
     from agent.tasks.skye import BAKEOFF
     ap = argparse.ArgumentParser(description=__doc__,
@@ -232,10 +236,10 @@ def main(argv: list[str] | None = None) -> int:
         run_stories(a.models.split(","), a.stories, a.out)
         return 0
     if a.table_only:
-        rows = [json.loads(p.read_text()) for p in sorted(a.out.glob("*__r*.json"))]
+        rows = [json.loads(p.read_text()) for p in _reports(a.out)]
     else:
         rows = run(a.models.split(","), a.scenarios.split(","), a.reps, a.out, a.hint)
-        prev = [json.loads(p.read_text()) for p in sorted(a.out.glob("*__r*.json"))]
+        prev = [json.loads(p.read_text()) for p in _reports(a.out)]
         rows = prev or rows
     with (a.out / "summary.csv").open("w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=FIELDS, extrasaction="ignore")
