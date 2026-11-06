@@ -159,14 +159,26 @@ class Session:
             return {"error": "not_found", "message": f"No file {path!r}; nothing changed.",
                     "files": sorted(self.files)}
         src = self.files.get(p, "")
+        note = None
         if old:
             n = src.count(old)
-            if n != 1:
-                return {"error": "old_not_unique" if n else "old_not_found", "changed": False,
-                        "message": f"`old` occurs {n} times in {p}; it must occur exactly "
-                                   "once. Nothing changed. Read the file and copy the exact "
-                                   "text."}
-            out = src.replace(old, new, 1)
+            if n == 0:
+                # like common coding tools: accept a unique match that differs only in
+                # indentation / trailing spaces, re-indenting `new` to the file's indentation
+                hit = _loose_match(src, old)
+                if hit is not None:
+                    out, note = _loose_replace(src, old, new, hit), "matched ignoring whitespace"
+                    n = -1
+            if n == 0 or n > 1:
+                err = {"error": "old_not_unique" if n else "old_not_found", "changed": False,
+                       "message": f"`old` occurs {n} times in {p}; it must occur exactly "
+                                  "once. Nothing changed. Read the file and copy the exact "
+                                  "text."}
+                if n == 0:
+                    err["closest_lines"] = _closest(src, old)
+                return err
+            if n == 1:
+                out = src.replace(old, new, 1)
         else:
             if p in self.files:     # no `old`: append to an existing file
                 out = src.rstrip("\n") + "\n\n\n" + new.strip("\n") + "\n"
@@ -174,9 +186,9 @@ class Session:
                 out = new
         self.files[p] = out
         summary = f"-{len(old.splitlines()) if old else 0} +{len(new.splitlines())} lines"
-        self.edits.append({"path": p, "summary": summary})
+        self.edits.append({"path": p, "summary": summary + (f" ({note})" if note else "")})
         self.sidebar_due = True
-        return {"changed": True, "path": p, "summary": summary}
+        return {"changed": True, "path": p, "summary": summary, **({"note": note} if note else {})}
 
     def run_tests(self, selector: str = "") -> dict:
         res = simulate(self.files, str(selector or ""))
@@ -221,6 +233,59 @@ class Session:
                     base.get(p, "").splitlines(), self.files[p].splitlines(),
                     f"a/{p}", f"b/{p}", n=1, lineterm=""))
         return out[:max_lines]
+
+
+# ---------------------------------------------------------------- edit helpers
+def _norm(lines: list[str]) -> list[str]:
+    return [ln.strip() for ln in lines if ln.strip()]
+
+
+def _loose_match(src: str, old: str) -> tuple[int, int] | None:
+    """(start, end) line indices of the ONE window of src whose non-blank lines equal old's
+    non-blank lines ignoring indentation and trailing spaces; None if 0 or several."""
+    want = _norm(old.splitlines())
+    if not want:
+        return None
+    lines = src.splitlines()
+    hits = []
+    for a in range(len(lines)):
+        if lines[a].strip() != want[0]:
+            continue
+        k, b = 0, a
+        while b < len(lines) and k < len(want):
+            if lines[b].strip():
+                if lines[b].strip() != want[k]:
+                    break
+                k += 1
+            b += 1
+        if k == len(want):
+            hits.append((a, b))
+    return hits[0] if len(hits) == 1 else None
+
+
+def _indent(s: str) -> str:
+    return s[: len(s) - len(s.lstrip())]
+
+
+def _loose_replace(src: str, old: str, new: str, hit: tuple[int, int]) -> str:
+    lines = src.splitlines()
+    a, b = hit
+    old_first = next(ln for ln in old.splitlines() if ln.strip())
+    base, given = _indent(lines[a]), _indent(old_first)
+    out_new = []
+    for ln in new.splitlines():
+        if ln.startswith(given):
+            ln = ln[len(given):]
+        out_new.append(base + ln if ln.strip() else "")
+    return "\n".join(lines[:a] + out_new + lines[b:]) + ("\n" if src.endswith("\n") else "")
+
+
+def _closest(src: str, old: str) -> list[str]:
+    import difflib
+    first = next((ln.strip() for ln in old.splitlines() if ln.strip()), "")
+    lines = src.splitlines()
+    best = difflib.get_close_matches(first, [ln.strip() for ln in lines], n=3, cutoff=0.5)
+    return [f"{i + 1}: {ln}" for i, ln in enumerate(lines) if ln.strip() in best][:5]
 
 
 # ---------------------------------------------------------------- the simulated runner

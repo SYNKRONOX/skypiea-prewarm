@@ -1,0 +1,4 @@
+conversation,turn,source,hint_mode,hint_sources,lead_ms,typing_ms,lookahead,console_map,first_tool,calls,base_first_wall_ms,base_first_cold,pred_first_wall_ms,pred_first_cold,pred_first_predicted,pred_first_warm_source,pred_first_warm,truth_claims,truth_verdict,truth_badge,truth_note_sent,truth_corrected,truth_price_verdict,truth_prices_unsourced,llm_model
+a4233b27b0d6,1,autopilot,off,,,27300.0,1,True,search,8,3015.6,True,3034.6,True,False,,False,,,,,,,,llama3.1:8b
+a4233b27b0d6,2,autopilot,off,,,19800.0,1,True,read_file,2,2019.4,True,31.7,False,True,call,True,,,,,,,,llama3.1:8b
+a4233b27b0d6,3,autopilot,off,,,10200.0,1,True,,0,,,,,,,,,,,,,,,llama3.1:8b

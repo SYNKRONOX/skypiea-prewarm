@@ -135,3 +135,15 @@ def test_a_rewrite_the_runner_cannot_judge_is_not_evaluated_and_diff_is_shown() 
     assert "note_merge_sort" in r
     d = s.state()["diff"]
     assert "+    return sorted(left + right)" in d and d[0].startswith("--- a/sortkit")
+
+
+def test_edit_matches_ignoring_whitespace_and_hints_on_a_miss() -> None:
+    s = Session()
+    r = s.edit_file("sortkit/sorting.py", "result.extend(left[i:])\nreturn result",
+                    "result.extend(left[i:])\nresult.extend(right[j:])\nreturn result")
+    assert r["changed"] and r["note"] == "matched ignoring whitespace"
+    assert "    result.extend(right[j:])\n    return result\n" in s.files["sortkit/sorting.py"]
+    assert s.run_tests("merge")["failed"] == 0
+    miss = Session().edit_file("sortkit/sorting.py", "result.extend(lft[i:])", "x")
+    assert miss["error"] == "old_not_found" and any("result.extend(left[i:])" in x
+                                                    for x in miss["closest_lines"])
