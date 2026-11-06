@@ -48,6 +48,15 @@ DEMOS = {"airline": "support", "codefix": "coding"}
 DRAIN_TIMEOUT_S = 180
 
 
+class NoCacheStatic(StaticFiles):
+    """Static files with Cache-Control: no-cache (a browser never runs an old console UI)."""
+
+    async def get_response(self, path, scope):
+        r = await super().get_response(path, scope)
+        r.headers["Cache-Control"] = "no-cache"
+        return r
+
+
 class Hub:
     def __init__(self) -> None:
         self.subs: set[asyncio.Queue] = set()
@@ -263,7 +272,7 @@ def make_app(console: Console) -> Starlette:
     c = console
 
     async def index(_: Request) -> Response:
-        return FileResponse(STATIC / "index.html")
+        return FileResponse(STATIC / "index.html", headers={"Cache-Control": "no-cache"})
 
     async def events(request: Request) -> Response:
         q: asyncio.Queue = asyncio.Queue()
@@ -382,7 +391,7 @@ def make_app(console: Console) -> Starlette:
         Route("/api/autopilot", autopilot, methods=["POST"]),
         Route("/api/export.csv", export),
         Route("/api/{name}", action, methods=["POST"]),
-        Mount("/static", StaticFiles(directory=STATIC)),
+        Mount("/static", NoCacheStatic(directory=STATIC)),
     ], lifespan=lifespan)
 
 

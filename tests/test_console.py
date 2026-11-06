@@ -278,7 +278,8 @@ def test_app_routes_offline() -> None:
         r = cl.get("/")
         assert r.status_code == 200 and "Skypiea Live Console" in r.text
         assert "http" not in r.text.replace("http-equiv", "")   # no external resources
-        assert cl.get("/static/app.js").status_code == 200
+        js = cl.get("/static/app.js")
+        assert js.status_code == 200 and js.headers["cache-control"] == "no-cache"
         s = cl.get("/api/state").json()
         assert s["settings"]["hint"] is False and s["settings"]["mirror"] == "concurrent"
         assert s["demo"]["profile"] == "support" and "tau2-bench" in s["demo"]["profile_label"]
