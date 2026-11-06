@@ -196,3 +196,93 @@ The first attempt failed before kind could create the cluster: Docker Desktop an
 published port, not only kind's. `docker desktop restart` from WSL failed, but the Windows CLI
 worked: `"/mnt/c/Users/<you>/AppData/Local/Programs/DockerDesktop/resources/bin/docker.exe"
 desktop restart`. After that restart, port publishing worked and the registry kept its images.
+
+---
+
+# Live Console: baseline vs predictive, side by side
+
+Design and data sources: [`docs/LIVE_CONSOLE.md`](LIVE_CONSOLE.md). Verification runs:
+[`results/live_console_demo/runs.md`](../results/live_console_demo/runs.md) (demo runs, not
+results). Backup for a live talk: [`docs/live_backup/`](live_backup/).
+
+![Live Console, airline support, hint on](img/console_support_hint_on.png)
+
+## Start and stop
+
+```bash
+make setup                      # once
+ollama pull llama3.1:8b         # once, on the machine running Ollama (Windows or Linux)
+make live                       # both stacks + console (about 45 s with cached images)
+# open http://127.0.0.1:8090 (console) and http://127.0.0.1:3001 (Grafana)
+make live-clean                 # console off, both stacks uninstalled (cluster/registry kept)
+```
+
+`make live` needs the real predictor image (`skypiea/predictor:af000231bc7b`, support +
+coding bundles) in the local registry or in Docker. It is built from the datasets (README
+Quickstart), so a clean laptop without the datasets cannot run `make live`; `make demo` can.
+Override the image with `PRED_IMAGE_TAG=<tag>` and the LLM with `AGENT_BASE_URL` /
+`AGENT_MODEL`. `LIVE_DEMO=coding make live` starts with the coding profile.
+
+Measured on the laptop in "Prerequisites" (2026-11-06):
+
+| What | Measured |
+|---|---|
+| `make live`, cluster up, images built | 44 s from a fresh clone (two runs: 44.1 s, 43.5 s); 25-32 s when the stacks are already installed |
+| first `make live` on a new cluster (stacks + image builds from a warm cache) | 2 min 47 s |
+| switching the demo (support <-> coding: helm upgrade of the predictive stack) | about 30-60 s |
+| Docker memory, both stacks idle | control plane 0.72 GiB, worker 1.09 GiB, registry 60 MiB |
+| Docker memory after the verification runs (a few tool pods warm, Prometheus data) | control plane 0.91 GiB, worker 2.15 GiB, registry 43 MiB |
+| console process | 87 MiB RSS |
+| kind worker image store | 3.2 GB |
+| Ollama (llama3.1:8b, Q4_K_M) | about 5 GB of GPU/host memory on the Ollama machine (not part of Docker) |
+
+## 7-minute presenter script
+
+Before the talk: `make live`, open the console at 125-150% zoom, pick the theme with ◐, and
+send one throwaway message to load the model ("hi"). The first LLM call after Ollama has been
+idle includes loading the model (seconds). Then press **Reset to zero**.
+
+| Time | Do | Point at and say |
+|---|---|---|
+| 0:00-0:45 | Nothing yet | Header: "support profile, trained on tau2-bench traces", mirror concurrent, hint off. Two columns: the same agent calls are sent to two copies of the platform. **Normal** scales tools to zero; **Skypiea** predicts the next tool and starts it. Pod grids: all 16 tools cold on both. Footer: local laptop, cold starts here are shorter than on AWS. |
+| 0:45-2:15 | Type: *Hi, this is Priya Menon, user id priya_menon_1119. I need to change my flight on reservation R35033531 to an earlier day. What are my options?* (or press **Autopilot ▶**, labelled AUTOPILOT) | user_lookup is cold on **both** stacks: nothing predicts the first call without the hint. Then the Predictor panel: after user_lookup it says reservation_lookup (p about 0.84) and warms travel_booking; the pod grid shows it starting. Then the **think window** under reservation_lookup: the LLM thought for about 0.4-0.7 s, the cold start is about 2-3 s. **The prediction was right, but the think time was too short to hide the start.** Say it plainly. |
+| 2:15-3:00 | Point at flight_search | Warm on both stacks: the five airline tools live in one server (travel_booking), so once it is up, every airline call is warm. Prediction works on servers, not tool names. |
+| 3:00-4:00 | Click **Hint: off → ON**, **Reset to zero**, send the first message again | Now the agent tells the predictive gateway "a new turn starts" (turn number only, never the text). The predictor answers with the first-tool distribution learned from tau2-bench (user_lookup 0.50) and warms it while the LLM thinks. user_lookup on Skypiea shows "warmed by hint" and waits less (in our runs about 0.9-1.9 s instead of about 2 s). The start is only partly hidden, because the LLM thinks for well under a second. With a human typing, the head start would be longer. |
+| 4:00-5:00 | Type: *Please move me to flight SK482 on day 36.* Then *Thanks. That's all.* | If the agent hands over (transfer_to_human), point at the Skypiea column: post_comment was warmed earlier (the support profile expects an escalation after a reservation lookup, p about 0.45), so it is warm while the baseline cold-starts. Point at the totals: "agent waited on tools", cold calls, p95, idle pod-seconds. **Skypiea pays for it with more idle pod-seconds** (higher estimated idle cost, an assumption from pricing.yaml). |
+| 5:00-5:45 | Click **Kill predictor**, then send a message (or Autopilot) | The predictor panel turns red (DOWN), and decisions read error:ConnectError. **Every call still succeeds**: the gateway falls back to plain scale-to-zero. Click **Restart predictor**. |
+| 5:45-6:30 | Switch **Demo → Code fix** (about 30-60 s; talk meanwhile), then Autopilot | Profile label changes: "coding profile: model trained on TraceLab traces, warm policy tuned on TraceLab + Copilot". Point at a reply with several calls: "batch: prediction cannot help between calls sent in the same reply". Calls marked "written as text" are where the 8B model wrote the call as JSON text instead of a tool call; the console executed it and says so. |
+| 6:30-7:00 | Open Grafana (:3001) | The same story over time for both namespaces: cold rate, added latency, warm pool, hint warms, predictor errors (the kill shows up there). Close with: this is one laptop and one small model; the AWS tables in the README are the results. |
+
+What to say honestly when prediction cannot hide a start:
+
+- **Batched calls:** calls the LLM sends in one reply arrive back to back. Nothing can be
+  warmed between them.
+- **Short think time:** a fast local model thinks for about 0.4-1.5 s; a cold start here
+  takes about 2-3 s. A right prediction made at the previous call is then only partly in time.
+  The console's think window shows this per call against the baseline's own cold start for the
+  same call.
+- **The first call** of a conversation is cold without the hint, because there is no history.
+- **Run-to-run variance is large** (both stacks on one node; up to 4 pods starting at once).
+  One conversation is a demo, not a measurement.
+
+## Live Console troubleshooting
+
+- **`make live` says the predictor image is missing:** see "Start and stop". `make demo`
+  works without it.
+- **Console shows "baseline stub not reachable" or stale pods:** run `make live-pf`, which
+  restarts the loopback port-forwards; they die when a pod they point at is replaced.
+- **LLM errors in the status line:** check `curl $AGENT_BASE_URL/models`. For Ollama on
+  Windows with WSL, see the Ollama item under Troubleshooting above.
+- **First answer takes many seconds:** Ollama is loading the model. Send a warm-up message
+  before the talk.
+- **Reset takes up to about 40 s:** it waits for the controllers' keep-alive (30 s) plus the
+  5 s purge; nothing is forced down on purpose.
+- **Ports:** console 8090 (`CONSOLE_PORT`), Grafana 3001, baseline 18180-18182, predictive
+  18280-18283; all on 127.0.0.1.
+- **Docker Desktop port errors (`/forwards/expose ... 500`) or `kubectl` EOF:** see
+  Troubleshooting above (restart Docker Desktop, or the kind node containers).
+- **A tool call FAILED on both stacks:** usually the 8B model sent an invalid argument
+  (e.g. `day` as a word). The model sees the tool's error and usually retries. It is not a
+  platform failure.
+- **Playwright:** not installed; adding it needs a new package (not done). Screenshots come
+  from a locally installed Chrome with `make live-screenshot NAME=...` (`?snapshot=1` view).
