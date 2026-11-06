@@ -51,7 +51,8 @@ MAX_STEPS = 8
 CSV_FIELDS = ["conversation", "turn", "reply", "pos_in_reply", "replay", "llm_model",
               "think_ms", "tool_call_from_text", "tool", "tool_class", "server", "mirror_mode",
               "hint", "hint_mode", "lookahead", "console_map", "note",
-              "baseline_policy", "profile", "results_match", "pred_warm_reason"] + [
+              "baseline_policy", "profile", "results_match", "pred_warm_reason", "result_error",
+              "arg_code_known"] + [
     f"{s}_{f}" for s in ("base", "pred") for f in (
         "gap_ms", "wall_ms", "added_ms", "held_ms", "hold_late_ms", "cold", "predicted",
         "warm_source", "ok",
@@ -272,6 +273,7 @@ class Conversation:
             self.backend = Session()
         self.writes: list[dict[str, Any]] = []         # truth panel: real write attempts
         self.facts: set[float] = set()                 # numbers tool results returned (prices)
+        self.think_log: list[dict[str, Any]] = []      # per LLM reply: turn, think ms, calls
         self._sidebar_msg: dict[str, Any] | None = None  # Skye's customer sidebar message
         self.truth: list[dict[str, Any]] = []          # truth panel: claim checks per turn
         self.abandoned: list[dict[str, Any]] = []      # typing hints whose turn never came
@@ -431,10 +433,16 @@ class Conversation:
                            results_match=None)
             return rec
         if unknown:
+            rec["result_error"] = "unknown_tool"
             content = json.dumps({"error": f"unknown tool {tc.name!r}; available: "
                                   f"{task.tool_names}"})
         elif self.backend is not None:       # Skypiea Air: answer from the session database
+            code = args.get("booking_code")
+            if code:     # a code the model sent that the database never had = invented
+                rec["arg_code_known"] = str(code).strip().upper() in self.backend.bookings
             result = self.backend.call(tc.name, args)
+            if isinstance(result, dict) and result.get("error"):
+                rec["result_error"] = str(result["error"])[:40]     # an error code only
             numbers_in(result, self.facts)
             content = json.dumps(result, default=str)[:3000]
             await self._log_write(tc.name, args, result)
@@ -578,6 +586,9 @@ class Conversation:
                     await self.publish({"type": "error", "where": "llm", "detail": str(e)[:200]})
                     break
                 self.messages.append(r.message)
+                self.think_log.append({"turn": self.turn, "think_ms": round(r.think_ms, 1),
+                                       "n_calls": len(r.tool_calls),
+                                       "from_text": bool(getattr(r, "from_text", False))})
                 await self.publish({"type": "llm_reply", "turn": self.turn,
                                     "reply": self.reply + 1 if r.tool_calls else None,
                                     "think_ms": round(r.think_ms, 1),

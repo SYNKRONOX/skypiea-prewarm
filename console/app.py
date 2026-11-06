@@ -588,6 +588,14 @@ def make_app(console: Console) -> Starlette:
                 "lookahead", "cpm", "model"]}, status_code=404)
         return JSONResponse({"ok": True, "settings": c.settings}, status_code=202)
 
+    async def report_ep(request: Request) -> Response:
+        from console.bakeoff import report
+        conv = c.conv if (c.conv and c.conv.calls) else (c.previous or c.conv)
+        if conv is None:
+            return JSONResponse({"error": "no conversation"}, status_code=404)
+        sc = request.query_params.get("scenario")
+        return JSONResponse(json.loads(json.dumps(report(conv, sc), default=str)))
+
     async def models_ep(_: Request) -> Response:
         return JSONResponse({"models": await c.models(),
                              "current": getattr(c.llm, "model", None)})
@@ -635,6 +643,7 @@ def make_app(console: Console) -> Starlette:
     return Starlette(routes=[
         Route("/", index), Route("/events", events), Route("/api/state", state),
         Route("/api/personas", personas_ep), Route("/api/models", models_ep),
+        Route("/api/report", report_ep),
         Route("/api/skyair/state", booking_ep),
         Route("/api/chat", chat, methods=["POST"]),
         Route("/api/autopilot", autopilot, methods=["POST"]),

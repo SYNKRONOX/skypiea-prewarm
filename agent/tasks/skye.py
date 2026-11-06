@@ -182,4 +182,52 @@ SCENARIOS: dict[str, list[str]] = {
         "Hi, I'm Dev Singh, email dev.singh@example.com, booking VPGX3T.",
         "Can you apply my loyalty voucher LOYAL50 and upgrade me to first class using it?",
         "Thanks."],
+    # W1 (bake-off personas): a new customer books a trip; offers; out of scope
+    "new_customer": [
+        "Hi! I've never flown with Skypiea Air before. My name is Nova Quill.",
+        "I'd like to fly from SKA to SKE on 2026-12-07.",
+        "The 06:15 one please, Saver fare. My email is nova.quill@example.org.",
+        "Yes, I confirm the booking.",
+        "Great. Can you show me my booking?",
+        "Thanks, that's all."],
+    "offers": [
+        "Hi, I'm Dev Singh, email dev.singh@example.com.",
+        "Do you have any offers at the moment?",
+        "Please apply SKYWINTER10 to my booking. Yes, I confirm.",
+        "Thanks, that's all."],
+    "out_of_scope": [
+        "Hi Skye, what will the weather be like in Paris tomorrow?",
+        "OK. Can you write me a Python function that sorts a list?",
+        "Fine, thanks."],
 }
+
+# The bake-off's five personas (docs/LIVE_DEMO.md "Model bake-off")
+BAKEOFF = ["new_customer", "change", "cancel_refund", "offers", "failed_verification"]
+
+
+def scenario_done(name: str, backend: Any, writes: list[dict[str, Any]],
+                  calls: list[dict[str, Any]]) -> bool | None:
+    """Did the conversation reach the persona's goal? From the session database and the
+    write log only (not from what Skye said). None = no rule for this scenario."""
+    ok = {w["tool"] for w in writes if w["outcome"] == "success"}
+    if backend is None:
+        return None
+    if name == "new_customer":
+        return any(backend.bookings[c]["customer_id"] in backend.new_customers
+                   for c in backend.new_bookings)
+    if name == "change":
+        b = backend.bookings.get("5TGTBP")
+        return bool(b) and _LATER["flight_no"] in b["flights"]
+    if name == "cancel_refund":
+        b = backend.bookings.get("S4Z64E")
+        return bool(b) and b["status"] == "cancelled" and bool(b.get("refunded"))
+    if name == "offers":
+        b = backend.bookings.get("VPGX3T")
+        return bool(b) and b.get("promo") == "SKYWINTER10"
+    if name == "failed_verification":
+        # the right outcome is a polite refusal: nobody verified, nothing written
+        return backend.verified is None and not ok
+    if name == "out_of_scope":
+        return not ok and not any(c.get("tool") not in ("transfer_to_human",)
+                                  for c in calls)
+    return None

@@ -193,3 +193,35 @@ def test_engine_sidebar_vocab_note_and_price_badge() -> None:
     csv = to_csv(conv.turns, TURN_FIELDS)
     assert "truth_prices_unsourced" in csv and "75" in csv
     assert one["email"] not in json.dumps(conv.calls)
+
+
+def test_report_metrics_and_scenario_check() -> None:
+    pytest.importorskip("starlette")
+    from agent.tasks import get
+    from agent.tasks.skye import SCENARIOS, scenario_done
+    from console.bakeoff import report, table
+    from console.engine import Conversation
+    from console.llm_stream import ScriptedStreamingLLM
+    from tests.test_console import FakeGW, FakeStack, NullPoller, factory
+
+    gws = {"base": FakeGW("base"), "pred": FakeGW("pred")}
+
+    async def publish(ev):
+        pass
+    llm = ScriptedStreamingLLM(
+        [[("find_customer", {"name": "Nova Quill"}),
+          ("change_flight", {"booking_code": "QQQQQQ", "new_flight_no": "SA1"}),
+          ("book_flight", {"flight_no": _scheduled_flight(), "name": "Nova Quill",
+                           "email": "nova@example.org", "customer_confirmed": True})]],
+        answers=["Booked! Your total is $5."], model="m1")
+    conv = Conversation(get("skyair"), llm, {"base": FakeStack("base"),
+                                             "pred": FakeStack("pred")}, NullPoller(),
+                        publish, {"mirror": "concurrent", "hint_mode": "off",
+                                  "baseline_policy": "scale_to_zero"}, mcp_factory=factory(gws))
+    asyncio.run(conv.user_turn(SCENARIOS["new_customer"][0]))
+    r = report(conv, "new_customer")
+    assert r["completed"] is True and r["invented_codes"] == 1
+    assert r["first_try_valid"] == round(2 / 3, 3) and "not_verified" in r["errors"]
+    assert r["invented_prices"] == 1 and r["llm_model"] == "m1" and r["llm_replies"] == 4
+    assert scenario_done("failed_verification", conv.backend, conv.writes, conv.calls) is False
+    assert "| m1 | 1 | 1 / 1 |" in table([{**r, "rep": 1}])
