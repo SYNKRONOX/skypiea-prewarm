@@ -155,7 +155,9 @@ class Session:
             return {"found": len(hits), "ambiguous": True, "message": "Several customers have "
                     "this name. Ask for their email address or a booking code to verify."}
         return {"found": 1, "customer_id": hits[0]["customer_id"], "verified": False,
-                "message": "Ask for the email address or a booking code to verify identity."}
+                "message": "Not verified yet. If the customer ALREADY gave an email address or "
+                           "a booking code in this conversation, call verify_customer with it "
+                           "now (do not ask again); otherwise ask for one."}
 
     def verify_customer(self, name: str = "", customer_id: str = "", email: str = "",
                         booking_code: str = "") -> dict:
