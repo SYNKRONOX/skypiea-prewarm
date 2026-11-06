@@ -152,8 +152,10 @@ the airline data and the repository are mocks inside the console; the predictor 
 names and timing.
 
 If asked "which model and why": llama3.1:8b by default, chosen by correctness in a bake-off
-against qwen2.5:7b on five scripted personas (`docs/LIVE_DEMO.md`, "Model bake-off": 8/10 vs
-6/10 tasks completed, 0 vs 4 false "done" claims; demo runs, n = 10 each). The Model dropdown
+against qwen2.5:7b on five scripted personas, run three times as the tools improved
+(`docs/LIVE_DEMO.md`, "Model bake-off": 23 vs 22 of 30 tasks completed, 2 vs 8 false "done"
+claims; qwen invents fewer booking codes and never hands over unasked; demo runs, n = 10 per
+model per version). The Model dropdown
 switches live; switching starts a new conversation.
 
 If asked about **FR-9** ("the AWS runs show held_ms up to 397.2 ms but the cap is 150 ms"): the
