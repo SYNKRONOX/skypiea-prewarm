@@ -131,7 +131,12 @@ free lead time. In a verification run this turned a 2.5 s wait into 0.5 s. We di
 runs (see the report) and changed the design.
 
 - **concurrent** (default): the baseline lane runs alongside the conversation. This is the
-  most visual mode; the two stacks' pod starts can compete for the node (recorded).
+  most visual mode; the two stacks' pod starts can compete for the node (recorded). One limit
+  cannot be removed: the next call only exists once the LLM has the predictive result. When a
+  predictive call is **slower** than the baseline's (the predictive stack cold, the baseline
+  warm), the baseline's next gap is longer by the difference. That can only leave the baseline
+  colder, never warmer. The console tags such calls "gap +X vs Skypiea (waited for the LLM)"
+  and records both gaps.
 - **sequential**: the predictive stack runs the turn live. When the turn ends, the baseline
   repeats that turn's calls with the same gaps before the next turn may start. The stacks'
   calls never overlap. A turn's first baseline call can come later than its gap (recorded),

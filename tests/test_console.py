@@ -410,5 +410,8 @@ def test_a_slow_predictive_call_does_not_delay_the_baseline() -> None:
     asyncio.run(conv.user_turn("x"))
     # both stacks started the first call together (no 0.4 s delay for the baseline)
     assert abs(gws["base"].times[0][0] - gws["pred"].times[0][0]) < 0.15
+    # the next call only exists once the LLM has the (slower) predictive result, so the
+    # baseline's gap is longer by the difference - recorded, never hidden
     c = conv.calls[1]
-    assert c["base_gap_ms"] == pytest.approx(c["pred_gap_ms"], abs=60)
+    excess = c["base_gap_ms"] - c["pred_gap_ms"]
+    assert 300 < excess < 520

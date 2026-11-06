@@ -118,6 +118,9 @@ function callTags(c, k) {
   add(c[k + "_cold"] ? "cold" : "warm", c[k + "_cold"] ? "cold" : "warm");
   add("added " + fmtMs(c[k + "_added_ms"]));
   if (c[k + "_gap_ms"] !== null && c[k + "_gap_ms"] !== undefined) add("gap " + fmtMs(c[k + "_gap_ms"]));
+  if (k === "base" && c.base_gap_ms !== null && c.pred_gap_ms !== null &&
+      c.base_gap_ms - c.pred_gap_ms > 100)
+    add("gap +" + fmtMs(c.base_gap_ms - c.pred_gap_ms) + " vs Skypiea (waited for the LLM)", "bad");
   if (c[k + "_held_ms"]) add("held " + fmtMs(c[k + "_held_ms"]));
   if (c[k + "_predicted"]) add(c[k + "_warm_source"] === "hint" ? "warmed by hint" : "predicted",
                                c[k + "_warm_source"] === "hint" ? "hint" : "");
