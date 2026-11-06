@@ -41,5 +41,8 @@ live-console:            ## run the console in the foreground (stacks must be up
 live-screenshot:         ## docs/img/console_<name>.png from a locally installed Chrome (NAME=...)
 	demo/screenshot.sh docs/img/console_$(or $(NAME),snapshot).png
 
-fetch-models:            ## real predictor bundles for `make live` (MODELS_URL, MODELS_SHA256; no default URL)
+fetch-models:            ## real predictor bundles from the GitHub Release v1.2 asset (verified) -> models/
 	demo/fetch_models.sh
+
+models-archive:          ## dist/skypiea-models-af000231.tar.gz + dist/SHA256SUMS (local; never published here)
+	demo/build_models_archive.sh

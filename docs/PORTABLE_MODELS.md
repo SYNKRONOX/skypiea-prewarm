@@ -1,4 +1,15 @@
-# Portable predictor bundles: proposal (NOT published, NOT committed)
+# Portable predictor bundles (NOT published, NOT committed)
+
+**Status (Phase A, 2026-11-06):** `make fetch-models` downloads from the GitHub Release asset of
+tag **v1.2** of this repository:
+`https://github.com/SYNKRONOX/skypiea-prewarm/releases/download/v1.2/skypiea-models-af000231.tar.gz`
+plus `SHA256SUMS` in the same release. It verifies both checksums, unpacks into `models/` and
+says clearly if the release is not there yet (exit 2). `make models-archive` builds the
+archive locally under `dist/` (git-ignored): **1,003,524 bytes, sha256
+`918b36c5409ffaf261e37326cc290125ab99a69b56569c215dff7687989bdf23`** (it now includes
+`ATTRIBUTION.md` = `docs/MODELS_ATTRIBUTION.md`; reproducible: same bytes on rebuild). To
+publish (maintainers, not done here): create release v1.2 and attach `dist/skypiea-models-
+af000231.tar.gz` and `dist/SHA256SUMS`.
 
 `make live` needs the real `support` and `coding` predictor bundles. A fresh laptop can only
 build them from the datasets (`make data-all model-all predictor-image`: several hundred MB of

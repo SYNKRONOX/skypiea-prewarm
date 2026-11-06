@@ -47,3 +47,6 @@ results/p1_accuracy.csv
 .demo/
 models/lgbm-*/
 .live/
+
+# Local build artefacts (model archive for a release; never committed)
+dist/
