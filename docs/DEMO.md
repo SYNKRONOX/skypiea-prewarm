@@ -253,6 +253,25 @@ idle includes loading the model (seconds). Then press **Reset to zero**.
 | 5:45-6:30 | Switch **Demo → Code fix** (about 30-60 s; talk meanwhile), then Autopilot | Profile label changes: "coding profile: model trained on TraceLab traces, warm policy tuned on TraceLab + Copilot". Point at a reply with several calls: "batch: prediction cannot help between calls sent in the same reply". Calls marked "written as text" are where the 8B model wrote the call as JSON text instead of a tool call; the console executed it and says so. |
 | 6:30-7:00 | Open Grafana (:3001) | The same story over time for both namespaces: cold rate, added latency, warm pool, hint warms, predictor errors (the kill shows up there). Close with: this is one laptop and one small model; the AWS tables in the README are the results. |
 
+### Lead-time toggles (typing hint, lookahead, console mapping)
+
+`make live` now starts with the **console mapping** on: the header shows "console mapping:
+escalate→generic_fallback, flight_search→search", so the airline tools no longer share one
+server. Extra steps for the script above (adds about 2 minutes):
+
+| When | Do | Point at and say |
+|---|---|---|
+| after 3:00 | **Hint → at typing start**, then **Reset to zero**, then start typing the first message *slowly* (do not press Enter yet) | The chat shows "turn hint (open)" and "turn hint (typing)": the console tells the predictive gateway that a turn is coming, with the turn number only and never the text. user_lookup starts on the Skypiea pod grid **while you type**. Press Enter after 5-20 s. The Turns panel shows the lead time (hint → Enter) and "first call user_lookup: Skypiea warm". |
+| | If you type for **more than about 30 s** | The pod the hint started has expired (TTL 30 s + 5 s purge), and the first call is cold again. Say so: the hint fires once per turn, and long typing outlasts it. |
+| | Clear the box instead of sending | The Turns panel shows "abandoned turn": the idle pod-seconds that hint wasted. |
+| any time | **Lookahead: 1 → 2** (helm, 30-60 s) | Skypiea also warms the most likely tool two steps ahead. With the console mapping, flight_search (on `search`) can be warm before the agent searches. **But** the simulator on real traces found no gain at equal cost (support: no change; coding: more idle for less margin), so it is a demo toggle, not a shipped setting. |
+
+What to say when **Skypiea costs more**: the idle pod-seconds tile and "est. idle cost" are
+higher on Skypiea in every lead-time cell we measured (`results/live_console_leadtime/`). Warm
+pods that wait for a call cost money. Earlier hints and lookahead buy lower waiting time by
+keeping more pods idle, and an abandoned turn is pure cost. On a laptop the dollar amounts are
+tiny assumptions (pricing.yaml); the ratio is the point.
+
 What to say honestly when prediction cannot hide a start:
 
 - **Batched calls:** calls the LLM sends in one reply arrive back to back. Nothing can be
