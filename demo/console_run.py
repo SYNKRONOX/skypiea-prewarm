@@ -68,6 +68,10 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--mirror", choices=["concurrent", "sequential"], default="concurrent")
     ap.add_argument("--policy", choices=["scale_to_zero", "keep_alive_30"],
                     default="scale_to_zero")
+    ap.add_argument("--kill-predictor", action="store_true",
+                    help="kill the predictor before the conversation, restart it after; every "
+                         "call must still succeed (fallback = scale-to-zero)")
+    ap.add_argument("--turns", type=int, default=0, help="stop autopilot after N turns")
     ap.add_argument("--out", type=Path, default=Path(".live/runs"))
     a = ap.parse_args(argv)
     out = a.out / a.name
@@ -87,13 +91,28 @@ def main(argv: list[str] | None = None) -> int:
         c.post(f"{URL}/api/reset")
         wait(lambda: len([e for e in lis.events if e["type"] == "reset"]) > n_reset, 300,
              "reset")
+        if a.kill_predictor:
+            c.post(f"{URL}/api/predictor", json={"action": "kill"})
+            time.sleep(1)
+            wait(lambda: not settings(c)["busy"], 300, "predictor kill")
+            wait(lambda: (lis.last("slow") or {}).get("model", {}).get("status") != "ok", 60,
+                 "predictor down")
+        model_before = (lis.last("slow") or {}).get("model", {})
         t0 = time.time()
         c.post(f"{URL}/api/autopilot")
         wait(lambda: settings(c)["autopilot"], 30, "autopilot start")
+        if a.turns:
+            wait(lambda: len([e for e in lis.events if e["type"] == "turn_end"
+                              and e.get("ts", 0) >= t0]) >= a.turns, 1800, "turns")
+            c.post(f"{URL}/api/autopilot")          # stop after the current turn
         wait(lambda: not settings(c)["autopilot"], 1800, "autopilot end")
         time.sleep(3)                         # last predictor refresh / totals
         state = c.get(f"{URL}/api/state").json()
         csv_text = c.get(f"{URL}/api/export.csv").text
+        if a.kill_predictor:
+            c.post(f"{URL}/api/predictor", json={"action": "restart"})
+            time.sleep(1)
+            wait(lambda: not settings(c)["busy"], 300, "predictor restart")
     lis.stop = True
     evs = [e for e in lis.events if e.get("ts", 0) >= t0 - 1]
     (out / "events.jsonl").write_text("".join(json.dumps(e, default=str) + "\n" for e in evs))
@@ -105,6 +124,8 @@ def main(argv: list[str] | None = None) -> int:
                "model": (state["last"].get("slow") or {}).get("model", {}).get("model_version"),
                "conversation": conv.get("id"), "totals": conv.get("totals"),
                "pod_events_seen": lis.pods, "label": "demo run, not a result",
+               "predictor_killed": a.kill_predictor,
+               "predictor_status_during_run": model_before.get("status"),
                "calls": [{k: v for k, v in x.items() if not k.endswith("_error")}
                          for x in conv.get("calls", [])]}
     (out / "summary.json").write_text(json.dumps(summary, indent=1, default=str) + "\n")
@@ -116,6 +137,17 @@ def main(argv: list[str] | None = None) -> int:
               f"pred={x.get('pred_predicted')} src={x.get('pred_warm_source')}"
               f"{' FROM-TEXT' if x.get('tool_call_from_text') else ''}")
     print(json.dumps(summary["totals"], indent=1))
+    if a.kill_predictor:
+        # a call may fail on BOTH stacks because the LLM sent bad arguments; the check is that
+        # the predictive stack (predictor dead) never fails where the baseline succeeded
+        calls = [x for x in summary["calls"] if x.get("tool_class")]
+        bad = [x["tool"] for x in calls if x.get("base_ok") and not x.get("pred_ok")]
+        both = [x["tool"] for x in calls if not x.get("base_ok") and not x.get("pred_ok")]
+        print(f"predictor killed (status during run: {summary['predictor_status_during_run']}): "
+              f"{len(calls)} calls; " + ("PASS: no call failed on the predictive stack that "
+                                         "succeeded on the baseline" if not bad else
+                                         f"FAIL: {bad}") +
+              (f"; failed on both stacks (tool argument errors): {both}" if both else ""))
     return 0
 
 
