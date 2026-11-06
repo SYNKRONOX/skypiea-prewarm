@@ -83,3 +83,115 @@ new optional arguments, off by default (existing calls answer exactly as before,
 autopilot customer is `priya_menon_1119`, reservation `R35033531` (business, SK216 GOI->HYD,
 day 45). The coding tools are deterministic mocks over the sample repo `minicalc`; an edit is
 not visible to later calls, since each tool runs in its own pod.
+
+## 2. Two stacks in one kind cluster
+
+`demo/live_stacks.sh up [support|coding]` (called by `make live`) deploys the chart twice:
+
+| | `skypiea-base`: "Normal (baseline)" | `skypiea-pred`: "Skypiea (predictive)" |
+|---|---|---|
+| tools | 16 Deployments at 0 | 16 Deployments at 0 |
+| gateway | turn hint off (default) | `platform.gateway.turnHint=true` |
+| controller | namespace-scoped RBAC, 2 starts at once | same |
+| predictor | stub with stand-in policies: `scale_to_zero` (default) or `keep_alive` 30 s | real predictor image `af000231bc7b`, profile `support` or `coding` |
+| monitoring | off | Prometheus + Grafana scraping **both** namespaces (`monitoring.extraNamespaces`, read-only Role in `skypiea-base`), live dashboard |
+
+Both stacks use the same images (tools and platform at the current image tag) and the same
+node. Each controller allows 2 concurrent starts (`maxScaleUpsPerNode: 2`), so up to 4 starts
+can compete for the node. The console records start contention for every call: the largest
+number of pods starting on the node (both stacks) while the call was in flight, sampled from
+both controllers every 0.25 s.
+
+Before the stacks start, `live_stacks.sh` pre-pulls the 16 tool images onto the worker node
+(`crictl pull`). So every start is a **cached** start, like E0's "cached" condition, on both
+stacks alike. Without the pre-pull, the first start of an image on a new cluster includes the
+image pull. That penalises whichever stack starts it first; we saw this in the first test
+conversation.
+
+The predictor image holds the real bundles; a fresh clone cannot build them without the
+datasets (README "Quickstart": `make data-all model-all predictor-image`). `make live` fails
+with that message if the image is in neither the local registry nor Docker.
+
+Resource use on the laptop (docs/DEMO.md has the table): both stacks idle take about
+0.7 GiB (control plane) + 1.1 GiB (worker) of Docker memory.
+
+## 3. Mirrored execution
+
+Each tool call the LLM makes goes to **both** gateways with the same arguments and the same
+MCP session id (`console/engine.py`):
+
+- **concurrent** (default): both at once. This is the most visual mode, but the two stacks'
+  pod starts compete for the node.
+- **sequential**: predictive first, then baseline. The two calls cannot compete with each
+  other (other starts can still be running).
+
+The conversation continues with the predictive stack's result. The mock tools are
+deterministic, so both results should be identical; the console compares them and flags
+`RESULTS DIFFER`. The mode is shown in the header and stored on every call.
+
+Per call and per stack the console records: tool and gateway class, LLM reply id and position
+in the reply, the LLM think time before the reply, wall latency, added latency, cold/warm,
+held ms, predicted and warm source (`hint`/`call`), ok, and start contention. It also stores
+the baseline policy, mirror mode and hint setting, and whether the model wrote the call as text
+(`tool_call_from_text`, see below). These are metadata only: prompts, arguments and results
+are never stored or exported. Replay keeps the arguments in memory only.
+
+The agent rules that differ from the CLI agent (`agent/loop.py`, which is unchanged):
+
+- A text reply ends the agent's turn (the human answers; no simulated user).
+- `null` arguments are dropped, since small models send null for optional parameters.
+- On a tool error the LLM sees the tool's own message, so it can fix its arguments.
+- llama3.1 sometimes **writes** a tool call as JSON text. If the text holds exactly one
+  `{"name": <known tool>, "parameters": {...}}`, the console executes it and marks it "the
+  model wrote this call as text; the console recovered it". It is counted in the CSV.
+
+## 4. Turn-start prewarm hint
+
+When a user turn starts, and the console's **Hint** toggle is on (off by default), the agent
+sends `POST /v1/hint {"turn": n}` with the session id to the **predictive** gateway only. The
+gateway asks the predictor with the session's history (empty on turn 1: the first-tool
+distribution learned from training), marked `trigger: "turn_start"`. It then applies the warm
+decisions, so warming overlaps the LLM's think time and, with a human, the typing. The contract
+extension, the flag and its tests are in `docs/predictor_contract.md` ("Turn-start hint"),
+`tests/test_gateway_hint.py` and `tests/test_service_hint.py`. A call that a hint's decision
+predicted is labelled **warmed by hint** in the console and `X-Skypiea-Warm-Source: hint` on
+the wire.
+
+## 5. The console
+
+`python -m console` (`make live-console`) serves http://127.0.0.1:8090 with Starlette and
+uvicorn, which are already in the lock. Updates arrive as server-sent events (`/events`). The
+page is hand-written HTML, CSS, JS and inline SVG under `console/static/`, with no CDN, fonts
+or external scripts (tested). It has a light and a dark theme, large type, and `?snapshot=1`
+renders the current state once (for screenshots and printing).
+
+| Panel | Source |
+|---|---|
+| Chat, with tool calls grouped by LLM reply | the console's own conversation. A reply with several calls says "prediction cannot help between calls sent in the same reply" |
+| Per-stack timeline and totals | gateway response headers per call. Totals: time the agent waited on tools, cold calls, p50/p95 added latency (nearest rank, with n), idle pod-seconds (each controller's `skypiea_pod_seconds_idle_total`, delta since the conversation began), estimated idle cost = idle pod-s × the tool tier's CPU request × `vcpu_second_usd` from `configs/model/pricing.yaml` (`status: assumption`, shown) |
+| Pod grid (16 tools per stack) | each controller's `/v1/state`, every 0.25 s: cold / starting / warm, ready/replicas, and "warm for" as measured by the console from the first poll that saw it ready |
+| Predictor | the predictive gateway's `/v1/sessions/<sid>` (the data behind `skypiea trace` / `explain`): every decision (after a call, or a turn-start hint) with its top-3, what it warmed, and whether the next call matched (top-1 right? warmed?) |
+| Think window per call | the LLM think time before the reply vs the cold start the **baseline** stack measured for the same call (its added latency when it was cold). If the baseline call was warm, it says "not measurable" |
+| Predictor health | `/healthz` through the API server's service proxy (survives the pod being killed) |
+| Footer | local kind on a laptop, LLM model, profile label and model version, cost assumption |
+
+Buttons: **Reset to zero** waits until both controllers report every tool at 0 (it shows the
+longest TTL left and never forces pods down), then starts a new conversation. The others are
+**Baseline policy** (scale-to-zero or keep-alive 30 s), **Hint** on/off, **Mirror**
+concurrent/sequential, **Kill / Restart predictor** (`kubectl scale` of `skypiea-model`;
+the gateway falls back to scale-to-zero), **Replay last** (the last conversation's calls on
+both stacks with the recorded gaps, no LLM) and **Export CSV** (also saved under
+`.live/exports/`). The **Demo** selector switches the predictive stack's profile with helm,
+which takes about 30-60 s.
+
+`python -m demo.console_run` drives the console through the same HTTP API and saves
+`events.jsonl`, `export.csv` and `summary.json`. The verification runs used it.
+
+## 6. Grafana: "Skypiea Live: baseline vs predictive"
+
+`make live` provisions it in the predictive stack's Grafana (http://127.0.0.1:3001, anonymous
+viewer, 5 s refresh). It shows per-stack added latency p50/p95, cold rate, calls and cold
+calls, idle pod-seconds, warm pool size, prewarm hits/misses, turn-start hints and the warms
+they caused, and predictor round trip and errors, all split by `namespace`. The dashboard is
+generated by `python -m demo.make_live_dashboard` and needs no plugin. Prometheus sees
+1-minute windows; per-call values are in the console.
