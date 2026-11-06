@@ -83,8 +83,24 @@ SKYE = Skye(
     canonical=["find_customer", "verify_customer", "get_booking", "search_flights",
                "change_flight"])
 
+def _later_flight(booking_code: str = "5TGTBP") -> dict:
+    """The first scheduled, bookable flight on the same route after the booking's first
+    flight (from the database, not typed in)."""
+    from agent.skyair.tools import pristine
+
+    db = pristine()
+    b = next(x for x in db["bookings"] if x["booking_code"] == booking_code)
+    f = next(x for x in db["flights"] if x["flight_no"] == b["flights"][0])
+    return min((x for x in db["flights"] if x["origin"] == f["origin"]
+                and x["destination"] == f["destination"] and x["status"] == "scheduled"
+                and x["seats_left"] > 0 and (x["date"], x["depart"]) > (f["date"], f["depart"])),
+               key=lambda x: (x["date"], x["depart"]))
+
+
+_LATER = _later_flight()
 SCRIPT = ["Hi, I'd like to move my flight to a later one.",
           "My name is Tara Patel.",
           "My email is tara.patel@example.com and my booking code is 5TGTBP.",
-          "Yes, please move me to the first later flight you found. I confirm.",
+          f"Please move me to flight {_LATER['flight_no']} on {_LATER['date']} at "
+          f"{_LATER['depart']}. Yes, I confirm the change.",
           "Thanks, that's all."]
