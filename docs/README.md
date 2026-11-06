@@ -3,6 +3,12 @@
 One line per document. Start with the top-level [`README.md`](../README.md); release history
 is in [`CHANGELOG.md`](../CHANGELOG.md).
 
+## Requirements and developer docs
+
+- [`../PRD.md`](../PRD.md): the original PRD v1.1, unchanged (emails removed).
+- [`PRD_STATUS.md`](PRD_STATUS.md): every FR, NFR, PRD experiment and scope item: Met / Partly met / Changed / Not done, with evidence.
+- [`../dev.md`](../dev.md): developer guide: request path, ports and metrics, folders, components, tests, how to add a tool, policy or dataset.
+
 ## Results and claims
 
 - [`results_summary.md`](results_summary.md): all result tables, generated from the committed result files only.

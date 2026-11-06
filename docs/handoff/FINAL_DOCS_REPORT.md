@@ -68,3 +68,26 @@ Fixes made:
   did not quote them in the README.
 - `docs/aws_plan.md`'s title still says "not applied"; the index line explains it is the plan
   as reviewed before apply. Not edited.
+
+## Second batch (deadline moved; stop at 18:00 UTC)
+
+| Commit | What |
+|---|---|
+| aa45f8a | `PRD.md` at the root, copied byte-for-byte (`cmp` identical) from the given path; no e-mail address found in it |
+| 3439c71, b0dfe40 | `docs/PRD_STATUS.md`: FR-1..9, NFR-1..6, the PRD's E1..E5 and 15 scope/stack items, each with status, evidence and one line |
+| b0dfe40 | `dev.md`: developer guide |
+| this commit | README links to `PRD.md`, `docs/PRD_STATUS.md`, `dev.md` near the top; `docs/README.md` entries; `shaper/README.md` and `tools/README.md` said "Status: not started" (stale) and now point to the gateway and `dev.md` |
+
+PRD_STATUS points a reviewer should know:
+
+- **Not done:** NFR-4 (500-session soak; a 40-session AWS check instead), NFR-5 (no reconcile
+  timing, one node).
+- **Changed:** NFR-1 (service-alone load test, not end-to-end at 500 sessions, no Locust),
+  OpenFaaS (own operator; OpenFaaS CE cannot scale to zero), LangGraph (own agent loop and
+  replayer), 6-8 tools (16), real traces in addition to synthetic.
+- **Needs check:** FR-6/E5 (no committed reload duration against 2 s), FR-9 (the AWS runs'
+  `held_ms_max` reaches 397.2 ms, measured from arrival; the hold wait itself is bounded by
+  150 ms in code, but "never exceeds the cap" should not be claimed until that is explained).
+- The PRD's E1-E5 differ from the E ids in `docs/experiments.md` and the README; PRD_STATUS
+  says so and uses the PRD's definitions.
+- The PRD's Figure 1 note links `dev.md`; that file now exists.

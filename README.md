@@ -29,6 +29,10 @@ DS252 Cloud Computing course project, Indian Institute of Science (IISc), Bengal
 evaluation 6 Nov 2026. Team: [below](#team). Release history: [`CHANGELOG.md`](CHANGELOG.md).
 Index of all documents: [`docs/README.md`](docs/README.md).
 
+**Requirements and developer docs:** the original PRD v1.1 is [`PRD.md`](PRD.md); what we met,
+changed or did not do, with evidence, is in [`docs/PRD_STATUS.md`](docs/PRD_STATUS.md); how
+the code fits together is in [`dev.md`](dev.md).
+
 **Contents:** [Architecture](#architecture) · [How to run](#how-to-run) ·
 [Results](#results) · [Limits](#limits) · [Repository layout](#repository-layout) · [Team](#team)
 
