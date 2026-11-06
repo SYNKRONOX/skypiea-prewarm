@@ -17,8 +17,8 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 PY="${PY:-.venv/bin/python}"
-CTX="${KIND_CTX:-kind-skypiea}"
-REG="${KIND_REG:-localhost:5001}"
+CTX="${KIND_CTX:-kind-${CLUSTER:-skypiea}}"
+REG="${KIND_REG:-localhost:${REG_PORT:-5001}}"
 # Real predictor bundles (support lgbm-support-aabdfd2, coding lgbm-coding-af00023, prd
 # lgbm-prd-a7642d0). The console image is built from THIS checkout's service code (lookahead
 # override) with those bundles, from $BUNDLES_DIR (default models/); without them the shipped
@@ -109,7 +109,7 @@ prepull() {   # every tool start is then a CACHED start (E0 "cached"), on both s
 
 deploy_base() {
   helm_q upgrade --install skypiea-base charts/skypiea --kube-context "$CTX" -n "$BASE" \
-    --create-namespace -f charts/skypiea/values-kind.yaml --set imageTag="$TAG" \
+    --create-namespace -f charts/skypiea/values-kind.yaml --set registry="$REG/" --set imageTag="$TAG" \
     --set platform.enabled=true --set e0Probe.enabled=false --set monitoring.enabled=false \
     --set platform.predictor.policy=scale_to_zero $(map_args) \
     --set platform.gateway.earlyConnect="${BASE_EARLY_CONNECT:-false}" --wait --timeout 10m
@@ -122,7 +122,7 @@ deploy_pred() {   # profile [lookahead]
   printf 'PROFILE=%s\nLOOKAHEAD=%s\nPRED_IMAGE_TAG=%s\nTAG=%s\n' "$1" "$la" "$PRED_IMAGE_TAG" \
     "$TAG" > "$STATE"
   helm_q upgrade --install skypiea-pred charts/skypiea --kube-context "$CTX" -n "$PRED" \
-    --create-namespace -f charts/skypiea/values-kind.yaml --set imageTag="$TAG" \
+    --create-namespace -f charts/skypiea/values-kind.yaml --set registry="$REG/" --set imageTag="$TAG" \
     --set platform.enabled=true --set e0Probe.enabled=false \
     --set platform.predictor.serve=model --set platform.predictor.image.tag="$PRED_IMAGE_TAG" \
     --set platform.predictor.profile="$1" \

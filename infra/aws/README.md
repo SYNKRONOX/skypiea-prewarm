@@ -23,14 +23,20 @@ same Helm chart as kind (`charts/skypiea`, `values-aws.yaml`). The setup:
 
 ## Usage
 
+Every `make aws-*` target first runs `scripts/aws-guard.sh`. It refuses, before any AWS or
+Terraform call, if the aws CLI or Terraform is missing, if no credentials are configured, or (all
+but `aws-plan`/`aws-apply`) if there is no Terraform state in `infra/aws/`. The targets that
+create or start billable resources (`aws-apply`, `aws-start`, `push-images-aws`,
+`push-images-aws-docker`, `e0-aws-node`) also need `AWS_CONFIRM=yes`.
+
 ```bash
 make aws-plan                    # init, validate, fmt -check, plan -out=tfplan; review it
-make aws-apply                   # apply exactly that plan; writes ~/skypiea-aws-destroy-reminder.ics
+make aws-apply AWS_CONFIRM=yes   # apply exactly that plan; writes ~/skypiea-aws-destroy-reminder.ics
 make aws-tunnel                  # own terminal: 127.0.0.1:16443 -> k3s API over SSM
 make aws-kubeconfig              # over SSM -> ~/.kube/skypiea-aws (outside the repo)
-make build-images push-images-aws
+make build-images push-images-kind push-images-aws AWS_CONFIRM=yes
 make deploy-aws                  # E0 layout: tools at 0 + e0-probe, no controller/monitoring
-make e0-aws-node IMAGE_TAG=a8567cc  # E0 ON the node (systemd); uploads to S3, then stops the VM
+make e0-aws-node IMAGE_TAG=a8567cc AWS_CONFIRM=yes  # E0 ON the node (systemd); uploads to S3, then stops the VM
 make e0-aws-status               # done/total, ETA, last error (short SSM call)
 make e0-aws-fetch                # verify (size+sha256), mask account id, reports
 make deploy-aws PLATFORM=true E0PROBE=false   # controller, gateway, monitoring
@@ -58,6 +64,6 @@ written at apply (`make aws-reminder REMIND_H=<hours>` writes a new one).
 
 ```bash
 make aws-stop       # pause: only the 20 GB volume is billed (about $0.06/day)
-make aws-start      # resume; cached images kept on EBS; new public IP, SSM/kubeconfig unaffected
+make aws-start AWS_CONFIRM=yes   # resume; cached images kept on EBS; new public IP, SSM/kubeconfig unaffected
 make aws-destroy    # back up results; type "destroy skypiea"; empties bucket + ECR, then destroys all
 ```

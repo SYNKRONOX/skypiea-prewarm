@@ -13,9 +13,12 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 PY="${PY:-.venv/bin/python}"
-CTX="${KIND_CTX:-kind-skypiea}"
+CTX="${KIND_CTX:-kind-${CLUSTER:-skypiea}}"
 NS="${NS:-skypiea-tools}"
-REG="${KIND_REG:-localhost:5001}"
+REG="${KIND_REG:-localhost:${REG_PORT:-5001}}"
+PF_BASE="${PF_BASE:-18080}"
+GRAFANA_PORT="${GRAFANA_PORT:-3000}"
+export KIND_CTX="$CTX" KIND_REG="$REG" PF_BASE GRAFANA_PORT
 SESSIONS="${DEMO_SESSIONS:-8}"
 CONC="${DEMO_CONCURRENCY:-4}"
 OUT=.demo
@@ -26,7 +29,7 @@ step() { echo; echo "=== [$(( $(date +%s) - T0 ))s] $*"; }
 [ -x "$PY" ] || { echo "no $PY: run 'make setup' first" >&2; exit 1; }
 DOCTOR_QUIET=1 tools/doctor.sh demo || { echo "make demo stopped before changing anything: fix the FAIL lines above (make doctor shows all checks)" >&2; exit 1; }
 
-step "1/8 kind cluster 'skypiea' (1 control-plane + 1 worker) + registry $REG"
+step "1/8 kind cluster '${CLUSTER:-skypiea}' (1 control-plane + 1 worker) + registry $REG"
 deploy/kind/up.sh
 
 step "2/8 demo inputs from data/samples (SYNTHETIC prd bundle + Scenario A sessions)"
@@ -68,7 +71,7 @@ echo "pushed $(echo $TOOLS | wc -w) tools, platform, predictor"
 deploy() { SERVE=$1 PRED_TAG=$PRED_TAG TAG=$TAG demo/deploy.sh; }
 replay() {   # policy [extra args]
   local pol=$1; shift
-  "$PY" -m gateway.scenario_run --base http://127.0.0.1:18080,http://127.0.0.1:18081,http://127.0.0.1:18082,http://127.0.0.1:18083 \
+  "$PY" -m gateway.scenario_run --base "http://127.0.0.1:$PF_BASE,http://127.0.0.1:$((PF_BASE + 1)),http://127.0.0.1:$((PF_BASE + 2)),http://127.0.0.1:$((PF_BASE + 3))" \
     --sessions-json "$OUT/sessions.json" --scenario A --policies "$pol" --dataset SYNTHETIC \
     --concurrency "$CONC" "$@" 2>&1 | tee "$OUT/run_$pol.log" | grep -v '^ROW ' || true
   grep -q '^FAILURES: none' "$OUT/run_$pol.log" || { echo "!! $pol: failures (see $OUT/run_$pol.log)"; FAILED=1; }
@@ -92,7 +95,7 @@ step "8/8 summary"
 echo
 echo "Done in $(( $(date +%s) - T0 ))s. Cluster left up. Port-forwards (127.0.0.1 only) are running:"
 echo "  bin/skypiea --context $CTX status         # CLI"
-echo "  Grafana  http://127.0.0.1:3000             (anonymous viewer)"
-echo "  Gateway  http://127.0.0.1:18080/mcp        (make agent-demo uses it)"
+echo "  Grafana  http://127.0.0.1:$GRAFANA_PORT             (anonymous viewer)"
+echo "  Gateway  http://127.0.0.1:$PF_BASE/mcp        (make agent-demo uses it)"
 echo "Remove everything: make demo-clean"
 exit "$FAILED"

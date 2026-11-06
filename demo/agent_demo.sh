@@ -13,6 +13,9 @@ LLM="${LLM:-scripted}"
 POLICY="${POLICY:-predictive}"
 N="${N:-3}"
 OUT="${OUT:-.demo/agent_runs}"
+PF_BASE="${PF_BASE:-18080}"
+URLS=(--gateway "http://127.0.0.1:$PF_BASE/mcp" --controller "http://127.0.0.1:$((PF_BASE + 1))"
+      --stub "http://127.0.0.1:$((PF_BASE + 2))" --model-url "http://127.0.0.1:$((PF_BASE + 3))")
 demo/portforward.sh check || demo/portforward.sh start
 if [ "$LLM" = openai-compatible ]; then
   : "${AGENT_BASE_URL:?set AGENT_BASE_URL, e.g. http://localhost:11434/v1}"
@@ -24,7 +27,7 @@ fi
 rc=0
 for S in A B; do
   "$PY" -m agent.run --scenario "$S" --policy "$POLICY" --llm "$LLM" --sessions "$N" \
-    --out-dir "$OUT" || rc=1
+    --out-dir "$OUT" "${URLS[@]}" || rc=1
 done
 "$PY" -m agent.summarize --dir "$OUT" --llm "$LLM" >/dev/null && \
   echo "summary: $OUT/summary.md (functional demo, not results)"
