@@ -271,6 +271,9 @@ class Conversation:
         if task.scenario == "skyair":
             from agent.skyair.tools import Session
             self.backend = Session()
+        elif task.scenario == "codefix":        # W1: the mock sortkit repository
+            from agent.devrepo import Session as RepoSession
+            self.backend = RepoSession()
         self.writes: list[dict[str, Any]] = []         # truth panel: real write attempts
         self.facts: set[float] = set()                 # numbers tool results returned (prices)
         self.think_log: list[dict[str, Any]] = []      # per LLM reply: turn, think ms, calls
@@ -436,7 +439,7 @@ class Conversation:
             rec["result_error"] = "unknown_tool"
             content = json.dumps({"error": f"unknown tool {tc.name!r}; available: "
                                   f"{task.tool_names}"})
-        elif self.backend is not None:       # Skypiea Air: answer from the session database
+        elif self.backend is not None:       # Skypiea Air / sortkit: the in-console session
             code = args.get("booking_code")
             if code:     # a code the model sent that the database never had = invented
                 rec["arg_code_known"] = str(code).strip().upper() in self.backend.bookings
@@ -481,7 +484,7 @@ class Conversation:
 
     def check_claims(self, text: str) -> dict[str, Any] | None:
         """Rule-based check of the final reply of a turn against this turn's real writes."""
-        if self.backend is None:
+        if self.backend is None or self.task.scenario != "skyair":
             return None
         tw = [w for w in self.writes if w["turn"] == self.turn]
         ew = [w for w in self.writes if w["turn"] < self.turn]

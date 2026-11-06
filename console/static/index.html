@@ -33,6 +33,7 @@
     <button id="btn-restart" title="Scale the predictor back to 1">Restart predictor</button>
     <span class="badge warn" id="b-busy" hidden></span>
     <span class="badge" id="b-auto" hidden>AUTOPILOT</span>
+    <span class="badge on" id="b-story" hidden></span>
     <span id="health" class="health" title="checking…"><i class="hdot"></i><span id="health-txt">checking</span></span>
     <button id="btn-details" class="ghost" aria-expanded="false">Details</button>
     <button id="btn-theme" class="ghost icon" title="Light / dark theme" aria-label="Theme">◐</button>
@@ -43,7 +44,8 @@
 <main>
   <section id="left" class="card">
     <div class="chat-head">
-      <h2>Chat with Skye <small id="conv-id"></small></h2>
+      <h2><span id="chat-title">Chat with Skye</span> <small id="conv-id"></small></h2>
+      <div id="story" class="story-row"></div>
       <details id="persona"><summary>Personas</summary><div id="persona-list" class="cap">loading…</div></details>
     </div>
     <div id="chat" aria-live="polite"><div class="empty" id="chat-empty">Say hello to Skye, or press Autopilot.<br><span class="cap">Skye is a fictional Skypiea Air assistant (local LLM). The airline data is a mock database.</span></div></div>

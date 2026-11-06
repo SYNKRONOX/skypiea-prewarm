@@ -46,6 +46,7 @@ ROOT = Path(__file__).resolve().parent.parent
 STATIC = Path(__file__).resolve().parent / "static"
 EXPORTS = ROOT / ".live" / "exports"
 DEMOS = {"airline": "support", "codefix": "coding", "skyair": "support"}
+AGENTS = {"skyair": "Skye", "codefix": "Dev assistant", "airline": "Agent"}
 DRAIN_TIMEOUT_S = 180
 # Autopilot typing model (an ASSUMPTION, not a measurement): the scripted customer "types"
 # each message at 200 characters per minute (about 40 words per minute) before it is sent,
@@ -110,7 +111,8 @@ class Console:
                          "autopilot": False, "autopilot_stopping": False, "busy": None,
                          "lookahead": 1, "console_map": None,
                          "autopilot_cpm": AUTOPILOT_CPM,
-                         "llm_model": getattr(llm, "model", "?"), "llm_provider": ""}
+                         "llm_model": getattr(llm, "model", "?"), "llm_provider": "",
+                         "story": None}
         self.conv: Conversation | None = None
         self.previous: Conversation | None = None
         self.tasks: set[asyncio.Task] = set()
@@ -150,10 +152,16 @@ class Console:
     def snapshot(self) -> dict[str, Any]:
         task = get_task(self.settings["demo"])
         conv = self.conv
+        from agent.tasks.stories import stories
+        demo = self.settings["demo"]
         return {"type": "snapshot", "settings": self.settings,
-                "demo": {"name": self.settings["demo"], "profile": task.profile,
+                "demo": {"name": demo, "profile": task.profile,
                          "profile_label": PROFILE_LABELS[task.profile],
-                         "tools": task.tool_names, "script": SCRIPTS[self.settings["demo"]]},
+                         "agent": AGENTS.get(demo, "Agent"),
+                         "human": "Developer" if demo == "codefix" else "Customer",
+                         "stories": [{"act": x["act"], "title": x["title"]}
+                                     for x in stories(demo)],
+                         "tools": task.tool_names, "script": SCRIPTS[demo]},
                 "llm_model": getattr(self.llm, "model", "?"),
                 "pricing": pricing(),
                 "console_map_file": "configs/live/console_tool_map.yaml",
@@ -273,6 +281,39 @@ class Console:
                 await self.chat(msg, "autopilot", typing_ms)
         finally:
             self.settings.update(autopilot=False, autopilot_stopping=False)
+            await self.publish_settings()
+
+    async def story(self, act: int) -> None:
+        """Story mode: reset, then the act's prepared lines through the autopilot (LIVE
+        model). An act with kill_after_turn kills the predictor after that many turns and
+        restarts it when the act has ended."""
+        from agent.tasks.stories import stories
+        st = next(x for x in stories(self.settings["demo"]) if x["act"] == act)
+        self.settings["story"] = st["title"]
+        await self.publish_settings()
+        try:
+            await self.reset()
+            k = st.get("kill_after_turn")
+            if not k:
+                await self.autopilot(None, st["script"])
+                return
+            await self.autopilot(k, st["script"])
+            if self.settings.get("autopilot_stopping") or self.conv is None or \
+                    self.conv.turn < k:
+                return
+            await self.status(f"{st['title']}: killing the predictor now (mid-conversation)")
+            await self.predictor("kill")
+            for _ in range(60):
+                if (await self.model_health()).get("status") != "ok":
+                    break
+                await asyncio.sleep(1)
+            try:
+                await self.autopilot(None, st["script"][k:])
+            finally:
+                await self.status(f"{st['title']}: restarting the predictor")
+                await self.predictor("restart")
+        finally:
+            self.settings["story"] = None
             await self.publish_settings()
 
     async def drain(self) -> bool:
@@ -601,9 +642,34 @@ def make_app(console: Console) -> Starlette:
                              "current": getattr(c.llm, "model", None)})
 
     async def personas_ep(_: Request) -> Response:
+        if c.settings["demo"] == "codefix":
+            from agent.tasks.live import CODEFIX_TASKS
+            return JSONResponse({"title": "the sortkit repository (mock)",
+                                 "agent": "Dev assistant", "personas": [
+                                     {"name": "Developer (you)", "note": "suggested tasks; "
+                                      "tests run in a simulated test runner",
+                                      "requests": CODEFIX_TASKS}]})
         from agent.skyair.tools import personas
-        return JSONResponse({"airline": "Skypiea Air (fictional)", "agent": "Skye",
-                             "personas": personas()})
+        return JSONResponse({"title": "Skypiea Air (fictional)", "airline":
+                             "Skypiea Air (fictional)", "agent": "Skye",
+                             "personas": personas() + [{
+                                 "name": "A new customer", "note": "not in the database: "
+                                 "Skye offers to book a trip", "requests": [
+                                     "Hi, I'm Nova Quill and I've never flown with you. I'd "
+                                     "like to fly from SKA to SKE on 2026-12-07."]}]})
+
+    async def story_ep(request: Request) -> Response:
+        from agent.tasks.stories import stories
+        d = await body(request)
+        acts = [x["act"] for x in stories(c.settings["demo"])]
+        if d.get("act") not in acts:
+            return JSONResponse({"error": f"act: one of {acts}"}, status_code=400)
+        if c.settings["busy"] or c.settings["autopilot"] or c.settings.get("story"):
+            return JSONResponse({"error": "busy"}, status_code=409)
+        if c.conv is not None and c.conv.lock.locked():
+            return JSONResponse({"error": "the agent is still working"}, status_code=409)
+        c.spawn(c.story(d["act"]))
+        return JSONResponse({"story": "started", "act": d["act"]}, status_code=202)
 
     async def booking_ep(_: Request) -> Response:
         conv = c.conv
@@ -643,7 +709,7 @@ def make_app(console: Console) -> Starlette:
     return Starlette(routes=[
         Route("/", index), Route("/events", events), Route("/api/state", state),
         Route("/api/personas", personas_ep), Route("/api/models", models_ep),
-        Route("/api/report", report_ep),
+        Route("/api/report", report_ep), Route("/api/story", story_ep, methods=["POST"]),
         Route("/api/skyair/state", booking_ep),
         Route("/api/chat", chat, methods=["POST"]),
         Route("/api/autopilot", autopilot, methods=["POST"]),

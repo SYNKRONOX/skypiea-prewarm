@@ -137,6 +137,8 @@ def state(backend: Any) -> dict[str, Any]:
     """The verified customer's current bookings, straight from the session database."""
     if backend is None:
         return {"available": False}
+    if not hasattr(backend, "bookings"):          # code-fix demo: the repository card
+        return {"available": True, "repo": backend.state()}
     cid = backend.verified
     if not cid:
         return {"available": True, "verified": None, "bookings": []}

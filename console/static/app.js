@@ -59,14 +59,30 @@ function applySettings(st) {
   for (const b of ["btn-reset", "btn-replay", "btn-kill", "btn-restart"]) $(b).disabled = !!st.busy;
   $("demo").value = st.demo;
   $("model").disabled = !!st.busy || !!st.autopilot;
+  storyState();
   if (S.lastModel !== st.llm_model) { S.lastModel = st.llm_model; S.llmModel = st.llm_model || S.llmModel; loadModels(); }
   footer();
 }
 
 function applyDemo(d) {
+  const changed = S.demo.name !== d.name;
   S.demo = d;
   $("b-profile").textContent = d.profile_label;
+  $("chat-title").textContent = "Chat with " + AG();
+  $("chat-input").placeholder = "Write as the " + HU().toLowerCase() + "… (Enter to send)";
+  const box = $("story"); box.textContent = "";
+  if ((d.stories || []).length) box.append(el("span", "cap", "Story:"));
+  for (const a of d.stories || []) { const b = el("button", "story", d.stories.length > 1 ? "Act " + a.act : "Act");
+    b.title = a.title + " (live model; prepared " + HU().toLowerCase() + " lines)"; b.type = "button";
+    b.onclick = () => post("/api/story", { act: a.act }); box.append(b); }
+  storyState();
+  if (changed) loadPersonas();
   footer();
+}
+function storyState() {
+  const st = S.settings || {};
+  for (const b of document.querySelectorAll("#story button")) b.disabled = !!(st.busy || st.autopilot || st.story);
+  $("b-story").hidden = !st.story; $("b-story").textContent = st.story || "";
 }
 
 async function loadModels() {
@@ -97,6 +113,7 @@ const PLAIN = { find_customer: "Find customer", verify_customer: "Verify custome
   edit_file: "Edit file", run_tests: "Run tests", search: "Search code", write_file: "Edit file",
   user_lookup: "Look up customer", reservation_lookup: "Get booking", flight_search: "Search flights",
   reservation_modify: "Change booking", reservation_cancel: "Cancel booking", escalate: "Transfer to a human" };
+const AG = () => S.demo.agent || "Skye", HU = () => S.demo.human || "Customer";
 const plain = (t) => PLAIN[t] || String(t || "?").replace(/_/g, " ").replace(/^./, (x) => x.toUpperCase());
 const secs = (ms) => (ms / 1000).toFixed(2) + " s";
 
@@ -116,7 +133,7 @@ function pill(text, cls) {
   const p = el("span", "pill " + (cls || ""), text); row.append(p); $("chat").scrollTop = 1e9; return p;
 }
 function showTyping() { if (S.typingEl) return; chatEmpty(false);
-  S.typingEl = el("div", "typing"); S.typingEl.setAttribute("aria-label", "Skye is typing");
+  S.typingEl = el("div", "typing"); S.typingEl.setAttribute("aria-label", AG() + " is typing");
   S.typingEl.append(el("i"), el("i"), el("i")); $("chat").append(S.typingEl); $("chat").scrollTop = 1e9; }
 function dropTyping() { if (S.typingEl) { S.typingEl.remove(); S.typingEl = null; } }
 
@@ -197,7 +214,7 @@ function renderTimelines() {
 
 function renderSummary(T) {
   const b = T && T.base, p = T && T.pred;
-  if (!b || !p || !p.ok) { $("sum-text").textContent = "No tool calls yet. Ask Skye something to start.";
+  if (!b || !p || !p.ok) { $("sum-text").textContent = "No tool calls yet. Ask " + AG() + " something to start.";
     $("sum-n").textContent = ""; $("sum-saved").textContent = ""; return; }
   const d = b.wait_ms - p.wait_ms, w = p.idle_pod_s - b.idle_pod_s;
   const dc = (p.idle_cost_usd || 0) - (b.idle_cost_usd || 0);
@@ -425,8 +442,11 @@ function resetView(convId) {
   $("chat").textContent = ""; $("predictor").textContent = ""; $("turns").textContent = "";
   $("think-list").textContent = ""; $("explain").hidden = true;
   const e = el("div", "empty"); e.id = "chat-empty";
-  e.append("Say hello to Skye, or press Autopilot.", el("br"),
-           el("span", "cap", "Skye is a fictional Skypiea Air assistant (local LLM). The airline data is a mock database."));
+  const code = (S.demo.name || "skyair") === "codefix";
+  e.append(code ? "Ask Dev assistant to work on the sortkit repository, or press a story act." :
+           "Say hello to Skye, or press a story act / Autopilot.", el("br"),
+           el("span", "cap", code ? "Dev assistant (live LLM) works on a small mock repository; tests run in a simulated test runner (no code is executed)." :
+             "Skye is a fictional Skypiea Air assistant (live LLM). The airline data is a mock database."));
   $("chat").append(e); renderBooking({ available: (S.demo.name || "skyair") === "skyair" }, []); renderTicker([]);
   S.typing = false; S.typingT = null;
   renderTimelines(); renderTotals(null);
@@ -444,9 +464,9 @@ function handle(ev) {
       { const cv = ev.conversation || {}, last = {}, calls = cv.calls || [], chat = cv.chat || [];
         const turns = [...new Set([...chat.map((m) => m.turn), ...calls.map((c) => c.turn)])].sort((a, b) => a - b);
         for (const t of turns) {     // user text, then the turn's tool calls, then Skye's text
-          for (const m of chat.filter((x) => x.turn === t && x.role === "user")) addMsg("user", m.text, "Customer · turn " + t);
+          for (const m of chat.filter((x) => x.turn === t && x.role === "user")) addMsg("user", m.text, HU() + " · turn " + t);
           for (const c of calls.filter((x) => x.turn === t)) onCall(c);
-          for (const m of chat.filter((x) => x.turn === t && x.role !== "user")) last[t] = addMsg("agent", m.text, "Skye");
+          for (const m of chat.filter((x) => x.turn === t && x.role !== "user")) last[t] = addMsg("agent", m.text, AG());
         }
         for (const t of cv.truth || []) { S.lastAgent = last[t.turn]; onTruth(t); }
         S.lastAgent = null; }
@@ -474,8 +494,8 @@ function handle(ev) {
       break;
     case "turn_start":
       S.agentEl = null; S.replyEl = null;
-      addMsg("user", ev.text, (ev.source === "autopilot" ? "Autopilot customer" :
-             ev.source === "replay" ? "Replay" : "Customer") + " · turn " + ev.turn);
+      addMsg("user", ev.text, (ev.source === "autopilot" ? (S.settings.story ? "Story · " + HU().toLowerCase() : "Autopilot " + HU().toLowerCase()) :
+             ev.source === "replay" ? "Replay" : HU()) + " · turn " + ev.turn);
       break;
     case "hint":
       pill("hint sent (" + (ev.source || "enter") + "): metadata only", "hint");
@@ -484,15 +504,15 @@ function handle(ev) {
     case "truth": onTruth(ev.truth); break;
     case "turn": renderTurn(ev.turn_record); break;
     case "abandoned": renderAbandoned(ev.abandoned); break;
-    case "llm_start": status("Skye is thinking…"); showTyping(); break;
+    case "llm_start": status(AG() + " is thinking…"); showTyping(); break;
     case "llm_delta":
       dropTyping();
-      if (!S.agentEl) { S.agentEl = addMsg("agent", "", "Skye"); S.lastAgent = S.agentEl; }
+      if (!S.agentEl) { S.agentEl = addMsg("agent", "", AG()); S.lastAgent = S.agentEl; }
       S.agentEl.append(document.createTextNode(ev.text)); $("chat").scrollTop = 1e9; break;
     case "llm_reply":
       dropTyping(); S.llmState = "ok"; renderHealth();
-      status("Skye replied in " + fmtMs(ev.think_ms) + (ev.n_calls ? ": " + ev.n_calls + " tool call(s)" : ""));
-      if (S.agentEl && S.agentEl.textContent.trim() === "Skye") S.agentEl.remove();
+      status(AG() + " replied in " + fmtMs(ev.think_ms) + (ev.n_calls ? ": " + ev.n_calls + " tool call(s)" : ""));
+      if (S.agentEl && S.agentEl.textContent.trim() === AG()) S.agentEl.remove();
       S.agentEl = null;
       break;
     case "call_start": status("calling " + ev.tool + " on both stacks…"); break;
@@ -542,7 +562,8 @@ async function loadPersonas() {
   const box = $("persona-list");
   try {
     const r = await (await fetch("/api/personas")).json(); box.textContent = "";
-    box.append(el("div", "cap", "Fictional customers of " + r.airline + ". Click a request to put it in the input."));
+    box.append(el("div", "cap", ((S.demo.name || "skyair") === "codefix" ? "Suggested tasks for " + r.title :
+      "Fictional customers of " + (r.title || r.airline)) + ". Click a request to put it in the input."));
     for (const p of r.personas) {
       const d = el("div", "persona");
       d.append(el("b", "", p.name), el("div", "cap", [p.email, p.booking_code, p.fare, p.note].filter(Boolean).join(" · ")));
@@ -553,7 +574,6 @@ async function loadPersonas() {
     }
   } catch (e) { box.textContent = "Personas are not available right now."; }
 }
-loadPersonas();
 $("btn-auto").onclick = () => post("/api/autopilot");
 $("btn-reset").onclick = () => post("/api/reset");
 $("btn-replay").onclick = () => post("/api/replay");

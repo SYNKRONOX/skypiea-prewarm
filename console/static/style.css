@@ -133,6 +133,8 @@ main { flex: 1; min-height: 0; display: grid; grid-template-columns: 40fr 60fr;
 .pass-meta b { font-size: 15px; font-variant-numeric: tabular-nums; }
 .pass-foot { border-top: 1px dashed var(--line); padding-top: 3px; }
 .pass-changes { font-size: var(--t-cap); color: var(--hint); font-weight: 600; padding-top: 2px; }
+.story-row { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
+button.story { border-color: var(--hint); color: var(--hint); font-weight: 700; }
 .pill.nov { color: var(--muted); border-style: dashed; }
 .bk-log { font-size: var(--t-cap); margin-top: 4px; }
 .bk-log div { padding: 2px 0; border-top: 1px dashed var(--line); }

@@ -50,8 +50,10 @@ def test_gateway_classes_route_to_the_expected_servers() -> None:
 def test_fixed_args_and_aliases() -> None:
     assert AIRLINE.gateway_call("reservation_lookup", {"reservation_id": "R1"}) == (
         "reservation_lookup", {"reservation_id": "R1", "action": "lookup", "detail": True})
-    assert CODEFIX.gateway_call("edit_file", {"path": "a"}) == ("write_file", {"path": "a"})
-    assert CODEFIX.gateway_call("shell", {"command": "ls"})[0] == "shell_other"
+    # W1: code-fix answers come from the in-console repository; the pods get timing calls
+    # with no repository content
+    assert CODEFIX.gateway_call("edit_file", {"path": "a"}) == ("write_file", {})
+    assert "shell" not in CODEFIX.tool_names
     # the PRD tasks are unchanged: identity mapping
     a = tasks.get("A")
     assert a.gateway_call("order_lookup", {"order_id": "x"}) == ("order_lookup",
