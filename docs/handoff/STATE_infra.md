@@ -187,3 +187,13 @@ Running log, newest last (the master task runs unattended; see docs/handoff/AGEN
   results/live_console_demo/ (demo runs, not results). Backup session: docs/live_backup/.
 - FINAL: docs/handoff/LIVE_CONSOLE_REPORT.md. Stacks + console left running from
   ~/skypiea-infra (`make live`, 2026-11-06), conversation reset.
+
+## v1.3 lead time (branch feat/console-leadtime, from main d15dc2b) — IN PROGRESS
+
+- Lookahead option: DecideConfig.lookahead (default 1; every shipped profile/bundle
+  unchanged; tests/test_lookahead.py). lookahead=2 warms the most likely tool of the batch
+  after next (graph horizon-2 table), now, default TTL, one copy, if new and above threshold.
+  Pre-registered adoption rule (written before any result): adopt as a labelled variant for a
+  profile only if at the shipped threshold its VAL equal-idle margin over the lookahead-1
+  curve is > 0 with the 95% session-bootstrap CI above 0, and its margin over keep-alive is not
+  below lookahead 1's. TEST once afterwards, reported regardless.

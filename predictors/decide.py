@@ -86,6 +86,10 @@ class DecideConfig:
     budget_ms: float = 40.0
     max_warm_tools: int = 0
     stagger_ms: float = 0.0
+    # 1 = next batch only (every shipped profile). 2 = also warm the single most likely tool of
+    # the batch AFTER next (graph horizon-2 table), now, default TTL, one copy, if not already
+    # warmed and above the same threshold (feat/console-leadtime; evaluated in sim/lookahead.py)
+    lookahead: int = 1
 
     @classmethod
     def load(cls, path: Path = CONFIG, **overrides: Any) -> DecideConfig:
@@ -101,6 +105,8 @@ class DecideConfig:
             raise ValueError("threshold must be fixed or cost")
         if cfg.start_rule not in ("timing", "now") or cfg.gap_stat not in ("p10", "p50"):
             raise ValueError("start_rule must be timing or now; gap_stat p10 or p50")
+        if cfg.lookahead not in (1, 2):
+            raise ValueError("lookahead must be 1 or 2")
         return cfg
 
     def with_(self, **kw: Any) -> DecideConfig:
@@ -190,7 +196,27 @@ class Decider(ContextPolicy):
                 order = order[:c.max_warm_tools]
             out = {t: replace(out[t], start_in_ms=out[t].start_in_ms + i * c.stagger_ms)
                    for i, t in enumerate(order)}
+        if c.lookahead >= 2:
+            t2 = self.two_step(ctx, out)
+            if t2 is not None:
+                out[t2[0]] = t2[1]
         return Decision(out, mode, degraded)
+
+    def two_step(self, ctx: Context, warmed: dict[str, WarmDecision]
+                 ) -> tuple[str, WarmDecision] | None:
+        """lookahead=2: the most likely tool of the batch after next, if it is not already in
+        ``warmed`` and passes the threshold (start now, default TTL, one copy)."""
+        if self.graph is None:
+            return None
+        p2 = {t: float(p) for t, p in self.graph.predict(ctx, 2).items()
+              if t != END and p > 0 and t not in warmed}
+        if not p2:
+            return None
+        t = min(p2, key=lambda x: (-p2[x], x))
+        ttl = self.cfg.ttl_default_ms
+        if p2[t] < self.tau(t, ttl):
+            return None
+        return t, WarmDecision(copies=1, start_in_ms=0.0, prob=p2[t], ttl_ms=ttl)
 
     def _unseen(self, ctx: Context) -> bool:
         if self.graph is None or ctx.length == 0:
