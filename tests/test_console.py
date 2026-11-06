@@ -395,3 +395,20 @@ def test_autopilot_runs_n_turns_and_stays_on_until_done() -> None:
     asyncio.run(go())
     assert seen == [True] and c.settings["autopilot"] is False
     assert c.conv.turn == 1 and [x["tool"] for x in c.conv.calls] == ["user_lookup"]
+
+
+def test_a_slow_predictive_call_does_not_delay_the_baseline() -> None:
+    gws = {"base": FakeGW("base"), "pred": FakeGW("pred", cold_s=0.4)}
+
+    async def publish(ev):
+        pass
+    llm = ScriptedStreamingLLM([[("user_lookup", {}), ("reservation_lookup", {})]])
+    conv = Conversation(AIRLINE, llm, {"base": FakeStack("base"), "pred": FakeStack("pred")},
+                        NullPoller(), publish, {"mirror": "concurrent", "hint": False,
+                                                "baseline_policy": "scale_to_zero"},
+                        mcp_factory=factory(gws))
+    asyncio.run(conv.user_turn("x"))
+    # both stacks started the first call together (no 0.4 s delay for the baseline)
+    assert abs(gws["base"].times[0][0] - gws["pred"].times[0][0]) < 0.15
+    c = conv.calls[1]
+    assert c["base_gap_ms"] == pytest.approx(c["pred_gap_ms"], abs=60)

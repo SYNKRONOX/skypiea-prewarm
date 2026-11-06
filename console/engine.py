@@ -262,10 +262,13 @@ class Conversation:
         lane = self.lane()
         if self.settings["mirror"] == "sequential":
             lane.gate.clear()
-        p_res, p_info, p0, p1 = await self._call_one("pred", cls, gargs)
-        p_gap = None if self.pred_last_end is None else p0 - self.pred_last_end
-        self.pred_last_end = p1
+        # the baseline call is queued when the predictive call is ISSUED, with the gap the
+        # predictive stack saw, so a slow predictive call cannot delay the baseline
+        issue = self.clock()
+        p_gap = None if self.pred_last_end is None else issue - self.pred_last_end
         fut = lane.submit(cls, gargs, p_gap)
+        p_res, p_info, p0, p1 = await self._call_one("pred", cls, gargs)
+        self.pred_last_end = p1
         rec["server"] = self._server(cls)
         rec["tool_class"] = cls
 
