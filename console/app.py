@@ -327,6 +327,7 @@ class Console:
     async def predictor(self, action: str) -> None:
         n = "0" if action == "kill" else "1"
         await self.busy(f"predictor {action}")
+        rc = 1
         try:
             rc, out = await kubectl("-n", PRED.namespace, "scale", "deploy/skypiea-model",
                                     f"--replicas={n}", context=self.ctx)
@@ -338,6 +339,18 @@ class Console:
                               "info" if rc == 0 else "error")
         finally:
             await self.busy(None)
+        if action == "kill" and rc == 0 and self.conv is not None and self.conv.turn == 0:
+            # Killed before the conversation started: a hint sent at Reset (typing mode)
+            # may already have warmed pods. Start again from 0 pods, so the "no predictor"
+            # demo really begins cold (W1 P0 #4). Mid-conversation kills keep the
+            # conversation; pods warmed before the kill are labelled as such per call.
+            for _ in range(60):          # the pod may answer until it has terminated
+                if (await self.model_health()).get("status") != "ok":
+                    break
+                await asyncio.sleep(1)
+            await self.status("predictor down; draining pods warmed before the kill, then a "
+                              "new conversation")
+            await self.reset()
 
     async def switch_demo(self, name: str) -> None:
         profile = DEMOS[name]

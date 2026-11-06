@@ -135,8 +135,21 @@ function explain(c, k) {
     (c.pos_in_reply === 0 ? " (the LLM thought for " + fmtMs(c.think_ms) + ")" : "") + "; warm on arrival, " + ms + ".";
   if (c.pred_predicted && c.pred_cold) return plain(c.tool) + ": predicted, but too late. The pod was still starting: " +
     added + " added after " + fmtMs(c.think_ms) + " of LLM think time.";
-  if (!c.pred_cold) return plain(c.tool) + ": warm. The pod was still up from an earlier call (" + ms + ").";
+  if (!c.pred_cold) return plain(c.tool) + ": warm (" + ms + "), not predicted for this call. " + warmWhy(c);
   return plain(c.tool) + ": not predicted. Cold start, " + added + " added.";
+}
+
+// Why a Skypiea call found a warm pod that the latest prediction did not include (from the
+// gateway's session record, console/engine.py warm_reason). Never claims a prediction.
+function warmWhy(c) {
+  const d = c.pred_warm_detail || {}, ago = d.since_ms !== undefined ? fmtMs(d.since_ms) + " before" : "earlier";
+  switch (c.pred_warm_reason) {
+    case "kept_after_use": return "The pod was still up after an earlier call to the same server (" + ago + "; its warm time counts from the last use).";
+    case "earlier_decision": return "An earlier " + (d.trigger === "turn_start" ? "turn-start hint" : "prediction") +
+      " in this conversation had warmed it (" + ago + ", e.g. before the predictor was killed); the latest prediction did not include it.";
+    case "already_up": return "Nothing in this conversation started it: a pod was left over from before.";
+    default: return "The reason is not known (the gateway's session record did not match).";
+  }
 }
 
 function renderTimelines() {

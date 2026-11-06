@@ -51,7 +51,7 @@ MAX_STEPS = 8
 CSV_FIELDS = ["conversation", "turn", "reply", "pos_in_reply", "replay", "llm_model",
               "think_ms", "tool_call_from_text", "tool", "tool_class", "server", "mirror_mode",
               "hint", "hint_mode", "lookahead", "console_map", "note",
-              "baseline_policy", "profile", "results_match"] + [
+              "baseline_policy", "profile", "results_match", "pred_warm_reason"] + [
     f"{s}_{f}" for s in ("base", "pred") for f in (
         "gap_ms", "wall_ms", "added_ms", "held_ms", "hold_late_ms", "cold", "predicted",
         "warm_source", "ok",
@@ -132,6 +132,40 @@ def evaluate_decisions(session: dict[str, Any]) -> list[dict[str, Any]]:
     return out
 
 
+def warm_reason(session: dict[str, Any] | None, idx: int, server: str,
+                tool_class: str) -> dict[str, Any]:
+    """Why the predictive stack's call #idx found a warm pod although the gateway did not
+    mark it predicted (its latest decision did not include it). From the gateway's own
+    session record (one clock: ms since the session began). The most recent cause wins:
+      kept_after_use   an earlier call to the same server; the pod stayed up (TTL counted
+                       from its last use);
+      earlier_decision an earlier predictor decision (or turn-start hint) of this
+                       conversation warmed it, e.g. just before the predictor was killed;
+      already_up       nothing in this conversation started it (a pod left from before).
+    Never "predicted": the console must not imply a prediction that did not happen."""
+    calls = (session or {}).get("calls", [])
+    if idx >= len(calls) or calls[idx].get("tool_class") != tool_class:
+        return {"reason": "unknown"}
+    t = calls[idx].get("t_start_ms", 0.0)
+    used = [c for c in calls[:idx] if c.get("server") == server and c.get("t_end_ms", 1e18) <= t]
+    decs = [d for d in (session or {}).get("decisions", []) if d.get("outcome") == "ok"
+            and d.get("t_ms", 1e18) <= t and any(
+                x.get("tool_class") == tool_class and x.get("warm") and x.get("copies", 0) > 0
+                for x in d.get("decisions", []))]
+    cands = []
+    if used:
+        cands.append((used[-1]["t_end_ms"], {"reason": "kept_after_use",
+                                              "since_ms": round(t - used[-1]["t_end_ms"])}))
+    if decs:
+        d = decs[-1]
+        cands.append((d["t_ms"], {"reason": "earlier_decision",
+                                  "trigger": d.get("trigger") or "after_call",
+                                  "turn": d.get("turn"), "since_ms": round(t - d["t_ms"])}))
+    if not cands:
+        return {"reason": "already_up"}
+    return max(cands, key=lambda x: x[0])[1]
+
+
 class BaseLane:
     """The baseline stack's own timeline (see the module docstring). ``gate`` holds the lane
     while it is cleared (sequential mode: during the predictive turn)."""
@@ -192,6 +226,7 @@ class Conversation:
         self._lane: BaseLane | None = None
         self._pending: list[asyncio.Task] = []
         self._next_seq = 0                            # call order in the conversation
+        self._pred_sent = 0                           # calls sent to the predictive gateway
         # turn-start hints (mode off | enter | typing): when each hint was sent, per turn
         self.hint_log: dict[int, list[dict[str, Any]]] = {}
         self.typing_t: float | None = None            # first keystroke of the coming turn
@@ -321,6 +356,8 @@ class Conversation:
         issue = self.clock()
         p_gap = None if self.pred_last_end is None else issue - self.pred_last_end
         fut = lane.submit(cls, gargs, p_gap)
+        rec["pred_seq"] = self._pred_sent
+        self._pred_sent += 1
         p_res, p_info, p0, p1 = await self._call_one("pred", cls, gargs)
         self.pred_last_end = p1
         rec["server"] = self._server(cls)
@@ -423,6 +460,16 @@ class Conversation:
     async def _emit_call(self, rec: dict[str, Any], args: dict[str, Any],
                          idx: int | None = None) -> None:
         rec["seq"] = len(self.calls) if idx is None else idx
+        if rec.get("pred_ok") and rec.get("pred_cold") is False and not rec.get("pred_predicted"):
+            try:
+                sess = await self.stacks["pred"].session(self.sid)
+            except Exception:  # noqa: BLE001
+                sess = None
+            pi = rec.get("pred_seq")
+            wr = warm_reason(sess, pi, rec.get("server", ""), rec.get("tool_class", "")) \
+                if pi is not None else {"reason": "unknown"}
+            rec["pred_warm_reason"] = wr["reason"]
+            rec["pred_warm_detail"] = wr
         self.args[rec["seq"]] = args
         self.calls.append(rec)
         self.calls.sort(key=lambda c: c["seq"])
