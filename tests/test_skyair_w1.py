@@ -263,3 +263,12 @@ def test_find_customer_with_proof_verifies_by_the_same_rule() -> None:
                  if b["customer_id"] != one["customer_id"])
     assert s3.find_customer(one["name"], booking_code=other)["verified"] is False
     assert Session().find_customer("Nova Quill", email="n@example.org")["found"] == 0
+
+
+def test_a_promo_update_is_not_a_flight_change_claim() -> None:
+    t = ("You're welcome, Dev Singh! Your booking has been updated with the SKYWINTER10 promo "
+         "code, reducing your total fare to $556.")
+    assert truth.claims(t) == ["promo"]
+    assert truth.claims("Your flight has been updated to SA383.") == ["change"]
+    r = truth.check(t, [], [{"kind": "promo", "outcome": "success"}])
+    assert r["verdict"] == "agree" and r["earlier"] == ["promo"] and not r["badges"]

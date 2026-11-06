@@ -33,7 +33,8 @@ _KIND = {"change": re.compile(r"\b(chang|updat|rebook|moved|switched)\w*", re.I)
          "book": re.compile(r"\b(booked|new booking (?:is|has been) (?:made|created|confirmed)|"
                             r"booking (?:code|reference) is)\b", re.I),
          "promo": re.compile(r"\b(applied|discount(?:ed)?)\b.*\b(promo|offer|discount|code|"
-                             r"\$)|\b(promo|offer|code)\b.*\bapplied\b", re.I)}
+                             r"\$)|\b(promo|offer|code)\b.*\bapplied\b|"
+                             r"\b(updated|reduc\w*|lowered)\b.*\b(promo|discount)\b", re.I)}
 # offers, questions and conditionals are not claims
 _NOT_CLAIM = re.compile(r"\?\s*$|\b(would you like|shall i|should i|do you want|can i|"
                         r"i can|i could|if you|once you|before i|let me know|to confirm|"
@@ -51,8 +52,13 @@ def claims(text: str) -> list[str]:
     for s in sentences(text):
         if _NOT_CLAIM.search(s) or not _DONE.search(s):
             continue
-        for kind, rx in _KIND.items():
-            if rx.search(s) and kind not in found:
+        kinds = [k for k, rx in _KIND.items() if rx.search(s)]
+        if "promo" in kinds and "change" in kinds:
+            # "your booking has been updated with the promo code" is a promo claim, not a
+            # flight change (W1 bake-off: false "not changed" badges)
+            kinds.remove("change")
+        for kind in kinds:
+            if kind not in found:
                 found.append(kind)
     return found
 
