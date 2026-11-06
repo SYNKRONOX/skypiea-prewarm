@@ -315,4 +315,13 @@ $("btn-theme").onclick = () => {
     (!r.classList.contains("light") && matchMedia("(prefers-color-scheme: dark)").matches);
   r.classList.toggle("dark", !dark); r.classList.toggle("light", dark);
 };
-connect();
+// ?snapshot=1: render the current state once (no live stream), e.g. for screenshots/printing
+if (new URLSearchParams(location.search).has("snapshot")) {
+  fetch("/api/state").then((r) => r.json()).then((st) => {
+    handle(st);
+    for (const e of Object.values(st.last || {})) handle(e);
+    status("snapshot of " + new Date().toLocaleString() + " (not live)");
+  });
+} else {
+  connect();
+}
