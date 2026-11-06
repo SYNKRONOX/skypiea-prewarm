@@ -180,3 +180,10 @@ Running log, newest last (the master task runs unattended; see docs/handoff/AGEN
   stack got the slow baseline's time as lead time). Two runs discarded (kept, marked INVALID,
   in results/live_console_demo/invalid_wait_for_both_mirror/). Fixed with the gap-matched
   baseline lane (1fe5fdf), tested. Verification restarts from a new fresh clone.
+- STEP 7 done: fresh clone ~/skypiea-live-fresh2 verified (setup, 389 tests, ruff, sizes,
+  make live 43.5 s, 4 conversations hint off/on, predictor-kill PASS, replay, policy, export,
+  make live-clean). More fixes found and made: lane submit timing (c4c8e9c), record order
+  (d17b6d9), autopilot stop semantics (9c701f9), static no-cache. Runs:
+  results/live_console_demo/ (demo runs, not results). Backup session: docs/live_backup/.
+- FINAL: docs/handoff/LIVE_CONSOLE_REPORT.md. Stacks + console left running from
+  ~/skypiea-infra (`make live`, 2026-11-06), conversation reset.
