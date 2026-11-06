@@ -300,8 +300,11 @@ class Conversation:
             rec["note"] = "unknown tool: no prediction, normal behaviour"
         else:
             allowed = task.params(tc.name)
+            raw = tc.arguments
+            if hasattr(task, "normalize_args"):        # documented argument synonyms (Skye)
+                raw = task.normalize_args(tc.name, raw)
             # null = "not given" (small models send null for optional parameters)
-            args = {a: v for a, v in tc.arguments.items() if a in allowed and v is not None}
+            args = {a: v for a, v in raw.items() if a in allowed and v is not None}
             cls, gargs = task.gateway_call(tc.name, args)
         await self.publish({"type": "call_start", "turn": self.turn, "reply": self.reply,
                             "pos": pos, "tool": tc.name, "tool_class": cls})

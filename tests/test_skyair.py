@@ -149,3 +149,14 @@ def test_change_flight_errors_say_not_changed_and_offer_alternatives() -> None:
     r = s.change_flight(p["booking_code"], "SA1", "SKA123", True)
     assert r["changed"] is False and "NOT made" in r["message"]
     assert "alternatives" in r or "booking_flights" in r
+
+
+def test_skye_argument_synonyms() -> None:
+    from agent.tasks.skye import SKYE
+
+    a = SKYE.normalize_args("change_flight", {"new_flight_id": "SA1", "booking_id": "X",
+                                              "junk": 1})
+    assert a == {"new_flight_no": "SA1", "booking_code": "X", "junk": 1}
+    # an explicit canonical name wins over a synonym
+    assert SKYE.normalize_args("change_flight", {"new_flight_no": "A", "new_flight_id": "B"}
+                               )["new_flight_no"] == "A"

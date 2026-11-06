@@ -34,7 +34,28 @@ customer_confirmed=true.
 Call tools through the tool-calling interface; never write a tool call as text."""
 
 
+# Argument synonyms small models use (seen live: new_flight_id); mapped before the schema filter
+ALIASES = {"new_flight_id": "new_flight_no", "new_flight": "new_flight_no",
+           "flight_number": "new_flight_no", "new_flight_number": "new_flight_no",
+           "old_flight_id": "old_flight_no", "booking_id": "booking_code",
+           "booking": "booking_code", "reservation_code": "booking_code",
+           "reservation_id": "booking_code", "email_address": "email",
+           "customer_name": "name", "full_name": "name", "confirmed": "customer_confirmed",
+           "number_of_bags": "bags"}
+
+
 class Skye(Task):
+    def normalize_args(self, tool: str, args: dict[str, Any]) -> dict[str, Any]:
+        allowed = self.params(tool)
+        out = {}
+        for k, v in args.items():
+            k2 = ALIASES.get(k, k)
+            if k2 in allowed and k2 not in args:
+                out[k2] = v
+            else:
+                out[k] = v
+        return out
+
     def user_prompt(self, i: int) -> str:
         return "Hi, I need help with my booking."
 
