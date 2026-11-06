@@ -1,4 +1,4 @@
-.PHONY: setup lock test lint check-sizes install-hooks data data-all samples cluster deploy e1 clean-cluster
+.PHONY: doctor setup lock test lint check-sizes install-hooks data data-all samples cluster deploy e1 clean-cluster
 
 # Infra targets (tool images, kind, AWS, E0, gateway/controller): see mk/infra.mk and docs/infra.md
 include mk/infra.mk
@@ -12,7 +12,14 @@ PYTHON ?= python3.12
 CONSTRAINTS = -c deploy/platform/constraints.txt -c tools/common/constraints.txt \
               -c services/predictor/requirements.lock
 
+DOCTOR_MODE ?= all
+doctor:                  ## check OS, Docker (running, memory), kind, kubectl, helm, Python 3.12, disk, ports, Ollama
+	@tools/doctor.sh $(DOCTOR_MODE)
+
 setup:                   ## create .venv and install requirements.lock (runtime + dev)
+	@test -x .venv/bin/python || command -v $(PYTHON) >/dev/null 2>&1 || { \
+	  echo "make setup: $(PYTHON) not found. Install Python 3.12 (make doctor prints the command)" \
+	       "or point to it: make setup PYTHON=/path/to/python3.12" >&2; exit 1; }
 	test -x .venv/bin/python || $(PYTHON) -m venv .venv
 	.venv/bin/pip install -q --upgrade pip
 	.venv/bin/pip install -q -r requirements.lock

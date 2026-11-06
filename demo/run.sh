@@ -24,10 +24,7 @@ T0=$(date +%s)
 step() { echo; echo "=== [$(( $(date +%s) - T0 ))s] $*"; }
 
 [ -x "$PY" ] || { echo "no $PY: run 'make setup' first" >&2; exit 1; }
-for b in docker kind kubectl helm; do
-  command -v "$b" >/dev/null || { echo "missing $b (see docs/DEMO.md, Prerequisites)" >&2; exit 1; }
-done
-docker info >/dev/null 2>&1 || { echo "docker daemon not reachable" >&2; exit 1; }
+DOCTOR_QUIET=1 tools/doctor.sh demo || { echo "make demo stopped before changing anything: fix the FAIL lines above (make doctor shows all checks)" >&2; exit 1; }
 
 step "1/8 kind cluster 'skypiea' (1 control-plane + 1 worker) + registry $REG"
 deploy/kind/up.sh

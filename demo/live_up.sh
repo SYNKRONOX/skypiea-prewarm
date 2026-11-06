@@ -5,9 +5,15 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 PY="${PY:-.venv/bin/python}"
 [ -x "$PY" ] || { echo "no $PY: run 'make setup' first" >&2; exit 1; }
-for b in docker kind kubectl helm curl; do
-  command -v "$b" >/dev/null || { echo "missing $b (docs/DEMO.md, Prerequisites)" >&2; exit 1; }
-done
+DOCTOR_QUIET=1 tools/doctor.sh live || { echo "make live stopped before changing anything: fix the FAIL lines above (make doctor shows all checks)" >&2; exit 1; }
+CONSOLE_PORT="${CONSOLE_PORT:-8090}"
+ours=0
+if [ -f .live/console.pid ] && kill -0 "$(cat .live/console.pid)" 2>/dev/null; then ours=1; fi
+if [ $ours = 0 ] && curl -s -m 2 -o /dev/null "http://127.0.0.1:$CONSOLE_PORT/" 2>/dev/null; then
+  echo "make live: port $CONSOLE_PORT is already in use by another program (another make live from a" >&2
+  echo "different folder?). Stop it first (ss -ltnp | grep :$CONSOLE_PORT); nothing was changed." >&2
+  exit 1
+fi
 export AGENT_BASE_URL="${AGENT_BASE_URL:-http://localhost:11434/v1}"
 export AGENT_MODEL="${AGENT_MODEL:-llama3.1:8b}"
 T0=$(date +%s)
@@ -18,14 +24,14 @@ if [ -f .live/console.pid ] && kill -0 "$(cat .live/console.pid)" 2>/dev/null; t
 fi
 nohup "$PY" -m console >.live/console.log 2>&1 &
 echo $! >.live/console.pid
-for _ in $(seq 1 40); do curl -sf -m 2 http://127.0.0.1:8090/api/state >/dev/null && break; sleep 0.5; done
-curl -sf -m 2 http://127.0.0.1:8090/api/state >/dev/null || { cat .live/console.log; exit 1; }
+for _ in $(seq 1 40); do curl -sf -m 2 http://127.0.0.1:$CONSOLE_PORT/api/state >/dev/null && break; sleep 0.5; done
+curl -sf -m 2 http://127.0.0.1:$CONSOLE_PORT/api/state >/dev/null || { cat .live/console.log; exit 1; }
 if curl -sf -m 5 "${AGENT_BASE_URL%/}/models" >/dev/null; then llm="reachable"; else
   llm="NOT reachable (docs/DEMO.md, Troubleshooting: Ollama)"; fi
 cat <<EOF
 
 Skypiea Live Console is up ($(( $(date +%s) - T0 )) s):
-  Console   http://127.0.0.1:8090                 (open in a browser; projector: zoom 125-150%)
+  Console   http://127.0.0.1:$CONSOLE_PORT                 (open in a browser; projector: zoom 125-150%)
   Grafana   http://127.0.0.1:3001                 dashboard "Skypiea Live: baseline vs predictive"
   LLM       $AGENT_MODEL at $AGENT_BASE_URL: $llm
   Logs      .live/console.log, port-forwards .live/pf/
