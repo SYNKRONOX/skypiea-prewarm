@@ -424,8 +424,8 @@ class Conversation:
         self.calls.append(rec)
         self.calls.sort(key=lambda c: c["seq"])
         await self.publish({"type": "call", "call": rec})
-        await self.publish({"type": "totals", "totals": totals(self.calls, self.idle_delta(),
-                                                               pricing())})
+        await self.publish({"type": "totals", "conversation": self.id,
+                            "totals": totals(self.calls, self.idle_delta(), pricing())})
         asyncio.create_task(self.predictor_refresh())
 
     async def user_turn(self, text: str, source: str = "presenter",

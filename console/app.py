@@ -99,6 +99,7 @@ class Console:
         self.ctx = kube_context
         self.stacks = {"base": base or StackClient(BASE), "pred": pred or StackClient(PRED)}
         self.poller = Poller(self.stacks, self.hub.publish, self.model_health)
+        self.poller.on_slow = self.publish_totals
         self.start_poller = start_poller
         self.mcp_factory = mcp_factory
         # hint_mode: off | enter (hint when the message is sent) | typing (first keystroke
@@ -162,6 +163,17 @@ class Console:
                     "truth": conv.truth, "chat": chat_view(conv.messages),
                     "totals": totals(conv.calls, conv.idle_delta(), pricing())},
                 "last": self.hub.last}
+
+    async def publish_totals(self) -> None:
+        """The current conversation's totals with the idle counters just read (every 2 s).
+        Without this the summary only moved when a call ended, so idle pod-seconds of pods
+        kept warm during think time and after the last call were missing (it could read
+        "kept pods warm 0.0 s longer" while Skypiea pods were visibly warm)."""
+        conv = self.conv
+        if conv is None or not conv.calls:
+            return
+        await self.hub.publish({"type": "totals", "conversation": conv.id,
+                                "totals": totals(conv.calls, conv.idle_delta(), pricing())})
 
     async def publish_settings(self) -> None:
         await self.hub.publish({"type": "settings", "settings": self.settings})
@@ -278,6 +290,7 @@ class Console:
         await self.busy("reset")
         try:
             ok = await self.drain()
+            await self.poller.refresh_idle()     # exact baseline: nothing is warm now
             self.new_conversation()
             await self.hub.publish({"type": "reset", "conversation": self.conv.id,
                                     "drained": ok})

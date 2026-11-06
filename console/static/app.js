@@ -169,10 +169,16 @@ function renderSummary(T) {
     $("sum-n").textContent = ""; $("sum-saved").textContent = ""; return; }
   const d = b.wait_ms - p.wait_ms, w = p.idle_pod_s - b.idle_pod_s;
   const dc = (p.idle_cost_usd || 0) - (b.idle_cost_usd || 0);
+  // idle pod-seconds come from the controllers' counters, read every 2 s (so they keep
+  // growing between calls and after the last one while pods stay warm)
+  const idle = (b.idle_pod_s || 0) === 0 && (p.idle_pod_s || 0) === 0 ?
+    "No idle pod-seconds measured yet on either stack (the counters are read every 2 s)." :
+    Math.abs(w) < 0.05 ? "Both stacks kept pods idle for the same time so far (" + p.idle_pod_s.toFixed(1) + " pod-s)." :
+    "Skypiea kept pods warm " + Math.abs(w).toFixed(1) + " pod-s " + (w >= 0 ? "longer" : "shorter") +
+    " so far (" + p.idle_pod_s.toFixed(1) + " vs " + b.idle_pod_s.toFixed(1) + " idle pod-s; cost " +
+    (dc >= 0 ? "+" : "−") + fmtUsd(Math.abs(dc)) + ", estimate).";
   $("sum-text").textContent = "This conversation: you waited " + secs(b.wait_ms) + " on tools with Normal and " +
-    secs(p.wait_ms) + " with Skypiea (" + secs(Math.abs(d)) + (d >= 0 ? " less" : " more") + "). " +
-    "Skypiea kept pods warm " + Math.abs(w).toFixed(1) + " s " + (w >= 0 ? "longer" : "shorter") +
-    " (cost " + (dc >= 0 ? "+" : "−") + fmtUsd(Math.abs(dc)) + ", estimate).";
+    secs(p.wait_ms) + " with Skypiea (" + secs(Math.abs(d)) + (d >= 0 ? " less" : " more") + "). " + idle;
   $("sum-n").textContent = "n = " + p.ok + " tool call" + (p.ok === 1 ? "" : "s") + " · demo run, not a result";
   const s = $("sum-saved"); s.textContent = "time saved " + (d >= 0 ? "+" : "−") + secs(Math.abs(d));
   s.className = "saved " + (d >= 0 ? "pos" : "neg");
@@ -343,6 +349,7 @@ function resetView(convId) {
   S.typing = false; S.typingT = null;
   renderTimelines(); renderTotals(null);
   $("conv-id").textContent = convId ? "(" + convId + ")" : "";
+  S.convId = convId || null;
 }
 
 // ---------------- events ----------------
@@ -376,11 +383,12 @@ function handle(ev) {
         status("connection: baseline gateway " + ev.links.base + ", Skypiea gateway " +
                ev.links.pred + " (port-forwards restart by themselves; else run make live-pf)", "warn");
       break;
-    case "totals": renderTotals(ev.totals); break;
+    case "totals":   // totals of an earlier conversation (e.g. replayed after a Reset) are ignored
+      if (!ev.conversation || !S.convId || ev.conversation === S.convId) renderTotals(ev.totals); break;
     case "predictor": renderPredictor(ev.decisions || []); break;
     case "reset": case "conversation":
       if (ev.type === "reset") resetView(ev.conversation);
-      else $("conv-id").textContent = "(" + ev.id + ")";
+      else { $("conv-id").textContent = "(" + ev.id + ")"; S.convId = ev.id; }
       break;
     case "turn_start":
       S.agentEl = null; S.replyEl = null;
