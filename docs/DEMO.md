@@ -236,24 +236,45 @@ Measured on the laptop in "Prerequisites" (2026-11-06):
 | kind worker image store | 3.2 GB |
 | Ollama (llama3.1:8b, Q4_K_M) | about 5 GB of GPU/host memory on the Ollama machine (not part of Docker) |
 
-## 7-minute presenter script
+<a id="7-minute-presenter-script"></a><a id="live-console-7-minute-presenter-script"></a>
 
-Before the talk: `make live`, open the console at 125-150% zoom, pick the theme with ◐, and
-send one throwaway message to load the model ("hi"). The first LLM call after Ollama has been
-idle includes loading the model (seconds). Then press **Reset to zero**.
+## Live demo: 5-minute presenter script
+
+The Skypiea Air view is described in [`LIVE_DEMO.md`](LIVE_DEMO.md). (This replaces the
+earlier 7-minute script; the anchors above keep old links working.)
+
+Before the talk: `make live` (or `BUNDLES_DIR=models make live` until Release v1.2 exists),
+open http://127.0.0.1:8090 full screen at 1920x1080 (100%) or 1366x768, pick the theme with
+◐, send one throwaway "hi" to load the model, then press **Reset**. Hint: **off**.
 
 | Time | Do | Point at and say |
 |---|---|---|
-| 0:00-0:45 | Nothing yet | Header: "support profile, trained on tau2-bench traces", mirror concurrent, hint off. Two columns: the same agent calls are sent to two copies of the platform. **Normal** scales tools to zero; **Skypiea** predicts the next tool and starts it. Pod grids: all 16 tools cold on both. Footer: local laptop, cold starts here are shorter than on AWS. |
-| 0:45-2:15 | Type: *Hi, this is Priya Menon, user id priya_menon_1119. I need to change my flight on reservation R35033531 to an earlier day. What are my options?* (or press **Autopilot ▶**, labelled AUTOPILOT) | user_lookup is cold on **both** stacks: nothing predicts the first call without the hint. Then the Predictor panel: after user_lookup it says reservation_lookup (p about 0.84) and warms travel_booking; the pod grid shows it starting. Then the **think window** under reservation_lookup: the LLM thought for about 0.35-0.7 s (our runs), the cold start is about 2-3 s. **The prediction was right, but the think time was too short to hide the start.** Say it plainly. |
-| 2:15-3:00 | Point at flight_search | Warm on both stacks: the five airline tools live in one server (travel_booking), so once it is up, every airline call is warm. Prediction works on servers, not tool names. |
-| 3:00-4:00 | Click **Hint: off → ON**, **Reset to zero**, send the first message again | Now the agent tells the predictive gateway "a new turn starts" (turn number only, never the text). The predictor answers with the first-tool distribution learned from tau2-bench (user_lookup 0.50) and warms it while the LLM thinks. user_lookup on Skypiea shows "warmed by hint" and waits less (in our runs about 0.9-1.9 s instead of about 2 s). The start is only partly hidden, because the LLM thinks for well under a second. With a human typing, the head start would be longer. |
-| 4:00-5:00 | Type: *Please move me to flight SK482 on day 36.* Then *Thanks. That's all.* | If the agent hands over (transfer_to_human), point at the Skypiea column: post_comment was warmed earlier (the support profile expects an escalation after a reservation lookup, p about 0.45), so it is warm while the baseline cold-starts. Point at the totals: "agent waited on tools", cold calls, p95, idle pod-seconds. **Skypiea pays for it with more idle pod-seconds** (higher estimated idle cost, an assumption from pricing.yaml). |
-| 5:00-5:45 | Click **Kill predictor**, then send a message (or Autopilot) | The predictor panel turns red (DOWN), and decisions read error:ConnectError. **Every call still succeeds**: the gateway falls back to plain scale-to-zero. Click **Restart predictor**. |
-| 5:45-6:30 | Switch **Demo → Code fix** (about 30-60 s; talk meanwhile), then Autopilot | Profile label changes: "coding profile: model trained on TraceLab traces, warm policy tuned on TraceLab + Copilot". Point at a reply with several calls: "batch: prediction cannot help between calls sent in the same reply". Calls marked "written as text" are where the 8B model wrote the call as JSON text instead of a tool call; the console executed it and says so. |
-| 6:30-7:00 | Open Grafana (:3001) | The same story over time for both namespaces: cold rate, added latency, warm pool, hint warms, predictor errors (the kill shows up there). Close with: this is one laptop and one small model; the AWS tables in the README are the results. |
+| 0:00-0:30 | Press **?** | "Skye is the assistant of Skypiea Air, a made-up airline. Every tool she uses runs in its own container that sleeps when idle. Skypiea guesses the next tool from names and timing only, and wakes it early." Read the setup line: real containers, mock airline data, the predictor sees only tool names and timing. Close. |
+| 0:30-1:45 | **Personas** → Tara Patel → click the "move my flight" request, Send; then give her email and booking code | The first call (Find customer) is **cold on both sides**: nothing can predict the first call of a conversation without a hint. Then the ticker under Skypiea: "Next likely: Get booking 84% → warming Get booking", and the spinner while that pod starts. Click the Get booking row on the Skypiea side and read its sentence: predicted after the previous call, and whether it was warm in time or "predicted but too late" with the numbers. The LLM thinks for well under a second; a cold start here is about 2 s, so often the prediction is right but late. Say so. |
+| 1:45-2:45 | Ask to move to the later flight and confirm | **Booking record**: the flight number changes, and the log shows "✓ done change_flight". If Skye says it changed something and the log shows no successful write, the reply gets a red **"Not done: the booking was not changed"** badge. "We never edit what the model says. We check it against the database and show you." |
+| 2:45-3:30 | Point at the summary sentence | "You waited X s on tools with Normal and Y s with Skypiea." Read the time-saved counter, **including when it is negative**, and the extra warm pod-seconds and cost: "Skypiea buys time with idle containers. Here it is pennies of a cent; it is an estimate from list prices." |
+| 3:30-4:15 | **Hint → on typing**, **Reset**, start typing a new request | The first keystroke sends a metadata-only hint (no text). Point at the "hint sent" pill and, when Find customer runs, at its row on the Skypiea side: warm, "predicted by the turn-start hint", while Normal is cold. "A human typing gives the predictor seconds of head start." |
+| 4:15-4:45 | **Kill predictor**, send one more message | Health dot turns amber, the ticker says the predictor is down. **Every call still succeeds**: Skypiea falls back to plain scale-to-zero. **Restart predictor**. |
+| 4:45-5:00 | Open **Details** | Pod grids, predictor top-3 per call, hint lead times, CSV export. Close with: "One laptop, one small model: these are demo runs. The AWS tables in the README are the results." |
+
+If a step goes wrong (LLM slow, cluster down), switch to the screenshots and CSV in
+[`docs/live_backup/`](live_backup/).
+
+### 1-minute version
+
+1. (0:00) "Skye is an AI assistant for a made-up airline. Each tool she calls is a container
+   that sleeps when idle; waking it takes about 2 s on this laptop."
+2. (0:10) Press **Autopilot**. "Left column: the normal platform. Right column: Skypiea, which
+   guesses the next tool from names and timing and wakes it early."
+3. (0:30) Point at the ticker ("Next likely ... warming ...") and at one warm row on the
+   Skypiea side next to a cold row on the Normal side. Read the summary sentence aloud,
+   including the cost of the warm containers.
+4. (0:50) Point at the **Booking record**: "And we check the model: what it claims is compared
+   with the real database; if they disagree you see a red *Not done* badge."
 
 ### Lead-time toggles (typing hint, lookahead, console mapping)
+
+In the Skypiea Air view, Lookahead, Mirror and Replay are in the **Details** drawer.
 
 `make live` now starts with the **console mapping** on: the header shows "console mapping:
 escalate→generic_fallback, flight_search→search", so the airline tools no longer share one

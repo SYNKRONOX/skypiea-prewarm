@@ -370,6 +370,7 @@ the first tool while the LLM thinks. Design and data sources:
 [`docs/LIVE_CONSOLE.md`](docs/LIVE_CONSOLE.md); 7-minute presenter script:
 [`docs/DEMO.md`](docs/DEMO.md#7-minute-presenter-script). Verification conversations (**demo
 runs, not results**): [`results/live_console_demo/runs.md`](results/live_console_demo/runs.md).
+Skypiea Air live demo (chat with Skye, truth panel): [`docs/LIVE_DEMO.md`](docs/LIVE_DEMO.md).
 
 ### Live LLM agent on kind
 
