@@ -97,5 +97,6 @@ echo "Done in $(( $(date +%s) - T0 ))s. Cluster left up. Port-forwards (127.0.0.
 echo "  bin/skypiea --context $CTX status         # CLI"
 echo "  Grafana  http://127.0.0.1:$GRAFANA_PORT             (anonymous viewer)"
 echo "  Gateway  http://127.0.0.1:$PF_BASE/mcp        (make agent-demo uses it)"
-echo "Remove everything: make demo-clean"
+if [ "${CLUSTER:-skypiea}" = skypiea ]; then echo "Remove everything: make demo-clean"
+else echo "Remove everything: CLUSTER=$CLUSTER REG_NAME=${REG_NAME:-kind-registry} make demo-clean"; fi
 exit "$FAILED"
