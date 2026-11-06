@@ -1,0 +1,66 @@
+# PRD status: what we built against PRD v1.1
+
+The PRD is [`PRD.md`](../PRD.md) (the original, unchanged); requirement text and our readings
+of it are in [`prd_excerpts.md`](prd_excerpts.md). One row per item. **Status** is one of
+Met / Partly met / Changed / Not done; "needs check" marks a row where the repo does not let us
+say more with confidence. Evidence is a file path, a test (`file::name`) or a results file.
+Nothing here claims more than those files show. Numbers are quoted from the named files.
+
+Note on experiment ids: the PRD's E1-E5 (Section 7) are not the same as the E0-E5 ids used in
+[`experiments.md`](experiments.md) and the README (where E0 = cold starts and E1 = next-tool
+accuracy). The E rows below use the **PRD's** definitions.
+
+## Functional requirements
+
+| ID | Status | Evidence | Explanation |
+|---|---|---|---|
+| FR-1 ranked next tools, top-3 in <= 50 ms, confidences sum <= 1 | Met (service alone) | `services/predictor/engine.py`; `tests/test_service.py::test_decide_answers_follow_the_contract`; `docs/redteam.md` (2,000 random requests: sum <= 1 + 1e-9); `results/loadtest.csv` (p99 13.2 ms at 75 req/s, 15.9 ms at 150 req/s) | Measured on the laptop with the service alone, not end-to-end on the cluster. |
+| FR-2 pod Ready before the call in >= 80% at tau 0.6 | Partly met | `results/sim_offline.csv.gz` via `docs/results_summary.md` ("Baselines and FR-2"): support 86.8% / 90.9% (cached / uncached) of predicted calls on 76 / 44 calls | Above 80%, but at the support profile's own tau 0.4, not 0.6, in the simulator, per predicted call (our reading of "trajectories" is in `prd_excerpts.md`). The coding profile uses a cost threshold (lambda), not tau. |
+| FR-3 evict unused pod within TTL + 5 s (default TTL 30 s) | Met | `controller/core.py`; `tests/test_controller.py::test_warm_then_scale_to_zero_at_ttl_plus_purge`, `::test_never_below_inflight_and_ttl_counts_from_last_use`; `charts/skypiea/values.yaml` (`defaultTtlS: 30`, `purgeS: 5`) | Unit-tested and used in every kind and AWS run; there is no separate committed timing log of evictions on AWS. |
+| FR-4 fall back to scale-from-zero when there is no usable prediction | Met | `gateway/app.py`; `tests/test_gateway.py` (FR-4 tests), `tests/test_service.py::test_decide_fails_open`; `make demo-failures` (`docs/DEMO.md`, "Failure injection"); `results/live_console_demo/runs.md` (support_predictor_killed) | A dead, slow or invalid predictor answer means plain scale-to-zero, with no error to the caller. "Standard OpenFaaS" became our own scale-to-zero (see the OpenFaaS row). |
+| FR-5 Prometheus cold/warm latency and warm-pool occupancy, graphable in Grafana | Met | `gateway/app.py` (`skypiea_gateway_calls_total{cold}`, `skypiea_gateway_added_latency_seconds`, `skypiea_gateway_hold_ms`), `controller/service.py` (`skypiea_warm_pool_size`, `skypiea_pod_seconds_idle_total`); `tests/test_monitoring.py`; `docs/img/grafana_live.png` | The latency histogram is labelled by tool; cold/warm is a label on the call counter, not on the histogram. |
+| FR-6 reload the model without dropping in-flight predictions, in < 2 s | Partly met (needs check) | `services/predictor/app.py` (`/reload`, `/rollback`, warm-up p99 gate of 50 ms); `tests/test_service.py::test_reload_rollback_and_refusals`; `docs/redteam.md` ("reload x3 under 8 concurrent request threads: zero non-200 answers") | Live reload with no failed requests is tested. Reload is from a prepared bundle, not "from newly logged traces" automatically, and no committed file records the reload duration against the 2 s budget. |
+| FR-7 concurrent sessions tracked independently | Met | `docs/redteam.md` ("two divergent sessions interleaved from 50 threads (400 calls): identical to each answered alone"); `tests/test_gateway.py::test_sessions_isolated_created_and_purged` | Tested at the service and gateway; the cluster runs replay concurrent sessions as well. |
+| FR-8 replay at a configurable rate and speed (1x, 5x, 10x), timing within 5% | Partly met | `replayer/replay.py` (`gap_scale`, `service_scale`; `results` mode requires 1x); `gateway/scenario_run.py`; `tests/test_replayer.py` | Replay is open loop with real gaps (1x) for every result, and scaled gaps (x0.2) for functional checks. We did not run 5x/10x as experiments, and no committed file checks the 5% timing tolerance. |
+| FR-9 hold a call for an already-starting pod, cap 150 ms; >= 90% served by that pod in forced races | Partly met (needs check) | `gateway/app.py` (hold = `wait_ready(hold_ms)`); `gateway/main.py` `SKYPIEA_HOLD_MS=150`; `tests/test_gateway.py::test_hold_catches_a_pod_that_becomes_ready_within_150ms` | The wait itself is bounded by 150 ms in code. No forced-race trial rate was measured. The per-call `held_ms` recorded in the AWS runs is measured from arrival and has a maximum of up to 397.2 ms per run (`held_ms_max`, `results/scenario_aws_summary.csv`; 152.5 ms in the A predictive run), so it includes time outside the wait: check before claiming "never exceeds the cap". |
+
+## Non-functional requirements
+
+| ID | Status | Evidence | Explanation |
+|---|---|---|---|
+| NFR-1 engine adds <= 50 ms to p99 at 500 concurrent sessions, 10 min, Locust from 3 VMs | Changed (measured differently) | `results/loadtest.csv`; `services/predictor/loadtest.py` | We load-tested the predictor service alone on the laptop (open loop, p99 13.2 / 15.9 ms at 75 / 150 req/s), not end-to-end at 500 sessions, and without Locust. The 75 req/s ~ 500 sessions mapping is an assumption (`docs/numbers_and_sources.md`, UNSOURCED). The predictor is off the critical path (the gateway does not wait for it). |
+| NFR-2 p50 within 20% of always-warm at 100 calls/s end-to-end | Partly met (different load) | `results/scenario_aws_summary.csv`: added p50 0 ms for predictive and always-warm in A and B | At real replay load (20 sessions per policy), not at a sustained 100 calls/s. Added latency is the gateway's addition per call, not client end-to-end latency. |
+| NFR-3 CPU-s on never-used pods <= 30% of always-warm's total CPU-s | Met (simulator), with our own stricter reading used for tuning | `results/sim_sensitivity.csv.gz` (columns `nfr3_unused_over_always_warm`, `idle_over_always_warm`; values in `docs/VIVA.md` 4.5); `configs/model/sim.yaml` `nfr3_idle_ratio: 0.3`; `docs/limits.md` | Under 0.30 in both readings for every shipped profile in the simulator. On AWS we have idle pod-seconds (predictive 9.7% / 19.1% of always-warm's in A / B, `results/scenario_aws_summary.csv`), not CPU-seconds. |
+| NFR-4 500 sessions x 8 calls for 30 min, no controller crash, missed-prediction rate <= 1% | Not done (smaller check instead) | `results/concurrent40_aws.csv` (40 concurrent TraceLab sessions on AWS: 938 of 938 calls succeeded, never more than 2 starting; the harness crashed 3 times first on NaN timings, `docs/handoff/OVERNIGHT_REPORT.md`) | No 500-session soak and no missed-prediction rate were measured (`docs/numbers_and_sources.md`). |
+| NFR-5 reconcile loop <= 200 ms/cycle at 50 nodes / 200 pods | Not done | `controller/service.py` (reconcile tick every 0.25 s) | One-node cluster; no reconcile-duration metric is exported, and 50 nodes / 200 pods were never run. |
+| NFR-6 session data not persisted, purged within 60 s of session end, audit script | Met for ended sessions; partly for abandoned ones | `tools_audit/audit_no_persistence.py` (`make audit`); `docs/redteam.md` (marker audit: pass); `gateway/sessions.py`; `tests/test_gateway.py::test_sessions_isolated_created_and_purged`, `::test_idle_sessions_purged_after_idle_timeout` | The predictor keeps nothing on disk. The gateway purges ended sessions within 10 s, but a session that never ends is purged after 600 s idle (`docs/gateway_controller.md`), longer than 60 s. |
+
+## Experiments (PRD Section 7 definitions)
+
+| ID | Status | Evidence | Explanation |
+|---|---|---|---|
+| E1 replay three trace types at 1x/5x/10x across the three configurations | Changed | `results/scenario_aws_summary.csv`, `results/scenario_aws_prd_SYNTHETIC_summary.csv`, `results/sim_sensitivity.csv.gz`, `results/sim_prd.csv.gz` | On AWS: real tau2 and TraceLab sessions plus SYNTHETIC PRD A/B, at 1x, against seven policies (more than the three configurations: keep-alive 10/30/60 s and Markov-1 added). Trace types and scale are covered in the simulator. No 5x/10x runs. |
+| E2 30-min soak at 500 sessions + two-session isolation | Partly met | Isolation: FR-7 row. Soak: `results/concurrent40_aws.csv` (40 sessions) | Isolation is tested; the 500-session soak was not run. |
+| E3 TTL eviction, low-confidence cold path, mid-provision race | Met (race: unit test only) | `tests/test_controller.py`, `tests/test_gateway.py`; `docs/gateway_controller.md` ("Live failure injection on kind"); `make demo-failures` | All three behaviours are tested; the race is a unit test, not a trial series (see FR-9). |
+| E4 cost model, latency vs cost | Met (idle pod-seconds; dollars are an assumption) | `results/sim_pareto.png`, `results/sim_sensitivity.csv.gz`, `results/scenario_aws_summary.csv`; `configs/model/pricing.yaml` | We report idle pod-seconds as the cost; dollar prices are an assumption (`docs/limits.md`). NFR-6's storage audit: see NFR-6. |
+| E5 live reload mid-session within 2 s | Partly met (needs check) | FR-6 row | Reload under load is tested with no failed answers; the 2 s duration is not recorded in a committed file. |
+
+## Scope and technology stack
+
+| Item (PRD) | Status | Evidence | Explanation |
+|---|---|---|---|
+| Prediction engine: graph prior + first-order Markov | Changed (extended) | `predictors/`, `docs/model.md`; `results/p4_ranker.csv` | Markov/n-gram transition graph learned from traces plus a LightGBM re-ranker and a warm policy. First-order Markov is kept as a baseline. There is no hand-written workflow-graph prior: our real traces come from agents without a fixed graph. |
+| Warm-pool controller (provision, TTL eviction, short queue) | Met | `controller/`, `gateway/`; `docs/gateway_controller.md` | Our own kopf operator plus the gateway's 150 ms hold. |
+| OpenFaaS for tool serving | Changed | `controller/`, `charts/skypiea/`; `docs/gateway_controller.md` | **Own scale-to-zero operator on plain Kubernetes Deployments instead of OpenFaaS**: OpenFaaS CE cannot scale to zero (`docs/gateway_controller.md`, "Controller"), and we wanted to control and measure the scale-up path directly (cap of 2 starts per node, queue by due time, restart-safe annotations) without a FaaS layer in between. The PRD's own rejection of Fission uses the same argument. |
+| 6-8 representative MCP tool functions | Changed | `tools/` (16 servers), `tools/tool_map.yaml` | **16 tool servers**, so that every tool class in the real support and coding traces maps to a server (`tests/test_tool_map_coverage.py`). |
+| Synthetic workload generator (deterministic, branching, stochastic) | Met, plus real traces | `traces/generate_synthetic.py` (deterministic, branching, random walk, prd mix); `traces/`, `data/README.md` | **Real public traces were added** (TraceLab, Copilot, tau-bench, tau2-bench, BFCL, Toolathlon; `data/README.md`) because synthetic traces cannot show whether prediction works on real agents. SYNTHETIC rows are labelled everywhere. |
+| Evaluation harness: scale-to-zero, always-warm, predictive | Met (extended) | `gateway/scenario_run.py`, `sim/`; `results/scenario_aws_summary.csv` | Keep-alive 10/30/60 s, Markov-1 top-1 and an oracle were added as baselines. |
+| LangGraph agent runtime | Changed | `agent/` (own agent loop), `replayer/` (own replayer) | **Own tool-calling agent loop and own trace replayer instead of LangGraph.** The predictor only needs call metadata, and the replayer must reproduce recorded traces from agents that were not LangGraph agents. |
+| Custom controller in client-go/kopf | Met | `controller/operator.py` | kopf. |
+| Prometheus/Grafana | Met | `charts/skypiea/` (monitoring), `tests/test_monitoring.py` | Prometheus and Grafana from the chart (`charts/skypiea/templates/monitoring.yaml`), including the Live Console dashboard. |
+| Locust from 3 client VMs | Changed | `services/predictor/loadtest.py` | Own open-loop load tester on one laptop (NFR-1 row). |
+| Cost model: dollars per 1,000 calls | Partly met | `configs/model/pricing.yaml`; `docs/limits.md` | Idle pod-seconds per 1,000 calls is the primary cost; dollars use assumed prices. |
+| Single cluster, no edge tier | Met | `infra/aws/` (one EC2 k3s node), `deploy/` (kind) | One node on AWS, so cold starts come from one 2-vCPU machine (`docs/limits.md`). |
+| MVP: E1 and E3 at 100 sessions, scale-to-zero vs predictive | Partly met | as E1/E3 | Done at 20 sessions per policy on AWS (plus the simulator), not 100. |
+| Stretch: full factorial matrix, FR-7, FR-6/E5 | Partly met | FR-6, FR-7, E1 rows | FR-7 is met; FR-6 partly; the factorial matrix is covered in the simulator only. |
+| Token-level speculation (SpecBox-style), stretch | Not done (a related step was added) | `docs/LIVE_CONSOLE.md` (turn-start hint) | Not built. The Live Console has a metadata-only turn-start hint; it gave no gain in the lead-time grid (`results/live_console_leadtime/tables.md`). |

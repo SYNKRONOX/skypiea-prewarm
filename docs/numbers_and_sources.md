@@ -36,8 +36,8 @@ repo (merged from feat/infra; results under `results/`).
 
 | Number | What it is | Source | Why |
 |---|---|---|---|
-| about 2.7 s cached, 5.4 s uncached | AWS cold start of one pod alone, median over tools (single tool e.g. edit_file 2,717 / 4,452 ms) | infra `results/e0_aws_summary.csv` (2aea6da; E0 run at a24e540, n=10 per tool and mode); infra `docs/gateway_controller.md` table (ac311d9) | What prediction has to hide. Measured on one m7i-flex.large (2 vCPU) k3s node, with images pulled from ECR in the same region. |
-| about 5.5 s cached, 9.0 s uncached | AWS cold start when 3 pods start at once (median) | infra `results/e0_aws_p3_summary.csv` (2aea6da); `docs/gateway_controller.md` (ac311d9) | Starting three at once roughly doubles each start (CPU-bound app_init on 2 vCPUs). The sim uses this for any overlap, including 2 at once. |
+| about 2.7 s cached, 5.4 s uncached | AWS cold start of one pod alone, median of all E0 runs pooled over tools (2,734 / 5,360 ms in `results/e0_aws_runs.csv`; single tool e.g. edit_file 2,717 / 4,452 ms) | infra `results/e0_aws_summary.csv` (2aea6da; E0 run at a24e540, n=10 per tool and mode); infra `docs/gateway_controller.md` table (ac311d9) | What prediction has to hide. Measured on one m7i-flex.large (2 vCPU) k3s node, with images pulled from ECR in the same region. |
+| about 5.5 s cached, 9.0 s uncached | AWS cold start when 3 pods start at once (median of all runs pooled over tools: 5,541 / 9,020 ms in `results/e0_aws_p3_runs.csv`) | infra `results/e0_aws_p3_summary.csv` (2aea6da); `docs/gateway_controller.md` (ac311d9) | Starting three at once roughly doubles each start (CPU-bound app_init on 2 vCPUs). The sim uses this for any overlap, including 2 at once. |
 | sha256 00758310b4d6 | The AWS cold-start file used by every AWS result and by all three bundles | infra `configs/cold_start.yaml` (2aea6da) | Ties each result row to the cold starts it used (`cold_start_sha256` column). |
 | sha256 96d8a3d6952d | The kind cold-start file (lower bound) | infra `configs/cold_start.yaml` at c21a567 | Comparison runs only. |
 
