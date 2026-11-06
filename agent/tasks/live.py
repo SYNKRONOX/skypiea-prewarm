@@ -152,7 +152,6 @@ CODEFIX = CodeFix(
     aliases={"edit_file": "write_file", "shell": "shell_other"})
 
 SCRIPTS = {"airline": AIRLINE_SCRIPT, "codefix": CODEFIX_SCRIPT}
-PROFILE_LABELS["skyair"] = PROFILE_LABELS["support"]
 
 
 def _skye_script() -> list[str]:
