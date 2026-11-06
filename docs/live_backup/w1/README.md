@@ -12,7 +12,9 @@ Demo runs, not results. One conversation each, recorded with the final W1 code.
 
 What to say from it: Normal waited 14.93 s on tools, Skypiea 5.93 s; Skypiea kept pods idle for
 212.0 pod-s vs 31.1 (the cost side). The first lookup was warm on Skypiea because of the
-typing hint; book_flight was warm because a decision had warmed its server; the duplicate
+typing hint (every call record says `hint_mode: typing`; the settings saved at the end and the
+screenshot header say "off": the hint setting was switched off during or right after the run
+by a request this script did not send, not identified, e.g. a browser tab on the console); book_flight was warm because a decision had warmed its server; the duplicate
 booking was refused by the tool; Skye's "$114" (her own sum of $79 + $35) is flagged "Not from
 a tool". In the code-fix run the model's rewrite of merge_sort could not be judged by the
 simulated runner, so it says "not evaluated" instead of claiming a pass.
