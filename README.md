@@ -26,16 +26,11 @@ same policy code offline ([`sim/`](sim/)), a replayer ([`replayer/`](replayer/),
 and Terraform for one EC2 k3s node ([`infra/aws/`](infra/aws/)).
 
 DS252 Cloud Computing course project, Indian Institute of Science (IISc), Bengaluru. Final
-evaluation 6 Nov 2026.
+evaluation 6 Nov 2026. Team: [below](#team). Release history: [`CHANGELOG.md`](CHANGELOG.md).
+Index of all documents: [`docs/README.md`](docs/README.md).
 
-| Name | SR No. | Focus |
-|---|---|---|
-| G. Parthav | 25302 | Predictors, simulator |
-| L. Mohnish | 25451 | Traces, replayer, data pipeline |
-| Ch. Dhanunjaya | 25415 | Controller, shaper, tools, deployment, cloud |
-
-We used AI coding assistants for parts of the code and documentation. The team reviewed,
-tested and owns all of it.
+**Contents:** [Architecture](#architecture) · [How to run](#how-to-run) ·
+[Results](#results) · [Limits](#limits) · [Repository layout](#repository-layout) · [Team](#team)
 
 ---
 
@@ -72,6 +67,170 @@ The gateway also has stand-in policies (`scale_to_zero`, `always_warm`, `keep_al
 
 ---
 
+## How to run
+
+### Quickstart (kind, local)
+
+Needs Docker, [kind](https://kind.sigs.k8s.io/), kubectl, [Helm](https://helm.sh/), `make` and
+Python 3.12.
+
+```bash
+git clone https://github.com/SYNKRONOX/skypiea-prewarm.git
+cd skypiea-prewarm
+make setup          # .venv with requirements.lock (runtime + dev)
+make test           # unit tests; uses the committed samples in data/samples/, no data download
+make lint check-sizes
+
+make build-images   # 16 tool images, E0 probe, platform image (gateway/controller), one at a time
+make cluster        # kind: 1 control-plane + 1 worker + local registry localhost:5001
+make deploy         # push to localhost:5001; helm install: tools at 0 replicas, gateway,
+                    # operator, stub predictor, Prometheus + Grafana
+bin/skypiea --context kind-skypiea status
+kubectl --context kind-skypiea -n skypiea-tools get pods -w   # watch tools scale 0 <-> 1
+make grafana-kind   # Grafana on http://127.0.0.1:3000
+make clean-cluster  # delete the cluster and the registry
+```
+
+`make deploy` serves the gateway's stand-in policies (`bin/skypiea --context kind-skypiea
+policy set keep_alive` etc.). The real predictor needs model bundles, which are not committed
+because they are built from the datasets:
+
+```bash
+python data/download.py --list                 # then download each dataset (see data/README.md)
+make data-all                                  # raw -> data/processed/<source>/
+python -m traces.generate_synthetic            # SYNTHETIC PRD traces (timing from real TRAIN data)
+make model-all                                 # tune, simulate, export the three bundles, test
+make predictor-image                           # skypiea/predictor:<commit>
+docker tag skypiea/predictor:<tag> localhost:5001/skypiea/predictor:<tag>
+docker push localhost:5001/skypiea/predictor:<tag>
+helm upgrade --install skypiea charts/skypiea --kube-context kind-skypiea -n skypiea-tools \
+  -f charts/skypiea/values-kind.yaml --set imageTag=$(tools/image_tag.sh) \
+  --set platform.enabled=true --set e0Probe.enabled=false \
+  --set platform.predictor.serve=model --set platform.predictor.image.tag=<tag> \
+  --set platform.predictor.profile=support \
+  --set-file platform.predictor.coldStartYaml=configs/cold_start.yaml --wait
+make kind-integration   # functional replay of Scenario A and B through the gateway, every policy
+```
+
+kind is for functional checks only. All reported timings come from AWS.
+
+### Demos on kind
+
+Two demos run on a laptop with kind. **They are functional demos. Their numbers are not results
+like the AWS tables in [Results](#results).**
+
+- **[`docs/DEMO.md`](docs/DEMO.md): `make demo`.** It starts from a fresh clone (after
+  `make setup`) with no datasets: it creates the kind cluster, builds the images, deploys the
+  chart with profile `prd`, replays SYNTHETIC PRD Scenario A sessions under scale-to-zero and
+  then under the predictor, and prints a table (about 4.5 min with a warm Docker cache). It
+  leaves the cluster up for the CLI and Grafana. `make demo-failures` stops the predictor and
+  kills the controller; the calls still succeed. `make demo-clean` removes everything.
+- **[`docs/AGENT.md`](docs/AGENT.md): `make agent-demo`.** A tool-calling agent that talks to
+  the tools only through the gateway's `POST /mcp`. Its LLM is either a scripted stand-in (no
+  network) or any OpenAI-compatible endpoint (`make agent-demo LLM=openai-compatible`, for
+  example local Ollama). The LLM picks the tool order itself.
+
+### Live Console: baseline vs predictive, side by side
+
+<!-- Reserved: the live-demo session adds one link line to docs/LIVE_DEMO.md here. -->
+
+![Skypiea Live Console](docs/img/console_support_hint_on.png)
+
+`make live` runs two copies of the platform in one kind cluster: **Normal** (scale-to-zero)
+and **Skypiea** (the real `support` or `coding` predictor, trained on tau2-bench and TraceLab
+traces). It also starts a local web console at http://127.0.0.1:8090. A presenter chats with
+a local LLM (Ollama, llama3.1:8b). Every tool call goes to both stacks, and the console shows
+per call, live: cold or warm, the added latency, the LLM's think time against the baseline's
+cold start for the same call, the pod grid read from the controllers, the predictor's top-3
+and whether it was right. An optional turn-start hint (off by default) lets the predictor warm
+the first tool while the LLM thinks. Design and data sources:
+[`docs/LIVE_CONSOLE.md`](docs/LIVE_CONSOLE.md); 7-minute presenter script:
+[`docs/DEMO.md`](docs/DEMO.md#7-minute-presenter-script); backup of one recorded session:
+[`docs/live_backup/`](docs/live_backup/).
+
+**How a grader runs it** (needs the Quickstart tools above plus [Ollama](https://ollama.com/)):
+
+```bash
+make setup                # once
+ollama pull llama3.1:8b   # once, on the machine that runs Ollama
+make fetch-models         # downloads the GitHub Release v1.2 asset (predictor bundles + SHA256SUMS),
+                          # verifies the archive and every file, unpacks to models/
+make live                 # kind cluster, both stacks, console on http://127.0.0.1:8090, Grafana on :3001
+make live-clean           # console off, both stacks uninstalled (cluster and registry stay)
+```
+
+- `make live` took 44 s from a fresh clone with the cluster up and images built, and 2 min 47 s
+  on a new cluster ([`docs/DEMO.md`](docs/DEMO.md), "Start and stop").
+- `make fetch-models` with the v1.2 release URL is part of v1.2 (see
+  [`CHANGELOG.md`](CHANGELOG.md)). If the release asset is not published, it stops with a clear
+  "not published" message and changes nothing. Without the bundles, `make live` needs a
+  predictor image built from the datasets (Quickstart, `make model-all predictor-image`). In
+  v1.1, `make fetch-models` has no default URL and needs `MODELS_URL` and `MODELS_SHA256`.
+
+**What is real in the console, said plainly:**
+
+- **The tool containers are real and cold-start for real.** Each tool server is a pod in the
+  kind cluster, scaled to zero by the same operator as on AWS; a cold call on the Normal stack
+  waits for a real pod start. These are laptop (kind) timings, lower than on AWS.
+- **The airline data is a mock database inside the console.** Skypiea Air is fictional; its
+  customers, bookings and flights live in the console process and reset with each new
+  conversation. The tool pods receive only the call's tool class with empty arguments (timing
+  only), never customer data.
+- **Skye, the support agent, is a local 8B model** (llama3.1:8b on Ollama, temperature 0). **It
+  can claim actions it did not take**: in a smoke run it said it had changed a flight after the
+  change had failed (smoke run 2 in `docs/handoff/PHASE_A_HANDOFF.md`, branch
+  `feat/console-support`). The tools refuse invalid changes, but the model's text is not checked. The
+  console's truth panel shows the session database's real state next to what Skye says.
+
+Skypiea Air, Skye and the truth panel belong to the v1.2 support console (in progress, merged
+if ready; see [`CHANGELOG.md`](CHANGELOG.md)). At the time of writing the truth panel was
+Phase B work and not yet committed on any branch. The v1.1 console runs the same two stacks with
+a tau2-style airline task and a code-fix task.
+
+### AWS (one EC2 node, k3s)
+
+Read [`docs/aws_plan.md`](docs/aws_plan.md) first (the 50 resources, prices with sources,
+security group, IAM, teardown), then follow [`infra/aws/README.md`](infra/aws/README.md). In short:
+one m7i-flex.large in ap-south-1 running k3s, images in ECR, **no inbound ports** (SSM only),
+about $0.108/h while running, and no automatic stop.
+
+```bash
+make aws-plan                    # terraform plan -> infra/aws/tfplan; review it
+make aws-apply                   # apply exactly that plan
+make aws-tunnel                  # own terminal: k3s API over SSM
+make aws-kubeconfig              # -> ~/.kube/skypiea-aws (outside the repo)
+make build-images push-images-aws
+make deploy-aws PLATFORM=true E0PROBE=false   # gateway, operator, monitoring
+make e0-aws-node                 # E0 on the node (see infra/aws/README.md)
+make aws-stop                    # pause (disk still billed); make aws-start to resume
+make aws-destroy                 # removes everything; asks for confirmation
+```
+
+Terraform state is local and git-ignored. See "Terraform state" in `docs/aws_plan.md`.
+
+### Make targets
+
+| Command | What it does |
+|---|---|
+| `make setup` | Create `.venv` from `requirements.lock` |
+| `make lock` | Re-resolve `requirements-dev.txt` against the image pins into `requirements.lock` |
+| `make test` / `make lint` / `make check-sizes` | pytest, ruff, no tracked file over 50 MB |
+| `make cluster` / `make deploy` / `make clean-cluster` | kind cluster, Helm install, teardown |
+| `make deploy-kind-e0` / `make e0-kind` / `make e0-kind-parallel` | E0 cold starts on kind |
+| `make kind-integration` | Functional Scenario A/B replay through the gateway |
+| `make grafana-kind` | Grafana on http://127.0.0.1:3000 |
+| `make demo` / `make demo-failures` / `make demo-clean` | Whole stack on kind from a fresh clone, failure injection, teardown ([`docs/DEMO.md`](docs/DEMO.md)) |
+| `make agent-demo [LLM=openai-compatible]` / `make agent-live` | Agent through the gateway; live-LLM runs ([`docs/AGENT.md`](docs/AGENT.md)) |
+| `make fetch-models` | Download and verify the real predictor bundles into `models/` (v1.2: from the GitHub Release v1.2 asset; v1.1: needs `MODELS_URL`) |
+| `make live` / `make live-pf` / `make live-clean` | Live Console: baseline and predictive stacks + web UI on :8090, restart port-forwards, teardown ([`docs/LIVE_CONSOLE.md`](docs/LIVE_CONSOLE.md)) |
+| `make model-all` | Tune on VAL, simulate on TEST, export bundles (needs `data/processed`) |
+| `make predictor-image` | Build the predictor image with the three bundles |
+| `make results-summary INFRA_RESULTS=results SCENARIOS='results/scenario_aws*_calls.csv'` | Rebuild `docs/results_summary.md` from committed results |
+| `make redteam` / `make audit` / `make loadtest` | Predictor red-team suite, no-persistence audit, load test |
+| `make aws-*` | AWS lifecycle, see [`infra/aws/README.md`](infra/aws/README.md) |
+
+---
+
 ## Results
 
 Every number below is copied from a committed file. The source path is given above each
@@ -92,6 +251,9 @@ of them.
 - **Oracle:** with cached images, a policy that knows every future call warms more calls
   than the shipped profiles at a small fraction of their idle pod-seconds. That gap is the
   remaining headroom for better prediction.
+- **Demo runs on kind** (live agent, Live Console, lead-time grid) show the mechanism live with a
+  local 8B model. Skypiea waited less on tools and idled more in every console run. They are
+  [demo runs](#demo-runs-on-kind-not-results), not results.
 - **SYNTHETIC PRD runs** show the mechanism running on the PRD's own scenario graphs. They are
   not evidence about real workloads.
 
@@ -314,64 +476,13 @@ Simulator, held-out SYNTHETIC TEST. Source: [`results/sim_prd.csv.gz`](results/s
 | uncached | prd | 23.7 / 33,143 |
 | uncached | oracle | 29.1 / 516 |
 
----
+### Demo runs on kind (NOT results)
 
-## Limits
+The runs below are on a laptop with kind (cold starts lower than AWS, both stacks on one node)
+with a local 8B model. They show the mechanism live. They are small, and they are not results
+like the AWS tables above.
 
-The full list, in plain language, is in **[`docs/limits.md`](docs/limits.md)**. The ones that
-matter most when reading the tables above:
-
-- **The AWS scenario runs are small**: 20 sessions per policy, so several CIs overlap. Idle
-  pod-seconds is one counter per run and has no CI.
-- **Cold starts come from one 2-vCPU node.** Pricing is an assumption; there are no
-  production cost or latency claims. kind numbers are a lower bound.
-- **The simulator gives each session its own pods and its own node.** Real deployments share
-  pods across sessions, which would help keep-alive and always-warm more than our simulator
-  shows. The 2-at-once start time is borrowed from the 3-at-once measurement.
-- **The shipped coding profile was adopted after its TEST margins were seen.** The frozen
-  profile's rows are kept next to it.
-- **tau2 is small** (56 TEST sessions with timing), and the support profile rests on it alone.
-  tau-bench has no timestamps, so it gives accuracy numbers only.
-- **The `prd` profile and every SYNTHETIC row are synthetic.**
-- **Nobody independent has reviewed these results.**
-
-Where every quoted number comes from: [`docs/numbers_and_sources.md`](docs/numbers_and_sources.md).
-
----
-
-## Demo
-
-Two demos run on a laptop with kind. **They are functional demos. Their numbers are not results
-like the AWS tables above.**
-
-- **[`docs/DEMO.md`](docs/DEMO.md): `make demo`.** It starts from a fresh clone (after
-  `make setup`) with no datasets: it creates the kind cluster, builds the images, deploys the
-  chart with profile `prd`, replays SYNTHETIC PRD Scenario A sessions under scale-to-zero and
-  then under the predictor, and prints a table (about 4.5 min with a warm Docker cache). It
-  leaves the cluster up for the CLI and Grafana. `make demo-failures` stops the predictor and
-  kills the controller; the calls still succeed. `make demo-clean` removes everything.
-- **[`docs/AGENT.md`](docs/AGENT.md): `make agent-demo`.** A tool-calling agent that talks to
-  the tools only through the gateway's `POST /mcp`. Its LLM is either a scripted stand-in (no
-  network) or any OpenAI-compatible endpoint (`make agent-demo LLM=openai-compatible`, for
-  example local Ollama). The LLM picks the tool order itself.
-
-### Live Console: baseline vs predictive, side by side
-
-![Skypiea Live Console](docs/img/console_support_hint_on.png)
-
-`make live` runs two copies of the platform in one kind cluster: **Normal** (scale-to-zero)
-and **Skypiea** (the real `support` or `coding` predictor, trained on tau2-bench and TraceLab
-traces). It also starts a local web console at http://127.0.0.1:8090. A presenter chats with
-a local LLM (Ollama, llama3.1:8b). Every tool call goes to both stacks, and the console shows
-per call, live: cold or warm, the added latency, the LLM's think time against the baseline's
-cold start for the same call, the pod grid read from the controllers, the predictor's top-3
-and whether it was right. An optional turn-start hint (off by default) lets the predictor warm
-the first tool while the LLM thinks. Design and data sources:
-[`docs/LIVE_CONSOLE.md`](docs/LIVE_CONSOLE.md); 7-minute presenter script:
-[`docs/DEMO.md`](docs/DEMO.md#7-minute-presenter-script). Verification conversations (**demo
-runs, not results**): [`results/live_console_demo/runs.md`](results/live_console_demo/runs.md).
-
-### Live LLM agent on kind
+#### Live LLM agent through the gateway
 
 Source: [`results/agent_runs/summary.csv`](results/agent_runs/summary.csv) and
 [`results/agent_runs/summary_think.csv`](results/agent_runs/summary_think.csv)
@@ -392,7 +503,7 @@ the next one. No CIs: the cells are too small.
 | B | **predictive (Skypiea)** | 10 | 34 | 14.7 | 0 | 2,957 | 307 | 8/10 |
 
 - **Think gaps vs cold starts.** The think gap is the time of the LLM request that produced a
-  call. Its median is 1,354 ms and its p90 is 2,938 ms. The AWS cached cold starts of
+  call. Its median is 1,354.5 ms and its p90 is 2,937.5 ms. The AWS cached cold starts of
   these tools take 2,572 to 3,791 ms (`configs/cold_start.yaml`). Over all 203 calls,
   the think gap alone is long enough to hide the tool's cold start for 7.9% of calls
   (cached) and 0.5% (uncached). Here, the later calls of a multi-call reply count
@@ -406,93 +517,94 @@ the next one. No CIs: the cells are too small.
   answered in text after two simulated "continue" replies). Counts are from
   `results/agent_runs/*_sessions.csv` and `*_steps.csv`.
 
+#### Live Console verification runs
+
+Source: [`results/live_console_demo/runs.md`](results/live_console_demo/runs.md) (generated by
+`python -m demo.live_runs_table results/live_console_demo`; caveats in
+[`results/live_console_demo/README.md`](results/live_console_demo/README.md)). One
+conversation per row, llama3.1:8b at temperature 0, baseline scale-to-zero, mirror concurrent,
+cached images.
+
+| run | hint | calls | agent waited on tools, baseline / Skypiea ms | cold calls baseline / Skypiea | idle pod-s baseline / Skypiea | calls warmed by the hint |
+|---|---|---|---|---|---|---|
+| support_hint_off | off | 6 | 7,548 / 5,311 | 3 / 2 (of 5 / 5 ok) | 17.9 / 36.7 | 0 |
+| support_hint_on | on | 6 | 6,322 / 3,576 | 3 / 2 (of 5 / 5 ok) | 18.6 / 50.5 | 1 |
+| coding_hint_off | off | 5 | 8,096 / 6,461 | 3 / 2 (of 5 / 5 ok) | 21.1 / 92.4 | 0 |
+| coding_hint_on | on | 5 | 7,913 / 4,240 | 3 / 2 (of 5 / 5 ok) | 20.1 / 99.2 | 3 |
+| support_predictor_killed | on | 3 | 5,002 / 4,239 | 2 / 2 (of 2 / 2 ok) | 8.3 / 11.1 | 0 |
+
+- Skypiea waited less on tools in every run and **idled more in every run**.
+- With the predictor killed, every call that succeeded on the baseline also succeeded on
+  Skypiea (fail-open; [`docs/handoff/LIVE_CONSOLE_REPORT.md`](docs/handoff/LIVE_CONSOLE_REPORT.md)).
+- One conversation per row and large run-to-run variance: do not read differences between
+  rows as effects.
+
+#### Lead-time grid: turn-start hint and lookahead
+
+Source: [`results/live_console_leadtime/tables.md`](results/live_console_leadtime/tables.md)
+(generated by `python -m demo.leadtime_table results/live_console_leadtime`); write-up in
+[`docs/handoff/LEADTIME_REPORT.md`](docs/handoff/LEADTIME_REPORT.md). 36 autopilot
+conversations: 2 demos x 3 hint modes x 2 lookaheads x 3, console tool mapping on. The
+scripted customer types at an **assumed** 200 characters per minute. Medians per conversation.
+
+| Demo | lookahead | hint | agent waited on tools, baseline / Skypiea ms | cold calls baseline / Skypiea | idle pod-s baseline / Skypiea |
+|---|---|---|---|---|---|
+| airline | 1 | off | 15,742 / 4,401 | 16 / 6 (of 22) | 29.7 / 121.9 |
+| airline | 1 | Enter | 15,357 / 4,495 | 16 / 6 (of 22) | 29.5 / 147.5 |
+| airline | 1 | typing | 17,061 / 4,352 | 18 / 6 (of 24) | 38.6 / 201.7 |
+| airline | 2 | off | 18,038 / 8,550 | 17 / 12 (of 23) | 38.8 / 132.9 |
+| airline | 2 | Enter | 16,943 / 5,518 | 17 / 8 (of 23) | 38.0 / 179.7 |
+| airline | 2 | typing | 14,265 / 8,485 | 15 / 11 (of 21) | 29.7 / 209.9 |
+| codefix | 1 | off | 13,331 / 9,579 | 16 / 12 (of 24) | 35.2 / 235.0 |
+| codefix | 1 | Enter | 13,520 / 10,286 | 15 / 12 (of 24) | 32.2 / 250.9 |
+| codefix | 1 | typing | 14,318 / 9,475 | 15 / 12 (of 24) | 35.5 / 332.0 |
+| codefix | 2 | off | 17,350 / 7,394 | 17 / 9 (of 24) | 35.5 / 270.8 |
+| codefix | 2 | Enter | 13,681 / 8,084 | 16 / 9 (of 24) | 36.5 / 274.9 |
+| codefix | 2 | typing | 13,330 / 7,347 | 15 / 9 (of 24) | 32.7 / 355.5 |
+
+- **What helped** was the normal prediction after each call: the first call of turn 2 was warm
+  on Skypiea in every cell (airline reservation_lookup 33-36 ms vs 2,962-3,183 ms on the
+  baseline; codefix run_tests 40-43 ms vs 3,137-4,155 ms).
+- **The typing hint did not help.** The scripted first message takes about 39-43 s to type,
+  longer than the 30 s TTL plus the 5 s purge, so the hinted pod was gone by Enter: the first
+  call was warm 0/3 in every cell. It only added idle pod-seconds.
+- **The Enter hint did not help** either: the LLM thinks for well under a second, a start takes
+  about 1.6-2.9 s.
+- **Lookahead 2** helped codefix (9 vs 12 cold calls) and hurt airline (the handover went from
+  warm 3/3 to cold 0/3, 1/3 in the typing cell). It was not adopted: in the simulator it brought no gain over lookahead 1
+  ([`results/sim_lookahead_val.md`](results/sim_lookahead_val.md),
+  [`results/sim_lookahead_test.md`](results/sim_lookahead_test.md)).
+- **Skypiea cost more idle pod-seconds in all 12 cells** (4-11x the baseline).
+
 ---
 
-## Quickstart (kind, local)
+## Limits
 
-Needs Docker, [kind](https://kind.sigs.k8s.io/), kubectl, [Helm](https://helm.sh/), `make` and
-Python 3.12.
+The full list, in plain language, is in **[`docs/limits.md`](docs/limits.md)**. The ones that
+matter most when reading the tables above:
 
-```bash
-git clone https://github.com/SYNKRONOX/skypiea-prewarm.git
-cd skypiea-prewarm
-make setup          # .venv with requirements.lock (runtime + dev)
-make test           # unit tests; uses the committed samples in data/samples/, no data download
-make lint check-sizes
+- **The AWS scenario runs are small**: 20 sessions per policy, so several CIs overlap. Idle
+  pod-seconds is one counter per run and has no CI.
+- **Cold starts come from one 2-vCPU node.** Pricing is an assumption; there are no
+  production cost or latency claims. kind numbers are a lower bound.
+- **The simulator gives each session its own pods and its own node.** Real deployments share
+  pods across sessions, which would help keep-alive and always-warm more than our simulator
+  shows. The 2-at-once start time is borrowed from the 3-at-once measurement.
+- **The shipped coding profile was adopted after its TEST margins were seen.** The frozen
+  profile's rows are kept next to it.
+- **tau2 is small** (56 TEST sessions with timing), and the support profile rests on it alone.
+  tau-bench has no timestamps, so it gives accuracy numbers only.
+- **The `prd` profile and every SYNTHETIC row are synthetic.**
+- **Everything on kind (demo, live agent, Live Console, lead-time grid) is a demo run**, on one
+  laptop with a local 8B model, with 1 to 10 conversations per cell. In the console, Skypiea
+  always idled more than the baseline.
+- **The Live Console's LLM can claim actions it did not take**, and its airline data is a mock
+  database inside the console (see [Live Console](#live-console-baseline-vs-predictive-side-by-side)).
+- **Nobody independent has reviewed these results.**
 
-make build-images   # 16 tool images, E0 probe, platform image (gateway/controller), one at a time
-make cluster        # kind: 1 control-plane + 1 worker + local registry localhost:5001
-make deploy         # push to localhost:5001; helm install: tools at 0 replicas, gateway,
-                    # operator, stub predictor, Prometheus + Grafana
-bin/skypiea --context kind-skypiea status
-kubectl --context kind-skypiea -n skypiea-tools get pods -w   # watch tools scale 0 <-> 1
-make grafana-kind   # Grafana on http://127.0.0.1:3000
-make clean-cluster  # delete the cluster and the registry
-```
+Where every quoted number comes from: [`docs/numbers_and_sources.md`](docs/numbers_and_sources.md).
 
-`make deploy` serves the gateway's stand-in policies (`bin/skypiea --context kind-skypiea
-policy set keep_alive` etc.). The real predictor needs model bundles, which are not committed
-because they are built from the datasets:
-
-```bash
-python data/download.py --list                 # then download each dataset (see data/README.md)
-make data-all                                  # raw -> data/processed/<source>/
-python -m traces.generate_synthetic            # SYNTHETIC PRD traces (timing from real TRAIN data)
-make model-all                                 # tune, simulate, export the three bundles, test
-make predictor-image                           # skypiea/predictor:<commit>
-docker tag skypiea/predictor:<tag> localhost:5001/skypiea/predictor:<tag>
-docker push localhost:5001/skypiea/predictor:<tag>
-helm upgrade --install skypiea charts/skypiea --kube-context kind-skypiea -n skypiea-tools \
-  -f charts/skypiea/values-kind.yaml --set imageTag=$(tools/image_tag.sh) \
-  --set platform.enabled=true --set e0Probe.enabled=false \
-  --set platform.predictor.serve=model --set platform.predictor.image.tag=<tag> \
-  --set platform.predictor.profile=support \
-  --set-file platform.predictor.coldStartYaml=configs/cold_start.yaml --wait
-make kind-integration   # functional replay of Scenario A and B through the gateway, every policy
-```
-
-kind is for functional checks only. All reported timings come from AWS.
-
-## AWS (one EC2 node, k3s)
-
-Read [`docs/aws_plan.md`](docs/aws_plan.md) first (the 50 resources, prices with sources,
-security group, IAM, teardown), then follow [`infra/aws/README.md`](infra/aws/README.md). In short:
-one m7i-flex.large in ap-south-1 running k3s, images in ECR, **no inbound ports** (SSM only),
-about $0.108/h while running, and no automatic stop.
-
-```bash
-make aws-plan                    # terraform plan -> infra/aws/tfplan; review it
-make aws-apply                   # apply exactly that plan
-make aws-tunnel                  # own terminal: k3s API over SSM
-make aws-kubeconfig              # -> ~/.kube/skypiea-aws (outside the repo)
-make build-images push-images-aws
-make deploy-aws PLATFORM=true E0PROBE=false   # gateway, operator, monitoring
-make e0-aws-node                 # E0 on the node (see infra/aws/README.md)
-make aws-stop                    # pause (disk still billed); make aws-start to resume
-make aws-destroy                 # removes everything; asks for confirmation
-```
-
-Terraform state is local and git-ignored. See "Terraform state" in `docs/aws_plan.md`.
-
-## Make targets
-
-| Command | What it does |
-|---|---|
-| `make setup` | Create `.venv` from `requirements.lock` |
-| `make lock` | Re-resolve `requirements-dev.txt` against the image pins into `requirements.lock` |
-| `make test` / `make lint` / `make check-sizes` | pytest, ruff, no tracked file over 50 MB |
-| `make cluster` / `make deploy` / `make clean-cluster` | kind cluster, Helm install, teardown |
-| `make deploy-kind-e0` / `make e0-kind` / `make e0-kind-parallel` | E0 cold starts on kind |
-| `make kind-integration` | Functional Scenario A/B replay through the gateway |
-| `make grafana-kind` | Grafana on http://127.0.0.1:3000 |
-| `make demo` / `make demo-failures` / `make demo-clean` | Whole stack on kind from a fresh clone, failure injection, teardown ([`docs/DEMO.md`](docs/DEMO.md)) |
-| `make agent-demo [LLM=openai-compatible]` / `make agent-live` | Agent through the gateway; live-LLM runs ([`docs/AGENT.md`](docs/AGENT.md)) |
-| `make live` / `make live-clean` | Live Console: baseline and predictive stacks + web UI on :8090 ([`docs/LIVE_CONSOLE.md`](docs/LIVE_CONSOLE.md)) |
-| `make model-all` | Tune on VAL, simulate on TEST, export bundles (needs `data/processed`) |
-| `make predictor-image` | Build the predictor image with the three bundles |
-| `make results-summary INFRA_RESULTS=results SCENARIOS='results/scenario_aws*_calls.csv'` | Rebuild `docs/results_summary.md` from committed results |
-| `make redteam` / `make audit` / `make loadtest` | Predictor red-team suite, no-persistence audit, load test |
-| `make aws-*` | AWS lifecycle, see [`infra/aws/README.md`](infra/aws/README.md) |
+---
 
 ## Repository layout
 
@@ -516,6 +628,17 @@ Terraform state is local and git-ignored. See "Terraform state" in `docs/aws_pla
 | [`results/`](results/) | Committed result files |
 | [`docs/`](docs/) | Design, results, limits, handoff notes |
 | [`mk/`](mk/) | Make targets: `infra.mk`, `model.mk`, `demo.mk` (included from the root Makefile) |
+
+## Team
+
+| Name | SR No. | Focus |
+|---|---|---|
+| G. Parthav | 25302 | Predictors, simulator |
+| L. Mohnish | 25451 | Traces, replayer, data pipeline |
+| Ch. Dhanunjaya | 25415 | Controller, shaper, tools, deployment, cloud |
+
+We used AI coding assistants for parts of the code and documentation. The team reviewed,
+tested and owns all of it.
 
 ## License
 

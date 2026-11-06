@@ -17,9 +17,13 @@ Main sources:
 - `docs/prd_excerpts.md`: PRD requirement text, verbatim
 - `results/*`: raw result files
 
-`docs/DEMO.md` and `docs/AGENT.md` were still being written on the infra branch when this file
-was written. Section 3 refers to them by name and does not copy their content. Check both
-before the viva.
+- `docs/DEMO.md`, `docs/AGENT.md`, `docs/LIVE_CONSOLE.md`: the demos (`make demo`,
+  `make agent-demo`, `make live`), all merged into `main`
+- `results/live_console_demo/`, `results/live_console_leadtime/`: Live Console demo runs (not
+  results)
+
+Updated 2026-11-06 (final documentation pass): the demos are merged, section 3 now leads with
+the Live Console, and sections 4.8-4.9, 5, 6 and 8 cover the lead-time and console findings.
 
 ---
 
@@ -43,8 +47,8 @@ pod-seconds (ratios computed from the same file).
 calling a tool. If every tool is a Kubernetes Deployment scaled to zero, nothing runs while
 idle, which is cheap, but the first call to a cold tool waits for a pod to be scheduled, pull
 its image, start Python and load its data. On our AWS node one pod starting alone takes about
-2.7 s with the image cached and 5.4 s uncached (median over tools,
-`docs/numbers_and_sources.md`, from `results/e0_aws_summary.csv`). Keeping everything warm
+2.7 s with the image cached and 5.4 s uncached (median of all E0 runs pooled over tools,
+`docs/numbers_and_sources.md`, from `results/e0_aws_runs.csv`). Keeping everything warm
 removes the wait but pays for idle pods. The LLM's think time is the opportunity: if we know
 which tool comes next, we can start its pod during the think gap.
 
@@ -134,10 +138,18 @@ call is unaffected; the system becomes scale-to-zero. Tested by live failure inj
 Roles: **Parthav (P)**: predictor and simulator. **Mohnish (M)**: traces, replayer, data.
 **Dhanunjaya (D)**: controller, cluster, cloud. Roles follow the table in `README.md`.
 
-The exact commands, expected output and prerequisites are in **`docs/DEMO.md`** (`make demo`)
-and **`docs/AGENT.md`** (`make agent-demo`, a live agent on local Ollama). The infra branch is
-building both. Before the viva, read both, run each once on the demo laptop, and update the
-timings below if they differ.
+**Preferred: the Live Console.** `make live` (after `make fetch-models` or with local bundles),
+then follow the **7-minute presenter script in `docs/DEMO.md`** ("7-minute presenter script"),
+which is written for the console and is not copied here. It shows both stacks side by side:
+cold starts on the Normal stack, the predictor panel, the think window, the hint, the
+predictor kill, and the code-fix demo. Say the three plain facts from `README.md`: the tool
+containers are real and cold-start for real; the airline data is a mock database inside the
+console; the 8B model can claim actions it did not take (v1.2 support console: the truth panel
+shows the real state).
+
+**Alternative (no console): `make demo` + `make agent-demo`**, per **`docs/DEMO.md`** and
+**`docs/AGENT.md`**. The table below is for this path. Run whichever you choose once on the
+demo laptop before the viva.
 
 **Say during the demo:** it runs on kind, on a laptop. Timings shown live are functional only.
 All reported timings come from AWS (`README.md`, "kind is for functional checks only").
@@ -155,8 +167,9 @@ All reported timings come from AWS (`README.md`, "kind is for functional checks 
 ### Fallback if the live part fails
 
 - **Agent or Ollama fails** (model slow to load, no output): stop after 20 s. Say "the live
-  model is slow on this laptop, so here is the recorded run" and show the **recorded transcript**
-  (location per `docs/AGENT.md`; confirm it is committed before the viva). Walk through the same
+  model is slow on this laptop, so here is the recorded run" and show the **recorded session**:
+  `docs/live_backup/` (console screenshots `docs/img/console_backup_*.png`, `export.csv`,
+  `session_log.txt`) or `docs/demo_transcript.log` for `make demo`. Walk through the same
   points from it: call, predicted next tool, pod warmed, next call warm.
 - **Cluster fails** (`make demo` errors, pods stuck Pending): do not debug live. Show the
   recorded transcript, then go straight to the results slide. D says one sentence on the cause
@@ -323,7 +336,8 @@ scripted customer, console-only tool mapping, n = 3 per cell.
 - **What helped was the normal prediction after each call.** The first call of turn 2 found
   a warm pod on Skypiea in every cell, 3/3 (airline reservation_lookup 33 ms vs about
   3,000 ms on the baseline; coding run_tests about 40 ms vs 3,100-4,200 ms). Turn 3 was warm
-  only in airline with lookahead 1; the coding `shell` call was always cold. The agent's
+  3/3 only in airline with lookahead 1 (1/3 in one lookahead-2 cell); the coding `shell` call
+  was always cold. The agent's
   median total waiting time per conversation with lookahead 1 was 4.4-4.5 s vs 15.4-17.1 s
   (airline) and 9.5-10.3 s vs 13.3-14.3 s (coding).
 - **Lookahead 2 is mixed and was not adopted.** In the simulator it brought no gain at equal
@@ -333,6 +347,40 @@ scripted customer, console-only tool mapping, n = 3 per cell.
   coding it waited less (7.4 s vs 9.6 s) at more idle (270.8 vs 235.0 pod-s).
 - **Skypiea cost more in every one of the 12 cells**: 4-11x the baseline's idle
   pod-seconds. Say it plainly: the waiting time it saves is bought with idle pods.
+- **LLM behaviour:** in codefix 9 calls per cell were written as text (the console recovered
+  and flagged them); in airline 3 calls per cell failed on a stack (invalid LLM arguments).
+- **Not measured:** early connect (implemented, off by default, `platform.gateway.earlyConnect`).
+  E0 bounds its possible saving at the readiness lag, median 0.5-0.8 s per tool
+  (`docs/handoff/LEADTIME_REPORT.md`). No live human-typed conversation was recorded for the
+  grid.
+- **After the grid (v1.2, in progress):** the typing hint is re-sent at Enter. In 5 smoke
+  conversations with Skye the first call was warm on Skypiea (31-38 ms vs 1,470-2,413 ms on
+  the baseline). Smoke runs, n = 5, not a measurement; source:
+  `docs/handoff/PHASE_A_HANDOFF.md` on branch `feat/console-support` (**not on `main`** unless
+  v1.2 is merged).
+
+### 4.9 Live Console verification runs (demo runs, 2026-11-06)
+
+Source: `results/live_console_demo/runs.md`, caveats in `results/live_console_demo/README.md`
+and `docs/handoff/LIVE_CONSOLE_REPORT.md`. One conversation per run, llama3.1:8b, kind.
+
+| run | agent waited on tools, baseline / Skypiea ms | cold calls baseline / Skypiea | idle pod-s baseline / Skypiea |
+|---|---|---|---|
+| support_hint_off | 7,548 / 5,311 | 3 / 2 | 17.9 / 36.7 |
+| support_hint_on | 6,322 / 3,576 | 3 / 2 | 18.6 / 50.5 |
+| coding_hint_off | 8,096 / 6,461 | 3 / 2 | 21.1 / 92.4 |
+| coding_hint_on | 7,913 / 4,240 | 3 / 2 | 20.1 / 99.2 |
+| support_predictor_killed | 5,002 / 4,239 | 2 / 2 | 8.3 / 11.1 |
+
+- With the hint on, the first call on Skypiea was started by the hint and waited less than with
+  it off (support 1,856 vs 2,920 ms; `runs.md`), but it was still cold: the LLM thought for
+  well under a second.
+- Where Skypiea was clearly faster, the pod was warm from an **earlier** decision
+  (transfer_to_human 32 ms vs 2,504 ms in support_hint_off; `runs.md`).
+- **Predictor killed:** every call that succeeded on the baseline also succeeded on Skypiea.
+- These runs used the first baseline lane (fixed afterwards in c4c8e9c); in 4 calls the
+  baseline gap was longer than Skypiea's (listed in `runs.md`). One run per row: do not
+  compare rows as effects.
 
 ## 5. What we do NOT claim (from `docs/limits.md`)
 
@@ -360,6 +408,13 @@ scripted customer, console-only tool mapping, n = 3 per cell.
 - **712 of 734,021 TraceLab calls have no service time** and are treated as 0 ms. This affects
   at most 0.23% of TEST calls. The counts come from an audit, not from a results file.
 - **No independent review.** The planned fresh-eyes review was skipped for time.
+- **Every kind run is a demo run** (live agent, Live Console, lead-time grid): one laptop, a
+  local 8B model, 1 to 10 conversations per cell, cached images. Skypiea idled more than the
+  baseline in every console run. The typing speed of the scripted customer (200 characters
+  per minute) is an assumption.
+- **The console's airline data is a mock database inside the console**, and the 8B model can
+  claim actions it did not take (v1.2 smoke run 2, `docs/handoff/PHASE_A_HANDOFF.md` on
+  `feat/console-support`). The tool containers and their cold starts are real.
 - **Not measured by us:** NFR-4's missed-prediction rate of at most 1%
   (`docs/numbers_and_sources.md`), NFR-2 at 100 calls/s end-to-end, and 500 real concurrent
   sessions on the cluster (**UNSOURCED** as results: no committed file).
@@ -386,8 +441,8 @@ behind them.
 | 500 sessions | Concurrency in NFR-1, NFR-4, Scenario C | PRD, `docs/prd_excerpts.md` | The PRD's scale target. Not run on the cluster. The simulator does not run 500 sessions on one shared pool. |
 | 75 req/s ~ 500 sessions | Load-test rate that stands for 500 sessions | `services/predictor/loadtest.py` line 8 | **UNSOURCED**: assumes one call per ~6.7 s per session. NFR-4's 8 calls per 30 min would be about 2 req/s. |
 | 30% idle budget | Tuning constraint: idle pod-s at most 30% of always-warm's | `configs/model/sim.yaml` `nfr3_idle_ratio: 0.3` | Our reading of NFR-3's 30%. The PRD counts never-used CPU-s against total CPU-s; both are reported. |
-| 2.7 s / 5.4 s | AWS cold start, one pod alone, cached / uncached, median over tools | `results/e0_aws_summary.csv`; `docs/numbers_and_sources.md` | What prediction has to hide. One 2-vCPU node. |
-| 5.5 s / 9.0 s | AWS cold start, 3 at once, cached / uncached | `results/e0_aws_p3_summary.csv` | CPU contention on 2 vCPUs. Reason for the cap. |
+| 2.7 s / 5.4 s | AWS cold start, one pod alone, cached / uncached: median of all E0 runs pooled over tools (2,734 / 5,360 ms, 160 runs each; the median of the per-tool medians is 2,732 / 5,197 ms) | `results/e0_aws_runs.csv`, `results/e0_aws_summary.csv`; `docs/numbers_and_sources.md` | What prediction has to hide. One 2-vCPU node. |
+| 5.5 s / 9.0 s | AWS cold start, 3 at once, cached / uncached: median of all runs pooled over tools (5,541 / 9,020 ms, 180 runs each) | `results/e0_aws_p3_runs.csv`, `results/e0_aws_p3_summary.csv` | CPU contention on 2 vCPUs. Reason for the cap. |
 | 2,572 to 8,366 ms | Range of per-tool AWS medians (cached minimum, uncached maximum) | `README.md` E0 table | Light tools are fast; heavy tools (scikit-learn) are slow. |
 | 49.1% to 15.5% cold | Scenario A, scale-to-zero vs predictive, AWS | `results/scenario_aws_summary.csv` | Main real-cluster result vs scale-to-zero. CIs do not overlap. |
 | 58.9% to 5.6% cold | Scenario B, scale-to-zero vs predictive, AWS | same | Same. |
@@ -399,6 +454,9 @@ behind them.
 | 20 sessions | Per policy in each AWS scenario run | `docs/results_summary.md` | Time and budget limit. This is why the CIs are wide. **UNSOURCED** as a design choice. |
 | 1,000 resamples, seed 0 | Session bootstrap for the AWS CIs | `docs/results_summary.md` | Standard; resampling sessions respects within-session correlation. |
 | 28 / 56 | tau2 VAL / TEST sessions with timing | `docs/limits.md` | Small, so a few sessions move tau2 numbers by several points. |
+| lookahead 1 | Steps ahead the predictor warms (shipped) | `results/sim_lookahead_val.md`, `results/sim_lookahead_test.md`; `docs/handoff/LEADTIME_REPORT.md` | Lookahead 2 was not adopted under the pre-registered rule: no gain at equal idle in the simulator, and worse for airline in the console grid. |
+| 200 chars/min | Typing speed of the scripted console customer | `results/live_console_leadtime/tables.md` header | **An assumption, not a measurement.** It makes the first message take about 39-43 s, longer than TTL + purge (35 s), which is why the typing hint expired. |
+| 4-11x | Skypiea's idle pod-s over the baseline's in the 12 lead-time cells | `results/live_console_leadtime/tables.md` | Demo runs, n = 3 per cell. The waiting saved is paid with idle pods. |
 | $0.108/h | AWS node cost while running | `README.md` "AWS"; details in `docs/aws_plan.md` | Why one small node. |
 
 ---
@@ -604,6 +662,23 @@ behind them.
 
 Extra hard ones, in case:
 
+- *Is the Live Console real?* The tool containers are real pods and cold-start for real on
+  kind (laptop timings, lower than AWS). The airline data is a mock database inside the
+  console; the pods receive only the tool class with empty arguments. The LLM is a local 8B
+  model (`README.md`, "Live Console").
+- *Your agent said it changed the flight. Did it?* Not necessarily: the 8B model can claim
+  actions it did not take (seen in a v1.2 smoke run). The tools refuse invalid changes; the
+  truth panel shows the session database's real state.
+- *Why did the typing hint not help?* The scripted first message took about 39-43 s to type,
+  longer than the 30 s TTL plus the 5 s purge, so the hinted pod expired before Enter: first
+  call warm 0/3 in every typing cell (`results/live_console_leadtime/tables.md`). v1.2 re-sends
+  the hint at Enter (smoke runs only).
+- *In the console, Skypiea always idles more. Isn't that a loss?* It is the price: 4-11x the
+  baseline's idle pod-seconds in the lead-time grid, for less waiting on tools. The console
+  runs are demo runs; the cost-latency comparison against keep-alive is in section 4.2-4.3.
+- *Why not lookahead 2?* Pre-registered rule: adopt only with a gain at equal idle on VAL. It
+  had none (support identical, coding +3.02 vs +3.56 points; `results/sim_lookahead_val.md`).
+
 - *Did AI write this?* We used AI coding assistants for parts of the code and docs. The team
   reviewed, tested, and owns all of it (`README.md`).
 - *The session-id bug?* The gateway forwards client session ids unchanged. Ids outside
@@ -644,9 +719,10 @@ Extra hard ones, in case:
    - Frozen coding was -1.9 under the cap, which is why it was retuned (disclosed)
    - Oracle headroom: mostly idle cost
 8. **Live demo**
-   - `make demo`: pods at zero, scale-to-zero call
-   - `make agent-demo`: live agent on Ollama, pods warmed during think time
-   - `skypiea explain` / `trace`
+   - `make live`: Live Console, Normal (scale-to-zero) vs Skypiea side by side, local 8B LLM
+   - Real pods, real cold starts on kind; mock airline database; the model can over-claim
+   - Kill the predictor: calls still succeed (fail-open)
+   - Backup: `make demo` / `make agent-demo`, `docs/live_backup/`
 9. **Limits: what we do not claim**
    - One small node; 20 AWS sessions; no shared pool in the simulator
    - tau2 small; prd profile SYNTHETIC; coding adopted after TEST
