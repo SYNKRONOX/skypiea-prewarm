@@ -135,7 +135,8 @@ def run(models: list[str], scenarios: list[str], reps: int, out: Path, hint: str
     return rows
 
 
-def run_stories(models: list[str], demo: str, out: Path) -> list[dict]:
+def run_stories(models: list[str], demo: str, out: Path,
+                acts: list[int] | None = None) -> list[dict]:
     """Every story act of `demo` once per model (POST /api/story); same files as run()."""
     import httpx
 
@@ -158,6 +159,8 @@ def run_stories(models: list[str], demo: str, out: Path) -> list[dict]:
             _wait(lambda m=model: not st()["settings"]["busy"]
                   and st()["settings"].get("llm_model") == m, 600, f"model {model}")
         for act in stories(demo):
+            if acts and act["act"] not in acts:
+                continue
             t0 = time.time()
             r = c.post("/api/story", json={"act": act["act"]})
             if r.status_code >= 400:
@@ -229,11 +232,13 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--hint", default="off", choices=["off", "enter", "typing"])
     ap.add_argument("--out", type=Path, default=Path("results/live_bakeoff"))
     ap.add_argument("--table-only", action="store_true", help="rebuild summary from --out")
+    ap.add_argument("--acts", default="", help="with --stories: only these acts, e.g. 2")
     ap.add_argument("--stories", default=None, help="run every story act of this demo "
                     "(skyair|codefix) once per model instead of the personas")
     a = ap.parse_args(argv)
     if a.stories:
-        run_stories(a.models.split(","), a.stories, a.out)
+        run_stories(a.models.split(","), a.stories, a.out,
+                    [int(x) for x in a.acts.split(",") if x] or None)
         return 0
     if a.table_only:
         rows = [json.loads(p.read_text()) for p in _reports(a.out)]

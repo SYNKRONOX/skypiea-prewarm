@@ -17,9 +17,11 @@ STORIES: dict[str, list[dict]] = {
                     "Yes, I confirm the booking.",
                     "Can I add one checked bag to it? Yes, I confirm.",
                     "Thanks, that's all."]},
+        # Tara Patel has TWO active bookings (5TGTBP, 8RK2RN): the customer names one
         {"act": 2, "title": "Act 2: change the schedule (watch the truth check)",
          "script": ["Hi, I'm Tara Patel. My email is tara.patel@example.com.",
-                    "I need to move my flight to a later one on the same route. What is there?",
+                    "I need to move my booking 5TGTBP to a later flight on the same route. "
+                    "What is there?",
                     f"Please move me to flight {_LATER['flight_no']} on {_LATER['date']} at "
                     f"{_LATER['depart']}. Yes, I confirm the change and the fee.",
                     "Thanks, that's all."]},
