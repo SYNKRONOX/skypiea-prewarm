@@ -136,7 +136,7 @@ like the AWS tables in [Results](#results).**
 
 ### Live Console: baseline vs predictive, side by side
 
-<!-- Reserved: the live-demo session adds one link line to docs/LIVE_DEMO.md here. -->
+- **Live demo (Skypiea Air console):** see [docs/LIVE_DEMO.md](docs/LIVE_DEMO.md)
 
 ![Skypiea Live Console](docs/img/console_support_hint_on.png)
 
