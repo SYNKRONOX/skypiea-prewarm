@@ -217,7 +217,9 @@ function renderTicker(decs) {
     box.append(document.createTextNode("Predictor is down: Skypiea behaves like scale-to-zero; calls still work.")); return; }
   const d = (decs || S.decs || []).slice(-1)[0];
   if (!d) { box.append(document.createTextNode("Thinking: waiting for the first call.")); return; }
-  if (d.outcome !== "ok") { box.append(document.createTextNode("Predictor: " + d.outcome)); return; }
+  if (d.outcome !== "ok") { box.append(document.createTextNode(String(d.outcome).startsWith("error") ?
+    "Predictor unreachable: Skypiea behaves like scale-to-zero; calls still work." :
+    "Predictor: " + d.outcome + " (nothing warmed)")); return; }
   const top = (d.top3 || []).slice(0, 2).map((x) => plain(x.tool_class) + " " + Math.round(100 * x.p) + "%").join(", ");
   box.append(document.createTextNode("Next likely: " + (top || "?") + " → " +
     ((d.warmed || []).length ? "warming " + d.warmed.map(plain).join(", ") : "not confident: nothing warmed") +

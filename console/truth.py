@@ -60,7 +60,7 @@ def write_outcome(tool: str, result: dict[str, Any]) -> str:
 
 
 def describe(tool: str, args: dict[str, Any], result: dict[str, Any], outcome: str) -> str:
-    code = args.get("booking_code") or result.get("booking_code") or "?"
+    code = args.get("booking_code") or result.get("booking_code") or "(no booking code given)"
     if outcome == "quote":
         return f"{code}: asked the customer to confirm (nothing written)"
     if outcome == "refused":
