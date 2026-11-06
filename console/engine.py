@@ -188,6 +188,7 @@ class Conversation:
         self.pred_last_end: float | None = None
         self._lane: BaseLane | None = None
         self._pending: list[asyncio.Task] = []
+        self._next_seq = 0                            # call order in the conversation
         self.lock = asyncio.Lock()
         self.t0 = clock()
         self.idle0 = {k: dict(v) for k, v in poller.idle.items()}
@@ -304,7 +305,8 @@ class Conversation:
     def _track(self, out: dict[str, Any]) -> None:
         """Emit the call record once the baseline lane has repeated the call; slots are
         reserved now so records keep the conversation's order."""
-        idx = len(self.calls) + len(self._pending)
+        idx = self._next_seq
+        self._next_seq += 1
         if "finish" not in out:          # not sent (unknown tool)
             self._pending.append(asyncio.create_task(self._emit_call(out["rec"], out["args"],
                                                                      idx)))

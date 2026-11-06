@@ -351,3 +351,25 @@ def test_sequential_mode_runs_the_baseline_after_the_turn_without_overlap() -> N
     last_pred_end = gws["pred"].times[-1][1]
     assert all(t0 >= last_pred_end for t0, _ in gws["base"].times)
     assert conv.calls[1]["base_gap_ms"] == pytest.approx(conv.calls[1]["pred_gap_ms"], abs=60)
+
+
+def test_records_keep_conversation_order_across_turns() -> None:
+    gws = {"base": FakeGW("base", cold_s=0.2), "pred": FakeGW("pred")}
+
+    async def publish(ev):
+        pass
+    llm = ScriptedStreamingLLM([[("user_lookup", {}), ("reservation_lookup", {}),
+                                 ("flight_search", {})], [("reservation_modify", {})]])
+    conv = Conversation(AIRLINE, llm, {"base": FakeStack("base"), "pred": FakeStack("pred")},
+                        NullPoller(), publish, {"mirror": "concurrent", "hint": False,
+                                                "baseline_policy": "scale_to_zero"},
+                        mcp_factory=factory(gws))
+
+    async def go():
+        await conv.user_turn("a")
+        await conv.user_turn("b")
+    asyncio.run(go())
+    assert [c["seq"] for c in conv.calls] == [0, 1, 2, 3]
+    assert [c["tool"] for c in conv.calls] == ["user_lookup", "reservation_lookup",
+                                               "flight_search", "reservation_modify"]
+    assert sorted(conv.args) == [0, 1, 2, 3]
