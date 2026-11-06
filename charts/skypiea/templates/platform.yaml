@@ -178,6 +178,9 @@ spec:
             {{- if $p.gateway.turnHint }}
             - {name: SKYPIEA_TURN_HINT, value: "1"}
             {{- end }}
+            {{- if $p.gateway.earlyConnect }}
+            - {name: SKYPIEA_EARLY_CONNECT, value: "1"}
+            {{- end }}
             - {name: SKYPIEA_CONTROLLER_URL, value: "http://skypiea-controller.{{ $ns }}.svc:8081"}
             {{- if $p.predictor.url }}
             - {name: SKYPIEA_PREDICTOR_URL, value: {{ $p.predictor.url | quote }}}

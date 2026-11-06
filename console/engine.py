@@ -471,6 +471,8 @@ class Conversation:
             await self.publish({"type": "turn_end", "turn": self.turn})
 
     def close(self) -> None:
+        if self._lane is not None and not self._lane.task.done():
+            self._lane.task.cancel()
         for c in self.clients.values():
             c.close()
 

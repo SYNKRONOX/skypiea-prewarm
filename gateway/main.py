@@ -35,6 +35,7 @@ def gateway() -> None:
         demand_ttl_s=None if ttl == "" else int(ttl),
         session_idle_s=float(_env("SKYPIEA_SESSION_IDLE_S", "600")),
         turn_hint=_env("SKYPIEA_TURN_HINT", "0") == "1",
+        early_connect=_env("SKYPIEA_EARLY_CONNECT", "0") == "1",
     )
     http = httpx.AsyncClient(limits=httpx.Limits(max_connections=200))
     router = Router(ns)

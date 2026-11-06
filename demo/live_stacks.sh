@@ -118,7 +118,8 @@ deploy_base() {
 deploy_pred() {   # profile [lookahead]
   local la="${2:-1}" la_args=""
   [ "$la" = 2 ] && la_args='--set-json=platform.predictor.decideOverrides={"lookahead":2}'
-  printf 'PROFILE=%s\nLOOKAHEAD=%s\nPRED_IMAGE_TAG=%s\n' "$1" "$la" "$PRED_IMAGE_TAG" > "$STATE"
+  printf 'PROFILE=%s\nLOOKAHEAD=%s\nPRED_IMAGE_TAG=%s\nTAG=%s\n' "$1" "$la" "$PRED_IMAGE_TAG" \
+    "$TAG" > "$STATE"
   helm_q upgrade --install skypiea-pred charts/skypiea --kube-context "$CTX" -n "$PRED" \
     --create-namespace -f charts/skypiea/values-kind.yaml --set imageTag="$TAG" \
     --set platform.enabled=true --set e0Probe.enabled=false \
@@ -178,7 +179,7 @@ up)
   pf ;;
 profile|lookahead)
   TAG=$(tools/image_tag.sh)
-  [ -f "$STATE" ] && . "$STATE"
+  [ -f "$STATE" ] && . "$STATE"        # keeps the DEPLOYED image tags (not the checkout's)
   if [ "$1" = profile ]; then PROFILE="${2:?support|coding}"; else LOOKAHEAD="${2:?1|2}"; fi
   if [ "${LOOKAHEAD:-1}" = 2 ] && [ "$PRED_IMAGE_TAG" = af000231bc7b ]; then
     echo "lookahead 2 needs the console predictor image (bundles in \$BUNDLES_DIR)" >&2; exit 1

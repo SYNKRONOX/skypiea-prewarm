@@ -21,6 +21,14 @@ class ReadyTracker:
         self._addrs: dict[str, list[str]] = defaultdict(list)
         self._rr: dict[str, int] = defaultdict(int)
         self._waiters: dict[str, list[asyncio.Future]] = defaultdict(list)
+        # pods that have an address but are not Ready yet (used only by early connect)
+        self._pending: dict[str, list[str]] = defaultdict(list)
+
+    def pending(self, server: str) -> list[str]:
+        return list(self._pending.get(server) or [])
+
+    def set_pending(self, server: str, addrs: list[str]) -> None:
+        self._pending[server] = list(addrs)
 
     def ready(self, server: str) -> int:
         return self._ready[server]
@@ -65,6 +73,7 @@ class K8sEndpointWatcher:
                  loop: asyncio.AbstractEventLoop):
         self.tracker, self.ns, self.svc2srv, self.loop = tracker, namespace, service_to_server, loop
         self._slices: dict[str, tuple[str, list[str]]] = {}
+        self._pending_slices: dict[str, tuple[str, list[str]]] = {}
         self._stop = threading.Event()
 
     def start(self) -> None:
@@ -78,6 +87,8 @@ class K8sEndpointWatcher:
         if server is None:
             return
         addrs = sorted(a for s, al in self._slices.values() if s == svc for a in al)
+        pend = sorted(a for s, al in self._pending_slices.values() if s == svc for a in al)
+        self.loop.call_soon_threadsafe(self.tracker.set_pending, server, pend)
         self.loop.call_soon_threadsafe(self.tracker.set_ready, server, len(addrs), addrs)
 
     def _run(self) -> None:
@@ -97,12 +108,18 @@ class K8sEndpointWatcher:
                     svc = (sl.metadata.labels or {}).get("kubernetes.io/service-name", "")
                     if ev["type"] == "DELETED":
                         self._slices.pop(sl.metadata.name, None)
+                        self._pending_slices.pop(sl.metadata.name, None)
                     else:
                         port = next((pt.port for pt in sl.ports or [] if pt.port), 8080)
                         addrs = [f"{e.addresses[0]}:{port}" for e in sl.endpoints or []
                                  if e.addresses and (e.conditions is None
                                                      or e.conditions.ready is not False)]
                         self._slices[sl.metadata.name] = (svc, addrs)
+                        pend = [f"{e.addresses[0]}:{port}" for e in sl.endpoints or []
+                                if e.addresses and e.conditions is not None
+                                and e.conditions.ready is False
+                                and e.conditions.terminating is not True]
+                        self._pending_slices[sl.metadata.name] = (svc, pend)
                     self._publish(svc)
                     if self._stop.is_set():
                         break

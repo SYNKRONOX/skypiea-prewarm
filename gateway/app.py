@@ -66,6 +66,11 @@ class GatewayConfig:
     # Turn-start prewarm hint (POST /v1/hint). Off by default: the endpoint then answers 404
     # and nothing else changes. See docs/predictor_contract.md ("Turn-start hint").
     turn_hint: bool = False
+    # Early connect (off by default): on the cold path, also poll pods that have an address but
+    # are not Ready yet (GET /healthz every early_poll_s) and use the first that answers,
+    # instead of waiting for the readiness probe (periodSeconds 1) and the EndpointSlice update.
+    early_connect: bool = False
+    early_poll_s: float = 0.05
     gateway_id: str = field(default_factory=lambda: uuid.uuid4().hex[:8])
 
 
@@ -101,6 +106,9 @@ class Metrics:
         self.sessions = Gauge("skypiea_gateway_sessions", "Live sessions", registry=r)
         self.hints = Counter("skypiea_gateway_hints_total", "Turn-start hints received "
                              "(only with the turn hint enabled)", registry=r)
+        self.early = Counter("skypiea_gateway_early_connects_total", "Cold calls served by a "
+                             "pod before it was Ready (early connect on only)", ["tool"],
+                             registry=r)
         self.hint_warms = Counter("skypiea_gateway_hint_warms_total", "Warm requests sent "
                                   "because of a turn-start hint", ["tool"], registry=r)
 
@@ -229,6 +237,7 @@ class Gateway:
         batch = session.start_call()
         self._inflight_delta(route.server, +1)
         cold, held_ms, info = False, 0.0, {}
+        early_addr: str | None = None
         try:
             if self.tracker.ready(route.server) > 0:
                 self.metrics.hits.labels(route.tool_class).inc()
@@ -242,7 +251,14 @@ class Gateway:
                                                                        self.cfg.hold_ms))
                 if not ok:
                     cold = True
-                    ok = await self.tracker.wait_ready(route.server, self.cfg.cold_timeout_s)
+                    if self.cfg.early_connect:
+                        ok, early_addr = await self._wait_early(route.server,
+                                                                self.cfg.cold_timeout_s)
+                        if early_addr:
+                            self.metrics.early.labels(route.tool_class).inc()
+                    else:
+                        ok = await self.tracker.wait_ready(route.server,
+                                                           self.cfg.cold_timeout_s)
                 if not ok:
                     self.metrics.not_ready.labels(route.tool_class).inc()
                     return ({"jsonrpc": "2.0", "id": body.get("id"), "error": {
@@ -253,7 +269,7 @@ class Gateway:
             # 2026-07-28: Mcp-Method / Mcp-Name must match the (rewritten) body
             headers = {**(headers or {}), "Mcp-Method": "tools/call", "Mcp-Name": route.server}
             t_up = self.clock()
-            result = await self._forward(route, fwd, headers or {})
+            result = await self._forward(route, fwd, headers or {}, early_addr)
             upstream_s = self.clock() - t_up
         finally:
             session.inflight -= 1
@@ -312,14 +328,37 @@ class Gateway:
         return JSONResponse({"accepted": True, "session_id": sid}, status_code=202,
                             headers={SESSION_HEADER: sid})
 
-    async def _forward(self, route, fwd: dict[str, Any], headers: dict[str, str]) -> dict[str, Any]:
+    async def _wait_early(self, server: str, timeout_s: float) -> tuple[bool, str | None]:
+        """Ready (False/True, None) or the address of a not-yet-Ready pod whose /healthz
+        already answers (True, addr), whichever comes first."""
+        ready = asyncio.ensure_future(self.tracker.wait_ready(server, timeout_s))
+        deadline = self.clock() + timeout_s
+        try:
+            while not ready.done() and self.clock() < deadline:
+                for addr in self.tracker.pending(server):
+                    try:
+                        r = await self.http.get(f"http://{addr}/healthz",
+                                                timeout=self.cfg.early_poll_s * 2)
+                        if r.status_code == 200:
+                            return True, addr
+                    except (httpx.HTTPError, OSError):
+                        pass
+                await asyncio.wait([ready], timeout=self.cfg.early_poll_s)
+            return (ready.result() if ready.done() else False), None
+        finally:
+            if not ready.done():
+                ready.cancel()
+
+    async def _forward(self, route, fwd: dict[str, Any], headers: dict[str, str],
+                       early_addr: str | None = None) -> dict[str, Any]:
         """Send to a ready pod address (EndpointSlice) if known, else to the Service. On a
         refused/reset connection (pod just went away, or Service not programmed yet) retry with
         a short backoff for up to connect_retry_s."""
         deadline = self.clock() + self.cfg.connect_retry_s
         delay = 0.025
         while True:
-            addr = self.tracker.pick(route.server)
+            addr = early_addr or self.tracker.pick(route.server)
+            early_addr = None              # one try at the early pod, then the normal path
             url = f"http://{addr}/mcp" if addr else route.url
             try:
                 r = await self.http.post(url, json=fwd, timeout=self.cfg.upstream_timeout_s,

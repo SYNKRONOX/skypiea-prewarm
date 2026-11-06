@@ -71,6 +71,7 @@ platform:
     predictorTimeoutMs: 300
     sessionIdleS: 600
     turnHint: false          # POST /v1/hint turn-start prewarm hint (live console); off = 404
+    earlyConnect: false      # cold path: use a pod as soon as its /healthz answers (50 ms polls)
     resources:
       requests: {cpu: 100m, memory: 128Mi}
       limits: {cpu: "1", memory: 256Mi}

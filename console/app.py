@@ -161,6 +161,7 @@ class Console:
             if pend and pend["turn"] > self.conv.turn:
                 self.spawn(self.measure_abandoned(self.conv, pend))
             self.previous = self.conv
+            self.previous.close()     # ends its MCP sessions and its baseline lane task
         self.conv = Conversation(get_task(self.task_name()), self.llm,
                                  self.stacks, self.poller, self.hub.publish, self.settings,
                                  mcp_factory=self.mcp_factory)
