@@ -109,7 +109,8 @@ class Console:
                          "demo": os.environ.get("CONSOLE_DEMO", "skyair"),
                          "autopilot": False, "autopilot_stopping": False, "busy": None,
                          "lookahead": 1, "console_map": None,
-                         "autopilot_cpm": AUTOPILOT_CPM}
+                         "autopilot_cpm": AUTOPILOT_CPM,
+                         "llm_model": getattr(llm, "model", "?"), "llm_provider": ""}
         self.conv: Conversation | None = None
         self.previous: Conversation | None = None
         self.tasks: set[asyncio.Task] = set()
@@ -352,6 +353,37 @@ class Console:
                               "new conversation")
             await self.reset()
 
+    async def models(self) -> list[dict[str, Any]]:
+        from console.models import list_models
+        http = getattr(self.llm, "http", None)
+        own = http is None
+        http = http or httpx.AsyncClient(timeout=5)
+        try:
+            return await list_models(http, getattr(self.llm, "model", None))
+        finally:
+            if own:
+                await http.aclose()
+
+    async def set_model(self, entry: dict[str, Any], llm: Any = None) -> None:
+        """Switch the LLM; the conversation is reset (drain to 0 pods, new conversation), so
+        one conversation never mixes two models. The model is in every exported row."""
+        from console.models import make_llm
+        await self.busy(f"switching model to {entry['model']}")
+        try:
+            old, self.llm = self.llm, llm or make_llm(entry)
+            close = getattr(getattr(old, "http", None), "aclose", None)
+            if close is not None and old is not self.llm:
+                with contextlib.suppress(Exception):
+                    await close()
+            self.settings["llm_model"] = self.llm.model
+            self.settings["llm_provider"] = entry.get("provider", "")
+        finally:
+            await self.busy(None)
+        await self.reset()
+        await self.hub.publish(self.snapshot())
+        await self.status(f"model: {self.llm.model} ({entry.get('provider', '')}); new "
+                          "conversation")
+
     async def switch_demo(self, name: str) -> None:
         profile = DEMOS[name]
         await self.busy(f"switching to {name} (profile {profile})")
@@ -534,6 +566,18 @@ def make_app(console: Console) -> Starlette:
             if d.get("action") not in ("kill", "restart"):
                 return JSONResponse({"error": "action: kill|restart"}, status_code=400)
             c.spawn(c.predictor(d["action"]))
+        elif name == "model":
+            if c.conv is not None and c.conv.lock.locked():
+                return JSONResponse({"error": "the agent is still working"}, status_code=409)
+            if c.settings["autopilot"]:
+                return JSONResponse({"error": "stop the autopilot first"}, status_code=409)
+            ms = await c.models()
+            entry = next((m for m in ms if m["id"] == d.get("id")), None)
+            if entry is None or not entry["selectable"]:
+                return JSONResponse({"error": "id: one of the selectable models",
+                                     "models": [m["id"] for m in ms if m["selectable"]]},
+                                    status_code=400)
+            c.spawn(c.set_model(entry))
         elif name == "demo":
             if d.get("name") not in DEMOS:
                 return JSONResponse({"error": f"name: {sorted(DEMOS)}"}, status_code=400)
@@ -541,8 +585,12 @@ def make_app(console: Console) -> Starlette:
         else:
             return JSONResponse({"error": f"unknown action {name!r}", "actions": [
                 "reset", "replay", "policy", "hint", "typing", "mirror", "predictor", "demo",
-                "lookahead", "cpm"]}, status_code=404)
+                "lookahead", "cpm", "model"]}, status_code=404)
         return JSONResponse({"ok": True, "settings": c.settings}, status_code=202)
+
+    async def models_ep(_: Request) -> Response:
+        return JSONResponse({"models": await c.models(),
+                             "current": getattr(c.llm, "model", None)})
 
     async def personas_ep(_: Request) -> Response:
         from agent.skyair.tools import personas
@@ -586,7 +634,8 @@ def make_app(console: Console) -> Starlette:
 
     return Starlette(routes=[
         Route("/", index), Route("/events", events), Route("/api/state", state),
-        Route("/api/personas", personas_ep), Route("/api/skyair/state", booking_ep),
+        Route("/api/personas", personas_ep), Route("/api/models", models_ep),
+        Route("/api/skyair/state", booking_ep),
         Route("/api/chat", chat, methods=["POST"]),
         Route("/api/autopilot", autopilot, methods=["POST"]),
         Route("/api/export.csv", export), Route("/api/export_turns.csv", export),

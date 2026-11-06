@@ -14,3 +14,5 @@ Each line: what a viewer of the Live Console (or a reader of the docs) sees diff
 | 8 | Offers: `list_offers`, `apply_promo` (fictional codes SKYWINTER10, BAG35, BIZ25), labelled "unknown tool for the predictor ...: no prediction, normal behaviour". |
 | 9 | Out-of-scope questions: Skye says what she can help with and does not answer. |
 | 10 | Truth check also flags money amounts no tool returned ("Not from a tool: $X"). |
+| 11 | Booking card is a small boarding pass (flight, times, seat, fare, status), with "old → new" change lines and "new customer" / "new" badges. Out-of-vocabulary tools get a dashed pill "(unknown to the predictor: no prediction)". Price badges appear under Skye's reply. |
+| 12 | Header "Model" dropdown: local Ollama models that support tools (others greyed out), plus a hosted endpoint if configured; switching starts a new conversation; the footer always names the model; the turns CSV gains `llm_model`. |

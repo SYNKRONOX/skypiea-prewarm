@@ -58,6 +58,9 @@ function applySettings(st) {
   $("b-busy").hidden = !st.busy; $("b-busy").textContent = st.busy || "";
   for (const b of ["btn-reset", "btn-replay", "btn-kill", "btn-restart"]) $(b).disabled = !!st.busy;
   $("demo").value = st.demo;
+  $("model").disabled = !!st.busy || !!st.autopilot;
+  if (S.lastModel !== st.llm_model) { S.lastModel = st.llm_model; S.llmModel = st.llm_model || S.llmModel; loadModels(); }
+  footer();
 }
 
 function applyDemo(d) {
@@ -66,10 +69,21 @@ function applyDemo(d) {
   footer();
 }
 
+async function loadModels() {
+  const sel = $("model");
+  try {
+    const r = await (await fetch("/api/models")).json(); sel.textContent = "";
+    for (const m of r.models) { const o = el("option", "", m.label); o.value = m.id;
+      o.disabled = !m.selectable; o.selected = m.current; sel.append(o); }
+    if (!r.models.some((m) => m.current)) { const o = el("option", "", (r.current || "?") + " (current)");
+      o.value = ""; o.selected = true; sel.prepend(o); }
+  } catch (e) { sel.textContent = ""; sel.append(el("option", "", S.llmModel || "?")); }
+}
 function footer() {
   const m = S.model || {};
+  const prov = (S.settings.llm_provider || "").startsWith("hosted") ? " (hosted)" : " (local)";
   $("footer").textContent = "Local laptop cluster (kind; cold starts are lower than on AWS) · LLM " +
-    (S.llmModel || "?") + " (local) · Predictor: " + (S.demo.profile_label || "?") + ", " +
+    (S.settings.llm_model || S.llmModel || "?") + prov + " · Predictor: " + (S.demo.profile_label || "?") + ", " +
     (m.model_version || "not reachable") + " · Demo runs, not results.";
 }
 
@@ -78,6 +92,9 @@ const PLAIN = { find_customer: "Find customer", verify_customer: "Verify custome
   get_customer_details: "Customer details", get_booking: "Get booking",
   search_flights: "Search flights", change_flight: "Change flight", cancel_booking: "Cancel booking",
   add_baggage: "Add baggage", issue_refund: "Issue refund", transfer_to_human: "Transfer to a human",
+  book_flight: "Book flight", list_offers: "List offers", apply_promo: "Apply promo",
+  reservation_book: "Book flight", promo_code_lookup: "Offers", read_file: "Read file",
+  edit_file: "Edit file", run_tests: "Run tests", search: "Search code", write_file: "Edit file",
   user_lookup: "Look up customer", reservation_lookup: "Get booking", flight_search: "Search flights",
   reservation_modify: "Change booking", reservation_cancel: "Cancel booking", escalate: "Transfer to a human" };
 const plain = (t) => PLAIN[t] || String(t || "?").replace(/_/g, " ").replace(/^./, (x) => x.toUpperCase());
@@ -116,15 +133,17 @@ function thinkLine(c) {
 function onCall(c) {
   S.calls.push(c);
   delete S.pending[c.reply + ":" + c.pos_in_reply];
-  const bad = c.note || c.results_match === false || !c.pred_ok;
-  pill("⚙ " + plain(c.tool) + (c.note ? " (unknown tool)" : "") +
-       (c.tool_call_from_text ? " (recovered from text)" : ""), bad ? "bad" : "");
+  const bad = (c.note && !c.out_of_vocab) || c.results_match === false || !c.pred_ok;
+  pill("⚙ " + plain(c.tool) + (c.out_of_vocab ? " (unknown to the predictor: no prediction)" : c.note ? " (unknown tool)" : "") +
+       (c.tool_call_from_text ? " (recovered from text)" : ""), bad ? "bad" : c.out_of_vocab ? "nov" : "");
   const tl = $("think-list");
   if (tl) { const d = el("div", "dec", "t" + c.turn + " " + plain(c.tool) + ": " + thinkLine(c)); tl.prepend(d); }
   renderTimelines();
 }
 
 function explain(c, k) {
+  if (c.out_of_vocab) return plain(c.tool) + ": a real tool, but unknown to the predictor (not in its vocabulary), so nothing was predicted: normal behaviour, " +
+    (c[k + "_cold"] ? "cold, " + fmtMs(c[k + "_added_ms"]) + " added." : "warm (" + fmtMs(c[k + "_wall_ms"]) + ").");
   if (c.note) return plain(c.tool) + ": unknown tool, nothing to predict; it behaved like Normal.";
   const ms = fmtMs(c[k + "_wall_ms"]), added = fmtMs(c[k + "_added_ms"]);
   if (k === "base") return c.base_cold ? plain(c.tool) + ": cold. The pod was started on demand, adding " + added + " (" + ms + " in total)."
@@ -197,21 +216,53 @@ function renderSummary(T) {
   s.className = "saved " + (d >= 0 ? "pos" : "neg");
 }
 
+// Booking card: a small boarding pass per booking (straight from the session database), the
+// changes of this conversation as old -> new, and a "new customer" badge.
+function changeLine(ch) {
+  const f = (v) => v && typeof v === "object" ? v.flight_no + " " + v.date + " " + v.depart + " seat " + v.seat : String(v);
+  if (ch.what === "booking") return "New booking made in this conversation";
+  if (ch.what === "flight") return "Flight: " + f(ch.old) + " → " + f(ch.new);
+  if (ch.what === "bags") return "Checked bags: " + ch.old + " → " + ch.new;
+  if (ch.what === "status") return "Status: " + ch.old + " → " + ch.new;
+  if (ch.what === "paid") return "Paid: $" + ch.old + " → $" + ch.new + " (offer)";
+  if (ch.what === "refund") return "Refund: $" + ch.new + " to the original payment method";
+  return ch.what + ": " + f(ch.old) + " → " + f(ch.new);
+}
+function boardingPass(b) {
+  const p = el("div", "pass" + (b.status === "cancelled" ? " void" : ""));
+  const top = el("div", "pass-top");
+  top.append(el("span", "pass-air", "SKYPIEA AIR · BOARDING PASS"), el("b", "pass-code", b.booking_code));
+  top.append(el("span", "chip " + (b.status === "cancelled" ? "bad" : "ok"), b.status));
+  if (b.new) top.append(el("span", "chip new", "new"));
+  p.append(top);
+  for (const f of b.flights) {
+    const r = el("div", "pass-leg");
+    const route = el("div", "pass-route"); route.append(el("b", "", f.origin), el("span", "plane", "✈"), el("b", "", f.destination));
+    const meta = el("div", "pass-meta");
+    for (const [k, v] of [["Flight", f.flight_no], ["Date", f.date], ["Departs", f.depart], ["Arrives", f.arrive], ["Seat", f.seat || "–"]]) {
+      const c = el("div", ""); c.append(el("small", "", k), el("b", "", v)); meta.append(c); }
+    r.append(route, meta);
+    if (f.status !== "scheduled") r.append(el("div", "chip bad", f.status.replace(/_/g, " ")));
+    p.append(r);
+  }
+  p.append(el("div", "pass-foot cap", b.fare + " fare · " + (b.passengers || 1) + " passenger(s) · " + b.bags + " bag(s) · paid $" + b.paid +
+    (b.promo ? " · promo " + b.promo : "") + (b.refunded ? " · refunded" : "")));
+  if ((b.changes || []).length) { const ch = el("div", "pass-changes");
+    for (const c of b.changes) ch.append(el("div", "", "↻ " + changeLine(c))); p.append(ch); }
+  return p;
+}
 function renderBooking(st, writes) {
+  if ((S.demo.name || "skyair") === "codefix") return renderRepo(st);
   const body = $("bk-body"); body.textContent = "";
+  $("bk-title").textContent = "Booking record";
   if (!st || !st.available) { body.textContent = "Booking record is shown for the Skypiea Air demo."; }
   else if (!st.verified) { body.textContent = "No verified customer yet."; }
   else {
-    body.append(el("div", "bk", st.verified.name + " · " + st.verified.customer_id + " (verified)"));
-    for (const b of st.bookings) {
-      const d = el("div", "bk"); d.append(el("b", "", b.booking_code + " "));
-      d.append(el("span", b.status === "cancelled" ? "st-cancelled" : "", b.status));
-      d.append(document.createTextNode(" · " + b.fare + " · " + b.bags + " bag(s) · paid $" + b.paid +
-        (b.refunded ? " · refunded" : "") + " · " +
-        b.flights.map((f) => f.flight_no + " " + f.origin + "→" + f.destination + " " + f.date + " " + f.depart +
-          (f.status !== "scheduled" ? " (" + f.status + ")" : "")).join(", ")));
-      body.append(d);
-    }
+    const who = el("div", "bk"); who.append(el("b", "", st.verified.name + " "), document.createTextNode(st.verified.customer_id + " · verified"));
+    if (st.verified.new_customer) who.append(el("span", "chip new", "new customer"));
+    body.append(who);
+    if (!st.bookings.length) body.append(el("div", "cap", "No bookings yet."));
+    for (const b of st.bookings) body.append(boardingPass(b));
   }
   const log = $("bk-log"); log.textContent = "";
   for (const w of [...(writes || [])].reverse()) {
@@ -220,11 +271,29 @@ function renderBooking(st, writes) {
     d.append(document.createTextNode(" " + w.tool + " (turn " + w.turn + "): " + w.what)); log.append(d);
   }
 }
+// Code-fix demo: the Repository card (files changed, tests failed -> passed; simulated runner)
+function renderRepo(st) {
+  const body = $("bk-body"); body.textContent = ""; $("bk-log").textContent = "";
+  $("bk-title").textContent = "Repository";
+  if (!st || !st.repo) { body.textContent = "Repository state appears after the first tool call."; return; }
+  const r = st.repo;
+  body.append(el("div", "bk", r.name + " · " + r.files.length + " files · simulated test runner (no code is executed)"));
+  const t = el("div", "bk"); t.append(el("b", "", "Tests: "));
+  if (!r.runs.length) t.append(document.createTextNode("not run yet"));
+  for (const [i, x] of r.runs.entries()) { if (i) t.append(document.createTextNode(" → "));
+    t.append(el("span", x.failed ? "st-cancelled" : "ok", x.passed + " passed, " + x.failed + " failed")); }
+  body.append(t);
+  const ch = el("div", "bk"); ch.append(el("b", "", "Files changed: "));
+  ch.append(document.createTextNode(r.changed.length ? r.changed.map((c) => c.path + " (" + c.edits + " edit" + (c.edits === 1 ? "" : "s") + ")").join(", ") : "none"));
+  body.append(ch);
+  for (const e of (r.edits || []).slice(-4)) { const d = el("div", "pass-changes"); d.append(el("div", "", "↻ " + e.path + ": " + e.summary)); body.append(d); }
+}
 
 function onTruth(t) {
   const m = S.lastAgent; if (!m || !t) return;
-  if (t.verdict === "not_done") for (const b of t.badges) m.append(el("span", "truth", "⚠ " + b));
-  else if (t.verdict === "agree") m.append(el("span", "truth ok", "✓ matches the booking record"));
+  for (const b of t.badges || []) m.append(el("span", "truth", "⚠ " + b));
+  if (t.verdict === "agree") m.append(el("span", "truth ok", "✓ matches the booking record"));
+  if (t.price_verdict === "sourced") m.append(el("span", "truth ok", "✓ prices quoted come from tool results"));
   if (t.earlier && t.earlier.length) m.append(el("span", "truth ok", "✓ done in an earlier turn"));
 }
 
@@ -496,6 +565,8 @@ $("btn-kill").onclick = () => post("/api/predictor", { action: "kill" });
 $("btn-restart").onclick = () => post("/api/predictor", { action: "restart" });
 $("policy").onchange = (e) => post("/api/policy", { key: e.target.value });
 $("demo").onchange = (e) => post("/api/demo", { name: e.target.value });
+$("model").onchange = (e) => { if (e.target.value) post("/api/model", { id: e.target.value }); };
+loadModels();
 $("btn-theme").onclick = () => {
   const r = document.documentElement;
   const dark = r.classList.contains("dark") ||

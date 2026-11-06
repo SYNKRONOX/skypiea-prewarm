@@ -21,6 +21,8 @@
       <select id="demo"><option value="skyair">Skypiea Air (Skye)</option>
         <option value="airline">Airline support (basic)</option>
         <option value="codefix">Code fix</option></select></label>
+    <label class="sel" title="The LLM behind the agent (local Ollama models with tool calling; switching starts a new conversation)">Model
+      <select id="model"><option value="">loading…</option></select></label>
     <label class="sel" title="What the Normal stack does with an idle pod">Normal
       <select id="policy"><option value="scale_to_zero">scale-to-zero</option>
         <option value="keep_alive_30">keep-alive 30 s</option></select></label>
@@ -46,7 +48,7 @@
     </div>
     <div id="chat" aria-live="polite"><div class="empty" id="chat-empty">Say hello to Skye, or press Autopilot.<br><span class="cap">Skye is a fictional Skypiea Air assistant (local LLM). The airline data is a mock database.</span></div></div>
     <div id="booking" class="booking">
-      <div class="bk-head"><b>Booking record</b> <span class="cap">straight from the Skypiea Air database</span></div>
+      <div class="bk-head"><b id="bk-title">Booking record</b> <span class="cap" id="bk-sub">straight from the mock database (fictional)</span></div>
       <div id="bk-body" class="cap">No verified customer yet.</div>
       <div id="bk-log" class="bk-log"></div>
     </div>
