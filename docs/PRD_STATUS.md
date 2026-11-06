@@ -5,6 +5,7 @@ of it are in [`prd_excerpts.md`](prd_excerpts.md). One row per item. **Status** 
 Met / Partly met / Changed / Not done; "needs check" marks a row where the repo does not let us
 say more with confidence. Evidence is a file path, a test (`file::name`) or a results file.
 Nothing here claims more than those files show. Numbers are quoted from the named files.
+How to re-run the checks behind the evidence: [`TESTING.md`](TESTING.md).
 
 Note on experiment ids: the PRD's E1-E5 (Section 7) are not the same as the E0-E5 ids used in
 [`experiments.md`](experiments.md) and the README (where E0 = cold starts and E1 = next-tool
