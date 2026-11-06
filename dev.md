@@ -42,15 +42,23 @@ Full description, failure behaviour and live checks:
 
 | Component | Port | Endpoints | Metrics (`GET /metrics`) |
 |---|---|---|---|
-| Gateway (`skypiea-gateway`) | container 8080, Service 80 | `POST /mcp`, `DELETE /mcp`, `GET /healthz`, `POST /v1/hint` (only with `SKYPIEA_TURN_HINT=1`) | `skypiea_gateway_calls_total{tool,cold}`, `_added_latency_seconds{tool}`, `_hold_ms{tool}`, `_prewarm_hits_total` / `_misses_total`, `_predictor_latency_seconds`, `_predictor_errors_total`, `_sessions`, ... |
+| Gateway (`skypiea-gateway`) | container 8080, Service 80 | `POST /mcp`, `DELETE /mcp`, `GET /healthz`, `GET /v1/sessions`, `GET /v1/sessions/{sid}` (used by the CLI), `POST /v1/hint` (only with `SKYPIEA_TURN_HINT=1`) | `skypiea_gateway_calls_total{tool,cold}`, `_added_latency_seconds{tool}`, `_hold_ms{tool}`, `_prewarm_hits_total` / `_misses_total`, `_predictor_latency_seconds`, `_predictor_errors_total`, `_sessions`, ... |
 | Controller (`skypiea-controller`) | 8081 (`api`) | `POST /v1/warm`, `POST /v1/inflight`, `GET /v1/state` (used by the CLI and the console) | `skypiea_warm_pool_size{tool}`, `skypiea_pod_seconds_idle_total`, `skypiea_scale_events_total`, `skypiea_scale_refused_total`, `skypiea_scale_errors_total`, queue metrics |
 | Predictor service | 8090 | `POST /decide`, `GET /healthz`, `POST /reload`, `POST /rollback` (admin token) | `skypiea_predictor_requests_total`, `_latency_seconds`, `_degraded_total`, `_reloads_total`, `_model_info` |
 | Predictor placeholder (stand-in policies) | 8080 | `POST /decide`, `POST /admin/policy` | - |
 | Prometheus / Grafana | 9090 / 3000 | chart `monitoring` | - |
 
-Laptop loopback port-forwards: `make demo` gateway :18080 and Grafana :3000; `make live`
-console :8090 and Grafana :3001 ([`docs/DEMO.md`](docs/DEMO.md)); `make aws-gateway` :8080
-over the SSM tunnel.
+Laptop loopback port-forwards: `make demo` gateway :18080 (controller :18081, stub :18082,
+model :18083) and Grafana :3000; `make live` console :8090, Grafana :3001, baseline
+:18180-18182, predictive :18280-18283 ([`docs/DEMO.md`](docs/DEMO.md)); `make aws-gateway`
+:8080 over the SSM tunnel.
+
+The kind scripts take their cluster, registry and ports from the environment (defaults in
+brackets): `CLUSTER` [skypiea], `KIND_CTX` [kind-$CLUSTER], `REG_PORT` [5001], `REG_NAME`
+[kind-registry], `KIND_REG` [localhost:$REG_PORT], `PF_BASE` [18080; controller +1, stub +2,
+model +3], `GRAFANA_PORT` [3000]. Tests and CI use this to run a second cluster beside the
+default one ([`docs/TESTING.md`](docs/TESTING.md)). The `make live` ports are fixed because
+`console/stacks.py` hard-codes them.
 
 ## 2. Top-level folders
 
@@ -179,18 +187,32 @@ over the SSM tunnel.
 
 ## 4. Tests and lint
 
+Every check, what it proves and how CI runs it: [`docs/TESTING.md`](docs/TESTING.md).
+
 ```bash
+make doctor       # machine checks with fixes (tools/doctor.sh; DOCTOR_MODE=test|demo|live)
 make setup        # .venv from requirements.lock
 make test         # pytest -q (tests/), offline, uses data/samples/
 make lint         # ruff check .
 make check-sizes  # no tracked file over 50 MB
-make infra-check  # lint, tests, sizes, no secrets tracked
+make secret-sweep # credentials / AWS account ids in the tree (HISTORY=1: all commits)
+make infra-check  # lint, tests, sizes, no secret-like file names tracked
 make redteam      # predictor red-team suite (tests/redteam)
 make audit        # no session data on disk, in logs or metrics
 make kind-integration   # functional replay through a running kind cluster
+demo/ci_e2e.sh    # CI's end-to-end job: doctor, make demo, scripted agent, tools back to 0
 ```
 
-`make install-hooks` installs the pre-commit hook (`tools/pre-commit.sh`).
+`make install-hooks` installs the pre-commit hook (`tools/pre-commit.sh`). CI
+([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) has two jobs: `test` (sizes, ruff,
+pytest, doctor) and `e2e` (kind on a clean runner, `demo/ci_e2e.sh`).
+
+**AWS targets are guarded.** Every `make aws-*` target (and `push-images-aws*`, `deploy-aws`,
+`e0-aws*`) first runs `infra/aws/scripts/aws-guard.sh`: no aws/terraform call without the CLIs,
+configured credentials and (except `aws-plan`/`aws-apply`) local Terraform state; targets that
+create or start resources also need `AWS_CONFIRM=yes`. `tests/test_aws_guard.py` checks this
+with fake binaries, and checks that every AWS target in `mk/infra.mk` has the guard. A new AWS
+target must start with `@$(AWS_GUARD) $@` or `@$(AWS_GUARD_CREATE) $@`.
 
 ## 5. How to add things
 
@@ -219,10 +241,11 @@ must reach a server (`tests/test_tool_map_coverage.py`).
 
 | Target | What it does |
 |---|---|
+| `help` (default), `doctor`, `secret-sweep` | List targets; machine checks; secret sweep |
 | `setup`, `lock` | Create `.venv` from `requirements.lock`; re-resolve the lock |
 | `test`, `lint`, `check-sizes`, `infra-check`, `install-hooks` | Tests, ruff, size check, all checks, git hook |
 | `data`, `data-all`, `samples` | Trace pipeline for one / all sources; rebuild the committed samples |
-| `build-images`, `measure-startup` | Tool + platform images; image size and startup per tool |
+| `build-images`, `clean-images`, `measure-startup` | Tool + platform images (tag: `tools/image_tag.sh`, the last commit that changed an image input); remove them; image size and startup per tool |
 | `cluster` / `cluster-kind`, `deploy` / `deploy-kind`, `deploy-kind-e0`, `clean-cluster` | kind cluster, Helm install, E0 layout, teardown |
 | `e1`, `e0-kind`, `e0-kind-parallel` | Accuracy experiment; E0 cold starts on kind |
 | `kind-integration`, `tool-map-coverage`, `grafana-kind` | Functional replay; traffic share per server; Grafana :3000 |
@@ -230,12 +253,30 @@ must reach a server (`tests/test_tool_map_coverage.py`).
 | `redteam`, `audit`, `loadtest` | Predictor red team, no-persistence audit, load test |
 | `demo`, `demo-portforward`, `demo-failures`, `demo-clean` | Whole stack on kind ([`docs/DEMO.md`](docs/DEMO.md)) |
 | `agent-demo`, `agent-live` | Agent through the gateway ([`docs/AGENT.md`](docs/AGENT.md)) |
-| `live`, `live-pf`, `live-console`, `live-screenshot`, `live-clean`, `fetch-models` | Live Console ([`docs/LIVE_CONSOLE.md`](docs/LIVE_CONSOLE.md)) |
-| `aws-plan`, `aws-apply`, `aws-tunnel`, `aws-kubeconfig`, `aws-shell`, `push-images-aws`, `deploy-aws`, `e0-aws-node`, `e0-aws-status`, `e0-aws-fetch`, `aws-gateway`, `aws-stop`, `aws-start`, `aws-destroy`, `aws-reminder` | AWS lifecycle ([`infra/aws/README.md`](infra/aws/README.md)) |
+| `live`, `live-pf`, `live-console`, `live-screenshot`, `live-clean` | Live Console ([`docs/LIVE_CONSOLE.md`](docs/LIVE_CONSOLE.md), [`docs/LIVE_DEMO.md`](docs/LIVE_DEMO.md)) |
+| `fetch-models`, `models-archive` | Download the bundles from release v1.2 of `MODELS_REPO` (default `SYNKRONOX/skypiea-prewarm`; `MODELS_REPO=""` uses origin if it is GitHub; `FETCH_DRY_RUN=1` prints the URL); build the archive to publish ([`docs/PORTABLE_MODELS.md`](docs/PORTABLE_MODELS.md)) |
+| `aws-plan`, `aws-apply`, `aws-tunnel`, `aws-kubeconfig`, `aws-shell`, `push-images-aws`, `push-images-aws-docker`, `deploy-aws`, `e0-aws`, `e0-aws-parallel`, `e0-aws-node`, `e0-aws-status`, `e0-aws-fetch`, `aws-gateway`, `aws-stop`, `aws-start`, `aws-destroy`, `aws-reminder` | AWS lifecycle ([`infra/aws/README.md`](infra/aws/README.md)) |
 
-`grep -hE '^[a-z0-9_.-]+:.*##' Makefile mk/*.mk` lists every target with its one-line help.
+`make help` (or plain `make`) lists every target with its one-line description.
 
-## 7. Where results come from
+## 7. Training data
+
+What each predictor profile was trained and tuned on (sessions / calls per split, copied by
+`tools/training_data_table.py` from the pipeline's split reports; check with `--check`):
+
+<!-- training-data:start (generated by tools/training_data_table.py; do not edit) -->
+| Profile | Dataset | Role | TRAIN | VAL | TEST | Note |
+|---|---|---|---|---|---|---|
+| support | tau2_bench | ranker trained on TRAIN; policy tuned on VAL; evaluated on TEST | 99 / 503 | 28 / 171 | 56 / 342 | airline tasks; the users in tau2-bench are LLM-simulated, and tool times come from a simulated run (data/README.md) |
+| support | tau_bench | listed in the profile's sources, but without timestamps it cannot be replayed, so the VAL pick used tau2 only (configs/model/profiles.yaml); next-tool accuracy only | 1,073 / 7,785 | 272 / 2,141 | 583 / 4,327 | has no timestamps |
+| coding | tracelab | ranker trained on TRAIN; policy tuned on VAL; evaluated on TEST | 4,532 / 435,501 | 358 / 73,230 | 2,092 / 225,290 | real coding-agent traces with per-call timings (data/README.md) |
+| coding | copilot_2026 | policy tuned on VAL (with TraceLab); evaluated on TEST | 663 / 29,114 | 158 / 8,299 | 398 / 18,322 | one session per group |
+| prd (SYNTHETIC) | synthetic_prd | demo bundle for `make demo`; not used by the Live Console | 2,520 / 7,359 | 630 / 1,820 | 1,350 / 3,892 | generated from the PRD scenario graphs (python -m traces.generate_synthetic) |
+
+Sessions / calls per split; source and input hashes: [`docs/training_data.md`](docs/training_data.md).
+<!-- training-data:end -->
+
+## 8. Where results come from
 
 | Result | Produced by | Files |
 |---|---|---|
