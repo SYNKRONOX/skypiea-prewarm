@@ -3,6 +3,10 @@
 # The kind cluster and the local registry are kept (they are shared with `make demo`).
 set -euo pipefail
 cd "$(dirname "$0")/.."
-if [ -f .live/console.pid ]; then kill "$(cat .live/console.pid)" 2>/dev/null || true; rm -f .live/console.pid; fi
+msg="no console was running"
+if [ -f .live/console.pid ]; then
+  kill "$(cat .live/console.pid)" 2>/dev/null && msg="console stopped"
+  rm -f .live/console.pid
+fi
 demo/live_stacks.sh down
-echo "console stopped. Exports and run logs stay in .live/ (git-ignored)."
+echo "$msg. Exports and run logs stay in .live/ (git-ignored)."
