@@ -1,0 +1,7 @@
+conversation,turn,source,hint_mode,hint_sources,lead_ms,typing_ms,lookahead,console_map,first_tool,calls,base_first_wall_ms,base_first_cold,pred_first_wall_ms,pred_first_cold,pred_first_predicted,pred_first_warm_source,pred_first_warm,truth_claims,truth_verdict,truth_badge,truth_note_sent,truth_corrected,truth_price_verdict,truth_prices_unsourced,llm_model
+2e2a271fa042,1,autopilot,typing,typing+open+enter,20403.6,20400.0,1,True,find_customer,1,2581.4,True,39.4,False,True,hint,True,,no_claim,,False,,none,,llama3.1:8b
+2e2a271fa042,2,autopilot,typing,typing+enter,13805.0,13800.0,1,True,search_flights,1,3436.2,True,2982.3,True,False,,False,,no_claim,,False,,none,,llama3.1:8b
+2e2a271fa042,3,autopilot,typing,typing+enter,20705.1,20700.0,1,True,book_flight,1,2717.6,True,46.5,False,False,,True,book,agree,,False,,sourced,,llama3.1:8b
+2e2a271fa042,4,autopilot,typing,typing+enter,8104.2,8100.0,1,True,book_flight,1,2727.6,True,38.3,False,False,,True,,no_claim,,False,,none,,llama3.1:8b
+2e2a271fa042,5,autopilot,typing,typing+enter,14405.2,14400.0,1,True,add_baggage,1,3010.1,True,39.5,False,False,,True,,no_claim,,False,,sourced,,llama3.1:8b
+2e2a271fa042,6,autopilot,typing,typing+enter,5703.2,5700.0,1,True,transfer_to_human,1,3464.5,True,4809.0,True,False,,False,,no_claim,,False,,none,,llama3.1:8b

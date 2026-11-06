@@ -127,6 +127,7 @@ def run(models: list[str], scenarios: list[str], reps: int, out: Path, hint: str
                 (out / f"{name}.json").write_text(json.dumps(rep_, indent=2) + "\n")
                 (out / f"{name}_calls.csv").write_text(c.get("/api/export.csv").text)
                 (out / f"{name}_turns.csv").write_text(c.get("/api/export_turns.csv").text)
+                (out / f"{name}_state.json").write_text(json.dumps(st(), indent=1))
                 rows.append(rep_)
                 print(f"{model} {sc} r{rep}: completed={rep_['completed']} "
                       f"first_try_valid={rep_['first_try_valid']} badges={rep_['truth_badges']}",

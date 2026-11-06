@@ -1,0 +1,1 @@
+conversation,turn,source,hint_mode,hint_sources,lead_ms,typing_ms,lookahead,console_map,first_tool,calls,base_first_wall_ms,base_first_cold,pred_first_wall_ms,pred_first_cold,pred_first_predicted,pred_first_warm_source,pred_first_warm,truth_claims,truth_verdict,truth_badge,truth_note_sent,truth_corrected,truth_price_verdict,truth_prices_unsourced,llm_model

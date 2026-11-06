@@ -1,0 +1,50 @@
+{
+  "label": "demo run, not a result",
+  "conversation": "da10863d3dbb",
+  "scenario": null,
+  "llm_model": "qwen2.5:7b",
+  "turns": 4,
+  "llm_replies": 7,
+  "calls": 3,
+  "first_try_valid": 0.667,
+  "calls_valid": 0.667,
+  "errors": [
+    "not_verified"
+  ],
+  "invented_codes": 1,
+  "unknown_codes_from_customer": 0,
+  "invented_prices": 0,
+  "truth_badges": 0,
+  "not_done_badges": 0,
+  "text_calls": 0,
+  "handover": false,
+  "writes": [
+    {
+      "turn": 2,
+      "tool": "add_baggage",
+      "outcome": "refused"
+    }
+  ],
+  "completed": null,
+  "code_in_reply": false,
+  "think_ms_p50": 620.8,
+  "think_ms_p95": 2208.7,
+  "think_ms_total": 5725.2,
+  "wait_ms": {
+    "base": 7543.9,
+    "pred": 2543.3
+  },
+  "idle_pod_s": {
+    "base": 15.8,
+    "pred": 109.5
+  },
+  "act": 3,
+  "title": "Act 3: kill the predictor mid-conversation",
+  "demo": "skyair",
+  "wall_s": 100.1,
+  "predictor_after": "ok",
+  "calls_ok": {
+    "base": 3,
+    "pred": 3
+  }
+}

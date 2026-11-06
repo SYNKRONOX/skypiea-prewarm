@@ -1,0 +1,50 @@
+{
+  "label": "demo run, not a result",
+  "conversation": "8c69716655d2",
+  "scenario": null,
+  "llm_model": "llama3.1:8b",
+  "turns": 4,
+  "llm_replies": 8,
+  "calls": 4,
+  "first_try_valid": 0.75,
+  "calls_valid": 0.75,
+  "errors": [
+    "not_verified"
+  ],
+  "invented_codes": 1,
+  "unknown_codes_from_customer": 0,
+  "invented_prices": 0,
+  "truth_badges": 0,
+  "not_done_badges": 0,
+  "text_calls": 0,
+  "handover": true,
+  "writes": [
+    {
+      "turn": 3,
+      "tool": "change_flight",
+      "outcome": "refused"
+    }
+  ],
+  "completed": null,
+  "code_in_reply": false,
+  "think_ms_p50": 781.8,
+  "think_ms_p95": 11341.6,
+  "think_ms_total": 17338.3,
+  "wait_ms": {
+    "base": 10016.8,
+    "pred": 8015.8
+  },
+  "idle_pod_s": {
+    "base": 18.1,
+    "pred": 187.7
+  },
+  "act": 2,
+  "title": "Act 2: change the schedule (watch the truth check)",
+  "demo": "skyair",
+  "wall_s": 110.1,
+  "predictor_after": "ok",
+  "calls_ok": {
+    "base": 4,
+    "pred": 4
+  }
+}
