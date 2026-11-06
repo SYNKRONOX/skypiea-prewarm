@@ -1,0 +1,7 @@
+conversation,turn,source,hint_mode,hint_sources,lead_ms,typing_ms,lookahead,console_map,first_tool,calls,base_first_wall_ms,base_first_cold,pred_first_wall_ms,pred_first_cold,pred_first_predicted,pred_first_warm_source,pred_first_warm,truth_claims,truth_verdict,truth_badge,truth_note_sent,truth_corrected,truth_price_verdict,truth_prices_unsourced,llm_model
+64a81fa92e79,1,autopilot,typing,typing+open+enter,20405.7,20400.0,1,True,,0,,,,,,,,,no_claim,,False,,none,,qwen2.5:7b
+64a81fa92e79,2,autopilot,typing,typing+enter,13803.9,13800.0,1,True,search_flights,1,2168.9,True,2183.8,True,False,,False,,no_claim,,False,,sourced,,qwen2.5:7b
+64a81fa92e79,3,autopilot,typing,typing+enter,20705.4,20700.0,1,True,book_flight,1,3026.6,True,41.1,False,False,,True,book,not_done,Not done: no booking was made,True,False,sourced,,qwen2.5:7b
+64a81fa92e79,4,autopilot,typing,typing+enter,8103.7,8100.0,1,True,,0,,,,,,,,,no_claim,,False,,sourced,,qwen2.5:7b
+64a81fa92e79,5,autopilot,typing,typing+enter,14406.1,14400.0,1,True,add_baggage,1,2701.5,True,34.0,False,False,,True,,no_claim,,False,,none,,qwen2.5:7b
+64a81fa92e79,6,autopilot,typing,typing+enter,5710.7,5700.0,1,True,,0,,,,,,,,,no_claim,Not from a tool: $20,True,,unsourced,20,qwen2.5:7b

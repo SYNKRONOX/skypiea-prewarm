@@ -1,0 +1,6 @@
+conversation,turn,source,hint_mode,hint_sources,lead_ms,typing_ms,lookahead,console_map,first_tool,calls,base_first_wall_ms,base_first_cold,pred_first_wall_ms,pred_first_cold,pred_first_predicted,pred_first_warm_source,pred_first_warm,truth_claims,truth_verdict,truth_badge,truth_note_sent,truth_corrected,truth_price_verdict,truth_prices_unsourced,llm_model
+abb40393b495,1,autopilot,off,,,8400.0,1,True,,0,,,,,,,,,no_claim,,False,,none,,qwen2.5:7b
+abb40393b495,2,autopilot,off,,,18300.0,1,True,verify_customer,1,1667.6,True,1657.6,True,False,,False,,no_claim,,False,,none,,qwen2.5:7b
+abb40393b495,3,autopilot,off,,,18600.0,1,True,cancel_booking,1,2513.6,True,36.2,False,False,,True,cancel,agree,,False,,none,,qwen2.5:7b
+abb40393b495,4,autopilot,off,,,17700.0,1,True,issue_refund,1,2181.7,True,35.6,False,False,,True,refund,agree,,False,,sourced,,qwen2.5:7b
+abb40393b495,5,autopilot,off,,,5700.0,1,True,,0,,,,,,,,,no_claim,,False,,none,,qwen2.5:7b

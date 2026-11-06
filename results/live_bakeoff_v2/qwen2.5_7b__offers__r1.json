@@ -1,0 +1,42 @@
+{
+  "label": "demo run, not a result",
+  "conversation": "48d23e458056",
+  "scenario": "offers",
+  "llm_model": "qwen2.5:7b",
+  "turns": 4,
+  "llm_replies": 7,
+  "calls": 3,
+  "first_try_valid": 1.0,
+  "calls_valid": 1.0,
+  "errors": [],
+  "invented_codes": 0,
+  "unknown_codes_from_customer": 0,
+  "invented_prices": 0,
+  "truth_badges": 0,
+  "not_done_badges": 0,
+  "text_calls": 0,
+  "handover": false,
+  "writes": [
+    {
+      "turn": 3,
+      "tool": "apply_promo",
+      "outcome": "success"
+    }
+  ],
+  "completed": true,
+  "code_in_reply": false,
+  "think_ms_p50": 683.5,
+  "think_ms_p95": 1363.0,
+  "think_ms_total": 5634.0,
+  "wait_ms": {
+    "base": 4805.8,
+    "pred": 5841.9
+  },
+  "idle_pod_s": {
+    "base": 15.8,
+    "pred": 70.3
+  },
+  "rep": 1,
+  "hint": "off",
+  "wall_s": 77.7
+}
