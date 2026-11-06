@@ -1,0 +1,36 @@
+Session log: Story Act 1 (Skypiea Air), llama3.1:8b, 2026-11-06 ~22:40 UTC (2026-11-07 04:10 IST). Demo run, not a result.
+
+Customer (turn 1): Hi, I'm Tara Patel. Can I move my flight SA342 (SKB to SKE on 2026-12-11) to a later flight?
+Skye (turn 1): I have found a customer with the name Tara Patel. However, I need to verify your identity before I can proceed. Can you please provide your email address or the booking code for your flight?
+Customer (turn 2): Hi! I've never flown with Skypiea Air before. My name is Nova Quill.
+Skye (turn 2): Welcome to Skypiea Air, Nova! Since you're new to our airline, I'd like to help you book a flight. Can you please tell me where you're flying from, where you'd like to go, and on which date?
+Customer (turn 3): I'd like to fly from SKA to SKE on 2026-12-07.
+Skye (turn 3): I've found some flights for you from SKA to SKE on 2026-12-07. Here are the options:
+
+* SA257: Departing at 06:15, arriving at 08:20, priced at 79 (Saver), 119 (Flex), or 218 (Business)
+* SA258: Departing at 09:40, arriving at 10:35, priced at 189 (Saver), 229 (Flex), or 438 (Business)
+
+Would you like to book one of these flights?
+Customer (turn 4): The 06:15 one please, Saver fare. My email is nova.quill@example.org.
+Skye (turn 4): Your flight from SKA to SKE on 2026-12-07 at 06:15 has been booked successfully. Your booking code is XB67ES. You have been assigned seat 26B. The total cost is $79.
+
+Would you like to add any baggage to your booking?
+Customer (turn 5): Yes, I confirm the booking.
+Skye (turn 5): You already have a booking for this flight. I've summarized what we've done so far: Your flight from SKA to SKE on 2026-12-07 at 06:15 has been booked successfully. Your booking code is XB67ES. You have been assigned seat 26B. The total cost is $79.
+Customer (turn 6): Can I add one checked bag to it? Yes, I confirm.
+Skye (turn 6): One checked bag has been added to your booking. The total cost is now $114 ($79 for the flight + $35 for the bag).
+Customer (turn 7): Thanks, that's all.
+Skye (turn 7): It was a pleasure assisting you, Nova. Have a great flight with Skypiea Air!
+
+Tool calls (Normal | Skypiea):
+  t1 find_customer      Normal  2169.4 ms cold | Skypiea    36.1 ms warm (predicted, hint)
+  t2 find_customer      Normal    26.6 ms warm | Skypiea    25.8 ms warm (kept_after_use)
+  t3 search_flights     Normal  2208.0 ms cold | Skypiea  2325.2 ms cold
+  t4 book_flight        Normal  3022.6 ms cold | Skypiea    37.2 ms warm (earlier_decision)
+  t5 book_flight        Normal  2469.2 ms cold | Skypiea    30.3 ms warm (kept_after_use)
+  t6 add_baggage        Normal  2029.4 ms cold | Skypiea    31.6 ms warm (kept_after_use)
+  t7 transfer_to_human  Normal  3009.1 ms cold | Skypiea  3443.5 ms cold
+
+Writes: t4 book_flight success: XB67ES: new booking, SA257 Saver, $79; t5 book_flight refused: XB67ES: refused (The customer already has booking XB67ES on this flight; nothing new was booked.); t6 add_baggage success: XB67ES: +1 bag(s), $35
+Truth badges: t6: Not from a tool: $114
+Totals: waited 14.93 s (Normal) vs 5.93 s (Skypiea); idle pod-s 31.1 vs 212.0

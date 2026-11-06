@@ -271,7 +271,7 @@ function boardingPass(b) {
 function renderBooking(st, writes) {
   if ((S.demo.name || "skyair") === "codefix") return renderRepo(st);
   const body = $("bk-body"); body.textContent = "";
-  $("bk-title").textContent = "Booking record";
+  $("bk-title").textContent = "Booking record"; $("bk-sub").textContent = "straight from the mock database (fictional)";
   if (!st || !st.available) { body.textContent = "Booking record is shown for the Skypiea Air demo."; }
   else if (!st.verified) { body.textContent = "No verified customer yet."; }
   else {
@@ -291,14 +291,15 @@ function renderBooking(st, writes) {
 // Code-fix demo: the Repository card (files changed, tests failed -> passed; simulated runner)
 function renderRepo(st) {
   const body = $("bk-body"); body.textContent = ""; $("bk-log").textContent = "";
-  $("bk-title").textContent = "Repository";
+  $("bk-title").textContent = "Repository"; $("bk-sub").textContent = "the mock sortkit repository in the console";
   if (!st || !st.repo) { body.textContent = "Repository state appears after the first tool call."; return; }
   const r = st.repo;
   body.append(el("div", "bk", r.name + " · " + r.files.length + " files · simulated test runner (no code is executed)"));
   const t = el("div", "bk"); t.append(el("b", "", "Tests: "));
   if (!r.runs.length) t.append(document.createTextNode("not run yet"));
   for (const [i, x] of r.runs.entries()) { if (i) t.append(document.createTextNode(" → "));
-    t.append(el("span", x.failed ? "st-cancelled" : "ok", x.passed + " passed, " + x.failed + " failed")); }
+    t.append(el("span", x.failed ? "st-cancelled" : x.not_evaluated ? "" : "ok", x.passed + " passed, " + x.failed + " failed" +
+      (x.not_evaluated ? ", " + x.not_evaluated + " not evaluated" : ""))); }
   body.append(t);
   const ch = el("div", "bk"); ch.append(el("b", "", "Files changed: "));
   ch.append(document.createTextNode(r.changed.length ? r.changed.map((c) => c.path + " (" + c.edits + " edit" + (c.edits === 1 ? "" : "s") + ")").join(", ") : "none"));
