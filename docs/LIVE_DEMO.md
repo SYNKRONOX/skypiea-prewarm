@@ -24,8 +24,7 @@ make live                        # both stacks + console: http://127.0.0.1:8090
 make live-clean                  # stop
 ```
 
-**Until the v1.2 release exists**, `make fetch-models` stops with exit code 2 and says so
-(checked 2026-11-06: 404). On a machine that already has the bundles in `models/`, run
+On a machine that already has the bundles in `models/`, run
 `BUNDLES_DIR=models make live` instead. The archive to publish is built by
 `make models-archive` (see `docs/PORTABLE_MODELS.md`).
 

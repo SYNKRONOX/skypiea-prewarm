@@ -130,10 +130,7 @@ make live-clean                # console off, both stacks uninstalled (cluster a
 
 - **The bundles.** `make fetch-models` downloads `skypiea-models-af000231.tar.gz` and
   `SHA256SUMS` from release v1.2 of `SYNKRONOX/skypiea-prewarm` (another repository:
-  `MODELS_REPO=<owner>/<repo>`), checks both checksums and unpacks into `models/`. **When we
-  last checked (2026-11-06) the release asset was not published yet** (HTTP 404). In that case
-  `make fetch-models` says "not available", changes nothing and exits 2, and `make live`
-  cannot run from a fresh clone; see [Known limitations](#known-limitations). Building the
+  `MODELS_REPO=<owner>/<repo>`), checks both checksums and unpacks into `models/`. Building the
   bundles yourself needs the datasets ([`docs/model.md`](docs/model.md), `make data-all
   model-all`).
 - **The LLM.** The console talks to any OpenAI-compatible endpoint: `AGENT_BASE_URL` (default
@@ -259,9 +256,7 @@ Dataset sources and licences: [`data/README.md`](data/README.md). Bundle attribu
 Each of these is a known gap, not something to report as a new bug. The full list, in plain
 language, is in [`docs/limits.md`](docs/limits.md).
 
-- **Tier 2 needs the v1.2 release asset.** When we last checked (2026-11-06) it was not
-  published; `make fetch-models` then stops with "not available" and `make live` cannot run
-  from a fresh clone. Tiers 0 and 1 do not need it.
+- **Tier 2 needs the v1.2 release asset.** Tiers 0 and 1 do not need it.
 - **The Live Console needs an LLM.** There is no scripted mode for the console; the scripted
   LLM exists for `make agent-demo` (Tier 1).
 - **The Live Console's LLM can claim actions it did not take** (llama3.1:8b; a smoke run in
@@ -658,7 +653,7 @@ More cases, with the exact error messages: [`docs/DEMO.md`](docs/DEMO.md) (Troub
 | `make live: port 8090 is already in use by another program` | Another console (perhaps from another folder) is running. Stop it; `make live` does not move its ports |
 | `kubectl ... Unable to connect to the server: EOF` after sleep or a Docker restart | Docker restarted the kind containers. `docker restart skypiea-control-plane skypiea-worker` ([`docs/DEMO.md`](docs/DEMO.md), Troubleshooting), then `make demo-portforward` (or `make live-pf`) |
 | Docker stopped in the middle of `make demo` | Start Docker again and re-run `make demo`; every step is idempotent and reuses what exists |
-| `make fetch-models`: `The model archive is not available` (exit 2) | Release v1.2 is not published (see [Known limitations](#known-limitations)) or there is no network. Nothing was changed |
+| `make fetch-models`: `The model archive is not available` (exit 2) | There is no network. Nothing was changed |
 | `LLM endpoint ... not reachable` / console says the LLM is down | Start Ollama (`ollama serve`) and `ollama pull llama3.1:8b`; on Windows with the cluster in WSL2 see [`docs/DEMO.md`](docs/DEMO.md) ("Ollama on Windows") |
 | `make aws-... refused: ...` | By design: AWS targets refuse without the CLIs, credentials, local Terraform state, or (for creating targets) `AWS_CONFIRM=yes`. Nothing was created |
 

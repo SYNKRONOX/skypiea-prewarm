@@ -5,9 +5,6 @@ Each entry names the tag or branch it describes. Numbers are in the files linked
 
 ## v1.2: lead time, the support console, red-team readiness
 
-Untagged. **The GitHub Release v1.2 with the model archive was not published** when this was
-written (2026-11-06: `make fetch-models` got HTTP 404).
-
 **Red-team readiness (branch `feat/redteam-ready`):**
 
 - `make doctor`: OS/WSL, Docker running and its memory, kind, kubectl, Helm, Python 3.12, disk,

@@ -243,7 +243,7 @@ Measured on the laptop in "Prerequisites" (2026-11-06):
 The Skypiea Air view is described in [`LIVE_DEMO.md`](LIVE_DEMO.md). (This replaces the
 earlier 7-minute script; the anchors above keep old links working.)
 
-Before the talk: `make live` (or `BUNDLES_DIR=models make live` until Release v1.2 exists),
+Before the talk: `make live` (or `BUNDLES_DIR=models make live`),
 open http://127.0.0.1:8090 full screen at 1920x1080 (100%) or 1366x768, pick the theme with
 ◐, send one throwaway "hi" to load the model, then press **Reset**. Hint: **off**.
 
