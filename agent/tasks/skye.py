@@ -193,7 +193,7 @@ SCENARIOS: dict[str, list[str]] = {
         "Thanks, that's all."],
     "offers": [
         "Hi, I'm Dev Singh, email dev.singh@example.com.",
-        "Do you have any offers at the moment?",
+        "Sure: my email is dev.singh@example.com. Do you have any offers at the moment?",
         "Please apply SKYWINTER10 to my booking. Yes, I confirm.",
         "Thanks, that's all."],
     "out_of_scope": [
