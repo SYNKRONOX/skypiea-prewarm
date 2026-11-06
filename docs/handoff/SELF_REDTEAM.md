@@ -2,3 +2,9 @@
 
 | # | What I tried | Problem | Fix | Commit |
 |---|---|---|---|---|
+| 1 | Fresh clone of this branch into a new folder, `make doctor DOCTOR_MODE=test`, `make setup`, `make test`, `make lint check-sizes` (README Tier 0, word for word) | none: doctor OK, setup 39 s, 474 passed / 2 skipped in 135 s, lint and sizes OK, clone left clean | - | - |
+| 2 | `make demo` with no `docker` on PATH | doctor also FAILed ":5001 is used by another program", which is misleading without Docker, and its fix named a variable (`KIND_REG`) that is now derived | port check says "cannot tell by whom while Docker is not available" (WARN); fix names `REG_PORT` + `REG_NAME` | f124608 |
+| 3 | `make doctor DOCTOR_MODE=live` with no LLM | hint suggested "use the scripted LLM" for the console; the console has no scripted mode | hint: the console needs an LLM; `make agent-demo` works without one | f124608 |
+| 4 | `make doctor DOCTOR_MODE=live` with no bundles (stranger case) | only a WARN; `make live` would then build and push images for minutes before failing on the missing predictor image | FAIL with the `make fetch-models` fix (OK if the shipped predictor image is in Docker or `PRED_IMAGE_TAG` is set); `make live` runs doctor first, so it stops before changing anything | f124608 |
+| 5 | `make demo-portforward` from a second folder while another folder's forwards hold the same ports | printed "port-forwards up" although its own forwards had exited (it reached the other folder's forwards) | checks that its own gateway/controller forwards are alive; on "address already in use" names the port and suggests free ports | (this commit) |
+| 6 | Ollama absent: `AGENT_BASE_URL=http://127.0.0.1:9/v1 tools/doctor.sh live` | WARN with the install hint, exit 0 (LLM is optional for the checks) | - | - |

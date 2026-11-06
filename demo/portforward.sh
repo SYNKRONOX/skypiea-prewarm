@@ -45,6 +45,16 @@ start)
   fwd model skypiea-model "$MODEL_PORT" 80
   if [ "${GRAFANA:-1}" = 1 ]; then fwd grafana skypiea-grafana "$GRAFANA_PORT" 3000; fi
   for _ in $(seq 1 30); do
+    for n in gateway controller; do   # our own forward must be alive (not someone else's port)
+      if [ -f "$DIR/$n.pid" ] && ! kill -0 "$(cat "$DIR/$n.pid")" 2>/dev/null; then
+        echo "port-forward '$n' exited: $(tail -1 "$DIR/$n.log" 2>/dev/null)" >&2
+        if grep -qs 'address already in use' "$DIR/$n.log"; then
+          echo "a local port is taken by another program; free it, or use other ports:" \
+               "PF_BASE=$((PF_BASE + 10000)) GRAFANA_PORT=$((GRAFANA_PORT + 300)) make demo" >&2
+        fi
+        exit 1
+      fi
+    done
     if check && curl -sf -m 3 "http://127.0.0.1:$CTL_PORT/v1/state" >/dev/null; then
       echo "port-forwards up: gateway http://127.0.0.1:${GW_PORT}/mcp, controller :$CTL_PORT," \
            "stub :$STUB_PORT, model :$MODEL_PORT, Grafana http://127.0.0.1:$GRAFANA_PORT"
@@ -55,7 +65,7 @@ start)
   echo "port-forwards did not come up; see $DIR/*.log" >&2
   if grep -qs 'address already in use' "$DIR"/*.log; then
     echo "a local port is taken by another program: $(grep -ho '127.0.0.1:[0-9]*' "$DIR"/*.log | sort -u | tr '\n' ' ')" >&2
-    echo "free it, or use other ports: PF_BASE=28080 GRAFANA_PORT=3300 make demo" >&2
+    echo "free it, or use other ports: PF_BASE=$((PF_BASE + 10000)) GRAFANA_PORT=$((GRAFANA_PORT + 300)) make demo" >&2
   fi
   exit 1 ;;
 stop) stop; echo "port-forwards stopped" ;;
