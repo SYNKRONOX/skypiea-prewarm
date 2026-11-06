@@ -53,7 +53,8 @@ CSV_FIELDS = ["conversation", "turn", "reply", "pos_in_reply", "replay", "llm_mo
               "hint", "hint_mode", "lookahead", "console_map", "note",
               "baseline_policy", "profile", "results_match"] + [
     f"{s}_{f}" for s in ("base", "pred") for f in (
-        "gap_ms", "wall_ms", "added_ms", "held_ms", "cold", "predicted", "warm_source", "ok",
+        "gap_ms", "wall_ms", "added_ms", "held_ms", "hold_late_ms", "cold", "predicted",
+        "warm_source", "ok",
         "contention_max_starting", "contention_samples")]
 
 
@@ -329,7 +330,9 @@ class Conversation:
             c = self.poller.contention(t0, t1)
             rec.update({f"{key}_gap_ms": None if gap is None else round(gap * 1000, 1),
                         f"{key}_wall_ms": round(info.wall_ms, 1), f"{key}_added_ms":
-                        info.added_ms, f"{key}_held_ms": info.held_ms, f"{key}_cold": info.cold,
+                        info.added_ms, f"{key}_held_ms": info.held_ms,
+                        f"{key}_hold_late_ms": getattr(info, "hold_late_ms", None),
+                        f"{key}_cold": info.cold,
                         f"{key}_predicted": info.predicted,
                         f"{key}_warm_source": info.warm_source, f"{key}_ok": info.ok,
                         f"{key}_error": info.error,
