@@ -38,6 +38,7 @@ from starlette.staticfiles import StaticFiles
 from agent.tasks import get as get_task
 from agent.tasks.live import PROFILE_LABELS, SCRIPTS
 from console.engine import TURN_FIELDS, Conversation, pricing, replay_plan, to_csv, totals
+from console import truth
 from console.poller import Poller
 from console.stacks import BASE, BASELINE_POLICIES, PRED, StackClient, kubectl
 
@@ -146,6 +147,8 @@ class Console:
                 "conversation": None if conv is None else {
                     "id": conv.id, "turn": conv.turn, "calls": conv.calls,
                     "turns": conv.turns, "abandoned": conv.abandoned,
+                    "booking": truth.state(conv.backend), "writes": conv.writes[-12:],
+                    "truth": conv.truth,
                     "totals": totals(conv.calls, conv.idle_delta(), pricing())},
                 "last": self.hub.last}
 
@@ -499,6 +502,12 @@ def make_app(console: Console) -> Starlette:
         return JSONResponse({"airline": "Skypiea Air (fictional)", "agent": "Skye",
                              "personas": personas()})
 
+    async def booking_ep(_: Request) -> Response:
+        conv = c.conv
+        return JSONResponse({"state": truth.state(conv.backend if conv else None),
+                             "writes": conv.writes if conv else [],
+                             "truth": conv.truth if conv else []})
+
     async def export(request: Request) -> Response:
         name, text = await c.export("turns" if request.url.path.endswith("turns.csv")
                                     else "calls")
@@ -530,7 +539,7 @@ def make_app(console: Console) -> Starlette:
 
     return Starlette(routes=[
         Route("/", index), Route("/events", events), Route("/api/state", state),
-        Route("/api/personas", personas_ep),
+        Route("/api/personas", personas_ep), Route("/api/skyair/state", booking_ep),
         Route("/api/chat", chat, methods=["POST"]),
         Route("/api/autopilot", autopilot, methods=["POST"]),
         Route("/api/export.csv", export), Route("/api/export_turns.csv", export),

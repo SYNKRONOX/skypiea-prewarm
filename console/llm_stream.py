@@ -142,8 +142,10 @@ class ScriptedStreamingLLM:
     then a text answer. ``think_ms`` is reported, never slept: this is for tests only, and the
     console labels it 'scripted'."""
 
-    def __init__(self, turns: list[list[tuple[str, dict[str, Any]]]], model: str = "scripted"):
+    def __init__(self, turns: list[list[tuple[str, dict[str, Any]]]], model: str = "scripted",
+                 answers: list[str] | None = None):
         self.turns, self.model, self._t, self._i = turns, model, 0, 0
+        self.answers = answers or []          # final text per turn (default "done")
 
     async def reply(self, messages, tools, on_text=None) -> Reply:
         calls = self.turns[self._t] if self._t < len(self.turns) else []
@@ -155,7 +157,8 @@ class ScriptedStreamingLLM:
             msg = {"role": "assistant", "content": "",
                    "tool_calls": [{"id": tc.id, "type": "function", "function": fn}]}
             return Reply("", [tc], 0.0, None, msg)
+        text = self.answers[self._t] if self._t < len(self.answers) else "done"
         self._t, self._i = self._t + 1, 0
         if on_text:
-            await on_text("done")
-        return Reply("done", [], 0.0, None, {"role": "assistant", "content": "done"})
+            await on_text(text)
+        return Reply(text, [], 0.0, None, {"role": "assistant", "content": text})

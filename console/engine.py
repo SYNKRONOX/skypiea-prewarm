@@ -32,6 +32,7 @@ import csv
 import io
 import json
 import math
+import re
 import time
 import uuid
 from pathlib import Path
@@ -43,6 +44,7 @@ from agent.llm import LLMError
 from agent.loop import render_result
 from agent.mcp_client import McpClient
 from agent.tasks import Task
+from console import truth
 
 ROOT = Path(__file__).resolve().parent.parent
 MAX_STEPS = 8
@@ -199,6 +201,8 @@ class Conversation:
         if task.scenario == "skyair":
             from agent.skyair.tools import Session
             self.backend = Session()
+        self.writes: list[dict[str, Any]] = []         # truth panel: real write attempts
+        self.truth: list[dict[str, Any]] = []          # truth panel: claim checks per turn
         self.abandoned: list[dict[str, Any]] = []      # typing hints whose turn never came
         self.lock = asyncio.Lock()
         self.t0 = clock()
@@ -348,10 +352,48 @@ class Conversation:
             content = json.dumps({"error": f"unknown tool {tc.name!r}; available: "
                                   f"{task.tool_names}"})
         elif self.backend is not None:       # Skypiea Air: answer from the session database
-            content = json.dumps(self.backend.call(tc.name, args), default=str)[:3000]
+            result = self.backend.call(tc.name, args)
+            content = json.dumps(result, default=str)[:3000]
+            await self._log_write(tc.name, args, result)
         else:
             content = llm_content(p_res, p_info)
         return {"rec": rec, "args": args, "content": content, "finish": finish}
+
+    async def _log_write(self, tool: str, args: dict[str, Any], result: Any) -> None:
+        """Truth panel: record a real write attempt and publish the booking record."""
+        if tool in truth.WRITES and isinstance(result, dict):
+            outcome = truth.write_outcome(tool, result)
+            self.writes.append({"turn": self.turn, "reply": self.reply, "tool": tool,
+                                "kind": truth.WRITES[tool][0], "outcome": outcome,
+                                "what": truth.describe(tool, args, result, outcome)})
+        await self.publish({"type": "booking", "state": truth.state(self.backend),
+                            "writes": self.writes[-12:]})
+
+    def check_claims(self, text: str) -> dict[str, Any] | None:
+        """Rule-based check of the final reply of a turn against this turn's real writes."""
+        if self.backend is None:
+            return None
+        tw = [w for w in self.writes if w["turn"] == self.turn]
+        ew = [w for w in self.writes if w["turn"] < self.turn]
+        res = {"turn": self.turn, **truth.check(text, tw, ew)}
+        prev = next((t for t in reversed(self.truth) if t.get("note_sent")), None)
+        if prev is not None and prev.get("corrected") is None and prev["turn"] < self.turn:
+            # did the reply after the system note correct itself? (heuristic, logged)
+            prev["corrected"] = bool(re.search(r"\b(sorry|apolog|correct|mistake|not (?:yet )?"
+                                               r"(?:been )?(?:changed|cancell?ed|refunded|"
+                                               r"added|made))", text or "", re.I))
+            for row in self.turns:
+                if row["turn"] == prev["turn"]:
+                    row["truth_corrected"] = prev["corrected"]
+        if res["verdict"] == "not_done" and self.settings.get("truth_note", True):
+            self.messages.append({"role": "system", "content": (
+                "Booking system note: your last reply said something was done ("
+                + ", ".join(res["claims"]) + ") but no such change succeeded. Tell the "
+                "customer plainly in your next reply that it was NOT done.")})
+            res["note_sent"] = True
+            res["corrected"] = None
+        self.truth.append(res)
+        return res
 
     def _server(self, cls: str) -> str:
         tm = yaml.safe_load((ROOT / "tools" / "tool_map.yaml").read_text())
@@ -421,6 +463,9 @@ class Conversation:
                                     "n_calls": len(r.tool_calls), "text": r.content,
                                     "from_text": getattr(r, "from_text", False)})
                 if not r.tool_calls:
+                    tr = self.check_claims(r.content)
+                    if tr is not None:
+                        await self.publish({"type": "truth", "truth": tr})
                     break          # the agent answered or asked: the human's turn
                 self.reply += 1
                 for pos, tc in enumerate(r.tool_calls):
@@ -452,6 +497,11 @@ class Conversation:
                "console_map": bool(self.settings.get("console_map")),
                "first_tool": first["tool"] if first else None,
                "calls": self._next_seq - first_seq}
+        tr = next((t for t in reversed(self.truth) if t["turn"] == self.turn), None)
+        if tr is not None:
+            row.update(truth_claims="+".join(tr["claims"]), truth_verdict=tr["verdict"],
+                       truth_badge=" | ".join(tr["badges"]),
+                       truth_note_sent=bool(tr.get("note_sent")))
         if first:
             for k in ("base", "pred"):
                 row.update({f"{k}_first_wall_ms": first.get(f"{k}_wall_ms"),
@@ -514,7 +564,9 @@ def replay_plan(calls: list[dict[str, Any]], args: dict[int, dict[str, Any]]
 TURN_FIELDS = ["conversation", "turn", "source", "hint_mode", "hint_sources", "lead_ms",
                "typing_ms", "lookahead", "console_map", "first_tool", "calls",
                "base_first_wall_ms", "base_first_cold", "pred_first_wall_ms", "pred_first_cold",
-               "pred_first_predicted", "pred_first_warm_source", "pred_first_warm"]
+               "pred_first_predicted", "pred_first_warm_source", "pred_first_warm",
+               "truth_claims", "truth_verdict", "truth_badge", "truth_note_sent",
+               "truth_corrected"]
 
 
 def to_csv(calls: list[dict[str, Any]], fields: list[str] | None = None) -> str:
