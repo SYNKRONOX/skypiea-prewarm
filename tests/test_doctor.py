@@ -120,3 +120,11 @@ def test_live_without_bundles_fails_with_fetch_hint(tmp_path):
     assert r.returncode == 1
     assert "predictor bundles are not in models/" in r.stdout and "make fetch-models" in r.stdout
     assert "console needs an LLM" in r.stdout
+
+
+def test_wrong_python_version_is_named(tmp_path):
+    fake = {"python3": 'case "$*" in *platform*) echo 3.11.9; exit 0;; '
+                       '*version_info*) exit 1;; esac; exit 0'}
+    r = _run(tmp_path, "test", fake, {"PYTHON": "python3"})
+    assert r.returncode == 1
+    assert "python3 is Python 3.11.9, not 3.12" in r.stdout

@@ -8,7 +8,7 @@
 # Exit 0 if nothing FAILed, 1 otherwise. Never changes anything on the machine.
 # Thresholds: Docker memory 6 GB and free disk 15 GB come from docs/DEMO.md ("Prerequisites"
 # and "Resources"). Environment overrides: CLUSTER, REG_PORT, PF_BASE, GRAFANA_PORT,
-# CONSOLE_PORT, AGENT_BASE_URL, DOCTOR_MIN_DOCKER_GB, DOCTOR_MIN_DISK_GB.
+# CONSOLE_PORT, AGENT_BASE_URL, PYTHON, DOCTOR_MIN_DOCKER_GB, DOCTOR_MIN_DISK_GB.
 set -uo pipefail
 cd "$(dirname "$0")/.."
 MODE="${1:-all}"
@@ -22,6 +22,7 @@ PF_BASE="${PF_BASE:-18080}"
 GRAFANA_PORT="${GRAFANA_PORT:-3000}"
 CONSOLE_PORT="${CONSOLE_PORT:-8090}"
 AGENT_BASE_URL="${AGENT_BASE_URL:-http://localhost:11434/v1}"
+PYBIN="${PYTHON:-python3.12}"   # same variable as make setup
 fails=0; warns=0
 QUIET="${DOCTOR_QUIET:-0}"   # 1: print only WARN/FAIL lines (used by make demo / make live)
 ok()   { [ "$QUIET" = 1 ] || printf '  OK    %s\n' "$*"; }
@@ -53,13 +54,16 @@ for b in make git; do
 done
 if [ -x .venv/bin/python ] && .venv/bin/python -c 'import sys; sys.exit(sys.version_info[:2] != (3, 12))' 2>/dev/null; then
   ok ".venv with Python 3.12 (make setup done)"
-elif has python3.12; then
-  ok "python3.12 found ($(python3.12 -c 'import platform;print(platform.python_version())')); next: make setup"
+elif has "$PYBIN" && "$PYBIN" -c 'import sys; sys.exit(sys.version_info[:2] != (3, 12))' >/dev/null 2>&1; then
+  ok "$PYBIN is Python $("$PYBIN" -c 'import platform;print(platform.python_version())'); next: make setup"
+elif has "$PYBIN"; then
+  fail "$PYBIN is Python $("$PYBIN" -c 'import platform;print(platform.python_version())' 2>/dev/null), not 3.12" \
+       "install Python 3.12, or point to it: make setup PYTHON=/path/to/python3.12"
 else
-  fail "Python 3.12 not found (python3.12 on PATH)" \
+  fail "Python 3.12 not found ($PYBIN on PATH)" \
        "Ubuntu 24.04: sudo apt-get install -y python3.12 python3.12-venv; other systems: https://www.python.org/downloads/ or pyenv; or set PYTHON=/path/to/python3.12 for make setup"
 fi
-if has python3.12 && ! python3.12 -c 'import ensurepip' 2>/dev/null && [ ! -x .venv/bin/python ]; then
+if has "$PYBIN" && ! "$PYBIN" -c 'import ensurepip' 2>/dev/null && [ ! -x .venv/bin/python ]; then
   fail "python3.12 has no venv/ensurepip" "sudo apt-get install -y python3.12-venv"
 fi
 

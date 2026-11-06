@@ -21,7 +21,7 @@ jobs:
       - run: python tools/check_sizes.py
       - run: ruff check .
       - run: pytest -q
-      - run: bash tools/doctor.sh test
+      - run: PYTHON=python bash tools/doctor.sh test
 
   # The whole stack on kind on a clean runner: make doctor, make demo (PRD Scenario A replay
   # under scale_to_zero and predictive), the agent with the SCRIPTED LLM (no Ollama, no GPU),
@@ -66,7 +66,7 @@ jobs:
       - run: echo "$HOME/.local/bin" >> "$GITHUB_PATH"
       - run: make setup PYTHON=python
       - name: make doctor
-        run: make doctor DOCTOR_MODE=demo
+        run: make doctor DOCTOR_MODE=demo PYTHON=python
       - name: End to end (demo/ci_e2e.sh)
         run: demo/ci_e2e.sh
       - name: Upload demo logs

@@ -19,7 +19,7 @@ help:                    ## list the make targets with their one-line descriptio
 
 DOCTOR_MODE ?= all
 doctor:                  ## check OS, Docker (running, memory), kind, kubectl, helm, Python 3.12, disk, ports, Ollama
-	@tools/doctor.sh $(DOCTOR_MODE)
+	@PYTHON=$(PYTHON) tools/doctor.sh $(DOCTOR_MODE)
 
 secret-sweep:            ## credentials / AWS account ids in the tree (HISTORY=1: every commit); prints file names only
 	@tools/secret_sweep.sh
