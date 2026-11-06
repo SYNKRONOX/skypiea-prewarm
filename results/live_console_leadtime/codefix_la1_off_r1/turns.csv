@@ -1,0 +1,4 @@
+conversation,turn,source,hint_mode,hint_sources,lead_ms,typing_ms,lookahead,console_map,first_tool,calls,base_first_wall_ms,base_first_cold,pred_first_wall_ms,pred_first_cold,pred_first_predicted,pred_first_warm_source,pred_first_warm
+f90c1b875098,1,autopilot,off,,,38400.0,1,True,read_file,6,1515.7,True,2547.4,True,False,,False
+f90c1b875098,2,autopilot,off,,,14400.0,1,True,run_tests,1,3487.8,True,41.9,False,False,,True
+f90c1b875098,3,autopilot,off,,,13200.0,1,True,shell,1,2201.2,True,2132.1,True,False,,False

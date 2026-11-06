@@ -1,0 +1,4 @@
+conversation,turn,source,hint_mode,hint_sources,lead_ms,typing_ms,lookahead,console_map,first_tool,calls,base_first_wall_ms,base_first_cold,pred_first_wall_ms,pred_first_cold,pred_first_predicted,pred_first_warm_source,pred_first_warm
+2426554d6a60,1,autopilot,enter,enter,0.0,38400.0,1,True,read_file,6,1853.2,True,1823.9,True,True,hint,False
+2426554d6a60,2,autopilot,enter,enter,0.0,14400.0,1,True,run_tests,1,4160.5,True,42.0,False,False,,True
+2426554d6a60,3,autopilot,enter,enter,0.0,13200.0,1,True,shell,1,2055.1,True,2169.4,True,False,,False

@@ -306,6 +306,34 @@ Sources: `README.md` Summary; `docs/results_summary.md`.
 
 ---
 
+### 4.8 Lead-time experiments (live console demo runs + simulator, 2026-11-06)
+
+Sources: `results/live_console_leadtime/tables.md` (36 autopilot conversations, 3 per cell)
+and `results/sim_lookahead_val.md` / `_test.md`. **These are demo runs, not results**:
+local kind, llama3.1:8b, an assumed typing speed of 200 characters per minute for the
+scripted customer, console-only tool mapping, n = 3 per cell.
+
+- **The typing-start hint did not help the first call.** The scripted first message takes
+  about 39-43 s to "type", which is longer than the warm TTL (30 s + 5 s purge). So the pod
+  the hint started was gone by Enter: first call warm 0/3 in every typing cell. The hint
+  only added idle pod-seconds (airline lookahead 1: median 201.7 vs 121.9 with no hint;
+  coding: 332.0 vs 235.0).
+- **The Enter-time hint did not help either.** The LLM thinks for well under a second, and
+  a start takes about 1.6-2.9 s.
+- **What helped was the normal prediction after each call.** The first call of turn 2 found
+  a warm pod on Skypiea in every cell, 3/3 (airline reservation_lookup 33 ms vs about
+  3,000 ms on the baseline; coding run_tests about 40 ms vs 3,100-4,200 ms). Turn 3 was warm
+  only in airline with lookahead 1; the coding `shell` call was always cold. The agent's
+  median total waiting time per conversation with lookahead 1 was 4.4-4.5 s vs 15.4-17.1 s
+  (airline) and 9.5-10.3 s vs 13.3-14.3 s (coding).
+- **Lookahead 2 is mixed and was not adopted.** In the simulator it brought no gain at equal
+  cost (support: identical, because all airline classes share one server; coding: +3.02
+  vs +3.56 points over keep-alive on VAL, more idle). In the console runs it was worse for
+  airline (the handover was cold 0/3 instead of warm 3/3; waiting 8.5 s vs 4.4 s). For
+  coding it waited less (7.4 s vs 9.6 s) at more idle (270.8 vs 235.0 pod-s).
+- **Skypiea cost more in every one of the 12 cells**: 4-11x the baseline's idle
+  pod-seconds. Say it plainly: the waiting time it saves is bought with idle pods.
+
 ## 5. What we do NOT claim (from `docs/limits.md`)
 
 - **No production cost or latency claims.** Cold starts come from one 2-vCPU m7i-flex.large.

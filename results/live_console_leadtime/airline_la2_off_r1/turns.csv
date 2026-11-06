@@ -1,0 +1,4 @@
+conversation,turn,source,hint_mode,hint_sources,lead_ms,typing_ms,lookahead,console_map,first_tool,calls,base_first_wall_ms,base_first_cold,pred_first_wall_ms,pred_first_cold,pred_first_predicted,pred_first_warm_source,pred_first_warm
+fd5c1cd54e6f,1,autopilot,off,,,42600.0,2,True,user_lookup,4,2551.6,True,1572.9,True,False,,False
+fd5c1cd54e6f,2,autopilot,off,,,12300.0,2,True,reservation_lookup,2,2953.5,True,32.3,False,False,,True
+fd5c1cd54e6f,3,autopilot,off,,,5700.0,2,True,transfer_to_human,1,3935.6,True,3858.9,True,False,,False

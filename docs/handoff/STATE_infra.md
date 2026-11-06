@@ -208,3 +208,8 @@ Running log, newest last (the master task runs unattended; see docs/handoff/AGEN
   the README's published simulator rows (harness cross-check). No profile variant added.
 - Portable models: bundles 4.0 MB, archive 1.0 MB (docs/PORTABLE_MODELS.md); make
   fetch-models (no default URL). NOT published/committed: user decision.
+- Demo grid done (36/36 conversations, results/live_console_leadtime/tables.md). Typing hint:
+  no first-call gain (typing 39-43 s > TTL 35 s), more idle; Enter hint: no gain; lookahead 2:
+  coding better waiting, airline worse; Skypiea more idle in all 12 cells. Live typed
+  conversation not done (needs a human). Early connect: code only, measurement skipped per
+  user's deadline. FINAL: docs/handoff/LEADTIME_REPORT.md, VIVA.md 4.8. Console left running.
