@@ -511,3 +511,31 @@ def test_app_hint_modes_and_typing_route() -> None:
         assert cl.post("/api/typing", json={"event": "x"}).status_code == 400
         assert cl.post("/api/lookahead", json={"value": 3}).status_code == 400
         assert cl.get("/api/export_turns.csv").status_code == 200
+
+
+def test_hint_change_is_recorded_with_its_sender_and_flagged_mid_conversation() -> None:
+    from starlette.testclient import TestClient
+
+    from console.app import Console, make_app
+    con = Console(llm=None, base=FakeStack("base"), pred=FakeStack("pred"),
+                  start_poller=False,
+                  mcp_factory=factory({"base": FakeGW("base"), "pred": FakeGW("pred")}))
+    seen = []
+    orig = con.hub.publish
+
+    async def pub(ev):
+        seen.append(ev)
+        await orig(ev)
+    con.hub.publish = pub
+    with TestClient(make_app(con)) as tc:
+        con.new_conversation()
+        con.conv.turn = 3                       # a conversation under way
+        r = tc.post("/api/hint", json={"mode": "typing"}, headers={"X-Skypiea-Client": "t1"})
+        assert r.status_code == 202
+        tc.post("/api/hint", json={"mode": "off"})
+    ch = con.conv.hint_changes
+    assert [(c["from"], c["to"]) for c in ch] == [("off", "typing"), ("typing", "off")]
+    assert ch[0]["by"].startswith("t1 @") and ch[0]["turn"] == 3
+    ev = [e for e in seen if e["type"] == "hint_change"]
+    assert len(ev) == 2 and all(e["mid_conversation"] for e in ev)
+    assert con.snapshot()["conversation"]["hint_changes"] == ch

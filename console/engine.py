@@ -282,6 +282,7 @@ class Conversation:
         self._sidebar_msg: dict[str, Any] | None = None  # Skye's customer sidebar message
         self.truth: list[dict[str, Any]] = []          # truth panel: claim checks per turn
         self.abandoned: list[dict[str, Any]] = []      # typing hints whose turn never came
+        self.hint_changes: list[dict[str, Any]] = []   # hint setting changed (who, when)
         self.lock = asyncio.Lock()
         self.t0 = clock()
         self.idle0 = {k: dict(v) for k, v in poller.idle.items()}
@@ -641,6 +642,12 @@ class Conversation:
         row = {"conversation": self.id, "turn": self.turn, "source": source,
                "llm_model": getattr(self.llm, "model", ""),
                "hint_mode": mode, "hint_sources": "+".join(h["source"] for h in hints),
+               # the setting at the END of the turn too: differs if it changed mid-turn
+               "hint_mode_end": self.hint_mode(),
+               "hint_changed_by": " | ".join(f"{h['from']}->{h['to']} by {h['by']}"
+                                             for h in self.hint_changes
+                                             if h.get("turn") == self.turn - 1
+                                             or h.get("turn") == self.turn),
                "lead_ms": round(max(0.0, t_enter - early[0]["t"]) * 1000, 1) if early else None,
                "typing_ms": None if typing_ms is None else round(typing_ms, 1),
                "lookahead": self.settings.get("lookahead", 1),
@@ -714,7 +721,8 @@ def replay_plan(calls: list[dict[str, Any]], args: dict[int, dict[str, Any]]
     return out
 
 
-TURN_FIELDS = ["conversation", "turn", "source", "hint_mode", "hint_sources", "lead_ms",
+TURN_FIELDS = ["conversation", "turn", "source", "hint_mode", "hint_mode_end",
+               "hint_changed_by", "hint_sources", "lead_ms",
                "typing_ms", "lookahead", "console_map", "first_tool", "calls",
                "base_first_wall_ms", "base_first_cold", "pred_first_wall_ms", "pred_first_cold",
                "pred_first_predicted", "pred_first_warm_source", "pred_first_warm",

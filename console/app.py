@@ -57,6 +57,18 @@ AUTOPILOT_CPM = int(os.environ.get("CONSOLE_AUTOPILOT_CPM", "200"))
 ABANDON_WINDOW_S = 40.0
 
 
+def client_label(request: Any, d: dict[str, Any]) -> str:
+    """Who sent a settings change: the declared client (body "client" or header
+    X-Skypiea-Client: the console page sends "console page", the run scripts their name),
+    else the User-Agent's first word, and the peer address."""
+    who = str(d.get("client") or request.headers.get("x-skypiea-client") or "").strip()[:40]
+    if not who:
+        ua = request.headers.get("user-agent", "")
+        who = (ua.split("/")[0] or "unknown client")[:40]
+    peer = request.client.host if request.client else "?"
+    return f"{who} @ {peer}"
+
+
 def chat_view(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """User and assistant text per turn (for re-drawing the chat after a reload)."""
     out, turn = [], 0
@@ -113,6 +125,7 @@ class Console:
                          "autopilot_cpm": AUTOPILOT_CPM,
                          "llm_model": getattr(llm, "model", "?"), "llm_provider": "",
                          "story": None}
+        self.hint_changes: list[dict[str, Any]] = []   # every hint change, with its sender
         self.conv: Conversation | None = None
         self.previous: Conversation | None = None
         self.tasks: set[asyncio.Task] = set()
@@ -164,12 +177,14 @@ class Console:
                          "tools": task.tool_names, "script": SCRIPTS[demo]},
                 "llm_model": getattr(self.llm, "model", "?"),
                 "pricing": pricing(),
+                "hint_changes": self.hint_changes[-10:],
                 "console_map_file": "configs/live/console_tool_map.yaml",
                 "conversation": None if conv is None else {
                     "id": conv.id, "turn": conv.turn, "calls": conv.calls,
                     "turns": conv.turns, "abandoned": conv.abandoned,
                     "booking": truth.state(conv.backend), "writes": conv.writes[-12:],
                     "truth": conv.truth, "chat": chat_view(conv.messages),
+                    "hint_changes": conv.hint_changes,
                     "totals": totals(conv.calls, conv.idle_delta(), pricing())},
                 "last": self.hub.last}
 
@@ -359,6 +374,33 @@ class Console:
             await conv.replay(plan)
         finally:
             await self.busy(None)
+
+    async def set_hint(self, mode: str, by: str) -> None:
+        """Change the turn-hint mode. Every change is kept with who sent it (W1 night: the
+        hint was once switched off mid-run by a request nobody could identify), stored on the
+        conversation (its report and turns CSV carry it) and, if it happens while a
+        conversation is under way, shown as a warning in the chat."""
+        old = self.settings.get("hint_mode") or "off"
+        self.settings.update(hint_mode=mode, hint=mode != "off")
+        await self.publish_settings()
+        if old == mode:
+            return
+        conv = self.conv
+        ch = {"t": round(time.time(), 3), "from": old, "to": mode, "by": by,
+              "turn": conv.turn if conv else None,
+              "running": bool(self.settings.get("autopilot") or self.settings.get("story")
+                              or (conv is not None and conv.lock.locked()))}
+        self.hint_changes.append(ch)
+        del self.hint_changes[:-50]
+        if conv is not None:
+            conv.hint_changes.append(ch)
+        mid = conv is not None and (conv.turn > 0 or ch["running"])
+        await self.hub.publish({"type": "hint_change", "change": ch, "mid_conversation": mid})
+        await self.status(f"turn hint {old} -> {mode} (by {by})"
+                          + (" during this conversation: later turns use the new setting"
+                             if mid else ""), "warn" if mid else "info")
+        if mode == "typing" and conv is not None:
+            self.spawn(conv.open_hint())
 
     async def set_policy(self, key: str) -> None:
         await self.stacks["base"].set_policy(key)
@@ -580,8 +622,7 @@ def make_app(console: Console) -> Starlette:
             mode = d.get("mode") or ("enter" if d.get("on") else "off")
             if mode not in ("off", "enter", "typing"):
                 return JSONResponse({"error": "mode: off|enter|typing"}, status_code=400)
-            c.settings.update(hint_mode=mode, hint=mode != "off")
-            await c.publish_settings()
+            await c.set_hint(mode, client_label(request, d))
             if mode == "typing" and c.conv is not None:
                 c.spawn(c.conv.open_hint())
         elif name == "typing":

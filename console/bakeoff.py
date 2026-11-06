@@ -75,6 +75,8 @@ def report(conv: Any, scenario: str | None) -> dict[str, Any]:
         "writes": [{k: w[k] for k in ("turn", "tool", "outcome")} for w in conv.writes],
         "completed": done,
         "code_in_reply": "def " in final or "```" in final,
+        "hint_modes": sorted({str(t.get("hint_mode")) for t in conv.turns}),
+        "hint_changes": list(getattr(conv, "hint_changes", [])),
         "think_ms_p50": nearest_rank(think, 50), "think_ms_p95": nearest_rank(think, 95),
         "think_ms_total": round(sum(think), 1),
         "wait_ms": {k: tot[k]["wait_ms"] for k in ("base", "pred")},
@@ -95,7 +97,7 @@ def _wait(cond, timeout_s: float, what: str) -> None:
 
 def run(models: list[str], scenarios: list[str], reps: int, out: Path, hint: str) -> list[dict]:
     import httpx
-    c = httpx.Client(base_url=URL, timeout=60)
+    c = httpx.Client(base_url=URL, timeout=60, headers={"X-Skypiea-Client": "console.bakeoff"})
 
     def st() -> dict:
         return c.get("/api/state").json()
@@ -141,7 +143,7 @@ def run_stories(models: list[str], demo: str, out: Path,
     import httpx
 
     from agent.tasks.stories import stories
-    c = httpx.Client(base_url=URL, timeout=60)
+    c = httpx.Client(base_url=URL, timeout=60, headers={"X-Skypiea-Client": "console.bakeoff"})
 
     def st() -> dict:
         return c.get("/api/state").json()

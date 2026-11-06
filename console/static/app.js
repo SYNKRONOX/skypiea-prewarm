@@ -21,7 +21,8 @@ const fmtUsd = (v) => (v === null || v === undefined) ? "–" : v === 0 ? "$0.00
 const fmtN = (v, d = 0) => (v === null || v === undefined) ? "–" : Number(v).toFixed(d);
 
 async function post(path, body) {
-  const r = await fetch(path, { method: "POST", headers: { "content-type": "application/json" },
+  const r = await fetch(path, { method: "POST", headers: { "content-type": "application/json",
+                                                           "x-skypiea-client": "console page" },
                                 body: JSON.stringify(body || {}) });
   if (!r.ok && r.status !== 202) {
     const t = await r.json().catch(() => ({}));
@@ -504,6 +505,10 @@ function handle(ev) {
       break;
     case "hint":
       pill("hint sent (" + (ev.source || "enter") + "): metadata only", "hint");
+      break;
+    case "hint_change":
+      if (ev.mid_conversation) pill("turn hint changed " + ev.change.from + " → " + ev.change.to +
+        " by " + ev.change.by + " (later turns use it)", "warn");
       break;
     case "booking": renderBooking(ev.state, ev.writes); break;
     case "truth": onTruth(ev.truth); break;

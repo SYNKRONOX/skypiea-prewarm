@@ -94,6 +94,7 @@ main { flex: 1; min-height: 0; display: grid; grid-template-columns: 40fr 60fr;
   color: var(--muted); animation: in .2s ease-out; }
 .pill.hint { color: var(--hint); border-color: var(--hint); }
 .pill.bad { color: var(--bad); border-color: var(--bad); }
+.pill.warn { color: var(--bad); border-color: var(--bad); border-style: dashed; }
 .truth { display: block; margin-top: 6px; font-size: var(--t-cap); font-weight: 700; color: var(--bad);
   background: color-mix(in srgb, var(--bad) 12%, transparent); border: 1px solid var(--bad);
   border-radius: 8px; padding: 4px 8px; white-space: normal; }

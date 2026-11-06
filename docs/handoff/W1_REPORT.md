@@ -119,3 +119,39 @@ git push origin main          # your decision
   there; `make live-clean` (or `make live`) restarts them cleanly.
 - 396 tool calls were recorded in the W1 result and backup CSVs; all 396 succeeded on both
   stacks.
+
+## W1 night (2026-11-06 23:47 UTC onwards): assumptions and findings
+
+Progress, resume point and the gate: `docs/handoff/W1_NIGHT.md`.
+
+### Who switched the Hint setting off (open issue 4), 15-minute investigation
+
+- Evidence (`docs/live_backup/w1/story_skyair_act1__llama3.1_8b_state.json`): turns 1-3 ran
+  with `hint_mode: typing`, turns 4-7 with `off`; turn 4's typing hint was sent (its
+  `hint_sources` is `typing`) and the mode was `off` by the time Enter was pressed, so the
+  change arrived during the scripted customer's typing pause of turn 4 (about 40-66 s into
+  the conversation, ~22:41 UTC).
+- The ONLY code path that changes the setting is `POST /api/hint` (`console/app.py`, action
+  `hint`). Senders in the repo: the console page's Hint select (`app.js`, on change only; a page
+  load or `?snapshot=1` never posts), `demo/console_run.py` (posts its `--hint`, default off,
+  before its Reset), `console/bakeoff.py run()` (posts its `--hint`, default `off`). A console
+  restart also returns to the default `off` (`demo/live_up.sh` kills and restarts the console
+  of its own checkout). Turn 1 of that run is labelled `presenter`, so a client other than
+  the story runner also posted to this console during the run.
+- The request was not logged (the console logged no settings changes), so the sender cannot be
+  identified after the fact. **Not a console bug**: no console code changes the hint by itself.
+- Fix (housekeeping commit): every hint change is now recorded with its sender
+  (`X-Skypiea-Client` header or body `client`, else the User-Agent's first word, plus the peer
+  address; the console page sends `console page`, the bake-off driver `console.bakeoff`). A
+  change while a conversation is under way shows a dashed warning pill in the chat ("turn hint
+  changed typing → off by ... (later turns use it)") and a status warning; the conversation
+  keeps the list (`/api/state` → `conversation.hint_changes`), every turn row has
+  `hint_mode_end` and `hint_changed_by`, and the run report (`/api/report`) has `hint_modes`
+  and `hint_changes`. Test: `tests/test_console.py::test_hint_change_is_recorded_with_its_sender_and_flagged_mid_conversation`.
+
+### Assumptions taken without asking (most recommended option each time)
+
+| # | Assumption |
+|---|---|
+| N-1 | The console on :8090 (pid in `.live/console.pid`) is this worktree's; it is restarted from here. The open test conversation is discarded. |
+| N-2 | The shared kind cluster `skypiea` and the port-forward loops of all checkouts are left alone; nothing is deleted or killed that this session did not start. The correctness suite needs no cluster (in-process tools), so it does not compete for pods. |
