@@ -167,7 +167,7 @@ def evaluate_decisions(session: dict[str, Any]) -> list[dict[str, Any]]:
 
 
 def warm_reason(session: dict[str, Any] | None, idx: int, server: str,
-                tool_class: str) -> dict[str, Any]:
+                tool_class: str, server_of=None) -> dict[str, Any]:
     """Why the predictive stack's call #idx found a warm pod although the gateway did not
     mark it predicted (its latest decision did not include it). From the gateway's own
     session record (one clock: ms since the session began). The most recent cause wins:
@@ -182,9 +182,11 @@ def warm_reason(session: dict[str, Any] | None, idx: int, server: str,
         return {"reason": "unknown"}
     t = calls[idx].get("t_start_ms", 0.0)
     used = [c for c in calls[:idx] if c.get("server") == server and c.get("t_end_ms", 1e18) <= t]
+    def same(cls: str | None) -> bool:     # the decision warmed this call's SERVER
+        return cls == tool_class or (server_of is not None and server_of(cls) == server)
     decs = [d for d in (session or {}).get("decisions", []) if d.get("outcome") == "ok"
             and d.get("t_ms", 1e18) <= t and any(
-                x.get("tool_class") == tool_class and x.get("warm") and x.get("copies", 0) > 0
+                same(x.get("tool_class")) and x.get("warm") and x.get("copies", 0) > 0
                 for x in d.get("decisions", []))]
     cands = []
     if used:
@@ -523,6 +525,11 @@ class Conversation:
         return res
 
     def _server(self, cls: str) -> str:
+        """The server a class runs on, with the console mapping the stacks were deployed with
+        (settings console_map, e.g. flight_search -> search)."""
+        ov = self.settings.get("console_map") or {}
+        if cls in ov:
+            return ov[cls]
         tm = yaml.safe_load((ROOT / "tools" / "tool_map.yaml").read_text())
         for s, spec in tm["servers"].items():
             if cls in spec["classes"]:
@@ -553,7 +560,8 @@ class Conversation:
             except Exception:  # noqa: BLE001
                 sess = None
             pi = rec.get("pred_seq")
-            wr = warm_reason(sess, pi, rec.get("server", ""), rec.get("tool_class", "")) \
+            wr = warm_reason(sess, pi, rec.get("server", ""), rec.get("tool_class", ""),
+                             self._server) \
                 if pi is not None else {"reason": "unknown"}
             rec["pred_warm_reason"] = wr["reason"]
             rec["pred_warm_detail"] = wr

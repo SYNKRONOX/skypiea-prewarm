@@ -79,3 +79,15 @@ def test_kill_before_the_first_turn_resets_the_conversation(monkeypatch) -> None
         await c.predictor("kill")
         assert c.conv is second
     asyncio.run(go())
+
+
+def test_a_decision_for_another_class_on_the_same_server_counts() -> None:
+    sess = {"decisions": [{"trigger": "turn_start", "turn": 2, "t_ms": 100.0, "outcome": "ok",
+                           "decisions": [{"tool_class": "reservation_lookup", "warm": True,
+                                          "copies": 1}]}],
+            "calls": [{"tool_class": "reservation_book", "server": "travel_booking",
+                       "t_start_ms": 900.0, "t_end_ms": 950.0}]}
+    srv = {"reservation_lookup": "travel_booking", "reservation_book": "travel_booking"}.get
+    assert warm_reason(sess, 0, "travel_booking", "reservation_book")["reason"] == "already_up"
+    r = warm_reason(sess, 0, "travel_booking", "reservation_book", srv)
+    assert r["reason"] == "earlier_decision" and r["since_ms"] == 800
