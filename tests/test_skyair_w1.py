@@ -248,3 +248,18 @@ def test_a_wrong_code_the_customer_typed_is_not_counted_as_invented() -> None:
     asyncio.run(conv.user_turn("My booking code is ZZZZZZ."))
     r = report(conv, "failed_verification")
     assert r["invented_codes"] == 0 and r["unknown_codes_from_customer"] == 1
+
+
+def test_find_customer_with_proof_verifies_by_the_same_rule() -> None:
+    one, _ = _customers_by_active()
+    s = Session()
+    r = s.find_customer(one["name"], email=one["email"])
+    assert r["found"] == 1 and r["verified"] is True and s.verified == one["customer_id"]
+    s2 = Session()
+    bad = s2.find_customer(one["name"], email="someone.else@example.com")
+    assert bad["verified"] is False and s2.verified is None and "bookings" not in bad
+    s3 = Session()                     # the code of ANOTHER customer does not verify this name
+    other = next(b["booking_code"] for b in pristine()["bookings"]
+                 if b["customer_id"] != one["customer_id"])
+    assert s3.find_customer(one["name"], booking_code=other)["verified"] is False
+    assert Session().find_customer("Nova Quill", email="n@example.org")["found"] == 0

@@ -100,8 +100,10 @@ _code = {"type": "string", "description": "the booking code; may be left out if 
 SKYE = Skye(
     scenario="skyair", name="skypiea_air_support", system=SYSTEM, profile="support",
     tools=[
-        fn("find_customer", "Find a customer by full name.", {"name": {"type": "string"}},
-           ["name"]),
+        fn("find_customer", "Find a customer by full name. If the customer gave their email "
+           "or a booking code, pass it too: a single match is then verified in the same call.",
+           {"name": {"type": "string"}, "email": {"type": "string"},
+            "booking_code": {"type": "string"}}, ["name"]),
         fn("verify_customer", "Verify identity with an email address or a booking code.",
            {"name": {"type": "string"}, "customer_id": {"type": "string"},
             "email": {"type": "string"}, "booking_code": {"type": "string"}}),

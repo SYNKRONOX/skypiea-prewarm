@@ -144,7 +144,18 @@ class Session:
         return fare_ok or airline
 
     # ---------------- tools ----------------
-    def find_customer(self, name: str = "") -> dict:
+    def find_customer(self, name: str = "", email: str = "", booking_code: str = "") -> dict:
+        """Find by name. With an email or booking code as well (a CRM search by name + proof),
+        a single match is verified in the same call by verify_customer's own rule, so the
+        proof required is exactly the same (W1-20)."""
+        res = self._find(name)
+        if res.get("found") == 1 and (email or booking_code):
+            v = self.verify_customer(name=name, email=email, booking_code=booking_code)
+            return {**res, **v, "message": "Found and verified." if v.get("verified") else
+                    v["message"]}
+        return res
+
+    def _find(self, name: str = "") -> dict:
         hits = [c for c in self.customers.values() if c["name"].lower() == name.strip().lower()]
         if not hits:
             return {"found": 0, "message": f"No customer named {name!r}. Ask them to check "
