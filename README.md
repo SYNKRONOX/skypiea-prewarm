@@ -355,6 +355,22 @@ like the AWS tables above.**
   network) or any OpenAI-compatible endpoint (`make agent-demo LLM=openai-compatible`, for
   example local Ollama). The LLM picks the tool order itself.
 
+### Live Console: baseline vs predictive, side by side
+
+![Skypiea Live Console](docs/img/console_support_hint_on.png)
+
+`make live` runs two copies of the platform in one kind cluster: **Normal** (scale-to-zero)
+and **Skypiea** (the real `support` or `coding` predictor, trained on tau2-bench and TraceLab
+traces). It also starts a local web console at http://127.0.0.1:8090. A presenter chats with
+a local LLM (Ollama, llama3.1:8b). Every tool call goes to both stacks, and the console shows
+per call, live: cold or warm, the added latency, the LLM's think time against the baseline's
+cold start for the same call, the pod grid read from the controllers, the predictor's top-3
+and whether it was right. An optional turn-start hint (off by default) lets the predictor warm
+the first tool while the LLM thinks. Design and data sources:
+[`docs/LIVE_CONSOLE.md`](docs/LIVE_CONSOLE.md); 7-minute presenter script:
+[`docs/DEMO.md`](docs/DEMO.md#7-minute-presenter-script). Verification conversations (**demo
+runs, not results**): [`results/live_console_demo/runs.md`](results/live_console_demo/runs.md).
+
 ### Live LLM agent on kind
 
 Source: [`results/agent_runs/summary.csv`](results/agent_runs/summary.csv) and
@@ -471,6 +487,7 @@ Terraform state is local and git-ignored. See "Terraform state" in `docs/aws_pla
 | `make grafana-kind` | Grafana on http://127.0.0.1:3000 |
 | `make demo` / `make demo-failures` / `make demo-clean` | Whole stack on kind from a fresh clone, failure injection, teardown ([`docs/DEMO.md`](docs/DEMO.md)) |
 | `make agent-demo [LLM=openai-compatible]` / `make agent-live` | Agent through the gateway; live-LLM runs ([`docs/AGENT.md`](docs/AGENT.md)) |
+| `make live` / `make live-clean` | Live Console: baseline and predictive stacks + web UI on :8090 ([`docs/LIVE_CONSOLE.md`](docs/LIVE_CONSOLE.md)) |
 | `make model-all` | Tune on VAL, simulate on TEST, export bundles (needs `data/processed`) |
 | `make predictor-image` | Build the predictor image with the three bundles |
 | `make results-summary INFRA_RESULTS=results SCENARIOS='results/scenario_aws*_calls.csv'` | Rebuild `docs/results_summary.md` from committed results |
@@ -489,7 +506,8 @@ Terraform state is local and git-ignored. See "Terraform state" in `docs/aws_pla
 | [`traces/`](traces/), [`data/`](data/) | Trace schema, converters, pipeline; dataset notes (data is not committed) |
 | [`replayer/`](replayer/) | Open-loop trace replayer |
 | [`agent/`](agent/) | Tool-calling agent (OpenAI-compatible or scripted LLM) that uses the gateway's `POST /mcp` only |
-| [`demo/`](demo/) | `make demo` scripts: inputs from the committed samples, deploy, port-forwards, failure injection |
+| [`demo/`](demo/) | `make demo` / `make live` scripts: inputs from the committed samples, deploy, port-forwards, failure injection, console driver |
+| [`console/`](console/) | Live Console: mirrored conversation engine, poller, web UI (offline, hand-written) |
 | [`tools/`](tools/) | 16 MCP tool servers and images; `tools/tool_map.yaml` (class -> server) |
 | [`charts/skypiea/`](charts/skypiea/), [`deploy/`](deploy/) | Helm chart; kind cluster and platform image |
 | [`infra/aws/`](infra/aws/) | Terraform: EC2 k3s (SSM only), ECR, S3 |
