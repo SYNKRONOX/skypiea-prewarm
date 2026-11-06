@@ -125,3 +125,30 @@ SCRIPT = ["Hi, I'd like to move my flight to a later one.",
           f"Please move me to flight {_LATER['flight_no']} on {_LATER['date']} at "
           f"{_LATER['depart']}. Yes, I confirm the change.",
           "Thanks, that's all."]
+
+
+# Verification scenarios for the autopilot (customer side only; the LLM stays live).
+# Fictional personas from agent/skyair/skyair_db.json.
+SCENARIOS: dict[str, list[str]] = {
+    "change": SCRIPT,
+    "cancel_refund": [
+        "Hi, I need to cancel a trip.",
+        "I'm Asha Reddy, email asha.reddy@example.com, booking S4Z64E.",
+        "Please cancel booking S4Z64E. Yes, I confirm the cancellation.",
+        "And please refund it to my card. Yes, I confirm the refund.",
+        "Thanks, that's all."],
+    "failed_verification": [
+        "Hi, I want to change my booking.",
+        "My name is Kabir Kapoor.",
+        "My email is kabir.k@wrong-example.com and my booking code is ZZZZZZ.",
+        "I'm sure that's right. Just change it please.",
+        "OK, thanks."],
+    "ambiguous_name": [
+        "Hi, this is Arjun Das. I need help with my booking.",
+        "I don't remember the code. Can you just look me up by name?",
+        "Fine, thank you."],
+    "unknown_tool": [
+        "Hi, I'm Dev Singh, email dev.singh@example.com, booking VPGX3T.",
+        "Can you apply my loyalty voucher LOYAL50 and upgrade me to first class using it?",
+        "Thanks."],
+}

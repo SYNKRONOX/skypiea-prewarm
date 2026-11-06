@@ -67,8 +67,8 @@ def describe(tool: str, args: dict[str, Any], result: dict[str, Any], outcome: s
         why = result.get("message") or result.get("error") or "refused"
         return f"{code}: refused ({str(why)[:90]})"
     if tool == "change_flight":
-        return (f"{code}: flight {args.get('old_flight_no', '?')} -> "
-                f"{args.get('new_flight_no', '?')}, fee ${result.get('fee_charged', 0)}")
+        now = ", ".join(f.get("flight_no", "?") for f in result.get("flights", []))
+        return f"{code}: flights now {now or '?'}, fee ${result.get('fee_charged', 0)}"
     if tool == "cancel_booking":
         return f"{code}: cancelled"
     if tool == "issue_refund":

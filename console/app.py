@@ -240,7 +240,8 @@ class Console:
             if pend:
                 self.spawn(self.measure_abandoned(conv, pend))
 
-    async def autopilot(self, turns: int | None = None) -> None:
+    async def autopilot(self, turns: int | None = None,
+                        script: list[str] | None = None) -> None:
         """Play the prepared script as the human side (the LLM stays live). `autopilot` stays
         true until the loop has really ended; a stop request only sets `autopilot_stopping`
         (the current turn finishes first)."""
@@ -248,7 +249,7 @@ class Console:
         await self.publish_settings()
         try:
             cpm = self.settings.get("autopilot_cpm") or 0
-            for i, msg in enumerate(SCRIPTS[self.settings["demo"]]):
+            for i, msg in enumerate(script or SCRIPTS[self.settings["demo"]]):
                 if self.settings["autopilot_stopping"] or (turns is not None and i >= turns):
                     break
                 typing_ms = None
@@ -446,12 +447,21 @@ def make_app(console: Console) -> Starlette:
             c.settings["autopilot_stopping"] = True      # stops after the current turn
             await c.publish_settings()
             return JSONResponse({"autopilot": "stopping after this turn"})
-        turns = (await body(request)).get("turns")
+        b = await body(request)
+        turns, scenario = b.get("turns"), b.get("scenario")
+        script = None
+        if scenario is not None:
+            from agent.tasks.skye import SCENARIOS
+            if c.settings["demo"] != "skyair" or scenario not in SCENARIOS:
+                return JSONResponse({"error": "scenario needs the skyair demo and one of "
+                                     f"{sorted(SCENARIOS)}"}, status_code=400)
+            script = SCENARIOS[scenario]
         if turns is not None and (not isinstance(turns, int) or isinstance(turns, bool)
                                   or turns < 1):
             return JSONResponse({"error": "turns must be a positive integer"}, status_code=400)
-        c.spawn(c.autopilot(turns))
-        return JSONResponse({"autopilot": "started", "turns": turns}, status_code=202)
+        c.spawn(c.autopilot(turns, script))
+        return JSONResponse({"autopilot": "started", "turns": turns, "scenario": scenario},
+                            status_code=202)
 
     async def action(request: Request) -> Response:
         name = request.path_params["name"]

@@ -75,6 +75,8 @@ def main(argv: list[str] | None = None) -> int:
                     help="kill the predictor before the conversation, restart it after; every "
                          "call must still succeed (fallback = scale-to-zero)")
     ap.add_argument("--turns", type=int, default=0, help="stop autopilot after N turns")
+    ap.add_argument("--scenario", default=None,
+                    help="skyair autopilot scenario (agent/tasks/skye.py SCENARIOS)")
     ap.add_argument("--out", type=Path, default=Path(".live/runs"))
     a = ap.parse_args(argv)
     out = a.out / a.name
@@ -109,7 +111,10 @@ def main(argv: list[str] | None = None) -> int:
                  "predictor down")
         model_before = (lis.last("slow") or {}).get("model", {})
         t0 = time.time()
-        c.post(f"{URL}/api/autopilot", json={"turns": a.turns} if a.turns else {})
+        apj = {"turns": a.turns} if a.turns else {}
+        if a.scenario:
+            apj["scenario"] = a.scenario
+        c.post(f"{URL}/api/autopilot", json=apj)
         wait(lambda: settings(c)["autopilot"], 30, "autopilot start")
         wait(lambda: not settings(c)["autopilot"], 1800, "autopilot end")
         time.sleep(3)                         # last predictor refresh / totals
@@ -132,6 +137,8 @@ def main(argv: list[str] | None = None) -> int:
                "console_map": st.get("console_map"),
                "autopilot_typing_model_cpm": st.get("autopilot_cpm"),
                "turns": conv.get("turns", []), "abandoned": conv.get("abandoned", []),
+               "scenario": a.scenario, "truth": conv.get("truth", []),
+               "writes": conv.get("writes", []), "booking": conv.get("booking"),
                "mirror": a.mirror,
                "baseline_policy": a.policy, "llm_model": state["llm_model"],
                "profile_label": state["demo"]["profile_label"],
