@@ -37,8 +37,8 @@ from starlette.staticfiles import StaticFiles
 
 from agent.tasks import get as get_task
 from agent.tasks.live import PROFILE_LABELS, SCRIPTS
-from console.engine import TURN_FIELDS, Conversation, pricing, replay_plan, to_csv, totals
 from console import truth
+from console.engine import TURN_FIELDS, Conversation, pricing, replay_plan, to_csv, totals
 from console.poller import Poller
 from console.stacks import BASE, BASELINE_POLICIES, PRED, StackClient, kubectl
 
