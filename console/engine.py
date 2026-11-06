@@ -48,7 +48,7 @@ ROOT = Path(__file__).resolve().parent.parent
 MAX_STEPS = 8
 CSV_FIELDS = ["conversation", "turn", "reply", "pos_in_reply", "replay", "llm_model",
               "think_ms", "tool_call_from_text", "tool", "tool_class", "server", "mirror_mode",
-              "hint",
+              "hint", "hint_mode", "lookahead", "console_map",
               "baseline_policy", "profile", "results_match"] + [
     f"{s}_{f}" for s in ("base", "pred") for f in (
         "gap_ms", "wall_ms", "added_ms", "held_ms", "cold", "predicted", "warm_source", "ok",
@@ -189,6 +189,12 @@ class Conversation:
         self._lane: BaseLane | None = None
         self._pending: list[asyncio.Task] = []
         self._next_seq = 0                            # call order in the conversation
+        # turn-start hints (mode off | enter | typing): when each hint was sent, per turn
+        self.hint_log: dict[int, list[dict[str, Any]]] = {}
+        self.typing_t: float | None = None            # first keystroke of the coming turn
+        self.typing_hinted: set[int] = set()           # turns that got their typing hint
+        self.turns: list[dict[str, Any]] = []          # per-turn records (lead time, 1st call)
+        self.abandoned: list[dict[str, Any]] = []      # typing hints whose turn never came
         self.lock = asyncio.Lock()
         self.t0 = clock()
         self.idle0 = {k: dict(v) for k, v in poller.idle.items()}
@@ -229,15 +235,45 @@ class Conversation:
             await self.publish({"type": "predictor", "conversation": self.id,
                                 "decisions": evaluate_decisions(sess)[-10:]})
 
-    async def send_hint(self) -> None:
+    async def send_hint(self, turn: int | None = None, source: str = "enter") -> None:
+        """Metadata-only turn hint to the PREDICTIVE gateway (session id + turn number)."""
+        turn = self.turn if turn is None else turn
         t = self.clock()
         try:
-            status = await self.stacks["pred"].hint(self.sid, self.turn)
+            status = await self.stacks["pred"].hint(self.sid, turn)
         except Exception as e:  # noqa: BLE001
             status = f"error {type(e).__name__}"
-        await self.publish({"type": "hint", "turn": self.turn, "status": status,
+        self.hint_log.setdefault(turn, []).append({"source": source, "t": t, "status": status})
+        await self.publish({"type": "hint", "turn": turn, "status": status, "source": source,
                             "t_s": round(t - self.t0, 2)})
         asyncio.create_task(self.predictor_refresh())
+
+    def hint_mode(self) -> str:
+        return self.settings.get("hint_mode") or ("enter" if self.settings.get("hint") else "off")
+
+    async def open_hint(self) -> None:
+        """Typing mode: a hint for turn 1 as soon as the conversation opens."""
+        if self.hint_mode() == "typing" and self.turn == 0:
+            await self.send_hint(1, "open")
+
+    async def typing_started(self) -> None:
+        """First keystroke of the coming turn (the browser sends it once per turn)."""
+        if self.typing_t is None:
+            self.typing_t = self.clock()
+        nxt = self.turn + 1
+        if self.hint_mode() == "typing" and nxt not in self.typing_hinted:
+            self.typing_hinted.add(nxt)
+            await self.send_hint(nxt, "typing")
+
+    def typing_cancelled(self) -> dict[str, Any] | None:
+        """The input was emptied without sending: the coming turn's typing hint (if any) is
+        abandoned. Returns what to measure (the caller measures its idle pod-seconds)."""
+        nxt = self.turn + 1
+        self.typing_t = None
+        hs = [h for h in self.hint_log.get(nxt, []) if h["source"] in ("typing", "open")]
+        if not hs:
+            return None
+        return {"turn": nxt, "hint_t": hs[0]["t"], "session": self.sid}
 
     async def tool_call(self, tc, think_ms: float, pos: int, replay: bool = False,
                         from_text: bool = False) -> dict[str, Any]:
@@ -247,7 +283,9 @@ class Conversation:
             "pos_in_reply": pos, "replay": replay, "llm_model": getattr(self.llm, "model", ""),
             "think_ms": round(think_ms, 1) if pos == 0 else 0.0,
             "tool_call_from_text": from_text, "tool": tc.name,
-            "mirror_mode": self.settings["mirror"], "hint": self.settings["hint"],
+            "mirror_mode": self.settings["mirror"], "hint": self.hint_mode() != "off",
+            "hint_mode": self.hint_mode(), "lookahead": self.settings.get("lookahead", 1),
+            "console_map": bool(self.settings.get("console_map")),
             "baseline_policy": self.settings["baseline_policy"], "profile": task.profile}
         if tc.name not in task.tool_names:
             rec.update(tool_class=None, server=None, results_match=None,
@@ -331,13 +369,20 @@ class Conversation:
                                                                pricing())})
         asyncio.create_task(self.predictor_refresh())
 
-    async def user_turn(self, text: str, source: str = "presenter") -> None:
+    async def user_turn(self, text: str, source: str = "presenter",
+                        typing_ms: float | None = None) -> None:
         async with self.lock:
             self.turn += 1
+            t_enter = self.clock()
+            typing_ms = typing_ms if typing_ms is not None else (
+                None if self.typing_t is None else (t_enter - self.typing_t) * 1000)
+            self.typing_t = None
+            mode = self.hint_mode()
             await self.publish({"type": "turn_start", "turn": self.turn, "source": source,
-                                "text": text, "hint": self.settings["hint"]})
-            if self.settings["hint"]:
-                await self.send_hint()
+                                "text": text, "hint": mode != "off", "hint_mode": mode})
+            if mode == "enter":
+                await self.send_hint(self.turn, "enter")
+            n_calls_before = self._next_seq
             self.messages.append({"role": "user", "content": text})
             for _ in range(MAX_STEPS):
                 await self.publish({"type": "llm_start", "turn": self.turn})
@@ -369,7 +414,34 @@ class Conversation:
                 await self.publish({"type": "status_turn", "turn": self.turn,
                                     "text": "baseline repeating this turn's calls (same gaps)"})
             await self.end_of_turn()
+            self._record_turn(source, mode, t_enter, typing_ms, n_calls_before)
             await self.publish({"type": "turn_end", "turn": self.turn})
+
+    def _record_turn(self, source: str, mode: str, t_enter: float, typing_ms: float | None,
+                     first_seq: int) -> None:
+        hints = self.hint_log.get(self.turn, [])
+        # hints of this turn sent before the LLM was asked (Enter-mode hints go out right
+        # after Enter: lead 0); lead = first such hint -> Enter
+        early = [h for h in hints if h["t"] <= t_enter + 1.0]
+        first = next((c for c in self.calls if c["seq"] >= first_seq and c.get("tool_class")),
+                     None)
+        row = {"conversation": self.id, "turn": self.turn, "source": source,
+               "hint_mode": mode, "hint_sources": "+".join(h["source"] for h in hints),
+               "lead_ms": round(max(0.0, t_enter - early[0]["t"]) * 1000, 1) if early else None,
+               "typing_ms": None if typing_ms is None else round(typing_ms, 1),
+               "lookahead": self.settings.get("lookahead", 1),
+               "console_map": bool(self.settings.get("console_map")),
+               "first_tool": first["tool"] if first else None,
+               "calls": self._next_seq - first_seq}
+        if first:
+            for k in ("base", "pred"):
+                row.update({f"{k}_first_wall_ms": first.get(f"{k}_wall_ms"),
+                            f"{k}_first_cold": first.get(f"{k}_cold")})
+            row["pred_first_predicted"] = first.get("pred_predicted")
+            row["pred_first_warm_source"] = first.get("pred_warm_source")
+            row["pred_first_warm"] = first.get("pred_cold") is False
+        self.turns.append(row)
+        asyncio.create_task(self.publish({"type": "turn", "turn_record": row}))
 
     async def replay(self, calls: list[dict[str, Any]]) -> None:
         """Replay a recorded conversation's tool calls on both stacks with the RECORDED gaps
@@ -386,9 +458,9 @@ class Conversation:
                     self.turn = c["turn"]
                     await self.publish({"type": "turn_start", "turn": self.turn,
                                         "source": "replay", "text": "(replay)",
-                                        "hint": self.settings["hint"]})
-                    if self.settings["hint"]:
-                        await self.send_hint()
+                                        "hint": self.hint_mode() != "off"})
+                    if self.hint_mode() != "off":
+                        await self.send_hint(self.turn, "replay")
                 await asyncio.sleep(c["_gap_s"])     # the measured gap, not an invented one
                 if c["pos_in_reply"] == 0:
                     self.reply += 1
@@ -418,9 +490,15 @@ def replay_plan(calls: list[dict[str, Any]], args: dict[int, dict[str, Any]]
     return out
 
 
-def to_csv(calls: list[dict[str, Any]]) -> str:
+TURN_FIELDS = ["conversation", "turn", "source", "hint_mode", "hint_sources", "lead_ms",
+               "typing_ms", "lookahead", "console_map", "first_tool", "calls",
+               "base_first_wall_ms", "base_first_cold", "pred_first_wall_ms", "pred_first_cold",
+               "pred_first_predicted", "pred_first_warm_source", "pred_first_warm"]
+
+
+def to_csv(calls: list[dict[str, Any]], fields: list[str] | None = None) -> str:
     buf = io.StringIO()
-    w = csv.DictWriter(buf, fieldnames=CSV_FIELDS, extrasaction="ignore")
+    w = csv.DictWriter(buf, fieldnames=fields or CSV_FIELDS, extrasaction="ignore")
     w.writeheader()
     w.writerows(calls)
     return buf.getvalue()

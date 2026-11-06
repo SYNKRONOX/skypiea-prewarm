@@ -385,6 +385,7 @@ def test_autopilot_runs_n_turns_and_stays_on_until_done() -> None:
     c = Console(llm, base=FakeStack("base"), pred=FakeStack("pred"), start_poller=False,
                 mcp_factory=factory(gws))
     c.poller = NullPoller()
+    c.settings["autopilot_cpm"] = 0          # no typing model in this test
     seen = []
 
     async def go():
@@ -416,3 +417,95 @@ def test_a_slow_predictive_call_does_not_delay_the_baseline() -> None:
     c = conv.calls[1]
     excess = c["base_gap_ms"] - c["pred_gap_ms"]
     assert 300 < excess < 520
+
+
+def _conv(mode, gws=None, script=None):
+    gws = gws or {"base": FakeGW("base"), "pred": FakeGW("pred")}
+    stacks = {"base": FakeStack("base"), "pred": FakeStack("pred")}
+
+    async def publish(ev):
+        pass
+    llm = ScriptedStreamingLLM(script or [[("user_lookup", {})], [("reservation_lookup", {})]])
+    conv = Conversation(AIRLINE, llm, stacks, NullPoller(), publish,
+                        {"mirror": "concurrent", "hint_mode": mode,
+                         "baseline_policy": "scale_to_zero"}, mcp_factory=factory(gws))
+    return conv, stacks
+
+
+def test_typing_hint_once_per_turn_plus_open_hint_and_lead_time() -> None:
+    conv, stacks = _conv("typing")
+
+    async def go():
+        await conv.open_hint()                 # conversation opens: hint for turn 1
+        await conv.typing_started()            # first keystroke of turn 1
+        await conv.typing_started()            # more keystrokes: no new hint
+        await asyncio.sleep(0.2)
+        await conv.user_turn("a", "presenter")
+        await conv.typing_started()            # turn 2
+        await conv.user_turn("b", "presenter")
+    asyncio.run(go())
+    assert stacks["pred"].hints == [(conv.sid, 1), (conv.sid, 1), (conv.sid, 2)]
+    assert stacks["base"].hints == []
+    t1, t2 = conv.turns
+    assert t1["hint_sources"] == "open+typing" and t1["lead_ms"] >= 200
+    assert t1["typing_ms"] >= 200 and t1["first_tool"] == "user_lookup"
+    assert t2["hint_sources"] == "typing" and t2["hint_mode"] == "typing"
+
+
+def test_enter_mode_hints_at_send_and_off_never() -> None:
+    conv, stacks = _conv("enter")
+
+    async def go():
+        await conv.typing_started()
+        await conv.user_turn("a")
+    asyncio.run(go())
+    assert stacks["pred"].hints == [(conv.sid, 1)]
+    assert conv.turns[0]["hint_sources"] == "enter" and conv.turns[0]["lead_ms"] < 50
+    conv, stacks = _conv("off")
+
+    async def go2():
+        await conv.open_hint()
+        await conv.typing_started()
+        await conv.user_turn("a")
+    asyncio.run(go2())
+    assert stacks["pred"].hints == [] and conv.turns[0]["lead_ms"] is None
+
+
+def test_cancelled_typing_reports_an_abandoned_hint() -> None:
+    conv, _ = _conv("typing")
+
+    async def go():
+        await conv.typing_started()
+        return conv.typing_cancelled()
+    pend = asyncio.run(go())
+    assert pend["turn"] == 1 and pend["session"] == conv.sid
+    conv2, _ = _conv("enter")
+    assert conv2.typing_cancelled() is None              # no typing hint, nothing abandoned
+
+
+def test_turn_records_export_without_text() -> None:
+    from console.engine import TURN_FIELDS
+
+    conv, _ = _conv("typing")
+    asyncio.run(conv.user_turn("secret customer text", "autopilot", typing_ms=1234.0))
+    text = to_csv(conv.turns, TURN_FIELDS)
+    assert "secret" not in text and text.splitlines()[0] == ",".join(TURN_FIELDS)
+    assert conv.turns[0]["typing_ms"] == 1234.0
+
+
+def test_app_hint_modes_and_typing_route() -> None:
+    from starlette.testclient import TestClient
+
+    from console.app import Console, make_app
+
+    c = Console(ScriptedStreamingLLM([]), base=FakeStack("base"), pred=FakeStack("pred"),
+                start_poller=False)
+    with TestClient(make_app(c)) as cl:
+        assert cl.post("/api/hint", json={"mode": "typing"}).json()["settings"]["hint_mode"] \
+            == "typing"
+        assert cl.post("/api/hint", json={"mode": "later"}).status_code == 400
+        assert cl.post("/api/hint", json={"on": True}).json()["settings"]["hint_mode"] == "enter"
+        assert cl.post("/api/typing", json={"event": "start"}).status_code == 202
+        assert cl.post("/api/typing", json={"event": "x"}).status_code == 400
+        assert cl.post("/api/lookahead", json={"value": 3}).status_code == 400
+        assert cl.get("/api/export_turns.csv").status_code == 200

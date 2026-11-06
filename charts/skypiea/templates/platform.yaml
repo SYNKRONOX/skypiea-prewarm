@@ -308,6 +308,9 @@ spec:
             - {name: PREDICTOR_PROFILE, value: {{ $p.predictor.profile | quote }}}
             - {name: COLD_START_PATH, value: /cold/cold_start.yaml}
             - {name: WORKERS, value: "1"}
+            {{- with $p.predictor.decideOverrides }}
+            - {name: PREDICTOR_DECIDE_OVERRIDES, value: {{ toJson . | quote }}}
+            {{- end }}
           readinessProbe:
             httpGet: {path: /healthz, port: http}
             periodSeconds: 2

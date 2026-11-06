@@ -33,14 +33,23 @@ function applySettings(st) {
   S.settings = st;
   $("b-mirror").textContent = "mirror: " + st.mirror;
   $("btn-mirror").textContent = "Mirror: " + st.mirror;
-  $("b-hint").textContent = "turn-start hint: " + (st.hint ? "ON" : "off");
-  $("b-hint").classList.toggle("on", !!st.hint);
-  $("btn-hint").textContent = "Hint: " + (st.hint ? "ON" : "off");
-  $("btn-hint").classList.toggle("on", !!st.hint);
+  const hm = st.hint_mode || (st.hint ? "enter" : "off");
+  $("b-hint").textContent = "turn hint: " + {off: "off", enter: "at Enter", typing: "at typing start"}[hm];
+  $("b-hint").classList.toggle("on", hm !== "off");
+  $("hintmode").value = hm;
+  $("b-la").textContent = "lookahead " + (st.lookahead || 1);
+  $("b-la").classList.toggle("on", (st.lookahead || 1) === 2);
+  $("btn-la").textContent = "Lookahead: " + (st.lookahead || 1);
+  $("btn-la").classList.toggle("on", (st.lookahead || 1) === 2);
+  $("btn-la").disabled = !!st.busy;
+  const cm = st.console_map;
+  $("b-map").hidden = !cm;
+  if (cm) $("b-map").textContent = "console mapping: " + Object.entries(cm).map(([k, v]) => k + "→" + v).join(", ");
   $("policy").value = st.baseline_policy;
   $("base-title").textContent = "(baseline: " + (st.baseline_policy === "keep_alive_30" ?
     "keep-alive 30 s" : "scale-to-zero") + ")";
   $("b-auto").hidden = !st.autopilot;
+  $("b-auto").textContent = "AUTOPILOT" + (st.autopilot_cpm ? " (typing model " + st.autopilot_cpm + " chars/min, assumption)" : "");
   $("btn-auto").textContent = st.autopilot ? (st.autopilot_stopping ? "Stopping after this turn…" :
     "Stop autopilot ■") : "Autopilot ▶";
   $("b-busy").hidden = !st.busy; $("b-busy").textContent = st.busy || "";
@@ -236,9 +245,39 @@ function onModel(m) {
   footer();
 }
 
+function renderTurn(t) {
+  const r = el("div", "dec");
+  r.append(el("b", "", "turn " + t.turn + " (" + t.source + "): "));
+  const lead = t.lead_ms === null || t.lead_ms === undefined ? "no hint before Enter" :
+    "hint " + fmtMs(t.lead_ms) + " before Enter (" + t.hint_sources + ")";
+  r.append(document.createTextNode(lead + (t.typing_ms ? " · typing " + fmtMs(t.typing_ms) +
+    (t.source === "autopilot" ? " (typing model)" : "") : "")));
+  if (t.first_tool) {
+    const d = el("div", "");
+    d.append(document.createTextNode("first call " + t.first_tool + ": Skypiea " +
+      fmtMs(t.pred_first_wall_ms) + " "));
+    d.append(el("span", t.pred_first_warm ? "ok" : "no", t.pred_first_warm ? "warm" : "cold"));
+    if (t.pred_first_predicted) d.append(document.createTextNode(" (predicted" +
+      (t.pred_first_warm_source === "hint" ? " by the hint" : "") + ")"));
+    d.append(document.createTextNode(" · baseline " + fmtMs(t.base_first_wall_ms) + " " +
+      (t.base_first_cold ? "cold" : "warm")));
+    r.append(d);
+  }
+  $("turns").prepend(r);
+}
+
+function renderAbandoned(a) {
+  const r = el("div", "dec");
+  r.append(el("b", "no", "abandoned turn " + a.turn + ": "));
+  r.append(document.createTextNode("typing hint warmed " + (a.servers.join(", ") || "nothing") +
+    " · idle " + a.idle_pod_s + " pod-s over " + a.window_s + " s (" + a.note + ")"));
+  $("turns").prepend(r);
+}
+
 function resetView(convId) {
   S.calls = []; S.replyEl = null; S.agentEl = null;
-  $("chat").textContent = ""; $("predictor").textContent = "";
+  $("chat").textContent = ""; $("predictor").textContent = ""; $("turns").textContent = "";
+  S.typing = false; S.typingT = null;
   renderTimelines(); renderTotals(null);
   $("conv-id").textContent = convId ? "(" + convId + ")" : "";
 }
@@ -251,6 +290,8 @@ function handle(ev) {
       applySettings(ev.settings); applyDemo(ev.demo);
       resetView(ev.conversation && ev.conversation.id);
       for (const c of (ev.conversation ? ev.conversation.calls : [])) onCall(c);
+      for (const t of (ev.conversation ? ev.conversation.turns || [] : [])) renderTurn(t);
+      for (const a of (ev.conversation ? ev.conversation.abandoned || [] : [])) renderAbandoned(a);
       if (ev.conversation) renderTotals(ev.conversation.totals);
       for (const e of Object.values(ev.last || {})) handle(e);
       break;
@@ -271,9 +312,11 @@ function handle(ev) {
              ev.source === "autopilot" ? "autopilot" : "");
       break;
     case "hint":
-      addMsg("agent", "turn-start hint sent to the predictive gateway (HTTP " + ev.status + ")",
-             "hint · turn " + ev.turn);
+      addMsg("agent", "turn hint (" + (ev.source || "enter") + ") sent to the predictive gateway (HTTP " +
+             ev.status + "): metadata only, never the text", "hint · turn " + ev.turn);
       break;
+    case "turn": renderTurn(ev.turn_record); break;
+    case "abandoned": renderAbandoned(ev.abandoned); break;
     case "llm_start": status("LLM thinking…"); break;
     case "llm_delta":
       if (!S.agentEl) S.agentEl = addMsg("agent", "", "agent (" + S.llmModel + ")");
@@ -300,7 +343,18 @@ function connect() {
 // ---------------- controls ----------------
 $("chat-form").addEventListener("submit", (e) => {
   e.preventDefault(); const t = $("chat-input").value.trim(); if (!t) return;
-  $("chat-input").value = ""; post("/api/chat", { text: t });
+  const typing_ms = S.typingT ? performance.now() - S.typingT : null;
+  $("chat-input").value = ""; S.typing = false; S.typingT = null;
+  post("/api/chat", { text: t, typing_ms: typing_ms });
+});
+// First keystroke of a turn: one metadata-only "typing start" (debounced: once per turn);
+// emptying the box again counts as abandoning the turn.
+$("chat-input").addEventListener("input", (e) => {
+  const v = e.target.value;
+  if (v.length > 0 && !S.typing) { S.typing = true; S.typingT = performance.now();
+    post("/api/typing", { event: "start" }); }
+  else if (v.length === 0 && S.typing) { S.typing = false; S.typingT = null;
+    post("/api/typing", { event: "cancel" }); }
 });
 $("chat-input").addEventListener("keydown", (e) => {
   if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); $("chat-form").requestSubmit(); }
@@ -308,7 +362,8 @@ $("chat-input").addEventListener("keydown", (e) => {
 $("btn-auto").onclick = () => post("/api/autopilot");
 $("btn-reset").onclick = () => post("/api/reset");
 $("btn-replay").onclick = () => post("/api/replay");
-$("btn-hint").onclick = () => post("/api/hint", { on: !S.settings.hint });
+$("hintmode").onchange = (e) => post("/api/hint", { mode: e.target.value });
+$("btn-la").onclick = () => post("/api/lookahead", { value: (S.settings.lookahead || 1) === 2 ? 1 : 2 });
 $("btn-mirror").onclick = () => post("/api/mirror",
   { mode: S.settings.mirror === "concurrent" ? "sequential" : "concurrent" });
 $("btn-kill").onclick = () => post("/api/predictor", { action: "kill" });

@@ -103,6 +103,9 @@ platform:
     image: {repository: skypiea/predictor, tag: ""}   # "" = not deployed
     profile: support
     coldStartYaml: ""
+    # Live console only: decide-config overrides for the real predictor (lookahead 1|2).
+    # Empty = the bundle's own policy (every result).
+    decideOverrides: {}
     resources:
       requests: {cpu: 50m, memory: 96Mi}
       limits: {cpu: 500m, memory: 192Mi}

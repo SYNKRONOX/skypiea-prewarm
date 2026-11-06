@@ -16,6 +16,8 @@
     <span class="badge" id="b-profile">profile</span>
     <span class="badge" id="b-mirror">mirror</span>
     <span class="badge" id="b-hint">hint</span>
+    <span class="badge" id="b-la">lookahead</span>
+    <span class="badge" id="b-map" hidden>console mapping</span>
     <span class="badge" id="b-auto" hidden>AUTOPILOT</span>
     <span class="badge warn" id="b-busy" hidden></span>
   </div>
@@ -24,12 +26,16 @@
     <label class="sel">Baseline
       <select id="policy"><option value="scale_to_zero">scale-to-zero</option>
         <option value="keep_alive_30">keep-alive 30 s</option></select></label>
-    <button id="btn-hint" class="toggle" title="Turn-start prewarm hint (predictive stack)">Hint: off</button>
+    <label class="sel" title="Metadata-only turn hint to the predictive gateway: never, when the message is sent, or at the first keystroke of each turn (and when a conversation opens)">Hint
+      <select id="hintmode"><option value="off">off</option><option value="enter">at Enter</option>
+        <option value="typing">at typing start</option></select></label>
+    <button id="btn-la" class="toggle" title="Predictor lookahead: also warm the most likely tool two steps ahead (helm, 30-60 s)">Lookahead: 1</button>
     <button id="btn-mirror" class="toggle" title="Concurrent: both stacks at once. Sequential: predictive first, then baseline (no contention between them)">Mirror: concurrent</button>
     <button id="btn-kill" class="danger" title="Scale the predictor to 0: calls must still succeed (fallback = scale-to-zero)">Kill predictor</button>
     <button id="btn-restart" title="Scale the predictor back to 1">Restart predictor</button>
     <button id="btn-replay" title="Replay the last conversation's calls on both stacks with the recorded gaps (no LLM)">Replay last</button>
     <a class="button" id="btn-export" href="/api/export.csv">Export CSV</a>
+    <a class="button" id="btn-export-turns" href="/api/export_turns.csv">Turns CSV</a>
     <button id="btn-theme" title="Light / dark">◐</button>
   </div>
 </header>
@@ -59,6 +65,8 @@
     <div class="timeline" id="tl-pred"></div>
     <h3>Pods <small>(controller state, polled every 0.25 s)</small></h3>
     <div class="grid" id="grid-pred"></div>
+    <h3>Turns <small>(lead time = hint to Enter; first call per turn)</small></h3>
+    <div id="turns"></div>
     <h3>Predictor <small id="pred-health"></small></h3>
     <div id="predictor"></div>
   </section>

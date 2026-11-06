@@ -37,7 +37,7 @@ from starlette.staticfiles import StaticFiles
 
 from agent.tasks import get as get_task
 from agent.tasks.live import PROFILE_LABELS, SCRIPTS
-from console.engine import Conversation, pricing, replay_plan, to_csv, totals
+from console.engine import TURN_FIELDS, Conversation, pricing, replay_plan, to_csv, totals
 from console.poller import Poller
 from console.stacks import BASE, BASELINE_POLICIES, PRED, StackClient, kubectl
 
@@ -46,6 +46,13 @@ STATIC = Path(__file__).resolve().parent / "static"
 EXPORTS = ROOT / ".live" / "exports"
 DEMOS = {"airline": "support", "codefix": "coding"}
 DRAIN_TIMEOUT_S = 180
+# Autopilot typing model (an ASSUMPTION, not a measurement): the scripted customer "types"
+# each message at 200 characters per minute (about 40 words per minute) before it is sent,
+# in EVERY hint mode, so cells differ only in when the hint fires. 0 = send at once.
+AUTOPILOT_CPM = int(os.environ.get("CONSOLE_AUTOPILOT_CPM", "200"))
+# An abandoned typing hint is charged the idle pod-seconds of the servers it warmed over this
+# window after the hint (TTL 30 s + 5 s purge + 5 s dwell).
+ABANDON_WINDOW_S = 40.0
 
 
 class NoCacheStatic(StaticFiles):
@@ -82,9 +89,13 @@ class Console:
         self.poller = Poller(self.stacks, self.hub.publish, self.model_health)
         self.start_poller = start_poller
         self.mcp_factory = mcp_factory
-        self.settings = {"mirror": "concurrent", "hint": False,
+        # hint_mode: off | enter (hint when the message is sent) | typing (first keystroke
+        # of each turn, and when a conversation opens). "hint" mirrors it for old clients.
+        self.settings = {"mirror": "concurrent", "hint": False, "hint_mode": "off",
                          "baseline_policy": "scale_to_zero", "demo": "airline",
-                         "autopilot": False, "autopilot_stopping": False, "busy": None}
+                         "autopilot": False, "autopilot_stopping": False, "busy": None,
+                         "lookahead": 1, "console_map": None,
+                         "autopilot_cpm": AUTOPILOT_CPM}
         self.conv: Conversation | None = None
         self.previous: Conversation | None = None
         self.tasks: set[asyncio.Task] = set()
@@ -130,31 +141,88 @@ class Console:
                          "tools": task.tool_names, "script": SCRIPTS[self.settings["demo"]]},
                 "llm_model": getattr(self.llm, "model", "?"),
                 "pricing": pricing(),
+                "console_map_file": "configs/live/console_tool_map.yaml",
                 "conversation": None if conv is None else {
                     "id": conv.id, "turn": conv.turn, "calls": conv.calls,
+                    "turns": conv.turns, "abandoned": conv.abandoned,
                     "totals": totals(conv.calls, conv.idle_delta(), pricing())},
                 "last": self.hub.last}
 
     async def publish_settings(self) -> None:
         await self.hub.publish({"type": "settings", "settings": self.settings})
 
+    def task_name(self) -> str:
+        d = self.settings["demo"]
+        return "airline_cm" if d == "airline" and self.settings.get("console_map") else d
+
     def new_conversation(self) -> Conversation:
         if self.conv is not None:
+            pend = self.conv.typing_cancelled()       # typed but never sent: abandoned
+            if pend and pend["turn"] > self.conv.turn:
+                self.spawn(self.measure_abandoned(self.conv, pend))
             self.previous = self.conv
-        self.conv = Conversation(get_task(self.settings["demo"]), self.llm,
+        self.conv = Conversation(get_task(self.task_name()), self.llm,
                                  self.stacks, self.poller, self.hub.publish, self.settings,
                                  mcp_factory=self.mcp_factory)
+        try:
+            asyncio.get_running_loop()
+            self.spawn(self.conv.open_hint())
+        except RuntimeError:
+            pass
         return self.conv
+
+    def servers_of(self, classes: list[str]) -> list[str]:
+        import yaml as _y
+
+        from tools.common.toolmap import apply_overrides, parse
+        cfg = _y.safe_load((ROOT / "tools" / "tool_map.yaml").read_text())
+        tm = parse(apply_overrides(cfg, self.settings.get("console_map") or {}))
+        return sorted({tm.server_for(c) or tm.fallback for c in classes})
+
+    async def measure_abandoned(self, conv: Conversation, pend: dict[str, Any]) -> None:
+        """Idle pod-seconds that an abandoned typing hint caused on the PREDICTIVE stack: the
+        servers its decision warmed, from the hint until ABANDON_WINDOW_S after it (controller
+        counter skypiea_pod_seconds_idle_total, read every 2 s). Other idle pods of the same
+        servers in that window are included, so this is an upper bound."""
+        sess = await self.stacks["pred"].session(pend["session"])
+        dec = next((d for d in (sess or {}).get("decisions", [])
+                    if d.get("trigger") == "turn_start" and d.get("turn") == pend["turn"]
+                    and d.get("outcome") == "ok"), None)
+        warmed = sorted({d["tool_class"] for d in (dec or {}).get("decisions", [])
+                         if d.get("warm") and d.get("copies", 0) > 0})
+        servers = self.servers_of(warmed) if warmed else []
+        idle0 = {s: self.poller.idle.get("pred", {}).get(s, 0.0) for s in servers}
+        wait = pend["hint_t"] + ABANDON_WINDOW_S - time.monotonic()
+        if wait > 0:
+            await asyncio.sleep(wait)
+        idle = sum(max(0.0, self.poller.idle.get("pred", {}).get(s, 0.0) - idle0[s])
+                   for s in servers)
+        row = {"conversation": conv.id, "turn": pend["turn"], "warmed": warmed,
+               "servers": servers, "idle_pod_s": round(idle, 1),
+               "window_s": ABANDON_WINDOW_S, "note": "upper bound (other idle pods of the "
+                                                     "same servers count too)"}
+        conv.abandoned.append(row)
+        await self.hub.publish({"type": "abandoned", "abandoned": row})
 
     async def busy(self, what: str | None) -> None:
         self.settings["busy"] = what
         await self.publish_settings()
 
     # ---------------- actions ----------------
-    async def chat(self, text: str, source: str = "presenter") -> None:
+    async def chat(self, text: str, source: str = "presenter",
+                   typing_ms: float | None = None) -> None:
         conv = self.conv or self.new_conversation()
         await self.hub.publish({"type": "conversation", "id": conv.id})
-        await conv.user_turn(text, source)
+        await conv.user_turn(text, source, typing_ms)
+
+    async def typing(self, event: str) -> None:
+        conv = self.conv or self.new_conversation()
+        if event == "start":
+            await conv.typing_started()
+        elif event == "cancel":
+            pend = conv.typing_cancelled()
+            if pend:
+                self.spawn(self.measure_abandoned(conv, pend))
 
     async def autopilot(self, turns: int | None = None) -> None:
         """Play the prepared script as the human side (the LLM stays live). `autopilot` stays
@@ -163,10 +231,16 @@ class Console:
         self.settings.update(autopilot=True, autopilot_stopping=False)
         await self.publish_settings()
         try:
+            cpm = self.settings.get("autopilot_cpm") or 0
             for i, msg in enumerate(SCRIPTS[self.settings["demo"]]):
                 if self.settings["autopilot_stopping"] or (turns is not None and i >= turns):
                     break
-                await self.chat(msg, "autopilot")
+                typing_ms = None
+                if cpm > 0:      # the declared typing model (same in every hint mode)
+                    await self.typing("start")
+                    typing_ms = 60_000.0 * len(msg) / cpm
+                    await asyncio.sleep(typing_ms / 1000.0)
+                await self.chat(msg, "autopilot", typing_ms)
         finally:
             self.settings.update(autopilot=False, autopilot_stopping=False)
             await self.publish_settings()
@@ -258,14 +332,48 @@ class Console:
         finally:
             await self.busy(None)
 
-    async def export(self) -> tuple[str, str]:
+    async def export(self, what: str = "calls") -> tuple[str, str]:
         conv = self.conv if (self.conv and self.conv.calls) else self.previous
-        calls = conv.calls if conv else []
         EXPORTS.mkdir(parents=True, exist_ok=True)
-        name = f"console_{time.strftime('%Y%m%dT%H%M%S')}_{conv.id if conv else 'empty'}.csv"
-        text = to_csv(calls)
+        cid = conv.id if conv else "empty"
+        if what == "turns":
+            name = f"console_{time.strftime('%Y%m%dT%H%M%S')}_{cid}_turns.csv"
+            text = to_csv(conv.turns if conv else [], TURN_FIELDS)
+        else:
+            name = f"console_{time.strftime('%Y%m%dT%H%M%S')}_{cid}.csv"
+            text = to_csv(conv.calls if conv else [])
         (EXPORTS / name).write_text(text)
         return name, text
+
+    async def detect(self) -> None:
+        """What the stacks are running: predictor lookahead (model /healthz) and the console
+        tool mapping (gateway /healthz class_overrides)."""
+        h = await self.model_health()
+        self.settings["lookahead"] = int(h.get("lookahead", 1)) if h.get("status") == "ok" \
+            else self.settings.get("lookahead", 1)
+        try:
+            g = (await self.stacks["pred"].http.get(f"{PRED.gateway}/healthz")).json()
+            self.settings["console_map"] = g.get("class_overrides") or None
+        except Exception:  # noqa: BLE001
+            pass
+
+    async def set_lookahead(self, value: int) -> None:
+        await self.busy(f"predictor lookahead -> {value} (helm, about 30-60 s)")
+        try:
+            p = await asyncio.to_thread(
+                subprocess.run, [str(ROOT / "demo" / "live_stacks.sh"), "lookahead", str(value)],
+                capture_output=True, text=True, timeout=900)
+            if p.returncode != 0:
+                await self.status(f"lookahead switch FAILED: {(p.stdout + p.stderr)[-200:]}",
+                                  "error")
+                return
+            await self.detect()
+            self.new_conversation()
+            await self.hub.publish({"type": "reset", "conversation": self.conv.id,
+                                    "drained": None})
+            await self.status(f"predictor lookahead {self.settings['lookahead']}")
+        finally:
+            await self.busy(None)
 
 
 def make_app(console: Console) -> Starlette:
@@ -305,12 +413,16 @@ def make_app(console: Console) -> Starlette:
             return {}
 
     async def chat(request: Request) -> Response:
-        text = str((await body(request)).get("text", "")).strip()
+        d = await body(request)
+        text = str(d.get("text", "")).strip()
         if not text:
             return JSONResponse({"error": "empty message"}, status_code=400)
         if c.conv is not None and c.conv.lock.locked():
             return JSONResponse({"error": "the agent is still working"}, status_code=409)
-        c.spawn(c.chat(text))
+        tm = d.get("typing_ms")
+        tm = float(tm) if isinstance(tm, (int, float)) and not isinstance(tm, bool) and \
+            0 <= tm < 3_600_000 else None
+        c.spawn(c.chat(text, "presenter", tm))
         return JSONResponse({"accepted": True}, status_code=202)
 
     async def autopilot(request: Request) -> Response:
@@ -328,7 +440,7 @@ def make_app(console: Console) -> Starlette:
     async def action(request: Request) -> Response:
         name = request.path_params["name"]
         d = await body(request)
-        if c.settings["busy"] and name not in ("hint", "mirror"):
+        if c.settings["busy"] and name not in ("hint", "mirror", "typing", "cpm"):
             return JSONResponse({"error": f"busy: {c.settings['busy']}"}, status_code=409)
         if name == "reset":
             c.spawn(c.reset())
@@ -340,7 +452,26 @@ def make_app(console: Console) -> Starlette:
                 return JSONResponse({"error": f"key: {sorted(BASELINE_POLICIES)}"}, 400)
             await c.set_policy(key)
         elif name == "hint":
-            c.settings["hint"] = bool(d.get("on"))
+            mode = d.get("mode") or ("enter" if d.get("on") else "off")
+            if mode not in ("off", "enter", "typing"):
+                return JSONResponse({"error": "mode: off|enter|typing"}, status_code=400)
+            c.settings.update(hint_mode=mode, hint=mode != "off")
+            await c.publish_settings()
+            if mode == "typing" and c.conv is not None:
+                c.spawn(c.conv.open_hint())
+        elif name == "typing":
+            if d.get("event") not in ("start", "cancel"):
+                return JSONResponse({"error": "event: start|cancel"}, status_code=400)
+            await c.typing(d["event"])
+        elif name == "lookahead":
+            if d.get("value") not in (1, 2):
+                return JSONResponse({"error": "value: 1|2"}, status_code=400)
+            c.spawn(c.set_lookahead(d["value"]))
+        elif name == "cpm":
+            v = d.get("value")
+            if not isinstance(v, int) or isinstance(v, bool) or not 0 <= v <= 2000:
+                return JSONResponse({"error": "value: chars per minute, 0-2000"}, 400)
+            c.settings["autopilot_cpm"] = v
             await c.publish_settings()
         elif name == "mirror":
             if d.get("mode") not in ("concurrent", "sequential"):
@@ -359,8 +490,9 @@ def make_app(console: Console) -> Starlette:
             return JSONResponse({"error": "unknown action"}, status_code=404)
         return JSONResponse({"ok": True, "settings": c.settings}, status_code=202)
 
-    async def export(_: Request) -> Response:
-        name, text = await c.export()
+    async def export(request: Request) -> Response:
+        name, text = await c.export("turns" if request.url.path.endswith("turns.csv")
+                                    else "calls")
         return PlainTextResponse(text, media_type="text/csv", headers={
             "Content-Disposition": f'attachment; filename="{name}"'})
 
@@ -376,6 +508,7 @@ def make_app(console: Console) -> Starlette:
         for demo, prof in DEMOS.items():
             if h.get("profile") == prof:
                 c.settings["demo"] = demo
+        await c.detect()
         c.new_conversation()
 
     @contextlib.asynccontextmanager
@@ -389,7 +522,7 @@ def make_app(console: Console) -> Starlette:
         Route("/", index), Route("/events", events), Route("/api/state", state),
         Route("/api/chat", chat, methods=["POST"]),
         Route("/api/autopilot", autopilot, methods=["POST"]),
-        Route("/api/export.csv", export),
+        Route("/api/export.csv", export), Route("/api/export_turns.csv", export),
         Route("/api/{name}", action, methods=["POST"]),
         Mount("/static", NoCacheStatic(directory=STATIC)),
     ], lifespan=lifespan)
