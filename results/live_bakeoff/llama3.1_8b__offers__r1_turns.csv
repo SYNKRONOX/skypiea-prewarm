@@ -1,0 +1,5 @@
+conversation,turn,source,hint_mode,hint_sources,lead_ms,typing_ms,lookahead,console_map,first_tool,calls,base_first_wall_ms,base_first_cold,pred_first_wall_ms,pred_first_cold,pred_first_predicted,pred_first_warm_source,pred_first_warm,truth_claims,truth_verdict,truth_badge,truth_note_sent,truth_corrected,truth_price_verdict,truth_prices_unsourced,llm_model
+475123991322,1,autopilot,off,,,14100.0,1,True,find_customer,1,2025.9,True,3031.0,True,False,,False,,no_claim,,False,,none,,llama3.1:8b
+475123991322,2,autopilot,off,,,23400.0,1,True,list_offers,1,2599.9,True,1593.7,True,False,,False,,no_claim,,False,,sourced,,llama3.1:8b
+475123991322,3,autopilot,off,,,16500.0,1,True,apply_promo,1,2405.3,True,2412.8,True,False,,False,,no_claim,,False,,none,,llama3.1:8b
+475123991322,4,autopilot,off,,,5700.0,1,True,transfer_to_human,1,3300.5,True,3296.0,True,False,,False,,no_claim,,False,,none,,llama3.1:8b

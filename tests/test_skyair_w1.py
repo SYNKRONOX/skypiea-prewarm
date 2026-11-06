@@ -225,3 +225,25 @@ def test_report_metrics_and_scenario_check() -> None:
     assert r["invented_prices"] == 1 and r["llm_model"] == "m1" and r["llm_replies"] == 4
     assert scenario_done("failed_verification", conv.backend, conv.writes, conv.calls) is False
     assert "| m1 | 1 | 1 / 1 |" in table([{**r, "rep": 1}])
+
+
+def test_a_wrong_code_the_customer_typed_is_not_counted_as_invented() -> None:
+    pytest.importorskip("starlette")
+    from agent.tasks import get
+    from console.bakeoff import report
+    from console.engine import Conversation
+    from console.llm_stream import ScriptedStreamingLLM
+    from tests.test_console import FakeGW, FakeStack, NullPoller, factory
+
+    gws = {"base": FakeGW("base"), "pred": FakeGW("pred")}
+
+    async def publish(ev):
+        pass
+    llm = ScriptedStreamingLLM([[("verify_customer", {"booking_code": "ZZZZZZ"})]])
+    conv = Conversation(get("skyair"), llm, {"base": FakeStack("base"),
+                                             "pred": FakeStack("pred")}, NullPoller(),
+                        publish, {"mirror": "concurrent", "hint_mode": "off",
+                                  "baseline_policy": "scale_to_zero"}, mcp_factory=factory(gws))
+    asyncio.run(conv.user_turn("My booking code is ZZZZZZ."))
+    r = report(conv, "failed_verification")
+    assert r["invented_codes"] == 0 and r["unknown_codes_from_customer"] == 1

@@ -52,7 +52,7 @@ CSV_FIELDS = ["conversation", "turn", "reply", "pos_in_reply", "replay", "llm_mo
               "think_ms", "tool_call_from_text", "tool", "tool_class", "server", "mirror_mode",
               "hint", "hint_mode", "lookahead", "console_map", "note",
               "baseline_policy", "profile", "results_match", "pred_warm_reason", "result_error",
-              "arg_code_known"] + [
+              "arg_code_known", "arg_code_from_user"] + [
     f"{s}_{f}" for s in ("base", "pred") for f in (
         "gap_ms", "wall_ms", "added_ms", "held_ms", "hold_late_ms", "cold", "predicted",
         "warm_source", "ok",
@@ -443,6 +443,9 @@ class Conversation:
             code = args.get("booking_code")
             if code:     # a code the model sent that the database never had = invented
                 rec["arg_code_known"] = str(code).strip().upper() in self.backend.bookings
+                said = " ".join(m.get("content") or "" for m in self.messages
+                                if m.get("role") == "user").upper()
+                rec["arg_code_from_user"] = str(code).strip().upper() in said
             result = self.backend.call(tc.name, args)
             if isinstance(result, dict) and result.get("error"):
                 rec["result_error"] = str(result["error"])[:40]     # an error code only

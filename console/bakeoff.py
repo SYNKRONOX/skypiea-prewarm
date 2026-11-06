@@ -61,7 +61,12 @@ def report(conv: Any, scenario: str | None) -> dict[str, Any]:
         "first_try_valid": round(sum(map(valid, first)) / len(first), 3) if first else None,
         "calls_valid": round(sum(map(valid, calls)) / len(calls), 3) if calls else None,
         "errors": sorted({c["result_error"] for c in calls if c.get("result_error")}),
-        "invented_codes": sum(1 for c in calls if c.get("arg_code_known") is False),
+        # a code that never existed AND the customer never typed (W1: ZZZZZZ in
+        # failed_verification is the customer's own wrong code, not an invention)
+        "invented_codes": sum(1 for c in calls if c.get("arg_code_known") is False
+                              and not c.get("arg_code_from_user")),
+        "unknown_codes_from_customer": sum(1 for c in calls if c.get("arg_code_known") is False
+                                           and c.get("arg_code_from_user")),
         "invented_prices": sum(len(t.get("prices_unsourced", [])) for t in truth),
         "truth_badges": sum(len(t.get("badges", [])) for t in truth),
         "not_done_badges": sum(1 for t in truth if t.get("verdict") == "not_done"),
