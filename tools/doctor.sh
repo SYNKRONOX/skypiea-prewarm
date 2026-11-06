@@ -111,8 +111,11 @@ if need demo; then
   reg_ours=0
   if has docker && docker inspect -f '{{.State.Running}}' "$REG_NAME" 2>/dev/null | grep -q true; then reg_ours=1; fi
   if port_busy "$REG_PORT"; then
-    if [ $reg_ours = 1 ]; then ok ":$REG_PORT registry $REG_NAME (ours, reused)"; else
-      fail ":$REG_PORT is used by another program (needed for the kind registry)" "stop it, or use another port: REG_PORT=5002 KIND_REG=localhost:5002 make demo"; fi
+    if [ $reg_ours = 1 ]; then ok ":$REG_PORT registry $REG_NAME (ours, reused)"
+    elif ! has docker || ! docker info >/dev/null 2>&1; then
+      warn ":$REG_PORT is in use (cannot tell by whom while Docker is not available)"
+    else
+      fail ":$REG_PORT is used by another program (needed for the kind registry)" "stop it, or use a second registry: REG_PORT=5002 REG_NAME=kind-registry-2 make demo"; fi
   else ok ":$REG_PORT free (registry)"; fi
   if has kind && kind get clusters 2>/dev/null | grep -qx "$CLUSTER"; then
     ok "kind cluster '$CLUSTER' exists (reused; make clean-cluster removes it)"
@@ -139,12 +142,18 @@ if need live; then
   else
     warn "live ports in use:$busy" "stop the program using them (ss -ltnp | grep -E ':(8090|3001|18180|18280) '); make live needs these ports"
   fi
-  if ls -d models/lgbm-support-* >/dev/null 2>&1; then ok "predictor bundles in models/"
-  else warn "no predictor bundles in models/" "make fetch-models (README, Tier 2); make live needs them"; fi
+  bd="${BUNDLES_DIR:-models}"
+  if [ -f "$bd/lgbm-support-aabdfd2/MANIFEST.json" ] && [ -f "$bd/lgbm-coding-af00023/MANIFEST.json" ] \
+     && [ -f "$bd/lgbm-prd-a7642d0/MANIFEST.json" ]; then ok "predictor bundles in $bd/"
+  elif [ -n "${PRED_IMAGE_TAG:-}" ]; then ok "no bundles; PRED_IMAGE_TAG=$PRED_IMAGE_TAG given"
+  elif has docker && docker image inspect skypiea/predictor:af000231bc7b >/dev/null 2>&1; then
+    ok "no bundles; the shipped predictor image skypiea/predictor:af000231bc7b is in Docker"
+  else fail "the predictor bundles are not in $bd/ (make live needs them)" \
+       "make fetch-models (README, Tier 2). If it says the release is not available, Tier 2 cannot run from a fresh clone (README, Known limitations)"; fi
   if has curl && curl -sf -m 3 "${AGENT_BASE_URL%/}/models" >/dev/null 2>&1; then
     ok "LLM endpoint ${AGENT_BASE_URL%/}/models reachable"
   else
-    warn "no LLM at ${AGENT_BASE_URL%/} (optional)" "install Ollama (https://ollama.com) and: ollama pull llama3.1:8b; without it use the scripted LLM (README, Tier 2)"
+    warn "no LLM at ${AGENT_BASE_URL%/} (optional)" "install Ollama (https://ollama.com) and: ollama pull llama3.1:8b. The console needs an LLM; make agent-demo works without one (scripted LLM, README Tier 1)"
   fi
 fi
 

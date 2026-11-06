@@ -109,3 +109,14 @@ def test_makefile_has_doctor_target():
     out = subprocess.run(["make", "-n", "doctor"], cwd=ROOT, capture_output=True, text=True,
                          env={**os.environ})
     assert "tools/doctor.sh" in out.stdout
+
+
+def test_live_without_bundles_fails_with_fetch_hint(tmp_path):
+    docker = ('case "$1" in info) case "$*" in *MemTotal*) echo 16000000000;; esac; exit 0;; '
+              'version) echo 29.9.2;; inspect|image) exit 1;; esac')
+    r = _run(tmp_path, "live", {**PY_OK, **K8S_OK, "docker": docker},
+             {"DOCTOR_MIN_DISK_GB": "0", "PF_BASE": "38080", "GRAFANA_PORT": "38090",
+              "REG_PORT": "38099", "CONSOLE_PORT": "38091"})
+    assert r.returncode == 1
+    assert "predictor bundles are not in models/" in r.stdout and "make fetch-models" in r.stdout
+    assert "console needs an LLM" in r.stdout
