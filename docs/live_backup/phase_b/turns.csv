@@ -1,0 +1,6 @@
+conversation,turn,source,hint_mode,hint_sources,lead_ms,typing_ms,lookahead,console_map,first_tool,calls,base_first_wall_ms,base_first_cold,pred_first_wall_ms,pred_first_cold,pred_first_predicted,pred_first_warm_source,pred_first_warm,truth_claims,truth_verdict,truth_badge,truth_note_sent,truth_corrected
+d025b1e56c11,1,autopilot,typing,open+typing+enter,15778.3,13800.0,1,True,find_customer,1,2213.2,True,37.6,False,False,,True,,no_claim,,False,
+d025b1e56c11,2,autopilot,typing,typing+enter,6605.1,6600.0,1,True,find_customer,1,1354.0,True,33.2,False,False,,True,,no_claim,,False,
+d025b1e56c11,3,autopilot,typing,typing+enter,19504.8,19500.0,1,True,verify_customer,1,1996.9,True,35.3,False,False,,True,,no_claim,,False,
+d025b1e56c11,4,autopilot,typing,typing+enter,24305.3,24300.0,1,True,search_flights,2,2176.5,True,2634.6,True,False,,False,,no_claim,,False,
+d025b1e56c11,5,autopilot,typing,typing+enter,5704.5,5700.0,1,True,transfer_to_human,1,3402.9,True,3403.5,True,False,,False,change,not_done,Not done: the booking was not changed,True,
