@@ -35,6 +35,10 @@ The console opens on Skypiea Air with an empty conversation and llama3.1:8b (ove
 
 ## What is mock and what is real
 
+Every number and element, typed as measured / estimated / trained offline / mocked /
+scripted / live, with a 2-minute self-check and the honest answers to the usual questions:
+[`MEASURED_VS_SCRIPTED.md`](MEASURED_VS_SCRIPTED.md).
+
 | Part | Real or mock |
 |---|---|
 | Tool containers (16 MCP servers per stack), their cold starts, the gateways, the controllers | **Real**, on kind. Every tool call is sent through both gateways and waits for a real pod. |
@@ -42,7 +46,7 @@ The console opens on Skypiea Air with an empty conversation and llama3.1:8b (ove
 | The LLM | **Real**, local (Ollama): llama3.1:8b by default, qwen2.5:7b selectable. |
 | Skypiea Air customers, bookings, flights, fares, offers, seats | **Mock** (fictional, `agent/skyair/`). Writes persist for the conversation; Reset restores the database. New customers and booking codes made in a conversation are fictional and live only in it. |
 | The `sortkit` repository and its tests | **Mock** (`agent/devrepo/sortkit.json`). `run_tests` is a **simulated test runner**: it parses the files and evaluates literal asserts against its own reference behaviour; **no code is executed**, least of all code the model wrote. |
-| Customer lines in Autopilot / Story mode | **Scripted** (prepared text); the model's replies, tool calls and all timings are live. The scripted customer "types" at 200 characters a minute (an assumption). |
+| Customer lines in Auto-play / Scenarios ("Scripted customer · turn N"; typed lines say "You") | **Scripted** (prepared text); the model's replies, tool calls and all timings are live. The scripted customer "types" at 200 characters a minute (an assumption). |
 | What the tool pods receive | Timing calls only: the tool class and no customer or repository data. The answer the model sees comes from the mock in the console. |
 
 ## What is on the screen
@@ -149,17 +153,40 @@ until `_merge` keeps `right[j:]` (or loops over `right`) after its main loop. An
 assert is "not evaluated" (never a pass); a test with no assert fails; a syntax error is a
 collection error.
 
-## Story mode
+## Scenarios (Auto-play)
 
-Each **Act** button resets, then sends prepared lines to the **live** model one by one (the
-autopilot, with its typing model). Nothing is pre-recorded.
+Each **Scenario** button resets, then sends prepared lines to the **live** model one by one
+(Auto-play, with its typing model). Nothing is pre-recorded. In the chat, these lines are
+labelled "Scripted customer · turn N"; lines you type are labelled "You". (In the code and
+API they are still "story acts": `POST /api/story {"act": n}`, files `story_*`.)
 
-| Demo | Act | Lines (customer side) |
+| Demo | Scenario | Lines (customer side) |
 |---|---|---|
-| Skypiea Air | 1: a new customer books a trip | new customer Nova Quill, SKA → SKE on 2026-12-07, Saver, confirm, add a bag |
-| Skypiea Air | 2: change the schedule | Tara Patel (two active bookings; the customer names 5TGTBP), later flight on the same route, confirm (truth check visible) |
-| Skypiea Air | 3: kill the predictor mid-conversation | Dev Singh (one active booking: Skye may leave the code out); the predictor is scaled to 0 after turn 1 (bag, offers) and restarted when the act ends |
-| Code fix | Act: fix the failing merge_sort test | fix and run the tests, which files changed, then an out-of-repository question |
+| Skypiea Air | New customer books a trip | new customer Nova Quill, SKA → SKE on 2026-12-07, Saver, confirm, add a bag |
+| Skypiea Air | Change a booking | Tara Patel (two active bookings; the customer names 5TGTBP), later flight on the same route, confirm (truth check visible) |
+| Skypiea Air | Cancel and refund | Asha Reddy cancels S4Z64E (a refundable fare) and asks for the refund; the predictor is scaled to 0 after turn 1 and restarted when the scenario ends, so the later calls run without prediction |
+| Code fix | Fix the failing merge_sort test | fix and run the tests, which files changed, then an out-of-repository question |
+
+Recorded runs before the W1-night rename (`results/live_stories/`) used Act 3 = Dev Singh, bag
+and offers; they are kept as they were.
+
+## Watch the pods (`make watch-pods`)
+
+```bash
+make -f Makefile -f mk/console.mk watch-pods     # until mk/console.mk is included by the Makefile
+```
+
+Prints every pod event of `skypiea-base` (Normal) and `skypiea-pred` (Skypiea) with a UTC
+timestamp, until Ctrl-C (read-only; `LIVE_KIND_CTX` overrides the kubectl context).
+
+**What you should see:** at the start only the platform pods (gateway, controller, predictor,
+model, Prometheus, Grafana). When Skye calls a tool, a tool pod (e.g. `travel-booking-...`) is
+ADDED in both namespaces. On Normal it appears only after the call arrived, and the call waits
+for it to become READY true. On Skypiea it often appears a second or two earlier, while the
+LLM is still thinking, because the predictor asked for it; then the call finds it ready. After
+about 30 s without use (TTL + 5 s) the pods are DELETED again, Skypiea's usually later than
+Normal's (the idle cost). With the predictor killed, Skypiea's pods appear only on demand,
+like Normal's.
 
 ## Model bake-off
 

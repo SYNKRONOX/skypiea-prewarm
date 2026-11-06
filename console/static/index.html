@@ -32,7 +32,7 @@
     <button id="btn-kill" class="danger" title="Scale the predictor to 0: calls must still succeed (fallback = scale-to-zero)">Kill predictor</button>
     <button id="btn-restart" title="Scale the predictor back to 1">Restart predictor</button>
     <span class="badge warn" id="b-busy" hidden></span>
-    <span class="badge" id="b-auto" hidden>AUTOPILOT</span>
+    <span class="badge" id="b-auto" hidden>AUTO-PLAY</span>
     <span class="badge on" id="b-story" hidden></span>
     <span id="health" class="health" title="checking…"><i class="hdot"></i><span id="health-txt">checking</span></span>
     <button id="btn-details" class="ghost" aria-expanded="false">Details</button>
@@ -48,7 +48,7 @@
       <div id="story" class="story-row"></div>
       <details id="persona"><summary>Personas</summary><div id="persona-list" class="cap">loading…</div></details>
     </div>
-    <div id="chat" aria-live="polite"><div class="empty" id="chat-empty">Say hello to Skye, or press Autopilot.<br><span class="cap">Skye is a fictional Skypiea Air assistant (local LLM). The airline data is a mock database.</span></div></div>
+    <div id="chat" aria-live="polite"><div class="empty" id="chat-empty">Say hello to Skye, or press a scenario / Auto-play.<br><span class="cap">Skye is a fictional Skypiea Air assistant (local LLM). The airline data is a mock database.</span></div></div>
     <div id="booking" class="booking">
       <div class="bk-head"><b id="bk-title">Booking record</b> <span class="cap" id="bk-sub">straight from the mock database (fictional)</span></div>
       <div id="bk-body" class="cap">No verified customer yet.</div>
@@ -59,7 +59,7 @@
       <div class="row">
         <button type="submit" id="btn-send" class="primary">Send</button>
         <button type="button" id="btn-reset" title="Wait until both stacks are at 0 pods, then start a new conversation">Reset</button>
-        <button type="button" id="btn-auto" title="Plays a prepared customer; the LLM is live">Autopilot ▶</button>
+        <button type="button" id="btn-auto" title="Plays a scripted customer; the LLM is live">Auto-play ▶</button>
       </div>
     </form>
   </section>
@@ -121,6 +121,7 @@
     </ol>
     <p><b>Cost:</b> starting containers early keeps them warm longer, which costs idle time. The summary shows both the time saved and the extra warm time; time saved can be negative.</p>
     <p><b>Setup:</b> Tool containers are real and cold-start for real; the airline data is a mock database inside the console; the predictor sees only tool names and timing.</p>
+    <p><b>What is measured and what is scripted:</b> every number and element of this page is typed (measured, estimated, trained offline, mocked, scripted, live) in <code>docs/MEASURED_VS_SCRIPTED.md</code>, with a 2-minute self-check.</p>
     <div class="row"><button id="btn-help-close" class="primary">Got it</button></div>
   </div>
 </div>

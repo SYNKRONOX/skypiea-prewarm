@@ -53,9 +53,9 @@ function applySettings(st) {
   $("base-title").textContent = "(baseline: " + (st.baseline_policy === "keep_alive_30" ?
     "keep-alive 30 s" : "scale-to-zero") + ")";
   $("b-auto").hidden = !st.autopilot;
-  $("b-auto").textContent = "Autopilot"; $("b-auto").title = st.autopilot_cpm ? "typing model " + st.autopilot_cpm + " chars/min (assumption)" : "";
+  $("b-auto").textContent = "Auto-play"; $("b-auto").title = st.autopilot_cpm ? "typing model " + st.autopilot_cpm + " chars/min (assumption)" : "";
   $("btn-auto").textContent = st.autopilot ? (st.autopilot_stopping ? "Stopping after this turn…" :
-    "Stop autopilot ■") : "Autopilot ▶";
+    "Stop auto-play ■") : "Auto-play ▶";
   $("b-busy").hidden = !st.busy; $("b-busy").textContent = st.busy || "";
   for (const b of ["btn-reset", "btn-replay", "btn-kill", "btn-restart"]) $(b).disabled = !!st.busy;
   $("demo").value = st.demo;
@@ -72,8 +72,8 @@ function applyDemo(d) {
   $("chat-title").textContent = "Chat with " + AG();
   $("chat-input").placeholder = "Write as the " + HU().toLowerCase() + "… (Enter to send)";
   const box = $("story"); box.textContent = "";
-  if ((d.stories || []).length) box.append(el("span", "cap", "Story:"));
-  for (const a of d.stories || []) { const b = el("button", "story", d.stories.length > 1 ? "Act " + a.act : "Act");
+  if ((d.stories || []).length) box.append(el("span", "cap", "Scenario:"));
+  for (const a of d.stories || []) { const b = el("button", "story", a.title);
     b.title = a.title + " (live model; prepared " + HU().toLowerCase() + " lines)"; b.type = "button";
     b.onclick = () => post("/api/story", { act: a.act }); box.append(b); }
   storyState();
@@ -83,7 +83,7 @@ function applyDemo(d) {
 function storyState() {
   const st = S.settings || {};
   for (const b of document.querySelectorAll("#story button")) b.disabled = !!(st.busy || st.autopilot || st.story);
-  $("b-story").hidden = !st.story; $("b-story").textContent = st.story || "";
+  $("b-story").hidden = !st.story; $("b-story").textContent = st.story ? "Scenario: " + st.story : "";
 }
 
 async function loadModels() {
@@ -449,8 +449,8 @@ function resetView(convId) {
   $("think-list").textContent = ""; $("explain").hidden = true;
   const e = el("div", "empty"); e.id = "chat-empty";
   const code = (S.demo.name || "skyair") === "codefix";
-  e.append(code ? "Ask Dev assistant to work on the sortkit repository, or press a story act." :
-           "Say hello to Skye, or press a story act / Autopilot.", el("br"),
+  e.append(code ? "Ask Dev assistant to work on the sortkit repository, or press a scenario." :
+           "Say hello to Skye, or press a scenario / Auto-play.", el("br"),
            el("span", "cap", code ? "Dev assistant (live LLM) works on a small mock repository; tests run in a simulated test runner (no code is executed)." :
              "Skye is a fictional Skypiea Air assistant (live LLM). The airline data is a mock database."));
   $("chat").append(e); renderBooking({ available: (S.demo.name || "skyair") === "skyair" }, []); renderTicker([]);
@@ -470,7 +470,9 @@ function handle(ev) {
       { const cv = ev.conversation || {}, last = {}, calls = cv.calls || [], chat = cv.chat || [];
         const turns = [...new Set([...chat.map((m) => m.turn), ...calls.map((c) => c.turn)])].sort((a, b) => a - b);
         for (const t of turns) {     // user text, then the turn's tool calls, then Skye's text
-          for (const m of chat.filter((x) => x.turn === t && x.role === "user")) addMsg("user", m.text, HU() + " · turn " + t);
+          const src = ((cv.turns || []).find((x) => x.turn === t) || {}).source;
+          for (const m of chat.filter((x) => x.turn === t && x.role === "user"))
+            addMsg("user", m.text, (src === "autopilot" ? "Scripted " + HU().toLowerCase() : src === "presenter" ? "You" : HU()) + " · turn " + t);
           for (const c of calls.filter((x) => x.turn === t)) onCall(c);
           for (const m of chat.filter((x) => x.turn === t && x.role !== "user")) last[t] = addMsg("agent", m.text, AG());
         }
@@ -500,8 +502,8 @@ function handle(ev) {
       break;
     case "turn_start":
       S.agentEl = null; S.replyEl = null;
-      addMsg("user", ev.text, (ev.source === "autopilot" ? (S.settings.story ? "Story · " + HU().toLowerCase() : "Autopilot " + HU().toLowerCase()) :
-             ev.source === "replay" ? "Replay" : HU()) + " · turn " + ev.turn);
+      addMsg("user", ev.text, (ev.source === "autopilot" ? "Scripted " + HU().toLowerCase() :
+             ev.source === "replay" ? "Replay" : "You") + " · turn " + ev.turn);
       break;
     case "hint":
       pill("hint sent (" + (ev.source || "enter") + "): metadata only", "hint");

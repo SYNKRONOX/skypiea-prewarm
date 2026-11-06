@@ -21,3 +21,16 @@ Each line: what a viewer of the Live Console (or a reader of the docs) sees diff
 | 15 | New personas in the Personas list: "A new customer" (Skypiea Air); suggested tasks (code fix). |
 | 16 | Docs: `docs/LIVE_DEMO.md` rewritten (what is mock vs real, models and the training data of each profile, Skye's behaviour, truth check incl. prices, warm reasons, code-fix demo and simulated runner, story mode, bake-off table, known limits); `docs/DEMO.md` 5-minute and 1-minute presenter scripts around story mode; `docs/VIVA.md` section 3 (demo) updated, incl. FR-6/FR-9 answers. |
 | 17 | Screenshots `docs/img/live_demo_light.png`, `live_demo_dark.png` (re-taken from a live Act 1), new `docs/img/live_demo_codefix.png`; backup set `docs/live_backup/w1/`; results `results/live_bakeoff{,_v2,_v3}/`, `results/live_stories/`, `results/fr6_reload_check.json`. |
+
+## W1 night, Phase A (display strings and docs only)
+
+- Console: "Act 1/2/3" → **Scenario** buttons with real names ("New customer books a trip",
+  "Change a booking", "Cancel and refund"; code fix: "Fix the failing merge_sort test"); the
+  row label "Story:" → "Scenario:"; "Autopilot"/"Story" → **Auto-play**; scripted lines are
+  labelled "Scripted customer · turn N" (code fix: "Scripted developer"), typed lines "You".
+  Scenario 3 is now cancel and refund (Asha Reddy, S4Z64E) with the predictor kill kept.
+  Routes, JSON keys (`act`, `story`, `autopilot`) and file names are unchanged.
+- Hint setting: every change recorded with its sender; a mid-conversation change shows a
+  warning pill (housekeeping).
+- `docs/MEASURED_VS_SCRIPTED.md` (new), linked from `docs/LIVE_DEMO.md` and the "?" help.
+- `make watch-pods` (`mk/console.mk`, `demo/watch_pods.py`), documented in `docs/LIVE_DEMO.md`.

@@ -8,7 +8,9 @@ Started 2026-11-06 23:47 UTC from feat/demo-polish 9ae97a1 (clean). Local models
 
 | Step | State | Commit | Notes |
 |---|---|---|---|
-| Housekeeping | done | (this commit) | hint change audit trail (W1_REPORT 'W1 night'); console restarted from this worktree |
+| Housekeeping | done | 9d90cc3 | hint change audit trail (W1_REPORT 'W1 night'); console restarted from this worktree |
 
-Next: Phase A (display strings, MEASURED_VS_SCRIPTED.md, make watch-pods).
+| Phase A | done | (this commit) | display strings, MEASURED_VS_SCRIPTED.md, make watch-pods; make test 476 passed, ruff clean, check-sizes OK |
+
+Next: branch feat/demo-realism, STEP 1 (scenario suite + before baseline).
 Blockers: none.
