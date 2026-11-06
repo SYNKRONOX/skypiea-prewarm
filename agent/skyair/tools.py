@@ -141,15 +141,26 @@ class Session:
         b, err = self._booking(booking_code)
         if err:
             return err
-        old = old_flight_no or b["flights"][0]
-        new = self.flights.get(str(new_flight_no).strip().upper())
+        old = str(old_flight_no or "").strip().upper()
         if old not in b["flights"]:
-            return {"error": "not_in_booking", "message": f"{old} is not in this booking."}
-        if new is None or new["status"] != "scheduled" or new["seats_left"] < 1:
-            return {"error": "unavailable", "message": "That flight is not available."}
+            if len(b["flights"]) != 1 and old:
+                return {"error": "not_in_booking", "changed": False,
+                        "message": f"{old} is not in this booking; the change was NOT made.",
+                        "booking_flights": [self._flight_view(f) for f in b["flights"]]}
+            old = b["flights"][0]          # one-flight booking: no ambiguity
         o = self.flights[old]
+        new = self.flights.get(str(new_flight_no).strip().upper())
+
+        def alternatives() -> list[dict]:
+            return self.search_flights(o["origin"], o["destination"])["flights"]
+        if new is None or new["status"] != "scheduled" or new["seats_left"] < 1:
+            return {"error": "unavailable", "changed": False, "message": "That flight does not "
+                    "exist or is not available; the change was NOT made. Offer one of these.",
+                    "alternatives": alternatives()}
         if (new["origin"], new["destination"]) != (o["origin"], o["destination"]):
-            return {"error": "wrong_route", "message": "The new flight must fly the same route."}
+            return {"error": "wrong_route", "changed": False, "message": "The new flight must "
+                    "fly the same route; the change was NOT made.",
+                    "alternatives": alternatives()}
         fee = self.db["fare_rules"][b["fare"]]["change_fee"] * len(b["passengers"])
         if not customer_confirmed:
             return {"confirmation_needed": True, "change_fee": fee, "from": self._flight_view(old),

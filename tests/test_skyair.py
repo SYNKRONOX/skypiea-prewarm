@@ -141,3 +141,11 @@ def test_verification_ignores_made_up_ids_but_not_contradictions() -> None:
                      "customer_id"])
     assert not Session().verify_customer(email=p["email"],
                                          booking_code=wrong["booking_code"])["verified"]
+
+
+def test_change_flight_errors_say_not_changed_and_offer_alternatives() -> None:
+    p, s = _persona(), Session()
+    s.verify_customer(email=p["email"])
+    r = s.change_flight(p["booking_code"], "SA1", "SKA123", True)
+    assert r["changed"] is False and "NOT made" in r["message"]
+    assert "alternatives" in r or "booking_flights" in r
