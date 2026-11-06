@@ -1,0 +1,22 @@
+Script started on 2026-11-06 08:51:34+00:00 [COMMAND="make live" <not executed on terminal>]
+PY=.venv/bin/python demo/live_up.sh
+images: tools/platform a5386d4, predictor af000231bc7b
+pre-pulled 16 tool images onto the worker node (every start is a cached start)
+REVISION: 1
+DESCRIPTION: Install complete
+TEST SUITE: None
+deployed skypiea-base (baseline: stub predictor, scale_to_zero)
+REVISION: 1
+DESCRIPTION: Install complete
+TEST SUITE: None
+deployed skypiea-pred (predictive: profile support, turn hint available)
+port-forwards up (127.0.0.1 only): baseline gateway :18180, predictive gateway :18280, Grafana :3001
+
+Skypiea Live Console is up (44 s):
+  Console   http://127.0.0.1:8090                 (open in a browser; projector: zoom 125-150%)
+  Grafana   http://127.0.0.1:3001                 dashboard "Skypiea Live: baseline vs predictive"
+  LLM       llama3.1:8b at http://localhost:11434/v1: reachable
+  Logs      .live/console.log, port-forwards .live/pf/
+Stop everything: make live-clean   (the kind cluster and registry stay; make clean-cluster removes them)
+
+Script done on 2026-11-06 08:52:18+00:00 [COMMAND_EXIT_CODE="0"]

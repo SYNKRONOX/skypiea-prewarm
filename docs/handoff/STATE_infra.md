@@ -146,3 +146,44 @@ Running log, newest last (the master task runs unattended; see docs/handoff/AGEN
   (new cluster, 270 s), agent-demo, demo-failures PASS. README Demo section.
 - FINAL: docs/handoff/AGENT_REPORT.md. Cluster left up (demo bundle prd-demo-25c176b8d6ba,
   gateway serves the model), port-forwards started from ~/skypiea-infra.
+
+## v1.2 Live Console (branch feat/live-console, from feat/agent) — IN PROGRESS
+
+- STEP 1 done (vocabulary): console tasks `airline` (support profile, tau2-bench) and
+  `codefix` (coding profile; manifest source tracelab, policy tuned on TraceLab + Copilot:
+  label says so) in agent/tasks/live.py; every LLM tool maps to a class in the real profile's
+  vocabulary (configs/live/predictor_vocab.json, generated from image af000231bc7b; test
+  tests/test_live_tasks.py). Coverage + abstain table in docs/LIVE_CONSOLE.md. Tools:
+  user_lookup `with_reservations`, travel_booking `detail`/`flight_no` (opt-in; defaults
+  unchanged; image tag changes because tools/ changed).
+- STEP 3b gateway part done: POST /v1/hint behind `platform.gateway.turnHint` /
+  SKYPIEA_TURN_HINT (default off: 404, nothing else changes); contract v1.1 optional
+  `trigger`/`turn` (docs/predictor_contract.md); reason `hint:<ver>`, metrics
+  skypiea_gateway_hints_total / _hint_warms_total, header X-Skypiea-Warm-Source (hint on
+  only). Tests: tests/test_gateway_hint.py, tests/test_service_hint.py.
+- STEP 2 done: demo/live_stacks.sh deploys skypiea-base (stub, scale_to_zero, no monitoring)
+  and skypiea-pred (real predictor af000231bc7b, profile support|coding, turn hint enabled,
+  Prometheus/Grafana over both namespaces, live dashboard). First deploy 2 min 47 s (images
+  a5386d4 built with warm cache). Idle, both stacks: kind control-plane 0.72 GiB, worker
+  1.09 GiB, registry 60 MiB. Hint verified on kind: turn 1 -> support profile -> warm
+  user_lookup (p 0.50); baseline answers 404.
+  NOTE: at 23:02 the kind cluster AND the registry container did not exist any more (all
+  three containers were re-created by deploy/kind/up.sh); cause unknown (not this session).
+  The v1.1 skypiea-tools demo stack is therefore gone; `make demo` recreates it.
+- STEP 3/4 first version: console/ (app, engine, poller, stacks, llm_stream, static UI);
+  mirrored calls (concurrent|sequential), predictive result feeds the LLM, results compared;
+  first live autopilot airline run worked end to end (3 calls each stack, all ok). Found:
+  llama3.1 sometimes writes tool calls as JSON text -> flagged recovery (tool_call_from_text);
+  first starts on a NEW cluster include image pulls -> `live_stacks.sh up` pre-pulls the tool
+  images onto the worker (every start = cached start, as E0 "cached").
+- STEP 7 first pass found a FAIRNESS BUG in the mirror (wait for both stacks -> the predictive
+  stack got the slow baseline's time as lead time). Two runs discarded (kept, marked INVALID,
+  in results/live_console_demo/invalid_wait_for_both_mirror/). Fixed with the gap-matched
+  baseline lane (1fe5fdf), tested. Verification restarts from a new fresh clone.
+- STEP 7 done: fresh clone ~/skypiea-live-fresh2 verified (setup, 389 tests, ruff, sizes,
+  make live 43.5 s, 4 conversations hint off/on, predictor-kill PASS, replay, policy, export,
+  make live-clean). More fixes found and made: lane submit timing (c4c8e9c), record order
+  (d17b6d9), autopilot stop semantics (9c701f9), static no-cache. Runs:
+  results/live_console_demo/ (demo runs, not results). Backup session: docs/live_backup/.
+- FINAL: docs/handoff/LIVE_CONSOLE_REPORT.md. Stacks + console left running from
+  ~/skypiea-infra (`make live`, 2026-11-06), conversation reset.

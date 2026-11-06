@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Skypiea Live Console</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header>
+  <h1>Skypiea Live Console</h1>
+  <div class="badges">
+    <label class="sel">Demo
+      <select id="demo"><option value="airline">Airline support</option>
+        <option value="codefix">Code fix</option></select></label>
+    <span class="badge" id="b-profile">profile</span>
+    <span class="badge" id="b-mirror">mirror</span>
+    <span class="badge" id="b-hint">hint</span>
+    <span class="badge" id="b-auto" hidden>AUTOPILOT</span>
+    <span class="badge warn" id="b-busy" hidden></span>
+  </div>
+  <div class="buttons">
+    <button id="btn-reset" title="Wait until both stacks are at 0 pods, then start a new conversation">Reset to zero</button>
+    <label class="sel">Baseline
+      <select id="policy"><option value="scale_to_zero">scale-to-zero</option>
+        <option value="keep_alive_30">keep-alive 30 s</option></select></label>
+    <button id="btn-hint" class="toggle" title="Turn-start prewarm hint (predictive stack)">Hint: off</button>
+    <button id="btn-mirror" class="toggle" title="Concurrent: both stacks at once. Sequential: predictive first, then baseline (no contention between them)">Mirror: concurrent</button>
+    <button id="btn-kill" class="danger" title="Scale the predictor to 0: calls must still succeed (fallback = scale-to-zero)">Kill predictor</button>
+    <button id="btn-restart" title="Scale the predictor back to 1">Restart predictor</button>
+    <button id="btn-replay" title="Replay the last conversation's calls on both stacks with the recorded gaps (no LLM)">Replay last</button>
+    <a class="button" id="btn-export" href="/api/export.csv">Export CSV</a>
+    <button id="btn-theme" title="Light / dark">◐</button>
+  </div>
+</header>
+<div id="status" class="status">connecting…</div>
+<main>
+  <section id="chat-col">
+    <h2>Conversation <small id="conv-id"></small></h2>
+    <div id="chat"></div>
+    <form id="chat-form">
+      <textarea id="chat-input" rows="2" placeholder="Type as the customer / developer… (Enter to send)"></textarea>
+      <div class="row">
+        <button type="submit" id="btn-send">Send</button>
+        <button type="button" id="btn-auto" title="Plays the prepared script as the human side; the LLM is live">Autopilot ▶</button>
+      </div>
+    </form>
+  </section>
+  <section class="stack" id="col-base">
+    <h2><span class="dot base"></span>Normal <small id="base-title">(baseline)</small></h2>
+    <div class="tiles" id="tiles-base"></div>
+    <div class="timeline" id="tl-base"></div>
+    <h3>Pods <small>(controller state, polled every 0.25 s)</small></h3>
+    <div class="grid" id="grid-base"></div>
+  </section>
+  <section class="stack" id="col-pred">
+    <h2><span class="dot pred"></span>Skypiea <small>(predictive)</small></h2>
+    <div class="tiles" id="tiles-pred"></div>
+    <div class="timeline" id="tl-pred"></div>
+    <h3>Pods <small>(controller state, polled every 0.25 s)</small></h3>
+    <div class="grid" id="grid-pred"></div>
+    <h3>Predictor <small id="pred-health"></small></h3>
+    <div id="predictor"></div>
+  </section>
+</main>
+<footer id="footer"></footer>
+<script src="/static/app.js"></script>
+</body>
+</html>

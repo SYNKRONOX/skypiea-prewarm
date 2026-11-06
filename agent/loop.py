@@ -111,7 +111,7 @@ def run_session(llm: Any, mcp: McpClient, task: Task, index: int, ctx: dict[str,
                 continue
             allowed = task.params(tc.name)
             args = {a: v for a, v in tc.arguments.items() if a in allowed}
-            res, info = mcp.call_tool(tc.name, args)
+            res, info = mcp.call_tool(*task.gateway_call(tc.name, args))
             seq.append(tc.name)
             row.update(ok=info.ok, cold=info.cold, predicted=info.predicted,
                        added_ms=info.added_ms, held_ms=info.held_ms,
