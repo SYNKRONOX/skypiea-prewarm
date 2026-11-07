@@ -52,6 +52,16 @@ def report(conv: Any, scenario: str | None) -> dict[str, Any]:
     final = next((m.get("content") or "" for m in reversed(conv.messages)
                   if m.get("role") == "assistant" and (m.get("content") or "").strip()), "")
     done = scenario_done(scenario, conv.backend, conv.writes, calls) if scenario else None
+    oracle = None
+    if scenario and scenario.startswith("suite:") and conv.backend is not None:
+        from agent.skyair.tools import Session
+        from agent.suite.scenarios import build, judge, snapshot
+        fresh = Session()
+        case = next((x for x in build(fresh) if x.key == scenario[6:]), None)
+        if case is not None:
+            ok, why = judge(case, conv.backend, snapshot(fresh), any(
+                c["tool"] == "transfer_to_human" and not c.get("result_error") for c in calls))
+            done, oracle = ok, why
     from console.engine import pricing, totals
     tot = totals(calls, conv.idle_delta(), pricing())
     return {
@@ -73,7 +83,7 @@ def report(conv: Any, scenario: str | None) -> dict[str, Any]:
         "text_calls": sum(1 for t in conv.think_log if t["from_text"]),
         "handover": any(c["tool"] == "transfer_to_human" for c in calls),
         "writes": [{k: w[k] for k in ("turn", "tool", "outcome")} for w in conv.writes],
-        "completed": done,
+        "completed": done, "oracle": oracle,
         "code_in_reply": "def " in final or "```" in final,
         "hint_modes": sorted({str(t.get("hint_mode")) for t in conv.turns}),
         "hint_changes": list(getattr(conv, "hint_changes", [])),
@@ -125,7 +135,7 @@ def run(models: list[str], scenarios: list[str], reps: int, out: Path, hint: str
                 time.sleep(3)
                 rep_ = c.get("/api/report", params={"scenario": sc}).json()
                 rep_.update(rep=rep, hint=hint, wall_s=round(time.time() - t0, 1))
-                name = f"{model.replace(':', '_')}__{sc}__r{rep}"
+                name = f"{model.replace(':', '_')}__{sc.replace(':', '_')}__r{rep}"
                 (out / f"{name}.json").write_text(json.dumps(rep_, indent=2) + "\n")
                 (out / f"{name}_calls.csv").write_text(c.get("/api/export.csv").text)
                 (out / f"{name}_turns.csv").write_text(c.get("/api/export_turns.csv").text)

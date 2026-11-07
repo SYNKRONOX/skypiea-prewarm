@@ -594,6 +594,17 @@ def make_app(console: Console) -> Starlette:
         b = await body(request)
         turns, scenario = b.get("turns"), b.get("scenario")
         script = None
+        if isinstance(scenario, str) and scenario.startswith("suite:") and \
+                c.settings["demo"] == "skyair":
+            # a case of the scenario suite (agent/suite/scenarios.py), scripted customer
+            from agent.skyair.tools import Session
+            from agent.suite.scenarios import build
+            case = next((x for x in build(Session()) if x.key == scenario[6:]), None)
+            if case is None:
+                return JSONResponse({"error": "unknown suite case"}, status_code=400)
+            c.spawn(c.autopilot(turns, case.turns))
+            return JSONResponse({"autopilot": "started", "scenario": scenario},
+                                status_code=202)
         if scenario is not None:
             from agent.tasks.skye import SCENARIOS
             if c.settings["demo"] != "skyair" or scenario not in SCENARIOS:
