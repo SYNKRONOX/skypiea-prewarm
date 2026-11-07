@@ -22,6 +22,7 @@ is in [`CHANGELOG.md`](../CHANGELOG.md).
 - [`experiments.md`](experiments.md): the experiment table: question, data and output of each experiment (E0, E1, ...).
 - [`benchmark_protocol.md`](benchmark_protocol.md): re-run of the published "Reading the Plan" next-tool protocol on tau-bench, next to our own harness.
 - [`redteam.md`](redteam.md): red-team suite for the predictor service.
+- [`VIVA_QA.md`](VIVA_QA.md): the 25 hardest viva questions with honest answers and their source files.
 - [`VIVA.md`](VIVA.md): viva preparation: pitch, architecture walk-through, demo script, claims with sources, Q&A, slides.
 
 ## Design

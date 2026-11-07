@@ -42,7 +42,8 @@ step 0 doctor-test make --no-print-directory doctor DOCTOR_MODE=test &&
 step 0 setup       make --no-print-directory setup &&
 { step 0 test      make --no-print-directory test
   step 0 lint      make --no-print-directory lint
-  step 0 check-sizes make --no-print-directory check-sizes; }
+  step 0 check-sizes make --no-print-directory check-sizes
+  step 0 check-claims make --no-print-directory check-claims; }
 
 # ---- Tier 1
 if [ "$MODE" = all ]; then
