@@ -9,6 +9,7 @@ import json
 
 import pytest
 
+from agent.skyair import world as W
 from agent.skyair.tools import OFFERS, Session, pristine, seat_for
 from console import truth
 
@@ -30,9 +31,10 @@ def _customers_by_active() -> tuple[dict, dict]:
     return one, many
 
 
-def _scheduled_flight(month: str = "2026-12") -> str:
-    return next(f["flight_no"] for f in pristine()["flights"] if f["status"] == "scheduled"
-                and f["seats_left"] > 0 and f["date"].startswith(month))
+def _scheduled_flight(month: str = "2027-01-2") -> str:
+    return next(f["flight_id"] for f in pristine()["flights"] if f["status"] == "scheduled"
+                and f["seats_left"] > 0 and f["date"].startswith(month)
+                and not f["international"])
 
 
 # ---------------------------------------------------------------- P0 #5
@@ -45,7 +47,8 @@ def test_one_active_booking_is_used_when_the_code_is_missing() -> None:
     assert s.verify_customer(email=one["email"])["verified"]
     assert s.get_booking()["booking_code"] == one["codes"][0]
     q = s.add_baggage(bags=1)
-    assert q["confirmation_needed"] and q["price"] == 35
+    b = s.bookings[one["codes"][0]]
+    assert q["confirmation_needed"] and q["price"] == s.bag_price(b) * len(b["passengers"])
     assert s.add_baggage(bags=1, customer_confirmed=True)["added"] == 1
 
 
@@ -54,10 +57,12 @@ def test_several_active_bookings_ask_which_one_and_wrong_codes_list_valid_ones()
     s = Session()
     s.verify_customer(email=many["email"])
     r = s.cancel_booking(customer_confirmed=True)
-    assert r["error"] == "which_booking" and r["your_bookings"] == many["codes"]
+    assert r["error"] == "which_booking"
+    assert [x.split()[0] for x in r["your_bookings"]] == many["codes"]
     assert all(s.bookings[c]["status"] == "confirmed" for c in many["codes"])   # nothing done
-    r = s.change_flight(booking_code="<booking_code>", new_flight_no="SA999")
-    assert r["error"] == "not_found" and set(many["codes"]) <= set(r["your_bookings"])
+    r = s.change_flight(booking_code="ZZZZZZ", new_flight_no="SKY999")
+    assert r["error"] == "not_found"
+    assert set(many["codes"]) <= {x.split()[0] for x in r["your_bookings"]}
     other = next(b["booking_code"] for b in pristine()["bookings"]
                  if b["customer_id"] != many["customer_id"])
     r = s.get_booking(other)
@@ -73,23 +78,23 @@ def test_sidebar_lists_codes_fare_and_fee_rules_only_after_verification() -> Non
     assert s.sidebar_due
     text = s.sidebar()
     b = s.bookings[one["codes"][0]]
-    assert one["codes"][0] in text and b["fare"] in text and "change fee $" in text
-    assert "Extra checked bag: $35" in text and one["email"] not in text
+    assert one["codes"][0] in text and b["fare"] in text and "change fee INR" in text
+    assert "Extra 15 kg bag: INR 1,800 domestic" in text and one["email"] not in text
 
 
 # ---------------------------------------------------------------- P1 #7 new customer
 def test_new_customer_finds_books_and_manages_a_trip_and_reset_clears_it() -> None:
     s = Session()
     assert s.find_customer("Nova Quill")["found"] == 0
-    assert "new customer" in s.find_customer("Nova Quill")["message"]
+    assert "NEW to Skypiea Air" in s.find_customer("Nova Quill")["message"]
     fno = _scheduled_flight()
     f = s.flights[fno]
     res = s.search_flights(f["origin"], f["destination"], f["date"])
-    row = next(x for x in res["flights"] if x["flight_no"] == fno)
-    assert row["fares"] == {"Saver": f["price"], "Flex": f["price"] + 40,
-                            "Business": 2 * f["price"] + 60}
+    row = next(x for x in res["flights"] if x["flight_id"] == fno)
+    assert row["fares"] == {"Saver": f["price"], "Flex": W.fare_price(f["price"], "Flex"),
+                            "Business": W.fare_price(f["price"], "Business")}
     q = s.book_flight(fno, "Flex", name="Nova Quill", email="nova@example.org")
-    assert q["confirmation_needed"] and q["price"] == f["price"] + 40 and not s.verified
+    assert q["confirmation_needed"] and q["price"] == row["fares"]["Flex"] and not s.verified
     r = s.book_flight(fno, "Flex", name="Nova Quill", email="nova@example.org",
                       customer_confirmed=True)
     assert r["booked"] and r["new_customer"] and s.verified == r["customer_id"]
@@ -100,11 +105,11 @@ def test_new_customer_finds_books_and_manages_a_trip_and_reset_clears_it() -> No
     assert code not in {b["booking_code"] for b in pristine()["bookings"]}
     assert r["flight"]["seat"] == seat_for(code, fno)
     assert s.get_booking()["booking_code"] == code                  # one active booking
-    later = next((x["flight_no"] for x in s.search_flights(f["origin"], f["destination"])
-                  ["flights"] if x["flight_no"] != fno), None)
+    later = next((x["flight_id"] for x in s.search_flights(f["origin"], f["destination"])
+                  ["flights"] if x["flight_id"] != fno), None)
     if later:
         ch = s.change_flight(new_flight_no=later, customer_confirmed=True)
-        assert ch["changed"] and ch["from"]["flight_no"] == fno and ch["to"]["flight_no"] == later
+        assert ch["changed"] and ch["from"]["flight_id"] == fno and ch["to"]["flight_id"] == later
     assert s.add_baggage(bags=1, customer_confirmed=True)["bags"] == 1
     assert s.list_offers()["offers"] == OFFERS
     st = truth.state(s)
@@ -130,11 +135,11 @@ def test_promo_quote_apply_conditions_and_once_per_booking() -> None:
     r = s.book_flight(fno, "Business", name="Nova Quill", email="nova@example.org",
                       customer_confirmed=True)
     paid = r["paid"]
-    assert s.apply_promo(promo_code="BAG35")["applied"] is False        # no bag yet
-    q = s.apply_promo(promo_code="biz25")
-    assert q["confirmation_needed"] and q["discount"] == 25 and q["new_total"] == paid - 25
-    a = s.apply_promo(promo_code="BIZ25", customer_confirmed=True)
-    assert a["applied"] and a["paid"] == paid - 25
+    assert s.apply_promo(promo_code="BAG500")["applied"] is False       # no bag yet
+    q = s.apply_promo(promo_code="biz1500")
+    assert q["confirmation_needed"] and q["discount"] == 1500 and q["new_total"] == paid - 1500
+    a = s.apply_promo(promo_code="BIZ1500", customer_confirmed=True)
+    assert a["applied"] and a["paid"] == paid - 1500
     assert s.apply_promo(promo_code="SKYWINTER10", customer_confirmed=True)["applied"] is False
     assert s.apply_promo(promo_code="FREE100")["error"] == "unknown_promo"
     assert truth.write_outcome("apply_promo", a) == "success"
@@ -150,7 +155,7 @@ def test_amounts(text, want) -> None:
 
 def test_price_check_flags_amounts_no_tool_returned() -> None:
     r = truth.check_prices("The fee is $50 and the bag is $35.", {35.0})
-    assert r["unsourced"] == [50.0] and r["badges"] == ["Not from a tool: $50"]
+    assert r["unsourced"] == [50.0] and r["badges"] == ["Not from a tool: INR 50"]
     assert truth.check_prices("A bag is $35.", {35.0})["verdict"] == "sourced"
     assert truth.check_prices("Happy to help.", set())["verdict"] == "none"
 
@@ -186,8 +191,8 @@ def test_engine_sidebar_vocab_note_and_price_badge() -> None:
     assert offers["tool_class"] == "promo_code_lookup" and offers.get("out_of_vocab")
     assert "no prediction, normal behaviour" in offers["note"]
     t = conv.truth[0]
-    assert t["prices_unsourced"] == [75.0] and "Not from a tool: $75" in t["badges"]
-    assert any("$75" in m and "no tool returned" in m for m in sys_msgs)
+    assert t["prices_unsourced"] == [75.0] and "Not from a tool: INR 75" in t["badges"]
+    assert any("INR 75" in m and "no tool returned" in m for m in sys_msgs)
     asyncio.run(conv.user_turn("ok"))
     assert conv.turns[0]["llm_model"] == conv.llm.model
     csv = to_csv(conv.turns, TURN_FIELDS)
@@ -210,8 +215,10 @@ def test_report_metrics_and_scenario_check() -> None:
         pass
     llm = ScriptedStreamingLLM(
         [[("find_customer", {"name": "Nova Quill"}),
-          ("change_flight", {"booking_code": "QQQQQQ", "new_flight_no": "SA1"}),
-          ("book_flight", {"flight_no": _scheduled_flight(), "name": "Nova Quill",
+          ("change_flight", {"booking_code": "QQQQQQ", "new_flight_no": "SKY101"}),
+          ("search_flights", {"origin": "Bangalore", "destination": "Goa",
+                              "date": "next friday"}),
+          ("book_flight", {"flight_no": "SKY142-15JAN", "name": "Nova Quill",
                            "email": "nova@example.org", "customer_confirmed": True})]],
         answers=["Booked! Your total is $5."], model="m1")
     conv = Conversation(get("skyair"), llm, {"base": FakeStack("base"),
@@ -220,11 +227,20 @@ def test_report_metrics_and_scenario_check() -> None:
                                   "baseline_policy": "scale_to_zero"}, mcp_factory=factory(gws))
     asyncio.run(conv.user_turn(SCENARIOS["new_customer"][0]))
     r = report(conv, "new_customer")
-    assert r["completed"] is True and r["invented_codes"] == 1
-    assert r["first_try_valid"] == round(2 / 3, 3) and "not_verified" in r["errors"]
-    assert r["invented_prices"] == 1 and r["llm_model"] == "m1" and r["llm_replies"] == 4
+    # W1 night guardrails: change_flight is not offered before verification (steered), and
+    # a booking with customer_confirmed=true but no customer yes runs as a quote
+    assert r["completed"] is False and r["invented_codes"] == 1
+    assert [g["kind"] for g in conv.guards] == ["gated", "confirm_first"]
+    assert r["first_try_valid"] == 0.75 and "not_available_yet" in r["errors"]
+    assert conv.writes[-1]["outcome"] == "quote" and not conv.backend.new_bookings
+    llm.turns.append([("book_flight", {"flight_no": "SKY142-15JAN", "name": "Nova Quill",
+                                       "email": "nova@example.org",
+                                       "customer_confirmed": True})])
+    asyncio.run(conv.user_turn("Yes, please go ahead."))
+    assert report(conv, "new_customer")["completed"] is True
+    assert r["invented_prices"] == 1 and r["llm_model"] == "m1" and r["llm_replies"] == 5
     assert scenario_done("failed_verification", conv.backend, conv.writes, conv.calls) is False
-    assert "| m1 | 1 | 1 / 1 |" in table([{**r, "rep": 1}])
+    assert "| m1 | 1 | 0 / 1 |" in table([{**r, "rep": 1}])
     assert "no calls" in table([{**r, "rep": 1, "first_try_valid": None}])   # out of scope
 
 

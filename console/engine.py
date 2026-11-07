@@ -48,6 +48,8 @@ from console import truth
 
 ROOT = Path(__file__).resolve().parent.parent
 MAX_STEPS = 8
+RESULT_CAP = 1500          # characters of a tool result the LLM sees
+OLD_RESULT_CAP = 240       # tool results of earlier turns are shortened to this
 CSV_FIELDS = ["conversation", "turn", "reply", "pos_in_reply", "replay", "llm_model",
               "think_ms", "tool_call_from_text", "tool", "tool_class", "server", "mirror_mode",
               "hint", "hint_mode", "lookahead", "console_map", "note",
@@ -87,8 +89,8 @@ def numbers_in(obj: Any, out: set[float] | None = None) -> set[float]:
         for v in obj:
             numbers_in(v, out)
     elif isinstance(obj, str):
-        for m in re.finditer(r"\$\s?(\d+(?:\.\d{1,2})?)", obj):
-            out.add(round(float(m.group(1)), 2))
+        from console.truth import amounts
+        out.update(amounts(obj))
     return out
 
 
@@ -283,6 +285,11 @@ class Conversation:
         self.truth: list[dict[str, Any]] = []          # truth panel: claim checks per turn
         self.abandoned: list[dict[str, Any]] = []      # typing hints whose turn never came
         self.hint_changes: list[dict[str, Any]] = []   # hint setting changed (who, when)
+        # W1 night guardrails: gating, validation, confirmation (shown in the Details drawer)
+        self.guards: list[dict[str, Any]] = []
+        self._invalid: dict[tuple[int, str], int] = {}
+        self._done: set[tuple[str, str]] = set()        # writes that succeeded (tool, target)
+        self._turn_msg0 = 1                            # first message of the current turn
         self.lock = asyncio.Lock()
         self.t0 = clock()
         self.idle0 = {k: dict(v) for k, v in poller.idle.items()}
@@ -449,15 +456,112 @@ class Conversation:
                 said = " ".join(m.get("content") or "" for m in self.messages
                                 if m.get("role") == "user").upper()
                 rec["arg_code_from_user"] = str(code).strip().upper() in said
-            result = self.backend.call(tc.name, args)
+            result = await self._guarded_call(tc.name, args, rec)
             if isinstance(result, dict) and result.get("error"):
                 rec["result_error"] = str(result["error"])[:40]     # an error code only
             numbers_in(result, self.facts)
-            content = json.dumps(result, default=str)[:3000]
+            content = json.dumps(result, default=str)[:RESULT_CAP]
             await self._log_write(tc.name, args, result)
+            if hasattr(self.backend, "state_view"):
+                await self.publish({"type": "skye_state", "state": self.backend.state_view(),
+                                    "guards": self.guards[-12:]})
         else:
             content = llm_content(p_res, p_info)
         return {"rec": rec, "args": args, "content": content, "finish": finish}
+
+    def last_user_text(self) -> str:
+        return next((m.get("content") or "" for m in reversed(self.messages)
+                     if m.get("role") == "user"), "")
+
+    async def _guard(self, tool: str, kind: str, detail: str, rec: dict[str, Any]) -> None:
+        g = {"turn": self.turn, "tool": tool, "kind": kind, "detail": detail[:240]}
+        self.guards.append(g)
+        rec["guard"] = kind
+        await self.publish({"type": "guard", "guard": g})
+
+    async def _guarded_call(self, tool: str, args: dict[str, Any], rec: dict[str, Any]) -> Any:
+        """Skypiea Air guardrails (W1 night): tool gating by state, argument validation with
+        one corrective retry and a transfer to a human after two failures, and explicit
+        confirmation before any write. Other demos call the backend directly."""
+        b = self.backend
+        if not hasattr(b, "allowed_tools"):
+            return b.call(tool, args)
+        from agent.skyair.tools import TOOL_NAMES, WRITE_TOOLS
+        from console import guards
+        code = str(args.get("booking_code") or "").strip().upper()
+        if b.verified and code in b.bookings and b.bookings[code]["customer_id"] == b.verified:
+            b.selected_booking = code        # naming one of the customer's codes selects it
+        if tool in TOOL_NAMES and tool not in b.allowed_tools():
+            msg = b.why_not(tool)
+            await self._guard(tool, "gated", msg, rec)
+            return {"error": "not_available_yet", "message": msg}
+        problems = guards.validate(tool, args, b)
+        if problems:
+            key = (self.turn, tool)
+            self._invalid[key] = self._invalid.get(key, 0) + 1
+            if self._invalid[key] >= 2:
+                await self._guard(tool, "auto_transfer", "two invalid calls to " + tool +
+                                  ": " + "; ".join(problems), rec)
+                b.transfer_to_human(summary=f"automatic: two invalid calls to {tool}")
+                return {"error": "invalid_arguments", "problems": problems,
+                        "transferred": True, "message": "Two invalid attempts: the "
+                        "conversation was transferred to a human colleague. Apologise "
+                        "briefly and tell the customer a colleague will take over."}
+            h = guards.hint(tool, problems, b)
+            await self._guard(tool, "invalid_retry", h, rec)
+            return {"error": "invalid_arguments", "problems": problems, "hint": h}
+        key = (tool, str(args.get("booking_code") or args.get("flight_no") or
+                         b.selected_booking or "").upper())
+        repeat = key in self._done and not (b.pending and b.pending.get("tool") == tool)
+        if tool in WRITE_TOOLS and args.get("customer_confirmed") is True and (
+                repeat or not guards.confirmed_ok(tool, self.last_user_text(), b.pending)):
+            args = {**args, "customer_confirmed": False}
+            res = b.call(tool, args)
+            await self._guard(tool, "confirm_first", ("the same write already succeeded; a "
+                              "repeat needs a new quote and yes" if repeat else
+                              "customer_confirmed=true without the customer's yes to this "
+                              "action") + ": run as a quote, nothing written", rec)
+            if isinstance(res, dict) and res.get("confirmation_needed"):
+                res["message"] = ("NOT done yet: the customer has not confirmed this. "
+                                  + res.get("message", ""))
+            return res
+        res = b.call(tool, args)
+        if tool in WRITE_TOOLS and isinstance(res, dict) and any(
+                res.get(k) for k in ("booked", "changed", "cancelled", "added", "refunded",
+                                     "applied")):
+            self._done.add(key)
+        return res
+
+    def system_message(self) -> str:
+        """Skye's system prompt + the customer sidebar + the STATE block, rebuilt before every
+        LLM call (the state is re-injected every turn)."""
+        text = self.task.system
+        if self._sidebar_msg:
+            text += ("\n\nCUSTOMER SIDEBAR (booking system, current; use only these facts and "
+                     "tool results):\n" + self._sidebar_msg["text"])
+        b = self.backend
+        if b is not None and hasattr(b, "state_block"):
+            text += "\n\nSTATE (booking system, now):\n" + b.state_block()
+        return text
+
+    def llm_messages(self) -> list[dict[str, Any]]:
+        """What the LLM is sent: the current system message, then the conversation with tool
+        results of EARLIER turns shortened (the STATE block carries what matters)."""
+        out = [{"role": "system", "content": self.system_message()}]
+        for i, m in enumerate(self.messages[1:], start=1):
+            if m.get("role") == "tool" and i < self._turn_msg0 and \
+                    len(m.get("content") or "") > OLD_RESULT_CAP:
+                m = {**m, "content": m["content"][:OLD_RESULT_CAP] + " ...(older result "
+                     "shortened; see STATE)"}
+            out.append(m)
+        return out
+
+    def offered_tools(self) -> list[dict[str, Any]]:
+        b = self.backend
+        if b is None or not hasattr(b, "allowed_tools"):
+            return self.task.tools
+        ok = b.allowed_tools()
+        return [t for t in self.task.tools if t["function"]["name"] in ok]
 
     async def _log_write(self, tool: str, args: dict[str, Any], result: Any) -> None:
         """Truth panel: record a real write attempt and publish the booking record."""
@@ -483,9 +587,7 @@ class Conversation:
         # in the TOP system message (replaced in place): a system message in the middle of
         # the conversation made llama3.1 start replies with a stray "assistant" (W1 smoke)
         self._sidebar_msg = {"text": text}
-        self.messages[0] = {"role": "system", "content": self.task.system + "\n\nCUSTOMER "
-                            "SIDEBAR (booking system, current; use only these facts and tool "
-                            "results):\n" + text}
+        self.messages[0] = {"role": "system", "content": self.system_message()}
         numbers_in(text, self.facts)
 
     def check_claims(self, text: str) -> dict[str, Any] | None:
@@ -514,7 +616,8 @@ class Conversation:
                          + ") but no such change succeeded. Tell the customer plainly in your "
                          "next reply that it was NOT done.")
         if pr["unsourced"]:
-            notes.append("your last reply quoted " + ", ".join(f"${a:g}" for a in pr["unsourced"])
+            notes.append("your last reply quoted " + ", ".join(truth.fmt(a)
+                                                               for a in pr["unsourced"])
                          + ", which no tool returned. Quote prices and fees only from tool "
                          "results or the customer sidebar; correct this in your next reply.")
         if notes and self.settings.get("truth_note", True):
@@ -590,6 +693,7 @@ class Conversation:
             if mode in ("enter", "typing"):
                 await self.send_hint(self.turn, "enter")
             n_calls_before = self._next_seq
+            self._turn_msg0 = len(self.messages)
             self.messages.append({"role": "user", "content": text})
             for _ in range(MAX_STEPS):
                 await self.publish({"type": "llm_start", "turn": self.turn})
@@ -597,10 +701,25 @@ class Conversation:
                 async def on_text(delta: str) -> None:
                     await self.publish({"type": "llm_delta", "turn": self.turn, "text": delta})
                 try:
-                    r = await self.llm.reply(self.messages, self.task.tools, on_text)
+                    if self.backend is not None and hasattr(self.backend, "state_block"):
+                        # prices in the STATE block count as sourced for the price check
+                        numbers_in(self.backend.state_block(), self.facts)
+                    r = await self.llm.reply(self.llm_messages(), self.offered_tools(),
+                                             on_text)
                 except LLMError as e:
                     await self.publish({"type": "error", "where": "llm", "detail": str(e)[:200]})
                     break
+                if not r.tool_calls and r.content and self.backend is not None:
+                    # a call written as TEXT for a tool that exists but is not offered yet
+                    # (gated): recover it so the guardrail can answer with its next step
+                    from console.llm_stream import tool_call_from_text
+                    got = tool_call_from_text(r.content, set(self.task.tool_names))
+                    if got:
+                        tc, before = got
+                        r.tool_calls, r.content, r.from_text = [tc], before, True
+                        r.message = {"role": "assistant", "content": before, "tool_calls": [
+                            {"id": tc.id, "type": "function", "function": {
+                                "name": tc.name, "arguments": tc.raw_arguments}}]}
                 self.messages.append(r.message)
                 self.think_log.append({"turn": self.turn, "think_ms": round(r.think_ms, 1),
                                        "n_calls": len(r.tool_calls),

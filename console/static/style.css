@@ -212,3 +212,8 @@ footer { font-size: var(--t-cap); color: var(--muted); padding: 4px calc(3 * var
   .brand .word { font-size: 20px; } .brand .mark { width: 32px; height: 32px; }
 }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+.greet { margin: .6rem 0 .3rem; text-align: left; }
+.chips { display: flex; flex-wrap: wrap; gap: .3rem; justify-content: center; margin: .25rem 0; }
+.chip-btn { font-size: .8rem; padding: .15rem .55rem; border-radius: 999px; }
+pre.state { white-space: pre-wrap; font-size: .75rem; margin: .3rem 0 0; }
+#skye-state summary { cursor: pointer; }

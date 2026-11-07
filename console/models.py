@@ -2,7 +2,8 @@
 
 - Local Ollama models that report the `tools` capability: GET {OLLAMA_URL}/api/tags, then
   POST /api/show per model (its "capabilities" list). Models without `tools` are listed as
-  not selectable (the demo needs tool calling).
+  not selectable (the demo needs tool calling). qwen3 models run with thinking DISABLED
+  (console/llm_stream.py sends think=false), and say so in their label.
 - Optionally ONE hosted OpenAI-compatible endpoint: when AGENT_API_KEY is set and
   AGENT_BASE_URL is not the local Ollama, model AGENT_MODEL at AGENT_BASE_URL. The key is
   only passed to that endpoint as a Bearer token; it is never shown, logged or stored, and
@@ -46,7 +47,10 @@ async def list_models(http: httpx.AsyncClient, current: str | None = None,
                     "base_url": f"{ollama}/v1", "tools": "tools" in caps,
                     "selectable": "tools" in caps,
                     "size": (m.get("details") or {}).get("parameter_size"),
-                    "label": f"{name} (local)" + ("" if "tools" in caps else " - no tools")})
+                    "thinking": "off" if name.startswith("qwen3") else None,
+                    "label": f"{name} (local" + (", thinking off" if name.startswith("qwen3")
+                                                 else "") + ")"
+                    + ("" if "tools" in caps else " - no tools")})
     base, model = env.get("AGENT_BASE_URL", ""), env.get("AGENT_MODEL", "")
     if env.get("AGENT_API_KEY") and base and model and not _is_local_ollama(base):
         out.append({"id": "hosted", "model": model, "provider": "hosted (OpenAI-compatible)",

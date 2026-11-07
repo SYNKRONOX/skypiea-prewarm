@@ -1,6 +1,7 @@
 """Streaming OpenAI-compatible chat client for the console (text deltas reach the browser as
 they arrive). Same configuration as agent/llm.py: AGENT_BASE_URL, AGENT_MODEL, optional
-AGENT_API_KEY (sent as a Bearer token; never shown, logged or stored). Temperature 0.
+AGENT_API_KEY (sent as a Bearer token; never shown, logged or stored). Temperature 0 and a
+fixed seed; qwen3 models with thinking disabled.
 
 ``think_ms`` is the time from sending the request to the complete reply: the gap the gateway
 sees before the reply's first tool call (calls are sent once the reply is complete).
@@ -52,6 +53,9 @@ def tool_call_from_text(content: str, tool_names: set[str]) -> tuple[ToolCall, s
     return None
 
 
+SEED = 7      # fixed seed for every request (Ollama supports it): repeatable tool turns
+
+
 class StreamingLLM:
     def __init__(self, base_url: str, model: str, api_key: str | None = None,
                  timeout_s: float = 300.0, http: httpx.AsyncClient | None = None):
@@ -89,7 +93,13 @@ class StreamingLLM:
         if self._key:
             headers["authorization"] = f"Bearer {self._key}"
         body = {"model": self.model, "messages": messages, "tools": tools, "temperature": 0,
-                "stream": True}
+                "seed": SEED, "stream": True}
+        if not tools:
+            body.pop("tools")
+        if self.model.startswith("qwen3"):
+            # thinking DISABLED (W1 night): Ollama's OpenAI-compatible endpoint maps
+            # reasoning_effort "none" to think=false; "think" is also sent for older builds
+            body.update(think=False, reasoning_effort="none")
         t0 = time.monotonic()
         first = None
         text: list[str] = []

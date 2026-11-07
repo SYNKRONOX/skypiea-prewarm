@@ -185,6 +185,9 @@ class Console:
                     "booking": truth.state(conv.backend), "writes": conv.writes[-12:],
                     "truth": conv.truth, "chat": chat_view(conv.messages),
                     "hint_changes": conv.hint_changes,
+                    "skye_state": conv.backend.state_view()
+                    if hasattr(conv.backend, "state_view") else None,
+                    "guards": conv.guards[-12:],
                     "totals": totals(conv.calls, conv.idle_delta(), pricing())},
                 "last": self.hub.last}
 
@@ -699,7 +702,7 @@ def make_app(console: Console) -> Starlette:
                                  "name": "A new customer", "note": "not in the database: "
                                  "Skye offers to book a trip", "requests": [
                                      "Hi, I'm Nova Quill and I've never flown with you. I'd "
-                                     "like to fly from SKA to SKE on 2026-12-07."]}]})
+                                     "like to fly from Bangalore to Goa next Friday."]}]})
 
     async def story_ep(request: Request) -> Response:
         from agent.tasks.stories import stories

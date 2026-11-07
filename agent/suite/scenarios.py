@@ -103,7 +103,7 @@ def wrong_email(email: str) -> str:
 def promo_for(s: Any, flight: dict, fare: str) -> str | None:
     f = getattr(s, "promo_for", None)
     if f:
-        return f(flight["flight_no"], fare)
+        return f(flight.get("flight_id", flight["flight_no"]), fare)
     # old world (agent/skyair before W1 night): SKYWINTER10 = December 2026, paid >= $100
     return "SKYWINTER10" if flight["date"].startswith("2026-12") and \
         flight["price"] >= 100 and fare == "Saver" else None
@@ -147,7 +147,7 @@ def build(s: Any) -> list[Case]:
 
     # 1. new customer books a trip --------------------------------------------------
     o, d, d1, d2 = r2[0]
-    O, D = place(s, o), place(s, d)
+    PO, D = place(s, o), place(s, d)
 
     def new_booking_oracle(date: str, email: str):
         def check(sess, dd) -> tuple[bool, str]:
@@ -177,7 +177,7 @@ def build(s: Any) -> list[Case]:
             "thx thats all"], {**ex, "date": d1}, new_booking_oracle(d1, NEW_EMAIL)),
         Case("new_booking", "wrong_email", [
             f"Hello! I've never flown with you before. My name is {NEW_NAME}.",
-            f"I'd like to fly from {O} to {D} on {say_date(s, d1)}, the earliest flight, "
+            f"I'd like to fly from {PO} to {D} on {say_date(s, d1)}, the earliest flight, "
             "Saver fare.",
             f"My email is {NEW_EMAIL.replace('@', '')}",
             f"Sorry, typo. My email is {NEW_EMAIL}",
@@ -185,7 +185,7 @@ def build(s: Any) -> list[Case]:
             "Thanks, that's all."], {**ex, "date": d1}, new_booking_oracle(d1, NEW_EMAIL)),
         Case("new_booking", "changes_mind", [
             f"Hi, I'm {NEW_NAME} and I'm new to Skypiea Air.",
-            f"I'd like to fly from {O} to {D} on {say_date(s, d1)}.",
+            f"I'd like to fly from {PO} to {D} on {say_date(s, d1)}.",
             f"Actually, make that {say_date(s, d2)} instead, same route. Earliest flight, "
             f"Saver fare. My email is {NEW_EMAIL}.",
             "Yes, I confirm the booking.",

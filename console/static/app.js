@@ -18,6 +18,7 @@ const fmtMs = (v) => (v === null || v === undefined) ? "–" :
 // money: never scientific notation; tiny amounts as "<$0.00001", small ones with 5 decimals
 const fmtUsd = (v) => (v === null || v === undefined) ? "–" : v === 0 ? "$0.00" :
   v < 0.00001 ? "<$0.00001" : v < 0.01 ? "$" + v.toFixed(5) : "$" + v.toFixed(2);
+const inr = (v) => (v === null || v === undefined) ? "–" : "INR " + Number(v).toLocaleString("en-IN");
 const fmtN = (v, d = 0) => (v === null || v === undefined) ? "–" : Number(v).toFixed(d);
 
 async function post(path, body) {
@@ -263,7 +264,7 @@ function boardingPass(b) {
     if (f.status !== "scheduled") r.append(el("div", "chip bad", f.status.replace(/_/g, " ")));
     p.append(r);
   }
-  p.append(el("div", "pass-foot cap", b.fare + " fare · " + (b.passengers || 1) + " passenger(s) · " + b.bags + " bag(s) · paid $" + b.paid +
+  p.append(el("div", "pass-foot cap", b.fare + " fare · " + (b.passengers || 1) + " passenger(s) · " + b.bags + " bag(s) · paid " + inr(b.paid) +
     (b.promo ? " · promo " + b.promo : "") + (b.refunded ? " · refunded" : "")));
   if ((b.changes || []).length) { const ch = el("div", "pass-changes");
     for (const c of b.changes) ch.append(el("div", "", "↻ " + changeLine(c))); p.append(ch); }
@@ -288,6 +289,26 @@ function renderBooking(st, writes) {
       w.outcome === "quote" ? "… asked to confirm" : "✕ refused"));
     d.append(document.createTextNode(" " + w.tool + " (turn " + w.turn + "): " + w.what)); log.append(d);
   }
+}
+// W1 night: what Skye knows (the STATE block re-sent every turn) and the guardrails
+function renderState(st) {
+  if (!st) return;
+  $("world-today").textContent = "· demo-world today " + st.today;
+  const lines = ["Verified customer: " + (st.verified || "none"),
+    "Last search: " + (st.last_search.length ? st.last_search.join(", ") : "none"),
+    "Selected flight: " + (st.selected_flight || "none"),
+    "Selected booking: " + (st.selected_booking || "none"),
+    "Waiting for the customer's yes: " + (st.pending ? st.pending.tool + " – " + st.pending.summary : "nothing"),
+    "Tools offered now: " + st.allowed_tools.join(", ")];
+  $("state-body").textContent = lines.join("\n");
+}
+const GUARD = { gated: "tool not offered yet (steered)", invalid_retry: "invalid arguments: one retry with a hint",
+  auto_transfer: "two invalid calls: transferred to a human", confirm_first: "no customer yes yet: run as a quote" };
+function renderGuards(gs) {
+  const box = $("guards"); box.textContent = "";
+  if (!gs || !gs.length) { box.textContent = "None in this conversation."; return; }
+  for (const g of gs) { const d = el("div"); d.append(el("b", "", "turn " + g.turn + " · " + g.tool + ": "),
+    document.createTextNode((GUARD[g.kind] || g.kind) + " – " + g.detail)); box.append(d); }
 }
 // Code-fix demo: the Repository card (files changed, tests failed -> passed; simulated runner)
 function renderRepo(st) {
@@ -453,6 +474,20 @@ function resetView(convId) {
            "Say hello to Skye, or press a scenario / Auto-play.", el("br"),
            el("span", "cap", code ? "Dev assistant (live LLM) works on a small mock repository; tests run in a simulated test runner (no code is executed)." :
              "Skye is a fictional Skypiea Air assistant (live LLM). The airline data is a mock database."));
+  if (!code) {     // W1 night: capability greeting + suggestion chips (free typing still works)
+    e.append(el("div", "greet", "Skye: Hi, I'm Skye from Skypiea Air. I can book a flight, change or cancel a booking, add bags, process refunds and apply offers."));
+    const chips = el("div", "chips");
+    const fill = (t) => { const i = $("chat-input"); i.value = t; i.dispatchEvent(new Event("input")); i.focus(); };
+    for (const [l, t] of [["Book a flight", "Hi, I'd like to book a flight from Bangalore to Goa next Friday."],
+      ["Change a booking", "Hi, I need to change the date of my flight."], ["Cancel and refund", "Hi, I want to cancel my booking and get a refund."],
+      ["Any offers?", "Hi, do you have any offers at the moment?"]]) { const c = el("button", "chip-btn", l); c.type = "button"; c.onclick = () => fill(t); chips.append(c); }
+    e.append(chips);
+    const tryc = el("div", "chips"); tryc.append(el("span", "cap", "Try a valid customer: "));
+    for (const [n, m] of [["Tara Patel", "tara.patel@example.com"], ["Asha Reddy", "asha.reddy@example.com"], ["Dev Singh", "dev.singh@example.com"]]) {
+      const c = el("button", "chip-btn", n); c.type = "button"; c.title = m; c.onclick = () => fill("Hi, I'm " + n + ", email " + m + "."); tryc.append(c); }
+    e.append(tryc);
+  }
+  S.guards = []; renderGuards([]); $("state-body").textContent = "No state yet.";
   $("chat").append(e); renderBooking({ available: (S.demo.name || "skyair") === "skyair" }, []); renderTicker([]);
   S.typing = false; S.typingT = null;
   renderTimelines(); renderTotals(null);
@@ -467,6 +502,7 @@ function handle(ev) {
       S.llmModel = ev.llm_model; S.pricing = ev.pricing;
       applySettings(ev.settings); applyDemo(ev.demo);
       resetView(ev.conversation && ev.conversation.id);
+      if (ev.conversation && ev.conversation.skye_state) { renderState(ev.conversation.skye_state); S.guards = ev.conversation.guards || []; renderGuards(S.guards); }
       { const cv = ev.conversation || {}, last = {}, calls = cv.calls || [], chat = cv.chat || [];
         const turns = [...new Set([...chat.map((m) => m.turn), ...calls.map((c) => c.turn)])].sort((a, b) => a - b);
         for (const t of turns) {     // user text, then the turn's tool calls, then Skye's text
@@ -512,6 +548,8 @@ function handle(ev) {
       if (ev.mid_conversation) pill("turn hint changed " + ev.change.from + " → " + ev.change.to +
         " by " + ev.change.by + " (later turns use it)", "warn");
       break;
+    case "skye_state": renderState(ev.state); renderGuards(ev.guards); break;
+    case "guard": S.guards = (S.guards || []).concat([ev.guard]); renderGuards(S.guards); break;
     case "booking": renderBooking(ev.state, ev.writes); break;
     case "truth": onTruth(ev.truth); break;
     case "turn": renderTurn(ev.turn_record); break;

@@ -7,24 +7,24 @@ kills the predictor after its first turn (mid-conversation) and restarts it when
 
 from __future__ import annotations
 
-from agent.tasks.skye import _LATER
+from agent.tasks.skye import _LATER, _say
 
 STORIES: dict[str, list[dict]] = {
     "skyair": [
         {"act": 1, "title": "New customer books a trip",
          "script": ["Hi! I've never flown with Skypiea Air before. My name is Nova Quill.",
-                    "I'd like to fly from SKA to SKE on 2026-12-07.",
-                    "The 06:15 one please, Saver fare. My email is nova.quill@example.org.",
+                    "I'd like to fly from Bangalore to Goa next Friday.",
+                    "The morning one please, Saver fare. My email is nova.quill@example.org.",
                     "Yes, I confirm the booking.",
                     "Can I add one checked bag to it? Yes, I confirm.",
                     "Thanks, that's all."]},
         # Tara Patel has TWO active bookings (5TGTBP, 8RK2RN): the customer names one
         {"act": 2, "title": "Change a booking",
          "script": ["Hi, I'm Tara Patel. My email is tara.patel@example.com.",
-                    "I need to move my booking 5TGTBP to a later flight on the same route. "
+                    "I need to move my booking 5TGTBP to a later date on the same route. "
                     "What is there?",
-                    f"Please move me to flight {_LATER['flight_no']} on {_LATER['date']} at "
-                    f"{_LATER['depart']}. Yes, I confirm the change and the fee.",
+                    f"Please move me to the {_LATER['depart']} flight on {_say(_LATER['date'])}. "
+                    "Yes, I confirm the change and the fee.",
                     "Thanks, that's all."]},
         # Asha Reddy's S4Z64E is a refundable fare: cancel, then refund (predictor killed
         # after turn 1: every call still succeeds, without prediction)

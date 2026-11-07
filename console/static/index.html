@@ -53,6 +53,7 @@
       <div class="bk-head"><b id="bk-title">Booking record</b> <span class="cap" id="bk-sub">straight from the mock database (fictional)</span></div>
       <div id="bk-body" class="cap">No verified customer yet.</div>
       <div id="bk-log" class="bk-log"></div>
+      <details id="skye-state" class="cap"><summary>What Skye knows now (state, re-sent every turn) <span id="world-today"></span></summary><pre id="state-body" class="state">No state yet.</pre></details>
     </div>
     <form id="chat-form">
       <textarea id="chat-input" rows="2" placeholder="Write as the customer… (Enter to send)"></textarea>
@@ -88,6 +89,8 @@
     <h3>Pods <small>(controller state, polled every 0.25 s)</small></h3>
     <div class="two"><div><b>Normal</b><div class="grid" id="grid-base"></div></div>
       <div><b>Skypiea</b><div class="grid" id="grid-pred"></div></div></div>
+    <h3>Guardrails <small>(gated tools, invalid arguments and retries, confirmation)</small></h3>
+    <div id="guards" class="cap">None in this conversation.</div>
     <h3>Predictor <small id="pred-health"></small></h3>
     <div id="predictor"></div>
     <h3>Turns <small>(hint lead time = hint to Enter; first call per turn; abandoned turns)</small></h3>

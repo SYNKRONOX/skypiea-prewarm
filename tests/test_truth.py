@@ -71,7 +71,7 @@ def test_truth_in_the_engine_agree_disagree_and_correction() -> None:
                         publish, {"mirror": "concurrent", "hint_mode": "off",
                                   "baseline_policy": "scale_to_zero"}, mcp_factory=factory(gws))
     before = [m["content"] for m in conv.messages]
-    for t in ("hi", "change my flight", "really?"):
+    for t in ("hi, please add one bag, yes I confirm", "change my flight", "really?"):
         asyncio.run(conv.user_turn(t))
     t1, t2, t3 = conv.truth
     assert t1["verdict"] == "agree" and t1["claims"] == ["baggage"]
