@@ -45,6 +45,7 @@ results/p1_accuracy.csv
 
 # Demo scratch (make demo) and locally built model bundles
 .demo/
+.review/
 models/lgbm-*/
 .live/
 

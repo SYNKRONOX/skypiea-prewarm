@@ -5,6 +5,8 @@ is in [`CHANGELOG.md`](../CHANGELOG.md).
 
 ## Requirements and developer docs
 
+- [`REVIEWER_GUIDE.md`](REVIEWER_GUIDE.md): **start here if you are reviewing**: paths by time and hardware, commands with expected output, how to use Skypiea yourself, PRD map, top problems, limits.
+- [`KNOWN_ISSUES.md`](KNOWN_ISSUES.md): known limitations with workarounds. [`TRIAGE.md`](TRIAGE.md): how red-team issues are handled.
 - [`../PRD.md`](../PRD.md): the original PRD v1.1, unchanged (emails removed).
 - [`PRD_STATUS.md`](PRD_STATUS.md): every FR, NFR, PRD experiment and scope item: Met / Partly met / Changed / Not done, with evidence.
 - [`../dev.md`](../dev.md): developer guide: request path, ports and metrics, folders, components, tests, how to add a tool, policy or dataset.
@@ -20,6 +22,7 @@ is in [`CHANGELOG.md`](../CHANGELOG.md).
 - [`experiments.md`](experiments.md): the experiment table: question, data and output of each experiment (E0, E1, ...).
 - [`benchmark_protocol.md`](benchmark_protocol.md): re-run of the published "Reading the Plan" next-tool protocol on tau-bench, next to our own harness.
 - [`redteam.md`](redteam.md): red-team suite for the predictor service.
+- [`VIVA_QA.md`](VIVA_QA.md): the 25 hardest viva questions with honest answers and their source files.
 - [`VIVA.md`](VIVA.md): viva preparation: pitch, architecture walk-through, demo script, claims with sources, Q&A, slides.
 
 ## Design
@@ -38,6 +41,9 @@ is in [`CHANGELOG.md`](../CHANGELOG.md).
 - [`LIVE_DEMO.md`](LIVE_DEMO.md): the Live Console's Skypiea Air presentation view: how to run it, what is on the screen, the truth panel.
 - [`DEMO.md`](DEMO.md): `make demo` and `make live`: commands, timings, the presenter script, troubleshooting.
 - [`AGENT.md`](AGENT.md): the tool-calling agent through the gateway (`make agent-demo`, `make agent-live`).
+- [`MEASURED_VS_SCRIPTED.md`](MEASURED_VS_SCRIPTED.md): every number and element of the Live Console typed as measured, estimated, trained offline, mocked, scripted or live.
+- [`SKYPIEA_WORLD.md`](SKYPIEA_WORLD.md): the SYNTHETIC India-centred Skypiea Air world (46 real airport codes, INR fares, fixed demo-world date).
+- [`SUITE_BEFORE_AFTER.md`](SUITE_BEFORE_AFTER.md): Skye's scripted correctness suite before and after the guardrails (correctness runs, not latency results).
 - [`LIVE_CONSOLE.md`](LIVE_CONSOLE.md): Live Console design: vocabularies, two stacks, mirrored execution, hint, panels, lead-time options.
 - [`PORTABLE_MODELS.md`](PORTABLE_MODELS.md): how the predictor bundles are distributed (`make fetch-models`, release v1.2 asset).
 - [`MODELS_ATTRIBUTION.md`](MODELS_ATTRIBUTION.md): attribution and licences of the predictor bundles.
@@ -57,7 +63,6 @@ is in [`CHANGELOG.md`](../CHANGELOG.md).
 - [`handoff/OVERNIGHT_REPORT.md`](handoff/OVERNIGHT_REPORT.md): 2026-11-04/05 overnight AWS runs on the infra branch.
 - [`handoff/STATE_infra.md`](handoff/STATE_infra.md): infra branch state as of 2026-11-02.
 - [`handoff/STATE_model.md`](handoff/STATE_model.md): prediction-engine branch state of work.
-- [`handoff/phase2_model.txt`](handoff/phase2_model.txt): raw terminal log of the phase-2 model-branch session (plain text).
 
 ## Elsewhere in the repository
 

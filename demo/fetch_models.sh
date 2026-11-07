@@ -56,4 +56,4 @@ mkdir -p models
 for d in "$tmp"/x/lgbm-*; do rm -rf "models/$(basename "$d")"; mv "$d" models/; done
 cp "$tmp/x/ATTRIBUTION.md" models/ATTRIBUTION.md 2>/dev/null || true
 echo "bundles in models/: $(ls -d models/lgbm-* | xargs -n1 basename | tr '\n' ' ')"
-echo "then: make live BUNDLES_DIR=models"
+echo "then: make live   (it reads the bundles from models/)"

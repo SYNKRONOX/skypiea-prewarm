@@ -1,3 +1,5 @@
+> **Reviewing this? Start here: [`docs/REVIEWER_GUIDE.md`](docs/REVIEWER_GUIDE.md)** (time-boxed paths, commands with expected output, PRD map).
+
 # Skypiea: predictive prewarming for agentic MCP tool calls on Kubernetes
 
 [![CI](https://github.com/SYNKRONOX/skypiea-prewarm/actions/workflows/ci.yml/badge.svg)](https://github.com/SYNKRONOX/skypiea-prewarm/actions/workflows/ci.yml)
@@ -38,9 +40,9 @@ Tier 1; neither needs datasets, an API key, a GPU or a cloud account.
 
 | Tier | What you get | Needs | Time (our laptop) |
 |---|---|---|---|
-| 0 | Unit tests, lint, size check | Python 3.12, make, git | `make setup` 35 s, `make test` about 2 min ([`docs/TESTING.md`](docs/TESTING.md#measured)) |
+| 0 | Unit tests, lint, size check | Python 3.12, make, git | `make setup` 59 s on a fresh clone, `make test` about 4 min (250 s; [`docs/handoff/NIGHT_W2.md`](docs/handoff/NIGHT_W2.md)) |
 | 1 | Whole stack on a local kind cluster; replay under scale-to-zero vs the predictor; scripted agent | + Docker (6 GB memory), kind, kubectl, Helm, 15 GB free disk | `make demo` 270 s on a new cluster with a warm Docker cache ([`docs/DEMO.md`](docs/DEMO.md)); a first build of the images takes longer |
-| 2 | Live Console: chat with a local LLM, every tool call sent to a baseline and a predictive stack | + the predictor bundles (`make fetch-models`), Ollama with a tool-calling model | `make live` 2 min 47 s on a new cluster, 44 s when up ([`docs/DEMO.md`](docs/DEMO.md)) |
+| 2 | Live Console: chat with a local LLM, every tool call sent to a baseline and a predictive stack | + the predictor bundles (`make fetch-models`), Ollama with a tool-calling model (llama3.1:8b; optional qwen2.5:7b, qwen3:8b) | `make live` 2 min 47 s on a new cluster, 44 s when up ([`docs/DEMO.md`](docs/DEMO.md)) |
 | 3 | The AWS setup we measured on (one EC2 node, k3s) | + your own AWS account; **costs money** | see Tier 3 |
 
 ### Supported platforms
@@ -68,7 +70,9 @@ model bundles that are not committed); `make lint` prints `All checks passed!`;
 `make check-sizes` prints `OK: ... tracked files, none over 50 MB.` What each check covers:
 [`docs/TESTING.md`](docs/TESTING.md).
 
-No `python3.12`? `make doctor` prints the install command; or `make setup PYTHON=/path/to/python3.12`.
+No `python3.12`? `make doctor` prints the install command; or `make setup PYTHON=/path/to/python3.12`;
+or, with Docker, `make test-docker` runs Tier 0 in a `python:3.12` container (231 s on our laptop,
+including the image pull; [`docs/handoff/NIGHT_W2.md`](docs/handoff/NIGHT_W2.md)).
 
 ### Tier 1: local demo on kind
 
@@ -115,14 +119,21 @@ The images are kept after `make demo-clean`; `make clean-images` removes them.
 `make live` runs two copies of the platform in one kind cluster: **Normal** (scale-to-zero) and
 **Skypiea** (the real `support` predictor trained on tau2-bench, or `coding` trained on
 TraceLab). A local web console at http://127.0.0.1:8090 lets you chat with **Skye**, the
-assistant of the fictional airline Skypiea Air, run by a local LLM. Every tool call goes to
+assistant of the fictional airline Skypiea Air, run by a local LLM (or with Dev assistant, who
+fixes a bug in a small mock repository). Every tool call goes to
 both stacks, and the screen shows per call whether it was cold or warm and how long Skye waited
 on tools on each side. Presenter view and what each panel means: **[`docs/LIVE_DEMO.md`](docs/LIVE_DEMO.md)**.
-Design and data sources: [`docs/LIVE_CONSOLE.md`](docs/LIVE_CONSOLE.md).
+Design and data sources: [`docs/LIVE_CONSOLE.md`](docs/LIVE_CONSOLE.md). What on the screen is
+measured, scripted or mocked: [`docs/MEASURED_VS_SCRIPTED.md`](docs/MEASURED_VS_SCRIPTED.md).
+The synthetic airline world: [`docs/SKYPIEA_WORLD.md`](docs/SKYPIEA_WORLD.md). Skye's
+correctness suite, before and after the guardrails:
+[`docs/SUITE_BEFORE_AFTER.md`](docs/SUITE_BEFORE_AFTER.md).
 
 ```bash
 make doctor DOCTOR_MODE=live   # also checks ports 8090/3001/18180/18280, bundles and the LLM endpoint
-ollama pull llama3.1:8b        # once, where Ollama runs (about 5 GB of memory, docs/DEMO.md)
+ollama pull llama3.1:8b        # once, where Ollama runs: the default model (about 5 GB of memory)
+ollama pull qwen2.5:7b         # optional: second model for the Model toggle
+ollama pull qwen3:8b           # optional: third model (runs with thinking disabled)
 make fetch-models              # predictor bundles from GitHub Release v1.2 (sha256-verified) -> models/
 make live                      # cluster, both stacks, console on :8090, Grafana on :3001
 make live-clean                # console off, both stacks uninstalled (cluster and registry stay)
@@ -134,14 +145,40 @@ make live-clean                # console off, both stacks uninstalled (cluster a
   bundles yourself needs the datasets ([`docs/model.md`](docs/model.md), `make data-all
   model-all`).
 - **The LLM.** The console talks to any OpenAI-compatible endpoint: `AGENT_BASE_URL` (default
-  `http://localhost:11434/v1`, Ollama) and `AGENT_MODEL` (default `llama3.1:8b`, the only model
-  we tested). The model must support tool calling. Ollama also runs without a GPU, only slower
-  (not measured by us).
+  `http://localhost:11434/v1`, Ollama) and `AGENT_MODEL` (default `llama3.1:8b`). The **Model**
+  toggle in the header lists the local Ollama models that support tool calling; we ran
+  llama3.1:8b, qwen2.5:7b and qwen3:8b (thinking disabled). `ollama pull` takes one model per
+  call, so pull them one by one as above; the qwen models are optional. Switching the model
+  starts a new conversation. Ollama also runs without a GPU, only slower (not measured by us).
+  Model licences: [`docs/PORTABLE_MODELS.md`](docs/PORTABLE_MODELS.md#llms-used-by-the-console-not-distributed-by-us).
+- **Scenarios and Auto-play.** Three Skypiea Air scenario buttons (**New customer books a
+  trip**, **Change a booking**, **Cancel and refund**) and one code-fix scenario each reset the
+  conversation and send prepared customer lines to the **live** model one by one. **Auto-play ▶**
+  plays a scripted customer the same way. Those lines are labelled "Scripted customer · turn
+  N" in the chat (what you type says "You"); the scripted customer "types" at an assumed 200
+  characters a minute. Nothing is pre-recorded: the replies, tool calls and timings are live
+  ([`docs/LIVE_DEMO.md`](docs/LIVE_DEMO.md), "Scenarios (Auto-play)").
+- **The demo world is SYNTHETIC and India-centred.** 46 real airport codes (38 in India, 8
+  abroad) with their real cities; everything else (flights, fares in rupees (INR) by a
+  documented rule, 306 fictional customers, 930 bookings, offers) is generated from a fixed
+  seed. The world has its own fixed date, **Monday 11 January 2027** ("demo-world today"), so
+  "tomorrow" and fares do not depend on the real date
+  ([`docs/SKYPIEA_WORLD.md`](docs/SKYPIEA_WORLD.md)).
+- **How often Skye gets it right.** A scripted correctness suite (6 scenarios x 3 messy
+  variants, end-state oracle, no cluster, no LLM judge; `python -m agent.suite.run`) passed
+  54/54 runs with llama3.1:8b after the guardrails (22/36 before), 46/54 with qwen3:8b and 42/54
+  with qwen2.5:7b (`results/suite/after/summary.md`,
+  [`docs/SUITE_BEFORE_AFTER.md`](docs/SUITE_BEFORE_AFTER.md)). Read it with three caveats: the
+  guardrails were tuned while looking at llama3.1:8b's failures on this same suite; every
+  request runs at temperature 0 with a fixed seed, so the 3 reps of a case are nearly
+  identical; and before and after used different worlds (old six-airport USD world vs the
+  India-centred one). It means "every suite case passes", not that Skye is always right.
 - **No LLM at all?** The console needs one. Without it, use Tier 1: `make agent-demo` sends the
   same kind of tool calls through the gateway with a scripted LLM.
 - **What is real:** the tool containers are real pods that cold-start for real (kind timings,
-  lower than AWS). The airline data is a mock database inside the console. Skye (llama3.1:8b)
-  **can claim actions it did not take**; the console's booking record shows the real state.
+  lower than AWS). The airline data is a SYNTHETIC mock database inside the console. Skye
+  **can still claim actions it did not take**; the truth check marks such claims and the
+  console's booking record shows the real state.
 
 ### Tier 3: AWS (optional, costs money)
 
@@ -259,9 +296,17 @@ language, is in [`docs/limits.md`](docs/limits.md).
 - **Tier 2 needs the v1.2 release asset.** Tiers 0 and 1 do not need it.
 - **The Live Console needs an LLM.** There is no scripted mode for the console; the scripted
   LLM exists for `make agent-demo` (Tier 1).
-- **The Live Console's LLM can claim actions it did not take** (llama3.1:8b; a smoke run in
+- **The Live Console's LLM can claim actions it did not take** (a smoke run in
   `docs/handoff/PHASE_A_HANDOFF.md`). The tools refuse invalid changes and the booking record
   shows the real state, but the model's text is not checked beyond simple rules.
+- **Skye's 54/54 suite result was tuned on that suite.** The guardrails were developed while
+  looking at llama3.1:8b's failures on the same 18 cases; temperature 0 and a fixed seed make
+  the reps nearly identical; before and after used different demo worlds
+  ([`docs/SUITE_BEFORE_AFTER.md`](docs/SUITE_BEFORE_AFTER.md)).
+- **The Skypiea Air world is synthetic.** Only the airport codes, city names and coordinates
+  are real; flights, fares, customers and the demo-world date (11 January 2027) are generated.
+- **The Live Console has no authentication.** It binds to 127.0.0.1 only; anything that can
+  reach that port can change its settings ([`SECURITY.md`](SECURITY.md)).
 - **Only Linux x86-64 and Windows + WSL2 are tested.** macOS and arm64 are untested.
 - **`make live` uses fixed local ports** (8090, 3001, 18180-18182, 18280-18283); it refuses to
   start when the console port is taken. `make demo` ports can be moved (`PF_BASE`, `GRAFANA_PORT`).
@@ -654,7 +699,7 @@ More cases, with the exact error messages: [`docs/DEMO.md`](docs/DEMO.md) (Troub
 | `kubectl ... Unable to connect to the server: EOF` after sleep or a Docker restart | Docker restarted the kind containers. `docker restart skypiea-control-plane skypiea-worker` ([`docs/DEMO.md`](docs/DEMO.md), Troubleshooting), then `make demo-portforward` (or `make live-pf`) |
 | Docker stopped in the middle of `make demo` | Start Docker again and re-run `make demo`; every step is idempotent and reuses what exists |
 | `make fetch-models`: `The model archive is not available` (exit 2) | There is no network. Nothing was changed |
-| `LLM endpoint ... not reachable` / console says the LLM is down | Start Ollama (`ollama serve`) and `ollama pull llama3.1:8b`; on Windows with the cluster in WSL2 see [`docs/DEMO.md`](docs/DEMO.md) ("Ollama on Windows") |
+| `LLM endpoint ... not reachable` / console says the LLM is down | Start Ollama (`ollama serve`) and `ollama pull llama3.1:8b` (one model per `ollama pull`); on Windows with the cluster in WSL2 see [`docs/DEMO.md`](docs/DEMO.md) ("Ollama on Windows") |
 | `make aws-... refused: ...` | By design: AWS targets refuse without the CLIs, credentials, local Terraform state, or (for creating targets) `AWS_CONFIRM=yes`. Nothing was created |
 
 ## FAQ
@@ -672,7 +717,8 @@ tool names, timings and batch structure ([`docs/predictor_contract.md`](docs/pre
 
 **Can I use another LLM?** Any OpenAI-compatible endpoint with tool calling:
 `AGENT_BASE_URL=... AGENT_MODEL=... make live` (or `make agent-demo LLM=openai-compatible`).
-We only tested llama3.1:8b on Ollama.
+We ran llama3.1:8b (the default), qwen2.5:7b and qwen3:8b on Ollama
+([`docs/SUITE_BEFORE_AFTER.md`](docs/SUITE_BEFORE_AFTER.md)).
 
 **How do I remove everything?** `make live-clean` (Live Console), `make demo-clean` (cluster,
 registry, `.demo/`), `make clean-images` (Docker images), `rm -rf .venv models/lgbm-*` (venv,
@@ -691,6 +737,10 @@ expected, actual); include the output of `make doctor`. Security issues: [`SECUR
 | Command | What it does | Clean-up |
 |---|---|---|
 | `make doctor [DOCTOR_MODE=test\|demo\|live]` | Check the machine; print the fix for each problem | (changes nothing) |
+| `make review [MODE=test]` | Tier 0 then Tier 1 on its own cluster `skypiea-review`; PASS/FAIL table with timings ([`docs/REVIEWER_GUIDE.md`](docs/REVIEWER_GUIDE.md)) | deletes only the cluster it created (`KEEP=1` keeps it) |
+| `make report` | OS, versions, `make doctor`, last test summary, to paste into an issue (no secrets, home shown as `~`) | (changes nothing) |
+| `make test-docker` | Tier 0 inside a `python:3.12` container, for machines without Python 3.12 (Docker, network) | (removes its container) |
+| `make check-claims` | README / PRD_STATUS numbers vs the committed result files; links, make targets, paths, commands in the docs | (changes nothing) |
 | `make setup` / `make lock` | `.venv` from `requirements.lock` / re-resolve the lock | `rm -rf .venv` |
 | `make test` / `make lint` / `make check-sizes` | pytest, ruff, no tracked file over 50 MB | |
 | `make secret-sweep [HISTORY=1]` | Credentials and AWS account ids in the tree (and history) | |
@@ -698,6 +748,7 @@ expected, actual); include the output of `make doctor`. Security issues: [`SECUR
 | `make demo-portforward` | Restart the demo port-forwards | `make demo-clean` |
 | `make fetch-models` | Download and verify the real predictor bundles into `models/` | `rm -rf models/lgbm-*` |
 | `make live` / `make live-pf` | Live Console and its two stacks; restart port-forwards ([`docs/LIVE_DEMO.md`](docs/LIVE_DEMO.md)) | `make live-clean` |
+| `make watch-pods` | Pod events of both Live Console stacks, until Ctrl-C (read-only; [`docs/LIVE_DEMO.md`](docs/LIVE_DEMO.md)) | |
 | `make build-images` | 16 tool images, E0 probe, platform image | `make clean-images` |
 | `make cluster` / `make deploy` | kind cluster + registry; Helm install with the stub predictor | `make clean-cluster` |
 | `make deploy-kind-e0` / `make e0-kind` / `make e0-kind-parallel` | E0 cold starts on kind | `make clean-cluster` |
@@ -729,7 +780,7 @@ expected, actual); include the output of `make doctor`. Security issues: [`SECUR
 | [`configs/`](configs/) | Tool classes, vocabularies, model/policy configs, measured cold starts |
 | [`results/`](results/) | Committed result files |
 | [`docs/`](docs/) | Design, results, limits, handoff notes |
-| [`mk/`](mk/) | Make targets: `infra.mk`, `model.mk`, `demo.mk` (included from the root Makefile) |
+| [`mk/`](mk/) | Make targets: `infra.mk`, `model.mk`, `demo.mk`, `console.mk` (included from the root Makefile) |
 
 ## Team
 
