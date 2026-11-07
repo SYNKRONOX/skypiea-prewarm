@@ -30,6 +30,11 @@ KEYWORDS = {"book_flight": r"\bbook", "change_flight": r"\b(chang|chnag|mov|swit
 
 
 def validate(tool: str, args: dict[str, Any], backend: Any = None) -> list[str]:
+    # small models send the STRING "None" / "null" for optional arguments (seen live with
+    # llama3.1:8b): that means "not given", not an invalid value
+    for k in [k for k, v in args.items() if isinstance(v, str)
+              and v.strip().lower() in ("none", "null", "n/a", "")]:
+        del args[k]
     out = []
     for k in REQUIRED.get(tool, []):
         if args.get(k) in (None, ""):

@@ -64,6 +64,8 @@ def test_gating_and_steering_messages() -> None:
 
 
 def test_validation_coerces_string_booleans_and_flags_bad_arguments() -> None:
+    n = {"name": "Nova Quill", "email": "None", "booking_code": "null"}
+    assert guards.validate("find_customer", n) == [] and n == {"name": "Nova Quill"}
     a = {"booking_code": "VPGX3T", "bags": "1", "customer_confirmed": "false"}
     assert guards.validate("add_baggage", a) == [] and a["customer_confirmed"] is False \
         and a["bags"] == 1
