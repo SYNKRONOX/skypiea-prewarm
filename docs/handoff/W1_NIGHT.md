@@ -18,5 +18,7 @@ Started 2026-11-06 23:47 UTC from feat/demo-polish 9ae97a1 (clean). Local models
 | STEP 3 a-h | done | a8b9693 | console/guards.py, engine STATE block/gating/validation/confirmation/compact context; UI state box, guardrails, greeting chips; live smoke on the cluster OK (6/6 calls both stacks) |
 | STEP 4 | running | | qwen3:8b with think=false verified (7 vs 1,215 tokens); AFTER suite 3 models x 3 reps started 00:22 UTC -> results/suite/after (log .live/suite_after.log; resume with --resume) |
 
+| STEP 5 (part) | done | b2f82d3.. | Proof panel (tested), docs LIVE_DEMO/MEASURED_VS_SCRIPTED/SKYPIEA_WORLD, compare generator, Auto-play of suite cases for the live smoke |
+
 Next: when the AFTER suite ends: summary, default model, STEP 5 (report, live smoke per scenario, DEMO.md, screenshots, backup, MEASURED_VS_SCRIPTED), gate.
 Blockers: none.
