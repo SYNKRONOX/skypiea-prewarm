@@ -327,7 +327,7 @@ function renderProof(c) {
   const old = box.querySelector('[data-seq="' + c.seq + '"]'); if (old) old.replaceWith(r); else box.prepend(r);
 }
 const GUARD = { gated: "tool not offered yet (steered)", invalid_retry: "invalid arguments: one retry with a hint",
-  auto_transfer: "two invalid calls: transferred to a human", confirm_first: "no customer yes yet: run as a quote" };
+  auto_transfer: "two invalid calls: transferred to a human", ignored_text_call: "ignored text tool call", confirm_first: "no customer yes yet: run as a quote" };
 function renderGuards(gs) {
   const box = $("guards"); box.textContent = "";
   if (!gs || !gs.length) { box.textContent = "None in this conversation."; return; }
@@ -562,11 +562,16 @@ function handle(ev) {
       break;
     case "turn_start":
       S.agentEl = null; S.replyEl = null;
-      addMsg("user", ev.text, (ev.source === "autopilot" ? "Scripted " + HU().toLowerCase() :
+      addMsg("user", ev.text || "(empty message)", (ev.source === "autopilot" ? "Scripted " + HU().toLowerCase() :
              ev.source === "replay" ? "Replay" : "You") + " · turn " + ev.turn);
       break;
     case "hint":
       pill("hint sent (" + (ev.source || "enter") + "): metadata only", "hint");
+      break;
+    case "llm_replace":      // the complete reply after held-back text (a hidden text tool call)
+      dropTyping();
+      if (S.agentEl) { S.agentEl.remove(); S.agentEl = null; }
+      if (ev.text) { S.agentEl = addMsg("agent", ev.text, AG()); S.lastAgent = S.agentEl; }
       break;
     case "hint_change":
       if (ev.mid_conversation) pill("turn hint changed " + ev.change.from + " → " + ev.change.to +
@@ -607,7 +612,8 @@ function connect() {
 
 // ---------------- controls ----------------
 $("chat-form").addEventListener("submit", (e) => {
-  e.preventDefault(); const t = $("chat-input").value.trim(); if (!t) return;
+  e.preventDefault(); const t = $("chat-input").value.trim();
+  if (S.settings.busy) return;
   const typing_ms = S.typingT ? performance.now() - S.typingT : null;
   $("chat-input").value = ""; S.typing = false; S.typingT = null;
   post("/api/chat", { text: t, typing_ms: typing_ms });

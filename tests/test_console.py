@@ -289,7 +289,7 @@ def test_app_routes_offline() -> None:
         assert cl.post("/api/policy", json={"key": "always_warm"}).status_code == 400
         assert cl.post("/api/policy", json={"key": "keep_alive_30"}).status_code == 202
         assert c.stacks["base"].policies[-1] == "keep_alive_30"
-        assert cl.post("/api/chat", json={"text": "  "}).status_code == 400
+        assert cl.post("/api/chat", json={}).status_code == 400  # "" is answered
         r = cl.get("/api/export.csv")
         assert r.status_code == 200 and r.text.splitlines()[0] == ",".join(CSV_FIELDS)
 

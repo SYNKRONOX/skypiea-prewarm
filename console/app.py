@@ -575,9 +575,10 @@ def make_app(console: Console) -> Starlette:
 
     async def chat(request: Request) -> Response:
         d = await body(request)
-        text = str(d.get("text", "")).strip()
-        if not text:
-            return JSONResponse({"error": "empty message"}, status_code=400)
+        if not isinstance(d.get("text"), str):
+            return JSONResponse({"error": "text is required"}, status_code=400)
+        # an empty message is allowed: Skye answers it politely (fix/free-typing)
+        text = d["text"].strip()[:4000]
         if c.conv is not None and c.conv.lock.locked():
             return JSONResponse({"error": "the agent is still working"}, status_code=409)
         tm = d.get("typing_ms")

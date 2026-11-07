@@ -44,7 +44,7 @@ from agent.llm import LLMError
 from agent.loop import render_result
 from agent.mcp_client import McpClient
 from agent.tasks import Task
-from console import truth
+from console import textcalls, truth
 
 ROOT = Path(__file__).resolve().parent.parent
 MAX_STEPS = 8
@@ -583,6 +583,14 @@ class Conversation:
             self._done.add(key)
         return res
 
+    def fallback_text(self) -> str:
+        return textcalls.FALLBACK if self.task.scenario == "skyair" else (
+            "Sorry, I didn't quite catch that. What would you like me to do?")
+
+    def empty_text(self) -> str:
+        return textcalls.EMPTY_REPLY if self.task.scenario == "skyair" else (
+            "Your message was empty. What would you like me to do?")
+
     def system_message(self) -> str:
         """Skye's system prompt + the customer sidebar + the STATE block, rebuilt before every
         LLM call (the state is re-injected every turn)."""
@@ -751,31 +759,74 @@ class Conversation:
             n_calls_before = self._next_seq
             self._turn_msg0 = len(self.messages)
             self.messages.append({"role": "user", "content": text})
-            for _ in range(MAX_STEPS):
+            text_retry = False
+            if not text.strip():            # an empty message: a fixed, polite answer
+                self.messages.append({"role": "assistant", "content": self.empty_text()})
+                await self.publish({"type": "llm_replace", "turn": self.turn,
+                                    "text": self.empty_text()})
+            for _ in range(MAX_STEPS if text.strip() else 0):
                 await self.publish({"type": "llm_start", "turn": self.turn})
 
-                async def on_text(delta: str) -> None:
+                streamed: list[str] = []
+                held = {"on": False}
+
+                async def on_text(delta: str, streamed=streamed, held=held) -> None:
+                    # text that may be a tool call written as JSON is held back from the
+                    # customer until the reply is complete (fix/free-typing)
+                    streamed.append(delta)
+                    if held["on"] or textcalls.might_start_call("".join(streamed)):
+                        held["on"] = True
+                        return
                     await self.publish({"type": "llm_delta", "turn": self.turn, "text": delta})
                 try:
                     if self.backend is not None and hasattr(self.backend, "state_block"):
                         # prices in the STATE block count as sourced for the price check
                         numbers_in(self.backend.state_block(), self.facts)
-                    r = await self.llm.reply(self.llm_messages(), self.offered_tools(),
-                                             on_text)
+                    msgs = self.llm_messages()
+                    if text_retry:
+                        msgs = msgs + [{"role": "system", "content": textcalls.RETRY_HINT}]
+                    r = await self.llm.reply(msgs, self.offered_tools(), on_text)
                 except LLMError as e:
                     await self.publish({"type": "error", "where": "llm", "detail": str(e)[:200]})
                     break
-                if not r.tool_calls and r.content and self.backend is not None:
-                    # a call written as TEXT for a tool that exists but is not offered yet
-                    # (gated): recover it so the guardrail can answer with its next step
-                    from console.llm_stream import tool_call_from_text
-                    got = tool_call_from_text(r.content, set(self.task.tool_names))
-                    if got:
-                        tc, before = got
-                        r.tool_calls, r.content, r.from_text = [tc], before, True
-                        r.message = {"role": "assistant", "content": before, "tool_calls": [
+                if not r.tool_calls and r.content and textcalls.looks_like_call(r.content):
+                    calls, rest = textcalls.find_calls(r.content)
+                    offered = {t["function"]["name"] for t in self.offered_tools()}
+                    run = [(n, a) for n, a in calls if n in offered]
+                    if run:     # a real, offered tool written as text: run it as a call
+                        from agent.llm import ToolCall
+                        tcs = [ToolCall(f"text_{i}", n, a, json.dumps(a))
+                               for i, (n, a) in enumerate(run)]
+                        r.tool_calls, r.content, r.from_text = tcs, rest, True
+                        r.message = {"role": "assistant", "content": rest, "tool_calls": [
                             {"id": tc.id, "type": "function", "function": {
-                                "name": tc.name, "arguments": tc.raw_arguments}}]}
+                                "name": tc.name, "arguments": tc.raw_arguments}}
+                            for tc in tcs]}
+                    else:       # unknown or not offered now: never shown, never executed
+                        names = ", ".join(n for n, _ in calls) or "(unparsed)"
+                        g = {"turn": self.turn, "tool": names, "kind": "ignored_text_call",
+                             "detail": "tool call written as text, not offered in this state: "
+                                       "hidden from the customer, not executed"
+                                       + (", retrying with a hint" if not text_retry else
+                                          ", second time: fallback reply")}
+                        self.guards.append(g)
+                        await self.publish({"type": "guard", "guard": g})
+                        await self.publish({"type": "llm_replace", "turn": self.turn,
+                                            "text": ""})
+                        if not text_retry:
+                            text_retry = True
+                            continue
+                        r.content = self.fallback_text()
+                        r.message = {"role": "assistant", "content": r.content}
+                        await self.publish({"type": "llm_replace", "turn": self.turn,
+                                            "text": r.content})
+                elif held["on"] and not r.tool_calls:
+                    # held back, but no tool call after all: show the complete text now
+                    await self.publish({"type": "llm_replace", "turn": self.turn,
+                                        "text": r.content})
+                elif held["on"] and r.content:
+                    await self.publish({"type": "llm_replace", "turn": self.turn,
+                                        "text": r.content})
                 self.messages.append(r.message)
                 self.think_log.append({"turn": self.turn, "think_ms": round(r.think_ms, 1),
                                        "n_calls": len(r.tool_calls),

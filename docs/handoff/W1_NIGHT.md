@@ -26,3 +26,9 @@ Started 2026-11-06 23:47 UTC from feat/demo-polish 9ae97a1 (clean). Local models
 Final branch heads: feat/demo-polish 89cba1b (Phase A), feat/demo-realism (this commit). Nothing pushed or merged.
 Next: nothing required. Optional: merge (commands in W1_REPORT.md), R1-R5 in REQUESTS_W1.md.
 Blockers: none.
+
+# fix/free-typing (2026-11-07, from origin/main 66404ff)
+
+| Step | State | Commit | Notes |
+|---|---|---|---|
+| 1 text tool calls | done | (next commit) | console/textcalls.py + engine: JSON tool calls in text held back while streaming; offered tool -> real call; unknown/not offered -> hidden, not run, logged "ignored text tool call", one retry with a hint, then a fixed fallback; empty input answered without the LLM |
