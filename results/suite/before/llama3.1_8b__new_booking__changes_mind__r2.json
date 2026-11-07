@@ -1,0 +1,198 @@
+{
+ "label": "CORRECTNESS run: real agent loop and real local LLM, tool handlers in-process, no cluster and no pods; scripted customer turns; timings are not results",
+ "scenario": "new_booking",
+ "variant": "changes_mind",
+ "model": "llama3.1:8b",
+ "rep": 2,
+ "pass": true,
+ "reason": "ok",
+ "expect": {
+  "origin": "SKA",
+  "destination": "SKB",
+  "fare": "Saver",
+  "email": "kavya.raman@example.net",
+  "date": "2026-12-09"
+ },
+ "customer_turns": [
+  "Hi, I'm Kavya Raman and I'm new to Skypiea Air.",
+  "I'd like to fly from SKA to SKB on 2026-12-08.",
+  "Actually, make that 2026-12-09 instead, same route. Earliest flight, Saver fare. My email is kavya.raman@example.net.",
+  "Yes, I confirm the booking.",
+  "Thanks, that's all."
+ ],
+ "customer_turns_are": "scripted",
+ "calls": [
+  {
+   "turn": 1,
+   "tool": "find_customer",
+   "error": null,
+   "from_text": false,
+   "guard": null
+  },
+  {
+   "turn": 2,
+   "tool": "search_flights",
+   "error": null,
+   "from_text": false,
+   "guard": null
+  },
+  {
+   "turn": 3,
+   "tool": "search_flights",
+   "error": null,
+   "from_text": false,
+   "guard": null
+  },
+  {
+   "turn": 3,
+   "tool": "book_flight",
+   "error": "need_details",
+   "from_text": false,
+   "guard": null
+  },
+  {
+   "turn": 4,
+   "tool": "book_flight",
+   "error": null,
+   "from_text": false,
+   "guard": null
+  },
+  {
+   "turn": 5,
+   "tool": "transfer_to_human",
+   "error": null,
+   "from_text": false,
+   "guard": null
+  }
+ ],
+ "n_calls": 6,
+ "n_errors": 1,
+ "llm_replies": 11,
+ "truth_badges": 0,
+ "transferred": true,
+ "wall_s_not_a_result": 9.5,
+ "transcript": [
+  {
+   "role": "user",
+   "text": "Hi, I'm Kavya Raman and I'm new to Skypiea Air.",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "",
+   "tool_calls": [
+    "find_customer {\"name\":\"Kavya Raman\"}"
+   ]
+  },
+  {
+   "role": "tool",
+   "text": "{\"found\": 0, \"message\": \"No customer named 'Kavya Raman'. Ask them to check the spelling. If they are new to Skypiea Air, welcome them as a new customer: ask origin, destination and travel date, call search_flights, and offer to book with book_flight (their name and email).\"}",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "Hi Kavya, welcome to Skypiea Air! Since we don't have a record of you, could you please tell me where you're flying from, where you'd like to go, and on which date you'd like to travel? I can help you find the best flights and book your ticket.",
+   "tool_calls": []
+  },
+  {
+   "role": "user",
+   "text": "I'd like to fly from SKA to SKB on 2026-12-08.",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "",
+   "tool_calls": [
+    "search_flights {\"date\":\"2026-12-08\",\"origin\":\"SKA\",\"destination\":\"SKB\"}"
+   ]
+  },
+  {
+   "role": "tool",
+   "text": "{\"flights\": [{\"flight_no\": \"SA286\", \"origin\": \"SKA\", \"destination\": \"SKB\", \"date\": \"2026-12-08\", \"depart\": \"17:30\", \"arrive\": \"19:10\", \"status\": \"scheduled\", \"price\": 229, \"fares\": {\"Saver\": 229, \"Flex\": 269, \"Business\": 518}}], \"airports\": null}",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "I've found a flight from SKA to SKB on 2026-12-08. The flight number is SA286, departing at 17:30 and arriving at 19:10. The price for a Saver ticket is $229. Would you like to book this flight?",
+   "tool_calls": []
+  },
+  {
+   "role": "user",
+   "text": "Actually, make that 2026-12-09 instead, same route. Earliest flight, Saver fare. My email is kavya.raman@example.net.",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "",
+   "tool_calls": [
+    "search_flights {\"origin\":\"SKA\",\"date\":\"2026-12-09\",\"destination\":\"SKB\"}"
+   ]
+  },
+  {
+   "role": "tool",
+   "text": "{\"flights\": [{\"flight_no\": \"SA309\", \"origin\": \"SKA\", \"destination\": \"SKB\", \"date\": \"2026-12-09\", \"depart\": \"13:05\", \"arrive\": \"15:10\", \"status\": \"scheduled\", \"price\": 119, \"fares\": {\"Saver\": 119, \"Flex\": 159, \"Business\": 298}}, {\"flight_no\": \"SA310\", \"origin\": \"SKA\", \"destination\": \"SKB\", \"date\": \"2026-12-09\", \"depart\": \"21:10\", \"arrive\": \"22:35\", \"status\": \"scheduled\", \"price\": 189, \"fares\": {\"Saver\": 189, \"Flex\": 229, \"Business\": 438}}], \"airports\": null}",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "",
+   "tool_calls": [
+    "book_flight {\"fare\":\"Saver\",\"customer_name\":\"Kavya Raman\",\"customer_email\":\"kavya.raman@example.net\",\"flight_no\":\"SA309\"}"
+   ]
+  },
+  {
+   "role": "tool",
+   "text": "{\"error\": \"need_details\", \"booked\": false, \"message\": \"For a new customer ask for their full name and email address.\"}",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "I need to verify your identity before booking the flight. Could you please confirm your full name and email address?",
+   "tool_calls": []
+  },
+  {
+   "role": "user",
+   "text": "Yes, I confirm the booking.",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "",
+   "tool_calls": [
+    "book_flight {\"name\":\"Kavya Raman\",\"email\":\"kavya.raman@example.net\",\"passengers\":1,\"customer_confirmed\":true,\"fare\":\"Saver\",\"flight_no\":\"SA309\"}"
+   ]
+  },
+  {
+   "role": "tool",
+   "text": "{\"booked\": true, \"booking_code\": \"G9H973\", \"customer_id\": \"C2001\", \"new_customer\": true, \"fare\": \"Saver\", \"paid\": 119, \"flight\": {\"flight_no\": \"SA309\", \"origin\": \"SKA\", \"destination\": \"SKB\", \"date\": \"2026-12-09\", \"depart\": \"13:05\", \"arrive\": \"15:10\", \"status\": \"scheduled\", \"seat\": \"10C\"}}",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "Your flight from SKA to SKB on 2026-12-09 has been booked successfully. Your booking code is G9H973. You have a Saver fare ticket with a seat number 10C.",
+   "tool_calls": []
+  },
+  {
+   "role": "user",
+   "text": "Thanks, that's all.",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "",
+   "tool_calls": [
+    "transfer_to_human {\"summary\":\"Booking G9H973 for Kavya Raman from SKA to SKB on 2026-12-09.\"}"
+   ]
+  },
+  {
+   "role": "tool",
+   "text": "{\"transferred\": true, \"message\": \"A human colleague will take over.\"}",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "Goodbye!",
+   "tool_calls": []
+  }
+ ]
+}
