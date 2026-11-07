@@ -1,0 +1,5 @@
+conversation,turn,source,hint_mode,hint_mode_end,hint_changed_by,hint_sources,lead_ms,typing_ms,lookahead,console_map,first_tool,calls,base_first_wall_ms,base_first_cold,pred_first_wall_ms,pred_first_cold,pred_first_predicted,pred_first_warm_source,pred_first_warm,truth_claims,truth_verdict,truth_badge,truth_note_sent,truth_corrected,truth_price_verdict,truth_prices_unsourced,llm_model
+68c7c6b6149a,1,autopilot,off,off,,,,10200.0,1,True,,0,,,,,,,,,no_claim,,False,,none,,llama3.1:8b
+68c7c6b6149a,2,autopilot,off,off,,,,32400.0,1,True,transfer_to_human,1,2936.3,True,2951.4,True,False,,False,,no_claim,,False,,none,,llama3.1:8b
+68c7c6b6149a,3,autopilot,off,off,,,,10800.0,1,True,transfer_to_human,1,2868.4,True,2860.4,True,False,,False,,no_claim,,False,,none,,llama3.1:8b
+68c7c6b6149a,4,autopilot,off,off,,,,2100.0,1,True,transfer_to_human,1,31.3,False,31.7,False,False,,True,,no_claim,,False,,none,,llama3.1:8b

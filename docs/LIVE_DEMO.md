@@ -21,6 +21,7 @@ really holds.
 make setup                       # once: .venv from requirements.lock
 ollama pull llama3.1:8b          # once, where Ollama runs (the default model)
 ollama pull qwen2.5:7b           # optional: second model for the Model dropdown
+ollama pull qwen3:8b             # optional: third model (runs with thinking disabled)
 make fetch-models                # predictor bundles from GitHub Release v1.2 (verified)
 make live                        # both stacks + console: http://127.0.0.1:8090
 make live-clean                  # stop
@@ -43,7 +44,7 @@ scripted / live, with a 2-minute self-check and the honest answers to the usual 
 |---|---|
 | Tool containers (16 MCP servers per stack), their cold starts, the gateways, the controllers | **Real**, on kind. Every tool call is sent through both gateways and waits for a real pod. |
 | The predictor | **Real** trained bundles: support profile `lgbm-support-aabdfd2` (trained on **tau2-bench** traces) for Skye; coding profile `lgbm-coding-af00023` (ranker trained on **TraceLab** traces, warm policy tuned on TraceLab + **Copilot** VAL) for Dev assistant. It sees tool names and timing only. |
-| The LLM | **Real**, local (Ollama): llama3.1:8b by default, qwen2.5:7b selectable. |
+| The LLM | **Real**, local (Ollama): llama3.1:8b by default; qwen2.5:7b and qwen3:8b (thinking disabled) selectable. Default chosen by the correctness suite (`docs/SUITE_BEFORE_AFTER.md`). |
 | Skypiea Air customers, bookings, flights, fares, offers, seats | **Mock** (fictional, `agent/skyair/`). Writes persist for the conversation; Reset restores the database. New customers and booking codes made in a conversation are fictional and live only in it. |
 | The `sortkit` repository and its tests | **Mock** (`agent/devrepo/sortkit.json`). `run_tests` is a **simulated test runner**: it parses the files and evaluates literal asserts against its own reference behaviour; **no code is executed**, least of all code the model wrote. |
 | Customer lines in Auto-play / Scenarios ("Scripted customer · turn N"; typed lines say "You") | **Scripted** (prepared text); the model's replies, tool calls and all timings are live. The scripted customer "types" at 200 characters a minute (an assumption). |

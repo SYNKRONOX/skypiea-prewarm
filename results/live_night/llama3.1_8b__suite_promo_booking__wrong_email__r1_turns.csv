@@ -1,0 +1,7 @@
+conversation,turn,source,hint_mode,hint_mode_end,hint_changed_by,hint_sources,lead_ms,typing_ms,lookahead,console_map,first_tool,calls,base_first_wall_ms,base_first_cold,pred_first_wall_ms,pred_first_cold,pred_first_predicted,pred_first_warm_source,pred_first_warm,truth_claims,truth_verdict,truth_badge,truth_note_sent,truth_corrected,truth_price_verdict,truth_prices_unsourced,llm_model
+0611f0c99e7c,1,autopilot,off,off,,,,16800.0,1,True,find_customer,1,2219.9,True,2240.8,True,False,,False,,no_claim,,False,,none,,llama3.1:8b
+0611f0c99e7c,2,autopilot,off,off,,,,14400.0,1,True,find_customer,1,1992.6,True,1980.5,True,False,,False,,no_claim,,False,,none,,llama3.1:8b
+0611f0c99e7c,3,autopilot,off,off,,,,26100.0,1,True,search_flights,1,1803.9,True,2832.6,True,False,,False,,no_claim,,False,,sourced,,llama3.1:8b
+0611f0c99e7c,4,autopilot,off,off,,,,8100.0,1,True,book_flight,1,2781.3,True,2797.4,True,False,,False,,no_claim,,False,,none,,llama3.1:8b
+0611f0c99e7c,5,autopilot,off,off,,,,18900.0,1,True,apply_promo,1,2719.3,True,2729.0,True,False,,False,promo,agree,,False,,sourced,,llama3.1:8b
+0611f0c99e7c,6,autopilot,off,off,,,,5700.0,1,True,transfer_to_human,1,3462.5,True,3474.5,True,False,,False,,no_claim,,False,,none,,llama3.1:8b

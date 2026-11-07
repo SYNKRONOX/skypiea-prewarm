@@ -273,6 +273,17 @@ executed." The act ends with an out-of-repository question ("That is not in this
 If a step goes wrong (LLM slow, cluster down), switch to the screenshots and CSV in
 [`docs/live_backup/`](live_backup/) (`w1/` is the newest set).
 
+**Best scenarios (W1 night).** In the correctness suite (`docs/SUITE_BEFORE_AFTER.md`,
+scripted customers, no cluster) llama3.1:8b now completes every case of all six scenario
+types; the three Scenario buttons are the clearest to show: **New customer books a trip**
+(Bangalore → Goa next Friday: city and date resolution, quote, "Shall I go ahead?", booking),
+**Change a booking** (Tara Patel names 5TGTBP; a fee quote before the change) and **Cancel and
+refund** (predictor killed mid-conversation). Things to point at: the demo-world date in "What
+Skye knows now" (Monday 11 January 2027, never today's date), the **Guardrails** list in the
+Details drawer (a tool not offered yet, a write without the customer's yes run as a quote),
+and the **Proof** panel (per call: arrival, pod Ready, lead time and the predictor decision,
+all measured). Prices are in INR; the world is synthetic (`docs/SKYPIEA_WORLD.md`).
+
 ### 1-minute version
 
 1. (0:00) "Skye is an AI assistant for a made-up airline. Each tool she calls is a container
