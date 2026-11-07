@@ -194,3 +194,36 @@ git merge --no-ff feat/demo-polish
 git merge --no-ff feat/demo-realism
 make test && .venv/bin/ruff check . && make check-sizes
 ```
+
+## fix/free-typing (2026-11-07, branch from origin/main 66404ff; not pushed, not merged)
+
+**Bug (found by hand):** typing "hello" showed `{"name": "hello", "parameters": {}}` as Skye's
+reply: llama3.1:8b wrote a tool call as JSON text, the console streamed it to the customer and
+treated "hello" as a tool name.
+
+**Fix:** `console/textcalls.py` finds tool-call JSON in assistant text (plain, fenced, after
+`<|python_tag|>`). Text that may be such a call is held back while streaming. An offered tool
+written as text runs as a real call; an unknown or not-offered name is never shown and never
+executed, is logged in the Details drawer as "ignored text tool call", and the model gets one
+retry with a corrective hint, then a fixed fallback reply. JSON echoed next to a real call is
+stripped. `console/guards.small_talk` (rules, no LLM) answers greetings, thanks, "ok",
+capability questions, gibberish, injection attempts and pasted tool calls without offering
+tools; "ok" after a pending quote still counts as a yes. An empty message gets a fixed polite
+reply (the API now accepts `""`; a missing `text` is still 400). The greeting and the
+suggestion / "Try a valid customer" chips were already visible on a fresh conversation
+(checked, `docs/img/live_fresh_greeting.png`; regression test added).
+
+**Evidence (correctness runs, no cluster, scripted openers):** free-typing group (13 openers,
+added after the bug), 3 reps: llama3.1:8b 30/39 → 39/39 (24 → 0 tool calls on openers),
+qwen3:8b 36/39 → 39/39, qwen2.5:7b 39/39 → 39/39 (`docs/SUITE_BEFORE_AFTER.md`, last section).
+Main suite on the fixed code, llama3.1:8b, 1 rep: 18/18 (development check, not committed).
+
+**Checks:** `make test` 572 passed, 4 skipped; ruff clean; check-sizes OK. Fresh clone
+(`.live/fresh_ft` at 4605b83): setup OK, 573 passed, 3 skipped, ruff, sizes OK. `make live`
+was not re-run in the clone: port 8090 is held by another checkout's console
+(`/home/smarty/skypiea-merge`), which I did not stop; my own check ran a console on port 8091
+(`CONSOLE_PORT`), now stopped.
+
+**Assumptions:** the task listed 13 openers while saying "12": all 13 kept. The pass rule is
+the one given (no tool-call JSON, no unknown tool, natural language) plus "database unchanged"
+and "no system prompt in the reply"; tool calls on openers are reported separately.
