@@ -157,3 +157,65 @@ def test_suite_has_18_cases_and_the_oracle_passes_only_the_expected_state() -> N
     assert judge(c, t, pristine)[0] is False
     tr = next(x for x in cases if x.scenario == "transfer")
     assert judge(tr, Session(), pristine, transferred=True) == (True, "ok")
+
+
+def test_proof_panel_values_equal_the_stub_gateways_record() -> None:
+    pytest.importorskip("starlette")
+    from pathlib import Path
+
+    from agent.suite.run import NullMcp, NullPoller
+    from agent.tasks import get
+    from console.engine import Conversation, proof
+    from console.llm_stream import ScriptedStreamingLLM
+    from tests.test_console import FakeStack
+
+    sess = {"calls": [{"i": 0, "tool_class": "flight_search", "server": "search",
+                       "t_start_ms": 5200.0, "t_end_ms": 5240.0, "cold": False,
+                       "predicted": True, "added_ms": 31.5, "held_ms": 0.0}],
+            "decisions": [{"t_ms": 900.0, "outcome": "ok", "after_call": -1,
+                           "trigger": "turn_start",
+                           "ranked": [{"tool_class": "flight_search", "p": 0.61},
+                                      {"tool_class": "user_lookup", "p": 0.2},
+                                      {"tool_class": "escalate", "p": 0.1},
+                                      {"tool_class": "other", "p": 0.05}],
+                           "decisions": [{"tool_class": "flight_search", "warm": True,
+                                          "copies": 1, "start_in_ms": 300, "prob": 0.61}]}]}
+
+    class GwStack(FakeStack):              # serves the stub gateway's session record
+        async def session(self, sid):
+            return sess
+
+    class Info:
+        ok, cold, added_ms, held_ms, predicted, wall_ms = True, False, 31.5, 0.0, True, 40.0
+        error = warm_source = hold_late_ms = None
+
+    class Mcp(NullMcp):
+        def call_tool(self, name, args):
+            return {"structuredContent": {}}, Info()
+
+    async def publish(ev):
+        pass
+    poller = NullPoller()
+    poller.warm_since = {}
+    conv = Conversation(get("skyair"), ScriptedStreamingLLM(
+        [[("search_flights", {"origin": "BLR", "destination": "GOI"})]]),
+        {"base": GwStack("base"), "pred": GwStack("pred")}, poller, publish,
+        {"mirror": "concurrent", "hint_mode": "off", "baseline_policy": "scale_to_zero"},
+        mcp_factory=lambda u: Mcp())
+    asyncio.run(conv.user_turn("flights please"))
+    p = conv.calls[0]["proof"]
+    c, d = sess["calls"][0], sess["decisions"][0]
+    assert p == proof(sess, 0, "flight_search", conv.calls[0]["server"], conv._server, None)
+    assert (p["arrival_ms"], p["added_ms"], p["held_ms"], p["cold"], p["predicted"]) == (
+        c["t_start_ms"], c["added_ms"], c["held_ms"], c["cold"], c["predicted"])
+    assert p["decision"]["t_ms"] == d["t_ms"] and p["decision"]["top3"] == d["ranked"][:3]
+    assert p["decision"]["copies"] == 1 and p["decision"]["start_in_ms"] == 300
+    assert p["warm_requested_ms"] == 1200.0 and p["lead_ms"] == 4000.0
+    assert p["verdict"] == "warm"
+    sess["calls"][0]["cold"] = True
+    assert proof(sess, 0, "flight_search", "search")["verdict"] == "cold_despite_prediction"
+    # the page shows these fields as they are (no client-side computation of values)
+    js = (Path(__file__).resolve().parent.parent / "console" / "static" / "app.js").read_text()
+    for f in ("p.arrival_ms", "p.added_ms", "p.held_ms", "p.lead_ms", "d.t_ms", "d.copies",
+              "d.start_in_ms", "p.pod_ready_before_ms"):
+        assert f in js

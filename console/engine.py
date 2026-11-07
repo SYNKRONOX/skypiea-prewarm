@@ -204,6 +204,55 @@ def warm_reason(session: dict[str, Any] | None, idx: int, server: str,
     return max(cands, key=lambda x: x[0])[1]
 
 
+def proof(session: dict[str, Any] | None, idx: int, tool_class: str, server: str,
+          server_of=None, ready_before_ms: float | None = None) -> dict[str, Any] | None:
+    """Proof panel row for the predictive stack's call #idx: MEASURED fields only, copied from
+    the gateway's own session record (ms since the session began) plus the console poller's
+    observation of the pod becoming Ready (every 0.25 s). Nothing is estimated:
+      arrival_ms        the call's arrival at the gateway (t_start_ms)
+      cold, predicted, added_ms, held_ms   as the gateway recorded them
+      decision          the latest ok predictor decision before the arrival that warmed this
+                        call's server: when (t_ms), its top-3 (tool_class, p), and for this
+                        call's class/server its copies, start_in_ms and prob
+      warm_requested_ms decision t_ms + start_in_ms (when the controller was asked)
+      lead_ms           arrival_ms - warm_requested_ms (time the pod had to start)
+      pod_ready_before_ms  how long before the call the pod was seen Ready (poller); for a
+                        cold call the pod was ready about added_ms AFTER the arrival
+      verdict           warm | cold | cold_despite_prediction
+    The predictor does not report its threshold tau in /decide, so none is shown."""
+    calls = (session or {}).get("calls", [])
+    if idx is None or idx >= len(calls) or calls[idx].get("tool_class") != tool_class:
+        return None
+    c = calls[idx]
+    t = c.get("t_start_ms", 0.0)
+
+    def same(cls: str | None) -> bool:
+        return cls == tool_class or (server_of is not None and server_of(cls) == server)
+    dec = None
+    for d in (session or {}).get("decisions", []):
+        if d.get("outcome") == "ok" and d.get("t_ms", 1e18) <= t and any(
+                same(x.get("tool_class")) and x.get("warm") and x.get("copies", 0) > 0
+                for x in d.get("decisions", [])):
+            dec = d
+    out: dict[str, Any] = {"arrival_ms": t, "cold": c.get("cold"),
+                           "predicted": c.get("predicted"), "added_ms": c.get("added_ms"),
+                           "held_ms": c.get("held_ms"), "decision": None,
+                           "pod_ready_before_ms": ready_before_ms}
+    if dec is not None:
+        mine = next(x for x in dec["decisions"] if same(x.get("tool_class"))
+                    and x.get("warm") and x.get("copies", 0) > 0)
+        req = dec["t_ms"] + (mine.get("start_in_ms") or 0)
+        out["decision"] = {"t_ms": dec["t_ms"], "trigger": dec.get("trigger") or "after_call",
+                           "top3": dec.get("ranked", [])[:3], "tool_class": mine["tool_class"],
+                           "copies": mine.get("copies"), "start_in_ms": mine.get("start_in_ms"),
+                           "prob": mine.get("prob")}
+        out["warm_requested_ms"] = round(req, 1)
+        out["lead_ms"] = round(t - req, 1)
+    out["verdict"] = ("cold_despite_prediction" if c.get("cold") and c.get("predicted")
+                      else "cold" if c.get("cold") else "warm")
+    return out
+
+
 class BaseLane:
     """The baseline stack's own timeline (see the module docstring). ``gate`` holds the lane
     while it is cleared (sequential mode: during the predictive turn)."""
@@ -411,6 +460,8 @@ class Conversation:
         # the baseline call is queued when the predictive call is ISSUED, with the gap the
         # predictive stack saw, so a slow predictive call cannot delay the baseline
         issue = self.clock()
+        ws = getattr(self.poller, "warm_since", {}).get(("pred", self._server(cls)))
+        rec["pred_ready_before_ms"] = None if ws is None else round((issue - ws) * 1000, 1)
         p_gap = None if self.pred_last_end is None else issue - self.pred_last_end
         fut = lane.submit(cls, gargs, p_gap)
         rec["pred_seq"] = self._pred_sent
@@ -658,11 +709,16 @@ class Conversation:
     async def _emit_call(self, rec: dict[str, Any], args: dict[str, Any],
                          idx: int | None = None) -> None:
         rec["seq"] = len(self.calls) if idx is None else idx
-        if rec.get("pred_ok") and rec.get("pred_cold") is False and not rec.get("pred_predicted"):
+        sess = None
+        if rec.get("pred_ok") and rec.get("tool_class"):
             try:
                 sess = await self.stacks["pred"].session(self.sid)
             except Exception:  # noqa: BLE001
                 sess = None
+            rec["proof"] = proof(sess, rec.get("pred_seq"), rec.get("tool_class", ""),
+                                 rec.get("server", ""), self._server,
+                                 rec.get("pred_ready_before_ms"))
+        if rec.get("pred_ok") and rec.get("pred_cold") is False and not rec.get("pred_predicted"):
             pi = rec.get("pred_seq")
             wr = warm_reason(sess, pi, rec.get("server", ""), rec.get("tool_class", ""),
                              self._server) \

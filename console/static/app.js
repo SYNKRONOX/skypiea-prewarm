@@ -302,6 +302,30 @@ function renderState(st) {
     "Tools offered now: " + st.allowed_tools.join(", ")];
   $("state-body").textContent = lines.join("\n");
 }
+// Proof panel: the values are copied from the call record's "proof" (gateway session record)
+function proofRow(c) {
+  const p = c.proof; if (!p) return null;
+  const ms = (v) => (v === null || v === undefined) ? "–" : Math.round(v) + " ms";
+  const d = p.decision;
+  const row = el("div", "proof-row");
+  row.dataset.seq = c.seq;
+  const verdict = { warm: "warm", cold: "cold", cold_despite_prediction: "cold despite prediction" }[p.verdict] || p.verdict;
+  row.append(el("b", "", "#" + c.seq + " " + c.tool + " · " + verdict), el("br"));
+  row.append(document.createTextNode("arrival " + ms(p.arrival_ms) + " · added " + ms(p.added_ms) + " · held " + ms(p.held_ms) +
+    " · pod Ready " + (p.pod_ready_before_ms !== null && p.pod_ready_before_ms !== undefined ? ms(p.pod_ready_before_ms) + " before the call (poller, ±250 ms)" :
+      p.cold ? "after arrival (the call waited " + ms(p.added_ms) + ")" : "– (not seen by the poller)")));
+  row.append(el("br"));
+  row.append(document.createTextNode(d ? ("decision at " + ms(d.t_ms) + " (" + d.trigger + "): top-3 " +
+    d.top3.map((r) => r.tool_class + " " + Number(r.p).toFixed(2)).join(", ") + " · warmed " + d.tool_class + " ×" + d.copies +
+    " in " + ms(d.start_in_ms) + " (p " + Number(d.prob).toFixed(2) + ") · lead " + ms(p.lead_ms) + " · threshold not reported by /decide") :
+    "no predictor decision warmed this server before the call" + (c.pred_warm_reason ? " (warm: " + c.pred_warm_reason + ")" : "")));
+  return row;
+}
+function renderProof(c) {
+  const r = proofRow(c); if (!r) return;
+  const box = $("proof"); if (box.textContent === "No calls yet.") box.textContent = "";
+  const old = box.querySelector('[data-seq="' + c.seq + '"]'); if (old) old.replaceWith(r); else box.prepend(r);
+}
 const GUARD = { gated: "tool not offered yet (steered)", invalid_retry: "invalid arguments: one retry with a hint",
   auto_transfer: "two invalid calls: transferred to a human", confirm_first: "no customer yes yet: run as a quote" };
 function renderGuards(gs) {
@@ -487,7 +511,7 @@ function resetView(convId) {
       const c = el("button", "chip-btn", n); c.type = "button"; c.title = m; c.onclick = () => fill("Hi, I'm " + n + ", email " + m + "."); tryc.append(c); }
     e.append(tryc);
   }
-  S.guards = []; renderGuards([]); $("state-body").textContent = "No state yet.";
+  S.guards = []; renderGuards([]); $("state-body").textContent = "No state yet."; $("proof").textContent = "No calls yet.";
   $("chat").append(e); renderBooking({ available: (S.demo.name || "skyair") === "skyair" }, []); renderTicker([]);
   S.typing = false; S.typingT = null;
   renderTimelines(); renderTotals(null);
@@ -509,7 +533,7 @@ function handle(ev) {
           const src = ((cv.turns || []).find((x) => x.turn === t) || {}).source;
           for (const m of chat.filter((x) => x.turn === t && x.role === "user"))
             addMsg("user", m.text, (src === "autopilot" ? "Scripted " + HU().toLowerCase() : src === "presenter" ? "You" : HU()) + " · turn " + t);
-          for (const c of calls.filter((x) => x.turn === t)) onCall(c);
+          for (const c of calls.filter((x) => x.turn === t)) { onCall(c); renderProof(c); }
           for (const m of chat.filter((x) => x.turn === t && x.role !== "user")) last[t] = addMsg("agent", m.text, AG());
         }
         for (const t of cv.truth || []) { S.lastAgent = last[t.turn]; onTruth(t); }
@@ -566,7 +590,7 @@ function handle(ev) {
       S.agentEl = null;
       break;
     case "call_start": status("calling " + ev.tool + " on both stacks…"); break;
-    case "call": onCall(ev.call); break;
+    case "call": onCall(ev.call); renderProof(ev.call); break;
     case "status_turn": status(ev.text); break;
     case "turn_end": status("your turn"); break;
     case "error": dropTyping();

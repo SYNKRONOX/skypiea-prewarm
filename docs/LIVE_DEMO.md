@@ -84,11 +84,49 @@ conversation never mixes two models.
   asks for confirmation and books (`book_flight`, class `reservation_book`). The new
   customer is verified by that booking and can then check it, change the flight, add bags,
   cancel or apply an offer. A second identical booking is refused ("duplicate").
-- **Offers:** `list_offers` and `apply_promo` (fictional codes SKYWINTER10, BAG35, BIZ25).
+- **Offers:** `list_offers` and `apply_promo` (fictional codes SKYWINTER10, GOAWEEKEND,
+  BAG500, BIZ1500; `book_flight` also takes an optional `promo_code`).
   The support vocabulary has no promo tool, so these calls (class `promo_code_lookup`) are
   labelled **"unknown tool for the predictor: no prediction, normal behaviour"**.
 - **Out of scope:** Skye says what she can help with and does not answer weather, visas,
   coding or general-knowledge questions.
+
+### The demo world and the guardrails (W1 night)
+
+Since W1 night the airline runs in a **synthetic, India-centred world** (46 real airport
+codes, a 90-day timetable in IST, INR fares by a documented rule, 306 fictional customers,
+930 bookings; fixed seed; demo-world "today" is Monday 11 January 2027):
+[`SKYPIEA_WORLD.md`](SKYPIEA_WORLD.md). Skye now works with these **guardrails**
+(`console/guards.py`, `console/engine.py`), all shown in the Details drawer under
+"Guardrails" and in the "What Skye knows now" box under the booking record:
+
+- **STATE block re-sent with every LLM call:** demo-world date, verified customer and active
+  bookings, last search (top 5 with flight_ids and fares), selected flight and booking, and
+  the action waiting for the customer's yes.
+- **Tool gating:** booking is offered only after a search; change, cancel, bags, refund and
+  promo only after verification with a selected booking (one active booking is selected
+  automatically). A call to a tool not offered yet is not run; the answer names the exact
+  next call ("call verify_customer(email=...) first").
+- **Steering errors:** an unknown email offers a new profile (search_flights, then
+  book_flight with name and email); booking before a search says search first.
+- **Argument validation before a tool runs:** missing or mistyped arguments (e.g. the string
+  "false" for customer_confirmed, a flight_id not in the last search, a malformed email) →
+  not run, one retry with a corrective hint; a second invalid call of the same tool in the
+  turn → transfer to a human.
+- **Explicit confirmation:** a write runs only if the customer's latest message says yes to
+  that action (or to the summary the tool quoted); otherwise it runs as a quote. A second
+  identical write needs a new quote and yes (seen before: two bags added for one).
+- **Places and dates:** "Bangalore", "Bengaluru", "blr" → BLR; "tomorrow", "next Friday" →
+  dates of the demo world.
+- **Compact context:** tool results capped (top 5 flights, 1,500 characters), older results
+  shortened (the STATE block carries what matters), temperature 0 and a fixed seed.
+- **Greeting and chips:** an empty chat shows Skye's capabilities, suggestion chips (book a
+  flight, change a booking, cancel and refund, any offers?) and "Try a valid customer" chips;
+  free typing works as before. Refused calls stay visible in the booking record.
+
+Correctness before and after, measured with a scripted scenario suite and an end-state
+oracle (no cluster, no LLM judge): [`results/suite/README.md`](../results/suite/README.md),
+`docs/SUITE_BEFORE_AFTER.md`.
 
 ### Booking card and truth check
 
@@ -103,9 +141,9 @@ After each Skye reply, simple rules check two things, and Skye's text is never e
 1. **"Done" claims** (changed, cancelled, refunded, baggage added; since W1 also booked and
    promo applied) against the writes that succeeded in that turn → red badge such as
    **"Not done: the booking was not changed"**.
-2. **Prices**: every money amount in the reply ("$50", "$1,014", "50 USD") must equal a number
-   that a tool result or the sidebar contained in this conversation → otherwise **"Not from
-   a tool: $X"**. A total Skye adds up herself is flagged too (no tool returned it).
+2. **Prices**: every money amount in the reply ("INR 2,500", "₹2,500", "Rs. 2,500", "2,500
+   rupees", and "$50" / "50 USD") must equal a number that a tool result, the sidebar or the
+   STATE block contained in this conversation → otherwise **"Not from a tool: INR X"**. A total Skye adds up herself is flagged too (no tool returned it).
 
 The verdicts are in the turns CSV (`truth_claims`, `truth_verdict`, `truth_badge`,
 `truth_note_sent`, `truth_corrected`, `truth_price_verdict`, `truth_prices_unsourced`). When a
@@ -162,7 +200,7 @@ API they are still "story acts": `POST /api/story {"act": n}`, files `story_*`.)
 
 | Demo | Scenario | Lines (customer side) |
 |---|---|---|
-| Skypiea Air | New customer books a trip | new customer Nova Quill, SKA → SKE on 2026-12-07, Saver, confirm, add a bag |
+| Skypiea Air | New customer books a trip | new customer Nova Quill, Bangalore → Goa next Friday (demo-world date), morning flight, Saver, confirm, add a bag |
 | Skypiea Air | Change a booking | Tara Patel (two active bookings; the customer names 5TGTBP), later flight on the same route, confirm (truth check visible) |
 | Skypiea Air | Cancel and refund | Asha Reddy cancels S4Z64E (a refundable fare) and asks for the refund; the predictor is scaled to 0 after turn 1 and restarted when the scenario ends, so the later calls run without prediction |
 | Code fix | Fix the failing merge_sort test | fix and run the tests, which files changed, then an out-of-repository question |
