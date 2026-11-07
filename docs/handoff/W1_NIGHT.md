@@ -31,4 +31,5 @@ Blockers: none.
 
 | Step | State | Commit | Notes |
 |---|---|---|---|
-| 1 text tool calls | done | (next commit) | console/textcalls.py + engine: JSON tool calls in text held back while streaming; offered tool -> real call; unknown/not offered -> hidden, not run, logged "ignored text tool call", one retry with a hint, then a fixed fallback; empty input answered without the LLM |
+| 1 text tool calls | done | 8a7f6dc | console/textcalls.py + engine: JSON tool calls in text held back while streaming; offered tool -> real call; unknown/not offered -> hidden, not run, logged "ignored text tool call", one retry with a hint, then a fixed fallback; empty input answered without the LLM |
+| 3 greeting and chips | done, no fix needed | (this commit) | fresh conversation on my console (port 8091; :8090 belongs to another checkout, skypiea-merge, left alone): greeting, 4 suggestion chips, 3 'Try a valid customer' chips visible; docs/img/live_fresh_greeting.png; regression test |

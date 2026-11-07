@@ -87,3 +87,12 @@ def test_empty_message_gets_a_polite_reply_without_the_llm() -> None:
     asyncio.run(conv.user_turn(""))
     assert conv.messages[-1] == {"role": "assistant", "content": textcalls.EMPTY_REPLY}
     assert not conv.think_log and not conv.calls
+
+
+def test_fresh_conversation_shows_greeting_and_chips() -> None:
+    from pathlib import Path
+    js = (Path(__file__).resolve().parent.parent / "console" / "static" / "app.js").read_text()
+    reset = js[js.index("function resetView"):js.index("function resetView") + 3000]
+    for label in ("Skye: Hi, I'm Skye from Skypiea Air", '"Book a flight"', '"Change a booking"',
+                  '"Cancel and refund"', '"Any offers?"', "Try a valid customer"):
+        assert label in reset
