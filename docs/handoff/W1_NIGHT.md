@@ -21,7 +21,7 @@ Started 2026-11-06 23:47 UTC from feat/demo-polish 9ae97a1 (clean). Local models
 | STEP 5 (part) | done | b2f82d3.. | Proof panel (tested), docs LIVE_DEMO/MEASURED_VS_SCRIPTED/SKYPIEA_WORLD, compare generator, Auto-play of suite cases for the live smoke |
 
 | STEP 5 | done | 3785805, 0e3c4af | live smoke per scenario on the cluster (results/live_night: 6/6 expected end states, 29/29 calls ok both stacks), DEMO.md, screenshots, recorded backup docs/live_backup/night, final-code recheck results/suite/final_check 18/18 |
-| Gate | PASS | (this commit) | see first lines; fresh clone .live/fresh_night at 0e3c4af |
+| Gate | PASS | 5d76bd5 | see first lines; fresh clone .live/fresh_night at 0e3c4af |
 
 Final branch heads: feat/demo-polish 89cba1b (Phase A), feat/demo-realism (this commit). Nothing pushed or merged.
 Next: nothing required. Optional: merge (commands in W1_REPORT.md), R1-R5 in REQUESTS_W1.md.
