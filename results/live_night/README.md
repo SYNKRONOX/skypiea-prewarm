@@ -18,7 +18,7 @@ these are demo runs, not results.
 
 All 29 calls succeeded on both stacks. In the promo conversation Skypiea was cold on every
 call and waited longer than Normal (offers are outside the predictor's vocabulary; the calls
-before them were not predicted in time). Skypiea's idle pod-seconds were 3.4-4.7 times
+before them were not predicted in time). Skypiea's idle pod-seconds were 3.5-4.7 times
 Normal's where it warmed pods (the cost side); in the transfer conversation they were equal.
 
 Files per conversation: `*.json` (console report, incl. the oracle verdict), `*_calls.csv`,
