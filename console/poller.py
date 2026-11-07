@@ -37,6 +37,10 @@ class Poller:
         self.policy: dict[str, Any] = {}
         self.links: dict[str, str] = {}       # gateway reachability (port-forward health)
         self._last_slow = 0.0
+        # called after every slow poll (fresh idle counters): the console re-publishes the
+        # conversation's totals there, so idle pod-seconds accrued BETWEEN and AFTER calls
+        # (LLM think time, the human's turn, the TTL tail) are shown, not only at call ends
+        self.on_slow = None
 
     # ---------------- pure helpers (tested offline) ----------------
     @staticmethod
@@ -104,11 +108,7 @@ class Poller:
         await self.publish({"type": "pods", "grid": self.grid, "errors": self.errors})
         if now - self._last_slow >= self.slow_s:
             self._last_slow = now
-            for key, cl in self.clients.items():
-                try:
-                    self.idle[key] = await cl.idle_pod_s()
-                except Exception:  # noqa: BLE001
-                    pass
+            await self.refresh_idle()
             if self.kube_health is not None:
                 self.model = await self.kube_health()
             try:
@@ -123,6 +123,16 @@ class Poller:
                     self.links[key] = f"down ({type(e).__name__})"
             await self.publish({"type": "slow", "idle": self.idle, "model": self.model,
                                 "baseline_policy": self.policy, "links": self.links})
+            if self.on_slow is not None:
+                await self.on_slow()
+
+    async def refresh_idle(self) -> None:
+        """Read both controllers' idle pod-second counters now."""
+        for key, cl in self.clients.items():
+            try:
+                self.idle[key] = await cl.idle_pod_s()
+            except Exception:  # noqa: BLE001
+                pass
 
     async def run(self) -> None:
         while True:

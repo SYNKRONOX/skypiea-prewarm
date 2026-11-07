@@ -1,0 +1,5 @@
+conversation,turn,source,hint_mode,hint_sources,lead_ms,typing_ms,lookahead,console_map,first_tool,calls,base_first_wall_ms,base_first_cold,pred_first_wall_ms,pred_first_cold,pred_first_predicted,pred_first_warm_source,pred_first_warm,truth_claims,truth_verdict,truth_badge,truth_note_sent,truth_corrected,truth_price_verdict,truth_prices_unsourced,llm_model
+f76f098779f2,1,autopilot,off,,,14100.0,1,True,find_customer,1,2470.9,True,2456.8,True,False,,False,,no_claim,,False,,none,,qwen2.5:7b
+f76f098779f2,2,autopilot,off,,,23400.0,1,True,list_offers,1,2325.5,True,2355.9,True,False,,False,,no_claim,,False,,sourced,,qwen2.5:7b
+f76f098779f2,3,autopilot,off,,,16500.0,1,True,apply_promo,1,1587.8,True,1582.9,True,False,,False,promo,agree,Not from a tool: $556,True,False,unsourced,556,qwen2.5:7b
+f76f098779f2,4,autopilot,off,,,5700.0,1,True,,0,,,,,,,,change,not_done,Not done: the booking was not changed | Not from a tool: $556,True,,unsourced,556,qwen2.5:7b

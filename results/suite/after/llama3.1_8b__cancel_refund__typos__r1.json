@@ -1,0 +1,177 @@
+{
+ "label": "CORRECTNESS run: real agent loop and real local LLM, tool handlers in-process, no cluster and no pods; scripted customer turns; timings are not results",
+ "scenario": "cancel_refund",
+ "variant": "typos",
+ "model": "llama3.1:8b",
+ "rep": 1,
+ "pass": true,
+ "reason": "ok",
+ "expect": {
+  "customer": "C1017",
+  "booking": "TDJE63",
+  "fare": "Flex"
+ },
+ "customer_turns": [
+  "hi, i need to cancle a trip. im vikram joshi, emial vikram.joshi@example.org",
+  "pls cancel bookng TDJE63, yes i confirm the cancelation",
+  "and refund it to my card pls, yes i confirm the refund",
+  "yes",
+  "thx"
+ ],
+ "customer_turns_are": "scripted",
+ "calls": [
+  {
+   "turn": 1,
+   "tool": "find_customer",
+   "error": null,
+   "from_text": false,
+   "guard": null
+  },
+  {
+   "turn": 2,
+   "tool": "cancel_booking",
+   "error": null,
+   "from_text": false,
+   "guard": null
+  },
+  {
+   "turn": 3,
+   "tool": "issue_refund",
+   "error": null,
+   "from_text": false,
+   "guard": null
+  },
+  {
+   "turn": 4,
+   "tool": "transfer_to_human",
+   "error": null,
+   "from_text": false,
+   "guard": null
+  },
+  {
+   "turn": 5,
+   "tool": "transfer_to_human",
+   "error": null,
+   "from_text": false,
+   "guard": null
+  }
+ ],
+ "n_calls": 5,
+ "n_errors": 0,
+ "llm_replies": 10,
+ "truth_badges": 0,
+ "transferred": true,
+ "wall_s_not_a_result": 6.4,
+ "transcript": [
+  {
+   "role": "user",
+   "text": "hi, i need to cancle a trip. im vikram joshi, emial vikram.joshi@example.org",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "",
+   "tool_calls": [
+    "find_customer {\"name\":\"Vikram Joshi\",\"email\":\"vikram.joshi@example.org\"}"
+   ]
+  },
+  {
+   "role": "tool",
+   "text": "{\"found\": 1, \"customer_id\": \"C1017\", \"verified\": true, \"message\": \"Found and verified.\", \"name\": \"Vikram Joshi\", \"active_bookings\": [\"TDJE63 (LKO->DEL 2027-03-06, confirmed)\"]}",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "You are a verified customer, Vikram Joshi. I see you have an active booking, TDJE63, for LKO->DEL on 2027-03-06. Would you like to cancel this booking?",
+   "tool_calls": []
+  },
+  {
+   "role": "user",
+   "text": "pls cancel bookng TDJE63, yes i confirm the cancelation",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "",
+   "tool_calls": [
+    "cancel_booking {\"booking_code\":\"TDJE63\",\"customer_confirmed\":\"true\"}"
+   ]
+  },
+  {
+   "role": "tool",
+   "text": "{\"cancelled\": true, \"booking_code\": \"TDJE63\", \"refund_eligible\": true, \"refund_amount\": 7060, \"message\": \"Now call issue_refund for this booking if the customer wants the refund.\"}",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "Your booking TDJE63 has been cancelled. You are eligible for a refund of INR 7,060. Would you like to proceed with the refund?",
+   "tool_calls": []
+  },
+  {
+   "role": "user",
+   "text": "and refund it to my card pls, yes i confirm the refund",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "",
+   "tool_calls": [
+    "issue_refund {\"booking_code\":\"TDJE63\",\"customer_confirmed\":\"true\"}"
+   ]
+  },
+  {
+   "role": "tool",
+   "text": "{\"refunded\": true, \"amount\": 7060, \"to\": \"original payment method\"}",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "Your refund of INR 7,060 has been processed and credited back to your original payment method.",
+   "tool_calls": []
+  },
+  {
+   "role": "user",
+   "text": "yes",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "",
+   "tool_calls": [
+    "transfer_to_human {\"summary\":\"Customer wants to cancel a booking\"}"
+   ]
+  },
+  {
+   "role": "tool",
+   "text": "{\"transferred\": true, \"message\": \"A human colleague will take over. Tell the customer briefly.\"}",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "A human colleague will assist you further. Thank you for choosing Skypiea Air. Goodbye!",
+   "tool_calls": []
+  },
+  {
+   "role": "user",
+   "text": "thx",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "",
+   "tool_calls": [
+    "transfer_to_human {\"summary\":\"Customer thanks for help\"}"
+   ]
+  },
+  {
+   "role": "tool",
+   "text": "{\"transferred\": true, \"message\": \"A human colleague will take over. Tell the customer briefly.\"}",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "Goodbye!",
+   "tool_calls": []
+  }
+ ]
+}

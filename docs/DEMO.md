@@ -212,6 +212,7 @@ results). Backup for a live talk: [`docs/live_backup/`](live_backup/).
 ```bash
 make setup                      # once
 ollama pull llama3.1:8b         # once, on the machine running Ollama (Windows or Linux)
+ollama pull qwen2.5:7b          # optional: second model in the console's Model dropdown
 make live                       # both stacks + console (about 45 s with cached images)
 # open http://127.0.0.1:8090 (console) and http://127.0.0.1:3001 (Grafana)
 make live-clean                 # console off, both stacks uninstalled (cluster/registry kept)
@@ -240,37 +241,62 @@ Measured on the laptop in "Prerequisites" (2026-11-06):
 
 ## Live demo: 5-minute presenter script
 
-The Skypiea Air view is described in [`LIVE_DEMO.md`](LIVE_DEMO.md). (This replaces the
-earlier 7-minute script; the anchors above keep old links working.)
+The view is described in [`LIVE_DEMO.md`](LIVE_DEMO.md). (This replaces the earlier
+7-minute script; the anchors above keep old links working.) The script is built around
+**story mode**: each **Act** button sends prepared customer lines to the **live** model one
+by one (nothing is pre-recorded; the replies, tool calls and timings are whatever happens).
+**Stop autopilot** ends an act after the current turn; you can type your own lines at any time
+between acts.
 
 Before the talk: `make live` (or `BUNDLES_DIR=models make live`),
 open http://127.0.0.1:8090 full screen at 1920x1080 (100%) or 1366x768, pick the theme with
-◐, send one throwaway "hi" to load the model, then press **Reset**. Hint: **off**.
+◐, check the **Model** dropdown (the default is the bake-off winner, see
+[`LIVE_DEMO.md`](LIVE_DEMO.md#model-bake-off)), send one throwaway "hi" to load the model, then
+press **Reset**. Hint: **on typing** (the act's scripted customer "types" at 200 characters a
+minute, so the hint has real lead time; say that this typing speed is an assumption).
 
 | Time | Do | Point at and say |
 |---|---|---|
 | 0:00-0:30 | Press **?** | "Skye is the assistant of Skypiea Air, a made-up airline. Every tool she uses runs in its own container that sleeps when idle. Skypiea guesses the next tool from names and timing only, and wakes it early." Read the setup line: real containers, mock airline data, the predictor sees only tool names and timing. Close. |
-| 0:30-1:45 | **Personas** → Tara Patel → click the "move my flight" request, Send; then give her email and booking code | The first call (Find customer) is **cold on both sides**: nothing can predict the first call of a conversation without a hint. Then the ticker under Skypiea: "Next likely: Get booking 84% → warming Get booking", and the spinner while that pod starts. Click the Get booking row on the Skypiea side and read its sentence: predicted after the previous call, and whether it was warm in time or "predicted but too late" with the numbers. The LLM thinks for well under a second; a cold start here is about 2 s, so often the prediction is right but late. Say so. |
-| 1:45-2:45 | Ask to move to the later flight and confirm | **Booking record**: the flight number changes, and the log shows "✓ done change_flight". If Skye says it changed something and the log shows no successful write, the reply gets a red **"Not done: the booking was not changed"** badge. "We never edit what the model says. We check it against the database and show you." |
-| 2:45-3:30 | Point at the summary sentence | "You waited X s on tools with Normal and Y s with Skypiea." Read the time-saved counter, **including when it is negative**, and the extra warm pod-seconds and cost: "Skypiea buys time with idle containers. Here it is pennies of a cent; it is an estimate from list prices." |
-| 3:30-4:15 | **Hint → on typing**, **Reset**, start typing a new request | The first keystroke sends a metadata-only hint (no text). Point at the "hint sent" pill and, when Find customer runs, at its row on the Skypiea side: warm, "predicted by the turn-start hint", while Normal is cold. "A human typing gives the predictor seconds of head start." |
-| 4:15-4:45 | **Kill predictor**, send one more message | Health dot turns amber, the ticker says the predictor is down. **Every call still succeeds**: Skypiea falls back to plain scale-to-zero. **Restart predictor**. |
-| 4:45-5:00 | Open **Details** | Pod grids, predictor top-3 per call, hint lead times, CSV export. Close with: "One laptop, one small model: these are demo runs. The AWS tables in the README are the results." |
+| 0:30-2:00 | **Scenario: New customer books a trip** | Nova Quill is not in the database: Skye welcomes a **new customer**, asks route and date, searches, quotes the fare **from the tool result**, asks for confirmation, books. The booking card becomes a **boarding pass** (flight, times, seat, fare, a "new customer" badge); the bag is added as "Checked bags: 0 → 1". On the right: the first call is cold on both sides (nothing to predict yet, except the typing hint); later rows on the Skypiea side say "started early because it was predicted ..." or "predicted, but too late" with the numbers. Click one row and read its sentence. |
+| 2:00-3:15 | **Scenario: Change a booking** | Tara Patel has two active bookings; the customer names 5TGTBP (without it Skye must ask which one). The boarding pass shows the change as "Flight: old → new". **Truth check:** if Skye says it is done and the database disagrees, her reply gets a red **"Not done: ..."** badge; if she quotes a price no tool returned, **"Not from a tool: $X"**. "We never edit what the model says; we check it against the database." If no badge fires, say so: the check runs on every reply and found nothing to flag. |
+| 3:15-4:15 | **Scenario: Cancel and refund** (predictor killed mid-conversation) | Asha Reddy cancels S4Z64E (refundable fare) and asks for the refund. After the first turn the scenario scales the predictor to 0 (health dot amber, ticker "Predictor is down"). **Every call still succeeds**: Skypiea falls back to plain scale-to-zero. A warm Skypiea call after the kill says *why* it was warm (still up after an earlier call, or warmed by a prediction made before the kill), never "predicted". The Booking record shows the cancellation and the refund as written (or refused, with the reason). The scenario restarts the predictor at the end. |
+| 4:15-4:45 | Point at the summary sentence | "You waited X s on tools with Normal and Y s with Skypiea." Read the time-saved counter **even when negative**, and the extra warm pod-seconds and cost (updated every 2 s): "Skypiea buys time with idle containers; the dollars are an estimate from list prices." |
+| 4:45-5:00 | Open **Details**, then close | Pod grids, predictor top-3 per call, hint lead times, CSV export (every row names the model). "One laptop, one small model: these are demo runs. The AWS tables in the README are the results." |
+
+Optional (+1 minute): **Demo → Code fix**, **Scenario: Fix the failing merge_sort test**. Dev assistant finds the planted
+`merge_sort` bug in the mock `sortkit` package, edits it and runs the tests: the Repository
+card shows the test runs going from failed to passed (e.g. "3 passed, 2 failed → 5 passed, 0 failed"). Say: "the test runner is
+**simulated**: it parses the files and checks literal asserts; no model-written code is ever
+executed." The act ends with an out-of-repository question ("That is not in this repository").
 
 If a step goes wrong (LLM slow, cluster down), switch to the screenshots and CSV in
-[`docs/live_backup/`](live_backup/).
+[`docs/live_backup/`](live_backup/) (`w1/` is the newest set).
+
+**Best scenarios (W1 night).** In the correctness suite (`docs/SUITE_BEFORE_AFTER.md`,
+scripted customers, no cluster) llama3.1:8b now completes every case of all six scenario
+types; the three Scenario buttons are the clearest to show: **New customer books a trip**
+(Bangalore → Goa next Friday: city and date resolution, quote, "Shall I go ahead?", booking),
+**Change a booking** (Tara Patel names 5TGTBP; a fee quote before the change) and **Cancel and
+refund** (predictor killed mid-conversation). Things to point at: the demo-world date in "What
+Skye knows now" (Monday 11 January 2027, never today's date), the **Guardrails** list in the
+Details drawer (a tool not offered yet, a write without the customer's yes run as a quote),
+and the **Proof** panel (per call: arrival, pod Ready, lead time and the predictor decision,
+all measured). Prices are in INR; the world is synthetic (`docs/SKYPIEA_WORLD.md`).
 
 ### 1-minute version
 
 1. (0:00) "Skye is an AI assistant for a made-up airline. Each tool she calls is a container
    that sleeps when idle; waking it takes about 2 s on this laptop."
-2. (0:10) Press **Autopilot**. "Left column: the normal platform. Right column: Skypiea, which
-   guesses the next tool from names and timing and wakes it early."
+2. (0:10) Press **Scenario: New customer books a trip**. "Left: the conversation and the booking, straight from the
+   database. Right: the normal platform next to Skypiea, which guesses the next tool from names
+   and timing and wakes it early."
 3. (0:30) Point at the ticker ("Next likely ... warming ...") and at one warm row on the
    Skypiea side next to a cold row on the Normal side. Read the summary sentence aloud,
    including the cost of the warm containers.
-4. (0:50) Point at the **Booking record**: "And we check the model: what it claims is compared
-   with the real database; if they disagree you see a red *Not done* badge."
+4. (0:50) Point at the boarding pass: "And we check the model: what it claims, and every price
+   it quotes, is compared with the database and the tool results; if they disagree you see a
+   red badge."
 
 ### Lead-time toggles (typing hint, lookahead, console mapping)
 

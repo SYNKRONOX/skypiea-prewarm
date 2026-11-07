@@ -1,0 +1,6 @@
+conversation,turn,source,hint_mode,hint_mode_end,hint_changed_by,hint_sources,lead_ms,typing_ms,lookahead,console_map,first_tool,calls,base_first_wall_ms,base_first_cold,pred_first_wall_ms,pred_first_cold,pred_first_predicted,pred_first_warm_source,pred_first_warm,truth_claims,truth_verdict,truth_badge,truth_note_sent,truth_corrected,truth_price_verdict,truth_prices_unsourced,llm_model
+a7f764dcd47f,1,autopilot,off,off,,,,16800.0,1,True,find_customer,1,1624.7,True,2633.6,True,False,,False,,no_claim,,False,,none,,llama3.1:8b
+a7f764dcd47f,2,autopilot,off,off,,,,20400.0,1,True,change_flight,1,2130.3,True,38.0,False,False,,True,,no_claim,,False,,sourced,,llama3.1:8b
+a7f764dcd47f,3,autopilot,off,off,,,,22200.0,1,True,change_flight,1,2602.7,True,32.4,False,False,,True,,no_claim,,False,,sourced,,llama3.1:8b
+a7f764dcd47f,4,autopilot,off,off,,,,11400.0,1,True,change_flight,1,2770.8,True,30.2,False,False,,True,change,agree,,False,,none,,llama3.1:8b
+a7f764dcd47f,5,autopilot,off,off,,,,5700.0,1,True,transfer_to_human,1,3032.5,True,3422.1,True,False,,False,,no_claim,,False,,none,,llama3.1:8b

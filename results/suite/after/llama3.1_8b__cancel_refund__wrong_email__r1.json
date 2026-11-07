@@ -1,0 +1,177 @@
+{
+ "label": "CORRECTNESS run: real agent loop and real local LLM, tool handlers in-process, no cluster and no pods; scripted customer turns; timings are not results",
+ "scenario": "cancel_refund",
+ "variant": "wrong_email",
+ "model": "llama3.1:8b",
+ "rep": 1,
+ "pass": true,
+ "reason": "ok",
+ "expect": {
+  "customer": "C1017",
+  "booking": "TDJE63",
+  "fare": "Flex"
+ },
+ "customer_turns": [
+  "Hi, I want to cancel my trip. I'm Vikram Joshi, email vikram.joshis@example.org.",
+  "Sorry, my email is vikram.joshi@example.org. The booking is TDJE6X.",
+  "Oops, the booking code is TDJE63. Please cancel it. Yes, I confirm the cancellation.",
+  "And please refund it to my card. Yes, I confirm the refund.",
+  "Thanks, that's all."
+ ],
+ "customer_turns_are": "scripted",
+ "calls": [
+  {
+   "turn": 1,
+   "tool": "find_customer",
+   "error": "email_not_found",
+   "from_text": false,
+   "guard": null
+  },
+  {
+   "turn": 2,
+   "tool": "find_customer",
+   "error": null,
+   "from_text": false,
+   "guard": null
+  },
+  {
+   "turn": 3,
+   "tool": "cancel_booking",
+   "error": null,
+   "from_text": false,
+   "guard": null
+  },
+  {
+   "turn": 4,
+   "tool": "issue_refund",
+   "error": null,
+   "from_text": false,
+   "guard": null
+  },
+  {
+   "turn": 5,
+   "tool": "transfer_to_human",
+   "error": null,
+   "from_text": false,
+   "guard": null
+  }
+ ],
+ "n_calls": 5,
+ "n_errors": 1,
+ "llm_replies": 10,
+ "truth_badges": 0,
+ "transferred": true,
+ "wall_s_not_a_result": 7.9,
+ "transcript": [
+  {
+   "role": "user",
+   "text": "Hi, I want to cancel my trip. I'm Vikram Joshi, email vikram.joshis@example.org.",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "",
+   "tool_calls": [
+    "find_customer {\"name\":\"Vikram Joshi\",\"email\":\"vikram.joshis@example.org\"}"
+   ]
+  },
+  {
+   "role": "tool",
+   "text": "{\"found\": 1, \"customer_id\": \"C1017\", \"verified\": false, \"message\": \"No customer has the email 'vikram.joshis@example.org'. Ask them to check it. If they are a NEW customer, offer to create a profile by booking: call search_flights(origin, destination, date), then book_flight(flight_id, fare, name, email).\", \"error\": \"email_not_found\"}",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "I'm sorry to hear that you want to cancel your trip, Vikram. However, it seems that we don't have your email on record. Could you please check your email address and make sure it's correct? If you're a new customer, I can offer to create a profile for you by booking a flight. Would you like me to guide you through the process?",
+   "tool_calls": []
+  },
+  {
+   "role": "user",
+   "text": "Sorry, my email is vikram.joshi@example.org. The booking is TDJE6X.",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "",
+   "tool_calls": [
+    "find_customer {\"name\":\"Vikram Joshi\",\"booking_code\":\"TDJE6X\",\"email\":\"vikram.joshi@example.org\"}"
+   ]
+  },
+  {
+   "role": "tool",
+   "text": "{\"found\": 1, \"customer_id\": \"C1017\", \"verified\": true, \"message\": \"Found and verified.\", \"name\": \"Vikram Joshi\", \"active_bookings\": [\"TDJE63 (LKO->DEL 2027-03-06, confirmed)\"], \"note\": \"Booking code 'TDJE6X' does not exist; verified by email. Use one of the active bookings below.\"}",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "I've found your booking, Vikram. It seems that you have a confirmed booking with us, TDJE63, for a trip from Lucknow to Delhi on March 6th. Would you like to cancel this booking?",
+   "tool_calls": []
+  },
+  {
+   "role": "user",
+   "text": "Oops, the booking code is TDJE63. Please cancel it. Yes, I confirm the cancellation.",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "",
+   "tool_calls": [
+    "cancel_booking {\"customer_confirmed\":\"true\",\"booking_code\":\"TDJE63\"}"
+   ]
+  },
+  {
+   "role": "tool",
+   "text": "{\"cancelled\": true, \"booking_code\": \"TDJE63\", \"refund_eligible\": true, \"refund_amount\": 7060, \"message\": \"Now call issue_refund for this booking if the customer wants the refund.\"}",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "Your booking TDJE63 has been cancelled, Vikram. You are eligible for a refund of INR 7,060. If you'd like to receive the refund, I can guide you through the process.",
+   "tool_calls": []
+  },
+  {
+   "role": "user",
+   "text": "And please refund it to my card. Yes, I confirm the refund.",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "",
+   "tool_calls": [
+    "issue_refund {\"booking_code\":\"TDJE63\",\"customer_confirmed\":\"true\"}"
+   ]
+  },
+  {
+   "role": "tool",
+   "text": "{\"refunded\": true, \"amount\": 7060, \"to\": \"original payment method\"}",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "Your refund of INR 7,060 has been processed and will be credited back to your original payment method.",
+   "tool_calls": []
+  },
+  {
+   "role": "user",
+   "text": "Thanks, that's all.",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "",
+   "tool_calls": [
+    "transfer_to_human {\"summary\":\"Booking TDJE63 cancelled and refunded.\"}"
+   ]
+  },
+  {
+   "role": "tool",
+   "text": "{\"transferred\": true, \"message\": \"A human colleague will take over. Tell the customer briefly.\"}",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "It was nice assisting you, Vikram. Have a great day!",
+   "tool_calls": []
+  }
+ ]
+}

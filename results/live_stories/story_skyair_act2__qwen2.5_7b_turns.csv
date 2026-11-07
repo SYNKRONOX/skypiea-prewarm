@@ -1,0 +1,5 @@
+conversation,turn,source,hint_mode,hint_sources,lead_ms,typing_ms,lookahead,console_map,first_tool,calls,base_first_wall_ms,base_first_cold,pred_first_wall_ms,pred_first_cold,pred_first_predicted,pred_first_warm_source,pred_first_warm,truth_claims,truth_verdict,truth_badge,truth_note_sent,truth_corrected,truth_price_verdict,truth_prices_unsourced,llm_model
+30b907ba1edc,1,autopilot,typing,typing+open+enter,16508.4,16500.0,1,True,find_customer,1,1840.4,True,32.8,False,True,hint,True,,no_claim,,False,,none,,qwen2.5:7b
+30b907ba1edc,2,autopilot,typing,typing+enter,25203.5,25200.0,1,True,search_flights,1,2211.9,True,3028.9,True,False,,False,,no_claim,,False,,none,,qwen2.5:7b
+30b907ba1edc,3,autopilot,typing,typing+enter,27907.2,27900.0,1,True,change_flight,1,2179.8,True,2149.8,True,False,,False,change,agree,,False,,sourced,,qwen2.5:7b
+30b907ba1edc,4,autopilot,typing,typing+enter,5705.6,5700.0,1,True,,0,,,,,,,,,no_claim,,False,,none,,qwen2.5:7b

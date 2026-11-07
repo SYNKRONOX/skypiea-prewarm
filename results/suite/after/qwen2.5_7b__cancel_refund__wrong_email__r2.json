@@ -1,0 +1,158 @@
+{
+ "label": "CORRECTNESS run: real agent loop and real local LLM, tool handlers in-process, no cluster and no pods; scripted customer turns; timings are not results",
+ "scenario": "cancel_refund",
+ "variant": "wrong_email",
+ "model": "qwen2.5:7b",
+ "rep": 2,
+ "pass": true,
+ "reason": "ok",
+ "expect": {
+  "customer": "C1017",
+  "booking": "TDJE63",
+  "fare": "Flex"
+ },
+ "customer_turns": [
+  "Hi, I want to cancel my trip. I'm Vikram Joshi, email vikram.joshis@example.org.",
+  "Sorry, my email is vikram.joshi@example.org. The booking is TDJE6X.",
+  "Oops, the booking code is TDJE63. Please cancel it. Yes, I confirm the cancellation.",
+  "And please refund it to my card. Yes, I confirm the refund.",
+  "Thanks, that's all."
+ ],
+ "customer_turns_are": "scripted",
+ "calls": [
+  {
+   "turn": 1,
+   "tool": "find_customer",
+   "error": "email_not_found",
+   "from_text": false,
+   "guard": null
+  },
+  {
+   "turn": 2,
+   "tool": "verify_customer",
+   "error": null,
+   "from_text": false,
+   "guard": null
+  },
+  {
+   "turn": 3,
+   "tool": "cancel_booking",
+   "error": null,
+   "from_text": false,
+   "guard": null
+  },
+  {
+   "turn": 4,
+   "tool": "issue_refund",
+   "error": null,
+   "from_text": false,
+   "guard": null
+  }
+ ],
+ "n_calls": 4,
+ "n_errors": 1,
+ "llm_replies": 9,
+ "truth_badges": 0,
+ "transferred": false,
+ "wall_s_not_a_result": 6.0,
+ "transcript": [
+  {
+   "role": "user",
+   "text": "Hi, I want to cancel my trip. I'm Vikram Joshi, email vikram.joshis@example.org.",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "",
+   "tool_calls": [
+    "find_customer {\"name\":\"Vikram Joshi\",\"email\":\"vikram.joshis@example.org\"}"
+   ]
+  },
+  {
+   "role": "tool",
+   "text": "{\"found\": 1, \"customer_id\": \"C1017\", \"verified\": false, \"message\": \"No customer has the email 'vikram.joshis@example.org'. Ask them to check it. If they are a NEW customer, offer to create a profile by booking: call search_flights(origin, destination, date), then book_flight(flight_id, fare, name, email).\", \"error\": \"email_not_found\"}",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "It seems there might be a typo in your email. Could you please check and confirm? If this is a new booking, we can create a profile by booking a flight. Shall we proceed with that?",
+   "tool_calls": []
+  },
+  {
+   "role": "user",
+   "text": "Sorry, my email is vikram.joshi@example.org. The booking is TDJE6X.",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "",
+   "tool_calls": [
+    "verify_customer {\"name\":\"Vikram Joshi\",\"booking_code\":\"TDJE6X\",\"email\":\"vikram.joshi@example.org\"}"
+   ]
+  },
+  {
+   "role": "tool",
+   "text": "{\"verified\": true, \"customer_id\": \"C1017\", \"name\": \"Vikram Joshi\", \"active_bookings\": [\"TDJE63 (LKO->DEL 2027-03-06, confirmed)\"], \"note\": \"Booking code 'TDJE6X' does not exist; verified by email. Use one of the active bookings below.\"}",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "It looks like there's a discrepancy. The booking code you provided, TDJE6X, does not exist. However, I can help with your active booking, TDJE63. Shall I proceed with cancelling your flight TDJE63 on 6th March from LKO to DEL?",
+   "tool_calls": []
+  },
+  {
+   "role": "user",
+   "text": "Oops, the booking code is TDJE63. Please cancel it. Yes, I confirm the cancellation.",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "",
+   "tool_calls": [
+    "cancel_booking {\"booking_code\":\"TDJE63\",\"customer_confirmed\":true}"
+   ]
+  },
+  {
+   "role": "tool",
+   "text": "{\"cancelled\": true, \"booking_code\": \"TDJE63\", \"refund_eligible\": true, \"refund_amount\": 7060, \"message\": \"Now call issue_refund for this booking if the customer wants the refund.\"}",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "Your booking TDJE63 has been cancelled successfully. You are eligible for a refund of INR 7,060. Would you like to proceed with the refund now?",
+   "tool_calls": []
+  },
+  {
+   "role": "user",
+   "text": "And please refund it to my card. Yes, I confirm the refund.",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "",
+   "tool_calls": [
+    "issue_refund {\"booking_code\":\"TDJE63\",\"customer_confirmed\":true}"
+   ]
+  },
+  {
+   "role": "tool",
+   "text": "{\"refunded\": true, \"amount\": 7060, \"to\": \"original payment method\"}",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "Your refund of INR 7,060 has been processed and will be credited to your original payment method. Thank you for choosing Skypiea Air. Safe travels!",
+   "tool_calls": []
+  },
+  {
+   "role": "user",
+   "text": "Thanks, that's all.",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "You're welcome! If you have any other questions in the future, feel free to ask. Safe travels!",
+   "tool_calls": []
+  }
+ ]
+}

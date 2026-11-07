@@ -1,0 +1,47 @@
+{
+  "label": "demo run, not a result",
+  "conversation": "156c3e5f121b",
+  "scenario": "cancel_refund",
+  "llm_model": "qwen2.5:7b",
+  "turns": 5,
+  "llm_replies": 8,
+  "calls": 3,
+  "first_try_valid": 1.0,
+  "calls_valid": 1.0,
+  "errors": [],
+  "invented_codes": 0,
+  "unknown_codes_from_customer": 0,
+  "invented_prices": 0,
+  "truth_badges": 0,
+  "not_done_badges": 0,
+  "text_calls": 0,
+  "handover": false,
+  "writes": [
+    {
+      "turn": 3,
+      "tool": "cancel_booking",
+      "outcome": "success"
+    },
+    {
+      "turn": 4,
+      "tool": "issue_refund",
+      "outcome": "success"
+    }
+  ],
+  "completed": true,
+  "code_in_reply": false,
+  "think_ms_p50": 790.9,
+  "think_ms_p95": 1230.0,
+  "think_ms_total": 6766.0,
+  "wait_ms": {
+    "base": 6585.7,
+    "pred": 2013.8
+  },
+  "idle_pod_s": {
+    "base": 15.8,
+    "pred": 57.0
+  },
+  "rep": 2,
+  "hint": "off",
+  "wall_s": 88.9
+}

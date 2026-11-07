@@ -1,0 +1,5 @@
+conversation,turn,source,hint_mode,hint_sources,lead_ms,typing_ms,lookahead,console_map,first_tool,calls,base_first_wall_ms,base_first_cold,pred_first_wall_ms,pred_first_cold,pred_first_predicted,pred_first_warm_source,pred_first_warm,truth_claims,truth_verdict,truth_badge,truth_note_sent,truth_corrected,truth_price_verdict,truth_prices_unsourced,llm_model
+9ff50c63e1f3,1,autopilot,typing,typing+open+enter,15905.0,15900.0,1,True,find_customer,1,2425.9,True,34.0,False,True,hint,True,,no_claim,,False,,none,,qwen2.5:7b
+9ff50c63e1f3,2,autopilot,typing,typing+enter,17105.3,17100.0,1,True,add_baggage,1,2529.4,True,38.1,False,False,,True,,no_claim,Not from a tool: $731,True,False,unsourced,731,qwen2.5:7b
+9ff50c63e1f3,3,autopilot,typing,typing+enter,11107.0,11100.0,1,True,list_offers,1,2128.0,True,1999.9,True,False,,False,,no_claim,,False,,sourced,,qwen2.5:7b
+9ff50c63e1f3,4,autopilot,typing,typing+enter,5704.6,5700.0,1,True,,0,,,,,,,,,no_claim,Not from a tool: $731,True,,unsourced,731,qwen2.5:7b

@@ -48,13 +48,50 @@ from console import truth
 
 ROOT = Path(__file__).resolve().parent.parent
 MAX_STEPS = 8
+RESULT_CAP = 1500          # characters of a tool result the LLM sees
+OLD_RESULT_CAP = 240       # tool results of earlier turns are shortened to this
 CSV_FIELDS = ["conversation", "turn", "reply", "pos_in_reply", "replay", "llm_model",
               "think_ms", "tool_call_from_text", "tool", "tool_class", "server", "mirror_mode",
               "hint", "hint_mode", "lookahead", "console_map", "note",
-              "baseline_policy", "profile", "results_match"] + [
+              "baseline_policy", "profile", "results_match", "pred_warm_reason", "result_error",
+              "arg_code_known", "arg_code_from_user"] + [
     f"{s}_{f}" for s in ("base", "pred") for f in (
-        "gap_ms", "wall_ms", "added_ms", "held_ms", "cold", "predicted", "warm_source", "ok",
+        "gap_ms", "wall_ms", "added_ms", "held_ms", "hold_late_ms", "cold", "predicted",
+        "warm_source", "ok",
         "contention_max_starting", "contention_samples")]
+
+
+_VOCAB: dict[str, set[str]] = {}
+
+
+def vocabulary(profile: str) -> set[str] | None:
+    """Tool classes the real predictor profile knows (configs/live/predictor_vocab.json)."""
+    if not _VOCAB:
+        try:
+            d = json.loads((ROOT / "configs" / "live" / "predictor_vocab.json").read_text())
+            _VOCAB.update({p: set(v.get("vocabulary") or []) for p, v in d["profiles"].items()})
+        except (OSError, ValueError, KeyError):
+            return None
+    return _VOCAB.get(profile)
+
+
+def numbers_in(obj: Any, out: set[float] | None = None) -> set[float]:
+    """Every number in a tool result (for the price check; kept in memory only)."""
+    out = set() if out is None else out
+    if isinstance(obj, bool):
+        return out
+    if isinstance(obj, (int, float)):
+        out.add(round(float(obj), 2))
+    elif isinstance(obj, dict):
+        for v in obj.values():
+            numbers_in(v, out)
+    elif isinstance(obj, (list, tuple)):
+        for v in obj:
+            numbers_in(v, out)
+    elif isinstance(obj, str):
+        from console.truth import amounts
+        out.update(amounts(obj))
+    return out
 
 
 def nearest_rank(xs: list[float], q: float) -> float | None:
@@ -131,6 +168,91 @@ def evaluate_decisions(session: dict[str, Any]) -> list[dict[str, Any]]:
     return out
 
 
+def warm_reason(session: dict[str, Any] | None, idx: int, server: str,
+                tool_class: str, server_of=None) -> dict[str, Any]:
+    """Why the predictive stack's call #idx found a warm pod although the gateway did not
+    mark it predicted (its latest decision did not include it). From the gateway's own
+    session record (one clock: ms since the session began). The most recent cause wins:
+      kept_after_use   an earlier call to the same server; the pod stayed up (TTL counted
+                       from its last use);
+      earlier_decision an earlier predictor decision (or turn-start hint) of this
+                       conversation warmed it, e.g. just before the predictor was killed;
+      already_up       nothing in this conversation started it (a pod left from before).
+    Never "predicted": the console must not imply a prediction that did not happen."""
+    calls = (session or {}).get("calls", [])
+    if idx >= len(calls) or calls[idx].get("tool_class") != tool_class:
+        return {"reason": "unknown"}
+    t = calls[idx].get("t_start_ms", 0.0)
+    used = [c for c in calls[:idx] if c.get("server") == server and c.get("t_end_ms", 1e18) <= t]
+    def same(cls: str | None) -> bool:     # the decision warmed this call's SERVER
+        return cls == tool_class or (server_of is not None and server_of(cls) == server)
+    decs = [d for d in (session or {}).get("decisions", []) if d.get("outcome") == "ok"
+            and d.get("t_ms", 1e18) <= t and any(
+                same(x.get("tool_class")) and x.get("warm") and x.get("copies", 0) > 0
+                for x in d.get("decisions", []))]
+    cands = []
+    if used:
+        cands.append((used[-1]["t_end_ms"], {"reason": "kept_after_use",
+                                              "since_ms": round(t - used[-1]["t_end_ms"])}))
+    if decs:
+        d = decs[-1]
+        cands.append((d["t_ms"], {"reason": "earlier_decision",
+                                  "trigger": d.get("trigger") or "after_call",
+                                  "turn": d.get("turn"), "since_ms": round(t - d["t_ms"])}))
+    if not cands:
+        return {"reason": "already_up"}
+    return max(cands, key=lambda x: x[0])[1]
+
+
+def proof(session: dict[str, Any] | None, idx: int, tool_class: str, server: str,
+          server_of=None, ready_before_ms: float | None = None) -> dict[str, Any] | None:
+    """Proof panel row for the predictive stack's call #idx: MEASURED fields only, copied from
+    the gateway's own session record (ms since the session began) plus the console poller's
+    observation of the pod becoming Ready (every 0.25 s). Nothing is estimated:
+      arrival_ms        the call's arrival at the gateway (t_start_ms)
+      cold, predicted, added_ms, held_ms   as the gateway recorded them
+      decision          the latest ok predictor decision before the arrival that warmed this
+                        call's server: when (t_ms), its top-3 (tool_class, p), and for this
+                        call's class/server its copies, start_in_ms and prob
+      warm_requested_ms decision t_ms + start_in_ms (when the controller was asked)
+      lead_ms           arrival_ms - warm_requested_ms (time the pod had to start)
+      pod_ready_before_ms  how long before the call the pod was seen Ready (poller); for a
+                        cold call the pod was ready about added_ms AFTER the arrival
+      verdict           warm | cold | cold_despite_prediction
+    The predictor does not report its threshold tau in /decide, so none is shown."""
+    calls = (session or {}).get("calls", [])
+    if idx is None or idx >= len(calls) or calls[idx].get("tool_class") != tool_class:
+        return None
+    c = calls[idx]
+    t = c.get("t_start_ms", 0.0)
+
+    def same(cls: str | None) -> bool:
+        return cls == tool_class or (server_of is not None and server_of(cls) == server)
+    dec = None
+    for d in (session or {}).get("decisions", []):
+        if d.get("outcome") == "ok" and d.get("t_ms", 1e18) <= t and any(
+                same(x.get("tool_class")) and x.get("warm") and x.get("copies", 0) > 0
+                for x in d.get("decisions", [])):
+            dec = d
+    out: dict[str, Any] = {"arrival_ms": t, "cold": c.get("cold"),
+                           "predicted": c.get("predicted"), "added_ms": c.get("added_ms"),
+                           "held_ms": c.get("held_ms"), "decision": None,
+                           "pod_ready_before_ms": ready_before_ms}
+    if dec is not None:
+        mine = next(x for x in dec["decisions"] if same(x.get("tool_class"))
+                    and x.get("warm") and x.get("copies", 0) > 0)
+        req = dec["t_ms"] + (mine.get("start_in_ms") or 0)
+        out["decision"] = {"t_ms": dec["t_ms"], "trigger": dec.get("trigger") or "after_call",
+                           "top3": dec.get("ranked", [])[:3], "tool_class": mine["tool_class"],
+                           "copies": mine.get("copies"), "start_in_ms": mine.get("start_in_ms"),
+                           "prob": mine.get("prob")}
+        out["warm_requested_ms"] = round(req, 1)
+        out["lead_ms"] = round(t - req, 1)
+    out["verdict"] = ("cold_despite_prediction" if c.get("cold") and c.get("predicted")
+                      else "cold" if c.get("cold") else "warm")
+    return out
+
+
 class BaseLane:
     """The baseline stack's own timeline (see the module docstring). ``gate`` holds the lane
     while it is cleared (sequential mode: during the predictive turn)."""
@@ -191,6 +313,7 @@ class Conversation:
         self._lane: BaseLane | None = None
         self._pending: list[asyncio.Task] = []
         self._next_seq = 0                            # call order in the conversation
+        self._pred_sent = 0                           # calls sent to the predictive gateway
         # turn-start hints (mode off | enter | typing): when each hint was sent, per turn
         self.hint_log: dict[int, list[dict[str, Any]]] = {}
         self.typing_t: float | None = None            # first keystroke of the coming turn
@@ -201,9 +324,21 @@ class Conversation:
         if task.scenario == "skyair":
             from agent.skyair.tools import Session
             self.backend = Session()
+        elif task.scenario == "codefix":        # W1: the mock sortkit repository
+            from agent.devrepo import Session as RepoSession
+            self.backend = RepoSession()
         self.writes: list[dict[str, Any]] = []         # truth panel: real write attempts
+        self.facts: set[float] = set()                 # numbers tool results returned (prices)
+        self.think_log: list[dict[str, Any]] = []      # per LLM reply: turn, think ms, calls
+        self._sidebar_msg: dict[str, Any] | None = None  # Skye's customer sidebar message
         self.truth: list[dict[str, Any]] = []          # truth panel: claim checks per turn
         self.abandoned: list[dict[str, Any]] = []      # typing hints whose turn never came
+        self.hint_changes: list[dict[str, Any]] = []   # hint setting changed (who, when)
+        # W1 night guardrails: gating, validation, confirmation (shown in the Details drawer)
+        self.guards: list[dict[str, Any]] = []
+        self._invalid: dict[tuple[int, str], int] = {}
+        self._done: set[tuple[str, str]] = set()        # writes that succeeded (tool, target)
+        self._turn_msg0 = 1                            # first message of the current turn
         self.lock = asyncio.Lock()
         self.t0 = clock()
         self.idle0 = {k: dict(v) for k, v in poller.idle.items()}
@@ -310,6 +445,13 @@ class Conversation:
             # null = "not given" (small models send null for optional parameters)
             args = {a: v for a, v in raw.items() if a in allowed and v is not None}
             cls, gargs = task.gateway_call(tc.name, args)
+            vocab = vocabulary(task.profile)
+            if vocab is not None and cls not in vocab:
+                # a real tool of this demo, but outside the predictor's vocabulary: the
+                # predictor cannot rank it (it abstains); the call itself works as usual
+                rec["note"] = (f"unknown tool for the predictor (class {cls} is not in the "
+                               f"{task.profile} vocabulary): no prediction, normal behaviour")
+                rec["out_of_vocab"] = True
         await self.publish({"type": "call_start", "turn": self.turn, "reply": self.reply,
                             "pos": pos, "tool": tc.name, "tool_class": cls})
         lane = self.lane()
@@ -318,8 +460,12 @@ class Conversation:
         # the baseline call is queued when the predictive call is ISSUED, with the gap the
         # predictive stack saw, so a slow predictive call cannot delay the baseline
         issue = self.clock()
+        ws = getattr(self.poller, "warm_since", {}).get(("pred", self._server(cls)))
+        rec["pred_ready_before_ms"] = None if ws is None else round((issue - ws) * 1000, 1)
         p_gap = None if self.pred_last_end is None else issue - self.pred_last_end
         fut = lane.submit(cls, gargs, p_gap)
+        rec["pred_seq"] = self._pred_sent
+        self._pred_sent += 1
         p_res, p_info, p0, p1 = await self._call_one("pred", cls, gargs)
         self.pred_last_end = p1
         rec["server"] = self._server(cls)
@@ -329,7 +475,9 @@ class Conversation:
             c = self.poller.contention(t0, t1)
             rec.update({f"{key}_gap_ms": None if gap is None else round(gap * 1000, 1),
                         f"{key}_wall_ms": round(info.wall_ms, 1), f"{key}_added_ms":
-                        info.added_ms, f"{key}_held_ms": info.held_ms, f"{key}_cold": info.cold,
+                        info.added_ms, f"{key}_held_ms": info.held_ms,
+                        f"{key}_hold_late_ms": getattr(info, "hold_late_ms", None),
+                        f"{key}_cold": info.cold,
                         f"{key}_predicted": info.predicted,
                         f"{key}_warm_source": info.warm_source, f"{key}_ok": info.ok,
                         f"{key}_error": info.error,
@@ -349,15 +497,122 @@ class Conversation:
                            results_match=None)
             return rec
         if unknown:
+            rec["result_error"] = "unknown_tool"
             content = json.dumps({"error": f"unknown tool {tc.name!r}; available: "
                                   f"{task.tool_names}"})
-        elif self.backend is not None:       # Skypiea Air: answer from the session database
-            result = self.backend.call(tc.name, args)
-            content = json.dumps(result, default=str)[:3000]
+        elif self.backend is not None:       # Skypiea Air / sortkit: the in-console session
+            code = args.get("booking_code")
+            if code:     # a code the model sent that the database never had = invented
+                rec["arg_code_known"] = str(code).strip().upper() in self.backend.bookings
+                said = " ".join(m.get("content") or "" for m in self.messages
+                                if m.get("role") == "user").upper()
+                rec["arg_code_from_user"] = str(code).strip().upper() in said
+            result = await self._guarded_call(tc.name, args, rec)
+            if isinstance(result, dict) and result.get("error"):
+                rec["result_error"] = str(result["error"])[:40]     # an error code only
+            numbers_in(result, self.facts)
+            content = json.dumps(result, default=str)[:RESULT_CAP]
             await self._log_write(tc.name, args, result)
+            if hasattr(self.backend, "state_view"):
+                await self.publish({"type": "skye_state", "state": self.backend.state_view(),
+                                    "guards": self.guards[-12:]})
         else:
             content = llm_content(p_res, p_info)
         return {"rec": rec, "args": args, "content": content, "finish": finish}
+
+    def last_user_text(self) -> str:
+        return next((m.get("content") or "" for m in reversed(self.messages)
+                     if m.get("role") == "user"), "")
+
+    async def _guard(self, tool: str, kind: str, detail: str, rec: dict[str, Any]) -> None:
+        g = {"turn": self.turn, "tool": tool, "kind": kind, "detail": detail[:240]}
+        self.guards.append(g)
+        rec["guard"] = kind
+        await self.publish({"type": "guard", "guard": g})
+
+    async def _guarded_call(self, tool: str, args: dict[str, Any], rec: dict[str, Any]) -> Any:
+        """Skypiea Air guardrails (W1 night): tool gating by state, argument validation with
+        one corrective retry and a transfer to a human after two failures, and explicit
+        confirmation before any write. Other demos call the backend directly."""
+        b = self.backend
+        if not hasattr(b, "allowed_tools"):
+            return b.call(tool, args)
+        from agent.skyair.tools import TOOL_NAMES, WRITE_TOOLS
+        from console import guards
+        code = str(args.get("booking_code") or "").strip().upper()
+        if b.verified and code in b.bookings and b.bookings[code]["customer_id"] == b.verified:
+            b.selected_booking = code        # naming one of the customer's codes selects it
+        if tool in TOOL_NAMES and tool not in b.allowed_tools():
+            msg = b.why_not(tool)
+            await self._guard(tool, "gated", msg, rec)
+            return {"error": "not_available_yet", "message": msg}
+        problems = guards.validate(tool, args, b)
+        if problems:
+            key = (self.turn, tool)
+            self._invalid[key] = self._invalid.get(key, 0) + 1
+            if self._invalid[key] >= 2:
+                await self._guard(tool, "auto_transfer", "two invalid calls to " + tool +
+                                  ": " + "; ".join(problems), rec)
+                b.transfer_to_human(summary=f"automatic: two invalid calls to {tool}")
+                return {"error": "invalid_arguments", "problems": problems,
+                        "transferred": True, "message": "Two invalid attempts: the "
+                        "conversation was transferred to a human colleague. Apologise "
+                        "briefly and tell the customer a colleague will take over."}
+            h = guards.hint(tool, problems, b)
+            await self._guard(tool, "invalid_retry", h, rec)
+            return {"error": "invalid_arguments", "problems": problems, "hint": h}
+        key = (tool, str(args.get("booking_code") or args.get("flight_no") or
+                         b.selected_booking or "").upper())
+        repeat = key in self._done and not (b.pending and b.pending.get("tool") == tool)
+        if tool in WRITE_TOOLS and args.get("customer_confirmed") is True and (
+                repeat or not guards.confirmed_ok(tool, self.last_user_text(), b.pending)):
+            args = {**args, "customer_confirmed": False}
+            res = b.call(tool, args)
+            await self._guard(tool, "confirm_first", ("the same write already succeeded; a "
+                              "repeat needs a new quote and yes" if repeat else
+                              "customer_confirmed=true without the customer's yes to this "
+                              "action") + ": run as a quote, nothing written", rec)
+            if isinstance(res, dict) and res.get("confirmation_needed"):
+                res["message"] = ("NOT done yet: the customer has not confirmed this. "
+                                  + res.get("message", ""))
+            return res
+        res = b.call(tool, args)
+        if tool in WRITE_TOOLS and isinstance(res, dict) and any(
+                res.get(k) for k in ("booked", "changed", "cancelled", "added", "refunded",
+                                     "applied")):
+            self._done.add(key)
+        return res
+
+    def system_message(self) -> str:
+        """Skye's system prompt + the customer sidebar + the STATE block, rebuilt before every
+        LLM call (the state is re-injected every turn)."""
+        text = self.task.system
+        if self._sidebar_msg:
+            text += ("\n\nCUSTOMER SIDEBAR (booking system, current; use only these facts and "
+                     "tool results):\n" + self._sidebar_msg["text"])
+        b = self.backend
+        if b is not None and hasattr(b, "state_block"):
+            text += "\n\nSTATE (booking system, now):\n" + b.state_block()
+        return text
+
+    def llm_messages(self) -> list[dict[str, Any]]:
+        """What the LLM is sent: the current system message, then the conversation with tool
+        results of EARLIER turns shortened (the STATE block carries what matters)."""
+        out = [{"role": "system", "content": self.system_message()}]
+        for i, m in enumerate(self.messages[1:], start=1):
+            if m.get("role") == "tool" and i < self._turn_msg0 and \
+                    len(m.get("content") or "") > OLD_RESULT_CAP:
+                m = {**m, "content": m["content"][:OLD_RESULT_CAP] + " ...(older result "
+                     "shortened; see STATE)"}
+            out.append(m)
+        return out
+
+    def offered_tools(self) -> list[dict[str, Any]]:
+        b = self.backend
+        if b is None or not hasattr(b, "allowed_tools"):
+            return self.task.tools
+        ok = b.allowed_tools()
+        return [t for t in self.task.tools if t["function"]["name"] in ok]
 
     async def _log_write(self, tool: str, args: dict[str, Any], result: Any) -> None:
         """Truth panel: record a real write attempt and publish the booking record."""
@@ -369,13 +624,34 @@ class Conversation:
         await self.publish({"type": "booking", "state": truth.state(self.backend),
                             "writes": self.writes[-12:]})
 
+    def refresh_sidebar(self) -> None:
+        """After verification, a new booking or any successful write: give Skye the verified
+        customer's facts the way a CRM shows them to a support agent (appended to the system
+        prompt, replaced when it changes)."""
+        b = self.backend
+        if b is None or not getattr(b, "sidebar_due", False):
+            return
+        b.sidebar_due = False
+        text = b.sidebar()
+        if not text:
+            return
+        # in the TOP system message (replaced in place): a system message in the middle of
+        # the conversation made llama3.1 start replies with a stray "assistant" (W1 smoke)
+        self._sidebar_msg = {"text": text}
+        self.messages[0] = {"role": "system", "content": self.system_message()}
+        numbers_in(text, self.facts)
+
     def check_claims(self, text: str) -> dict[str, Any] | None:
         """Rule-based check of the final reply of a turn against this turn's real writes."""
-        if self.backend is None:
+        if self.backend is None or self.task.scenario != "skyair":
             return None
         tw = [w for w in self.writes if w["turn"] == self.turn]
         ew = [w for w in self.writes if w["turn"] < self.turn]
         res = {"turn": self.turn, **truth.check(text, tw, ew)}
+        pr = truth.check_prices(text, self.facts)
+        res.update(prices=pr["amounts"], prices_unsourced=pr["unsourced"],
+                   price_verdict=pr["verdict"])
+        res["badges"] = res["badges"] + pr["badges"]
         prev = next((t for t in reversed(self.truth) if t.get("note_sent")), None)
         if prev is not None and prev.get("corrected") is None and prev["turn"] < self.turn:
             # did the reply after the system note correct itself? (heuristic, logged)
@@ -385,17 +661,30 @@ class Conversation:
             for row in self.turns:
                 if row["turn"] == prev["turn"]:
                     row["truth_corrected"] = prev["corrected"]
-        if res["verdict"] == "not_done" and self.settings.get("truth_note", True):
-            self.messages.append({"role": "system", "content": (
-                "Booking system note: your last reply said something was done ("
-                + ", ".join(res["claims"]) + ") but no such change succeeded. Tell the "
-                "customer plainly in your next reply that it was NOT done.")})
+        notes = []
+        if res["verdict"] == "not_done":
+            notes.append("your last reply said something was done (" + ", ".join(res["claims"])
+                         + ") but no such change succeeded. Tell the customer plainly in your "
+                         "next reply that it was NOT done.")
+        if pr["unsourced"]:
+            notes.append("your last reply quoted " + ", ".join(truth.fmt(a)
+                                                               for a in pr["unsourced"])
+                         + ", which no tool returned. Quote prices and fees only from tool "
+                         "results or the customer sidebar; correct this in your next reply.")
+        if notes and self.settings.get("truth_note", True):
+            self.messages.append({"role": "system", "content": "Booking system note: "
+                                  + " Also, ".join(notes)})
             res["note_sent"] = True
             res["corrected"] = None
         self.truth.append(res)
         return res
 
     def _server(self, cls: str) -> str:
+        """The server a class runs on, with the console mapping the stacks were deployed with
+        (settings console_map, e.g. flight_search -> search)."""
+        ov = self.settings.get("console_map") or {}
+        if cls in ov:
+            return ov[cls]
         tm = yaml.safe_load((ROOT / "tools" / "tool_map.yaml").read_text())
         for s, spec in tm["servers"].items():
             if cls in spec["classes"]:
@@ -420,12 +709,28 @@ class Conversation:
     async def _emit_call(self, rec: dict[str, Any], args: dict[str, Any],
                          idx: int | None = None) -> None:
         rec["seq"] = len(self.calls) if idx is None else idx
+        sess = None
+        if rec.get("pred_ok") and rec.get("tool_class"):
+            try:
+                sess = await self.stacks["pred"].session(self.sid)
+            except Exception:  # noqa: BLE001
+                sess = None
+            rec["proof"] = proof(sess, rec.get("pred_seq"), rec.get("tool_class", ""),
+                                 rec.get("server", ""), self._server,
+                                 rec.get("pred_ready_before_ms"))
+        if rec.get("pred_ok") and rec.get("pred_cold") is False and not rec.get("pred_predicted"):
+            pi = rec.get("pred_seq")
+            wr = warm_reason(sess, pi, rec.get("server", ""), rec.get("tool_class", ""),
+                             self._server) \
+                if pi is not None else {"reason": "unknown"}
+            rec["pred_warm_reason"] = wr["reason"]
+            rec["pred_warm_detail"] = wr
         self.args[rec["seq"]] = args
         self.calls.append(rec)
         self.calls.sort(key=lambda c: c["seq"])
         await self.publish({"type": "call", "call": rec})
-        await self.publish({"type": "totals", "totals": totals(self.calls, self.idle_delta(),
-                                                               pricing())})
+        await self.publish({"type": "totals", "conversation": self.id,
+                            "totals": totals(self.calls, self.idle_delta(), pricing())})
         asyncio.create_task(self.predictor_refresh())
 
     async def user_turn(self, text: str, source: str = "presenter",
@@ -444,6 +749,7 @@ class Conversation:
             if mode in ("enter", "typing"):
                 await self.send_hint(self.turn, "enter")
             n_calls_before = self._next_seq
+            self._turn_msg0 = len(self.messages)
             self.messages.append({"role": "user", "content": text})
             for _ in range(MAX_STEPS):
                 await self.publish({"type": "llm_start", "turn": self.turn})
@@ -451,11 +757,29 @@ class Conversation:
                 async def on_text(delta: str) -> None:
                     await self.publish({"type": "llm_delta", "turn": self.turn, "text": delta})
                 try:
-                    r = await self.llm.reply(self.messages, self.task.tools, on_text)
+                    if self.backend is not None and hasattr(self.backend, "state_block"):
+                        # prices in the STATE block count as sourced for the price check
+                        numbers_in(self.backend.state_block(), self.facts)
+                    r = await self.llm.reply(self.llm_messages(), self.offered_tools(),
+                                             on_text)
                 except LLMError as e:
                     await self.publish({"type": "error", "where": "llm", "detail": str(e)[:200]})
                     break
+                if not r.tool_calls and r.content and self.backend is not None:
+                    # a call written as TEXT for a tool that exists but is not offered yet
+                    # (gated): recover it so the guardrail can answer with its next step
+                    from console.llm_stream import tool_call_from_text
+                    got = tool_call_from_text(r.content, set(self.task.tool_names))
+                    if got:
+                        tc, before = got
+                        r.tool_calls, r.content, r.from_text = [tc], before, True
+                        r.message = {"role": "assistant", "content": before, "tool_calls": [
+                            {"id": tc.id, "type": "function", "function": {
+                                "name": tc.name, "arguments": tc.raw_arguments}}]}
                 self.messages.append(r.message)
+                self.think_log.append({"turn": self.turn, "think_ms": round(r.think_ms, 1),
+                                       "n_calls": len(r.tool_calls),
+                                       "from_text": bool(getattr(r, "from_text", False))})
                 await self.publish({"type": "llm_reply", "turn": self.turn,
                                     "reply": self.reply + 1 if r.tool_calls else None,
                                     "think_ms": round(r.think_ms, 1),
@@ -474,6 +798,7 @@ class Conversation:
                     self.messages.append({"role": "tool", "tool_call_id": tc.id,
                                           "content": out["content"]})
                     self._track(out)
+                self.refresh_sidebar()
             if self.settings["mirror"] == "sequential":
                 await self.publish({"type": "status_turn", "turn": self.turn,
                                     "text": "baseline repeating this turn's calls (same gaps)"})
@@ -490,7 +815,14 @@ class Conversation:
         first = next((c for c in self.calls if c["seq"] >= first_seq and c.get("tool_class")),
                      None)
         row = {"conversation": self.id, "turn": self.turn, "source": source,
+               "llm_model": getattr(self.llm, "model", ""),
                "hint_mode": mode, "hint_sources": "+".join(h["source"] for h in hints),
+               # the setting at the END of the turn too: differs if it changed mid-turn
+               "hint_mode_end": self.hint_mode(),
+               "hint_changed_by": " | ".join(f"{h['from']}->{h['to']} by {h['by']}"
+                                             for h in self.hint_changes
+                                             if h.get("turn") == self.turn - 1
+                                             or h.get("turn") == self.turn),
                "lead_ms": round(max(0.0, t_enter - early[0]["t"]) * 1000, 1) if early else None,
                "typing_ms": None if typing_ms is None else round(typing_ms, 1),
                "lookahead": self.settings.get("lookahead", 1),
@@ -501,7 +833,10 @@ class Conversation:
         if tr is not None:
             row.update(truth_claims="+".join(tr["claims"]), truth_verdict=tr["verdict"],
                        truth_badge=" | ".join(tr["badges"]),
-                       truth_note_sent=bool(tr.get("note_sent")))
+                       truth_note_sent=bool(tr.get("note_sent")),
+                       truth_price_verdict=tr.get("price_verdict"),
+                       truth_prices_unsourced="+".join(f"{a:g}" for a in
+                                                       tr.get("prices_unsourced", [])))
         if first:
             for k in ("base", "pred"):
                 row.update({f"{k}_first_wall_ms": first.get(f"{k}_wall_ms"),
@@ -561,12 +896,14 @@ def replay_plan(calls: list[dict[str, Any]], args: dict[int, dict[str, Any]]
     return out
 
 
-TURN_FIELDS = ["conversation", "turn", "source", "hint_mode", "hint_sources", "lead_ms",
+TURN_FIELDS = ["conversation", "turn", "source", "hint_mode", "hint_mode_end",
+               "hint_changed_by", "hint_sources", "lead_ms",
                "typing_ms", "lookahead", "console_map", "first_tool", "calls",
                "base_first_wall_ms", "base_first_cold", "pred_first_wall_ms", "pred_first_cold",
                "pred_first_predicted", "pred_first_warm_source", "pred_first_warm",
                "truth_claims", "truth_verdict", "truth_badge", "truth_note_sent",
-               "truth_corrected"]
+               "truth_corrected", "truth_price_verdict", "truth_prices_unsourced",
+               "llm_model"]
 
 
 def to_csv(calls: list[dict[str, Any]], fields: list[str] | None = None) -> str:

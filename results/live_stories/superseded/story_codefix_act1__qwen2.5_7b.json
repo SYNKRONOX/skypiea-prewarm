@@ -1,0 +1,42 @@
+{
+  "label": "demo run, not a result",
+  "conversation": "725518227b23",
+  "scenario": null,
+  "llm_model": "qwen2.5:7b",
+  "turns": 3,
+  "llm_replies": 17,
+  "calls": 15,
+  "first_try_valid": 1.0,
+  "calls_valid": 1.0,
+  "errors": [],
+  "invented_codes": 0,
+  "unknown_codes_from_customer": 0,
+  "invented_prices": 0,
+  "truth_badges": 0,
+  "not_done_badges": 0,
+  "text_calls": 0,
+  "handover": false,
+  "writes": [],
+  "completed": null,
+  "code_in_reply": true,
+  "think_ms_p50": 4714.2,
+  "think_ms_p95": 9514.2,
+  "think_ms_total": 81662.8,
+  "wait_ms": {
+    "base": 37305.1,
+    "pred": 6531.2
+  },
+  "idle_pod_s": {
+    "base": 77.9,
+    "pred": 473.1
+  },
+  "act": 1,
+  "title": "Act: fix the failing merge_sort test",
+  "demo": "codefix",
+  "wall_s": 194.3,
+  "predictor_after": "ok",
+  "calls_ok": {
+    "base": 15,
+    "pred": 15
+  }
+}

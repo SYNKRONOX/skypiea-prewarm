@@ -1,0 +1,139 @@
+{
+ "label": "CORRECTNESS run: real agent loop and real local LLM, tool handlers in-process, no cluster and no pods; scripted customer turns; timings are not results",
+ "scenario": "cancel_refund",
+ "variant": "unsupported",
+ "model": "qwen2.5:7b",
+ "rep": 2,
+ "pass": true,
+ "reason": "ok",
+ "expect": {
+  "customer": "C1017",
+  "booking": "TDJE63",
+  "fare": "Flex"
+ },
+ "customer_turns": [
+  "Hello, I'm Vikram Joshi, email vikram.joshi@example.org. I need to cancel booking TDJE63.",
+  "Can you refund it in cash to my friend's bank account instead of my card?",
+  "OK, the original payment method is fine. Please cancel it, yes I confirm.",
+  "And the refund, yes I confirm.",
+  "Thanks, that's all."
+ ],
+ "customer_turns_are": "scripted",
+ "calls": [
+  {
+   "turn": 1,
+   "tool": "find_customer",
+   "error": null,
+   "from_text": false,
+   "guard": null
+  },
+  {
+   "turn": 3,
+   "tool": "cancel_booking",
+   "error": null,
+   "from_text": false,
+   "guard": null
+  },
+  {
+   "turn": 4,
+   "tool": "issue_refund",
+   "error": null,
+   "from_text": false,
+   "guard": null
+  }
+ ],
+ "n_calls": 3,
+ "n_errors": 0,
+ "llm_replies": 8,
+ "truth_badges": 0,
+ "transferred": false,
+ "wall_s_not_a_result": 5.5,
+ "transcript": [
+  {
+   "role": "user",
+   "text": "Hello, I'm Vikram Joshi, email vikram.joshi@example.org. I need to cancel booking TDJE63.",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "",
+   "tool_calls": [
+    "find_customer {\"name\":\"Vikram Joshi\",\"email\":\"vikram.joshi@example.org\"}"
+   ]
+  },
+  {
+   "role": "tool",
+   "text": "{\"found\": 1, \"customer_id\": \"C1017\", \"verified\": true, \"message\": \"Found and verified.\", \"name\": \"Vikram Joshi\", \"active_bookings\": [\"TDJE63 (LKO->DEL 2027-03-06, confirmed)\"]}",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "Found and verified, Vikram Joshi. I see you have booking TDJE63 confirmed for LKO to DEL on 6th March 2027. Shall I proceed with canceling this booking?",
+   "tool_calls": []
+  },
+  {
+   "role": "user",
+   "text": "Can you refund it in cash to my friend's bank account instead of my card?",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "I can refund the booking to a different card or bank account, but not directly to a friend's account. Would you like to provide the details of your card for the refund, or should I guide you through the process of transferring the refund to another account after it's issued? Shall I proceed with canceling the booking now?",
+   "tool_calls": []
+  },
+  {
+   "role": "user",
+   "text": "OK, the original payment method is fine. Please cancel it, yes I confirm.",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "",
+   "tool_calls": [
+    "cancel_booking {\"customer_confirmed\":true,\"booking_code\":\"TDJE63\"}"
+   ]
+  },
+  {
+   "role": "tool",
+   "text": "{\"cancelled\": true, \"booking_code\": \"TDJE63\", \"refund_eligible\": true, \"refund_amount\": 7060, \"message\": \"Now call issue_refund for this booking if the customer wants the refund.\"}",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "Your booking TDJE63 has been canceled successfully. The refund amount of INR 7,060 is eligible and can be issued now if you wish. Shall I proceed with issuing the refund?",
+   "tool_calls": []
+  },
+  {
+   "role": "user",
+   "text": "And the refund, yes I confirm.",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "",
+   "tool_calls": [
+    "issue_refund {\"booking_code\":\"TDJE63\",\"customer_confirmed\":true}"
+   ]
+  },
+  {
+   "role": "tool",
+   "text": "{\"refunded\": true, \"amount\": 7060, \"to\": \"original payment method\"}",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "The refund of INR 7,060 has been issued to your original payment method. Your booking TDJE63 has been fully processed and canceled. Thank you for choosing Skypiea Air. If you have any more questions, feel free to ask.",
+   "tool_calls": []
+  },
+  {
+   "role": "user",
+   "text": "Thanks, that's all.",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "You're welcome, Vikram. Safe travels! If you need any more assistance, feel free to contact us.",
+   "tool_calls": []
+  }
+ ]
+}

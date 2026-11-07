@@ -1,0 +1,44 @@
+{
+  "label": "demo run, not a result",
+  "conversation": "3a92df980bf9",
+  "scenario": "failed_verification",
+  "llm_model": "llama3.1:8b",
+  "turns": 5,
+  "llm_replies": 10,
+  "calls": 5,
+  "first_try_valid": 0.8,
+  "calls_valid": 0.8,
+  "errors": [
+    "not_verified"
+  ],
+  "invented_codes": 1,
+  "unknown_codes_from_customer": 0,
+  "invented_prices": 0,
+  "truth_badges": 0,
+  "not_done_badges": 0,
+  "text_calls": 0,
+  "handover": true,
+  "writes": [
+    {
+      "turn": 4,
+      "tool": "change_flight",
+      "outcome": "refused"
+    }
+  ],
+  "completed": true,
+  "code_in_reply": false,
+  "think_ms_p50": 747.2,
+  "think_ms_p95": 1274.4,
+  "think_ms_total": 8901.2,
+  "wait_ms": {
+    "base": 11265.4,
+    "pred": 8283.5
+  },
+  "idle_pod_s": {
+    "base": 24.3,
+    "pred": 85.7
+  },
+  "rep": 1,
+  "hint": "off",
+  "wall_s": 81.8
+}

@@ -1,0 +1,89 @@
+{
+ "label": "CORRECTNESS run: real agent loop and real local LLM, tool handlers in-process, no cluster and no pods; scripted customer turns; timings are not results",
+ "scenario": "transfer",
+ "variant": "changes_mind",
+ "model": "qwen2.5:7b",
+ "rep": 3,
+ "pass": true,
+ "reason": "ok",
+ "expect": {
+  "transfer": true,
+  "writes": 0
+ },
+ "customer_turns": [
+  "Hi, can you book me a hotel near the airport?",
+  "Never mind the hotel. I lost my laptop on the plane yesterday and need someone to help me find it. Please put me through to a human.",
+  "Yes, transfer me please.",
+  "Thanks."
+ ],
+ "customer_turns_are": "scripted",
+ "calls": [
+  {
+   "turn": 3,
+   "tool": "transfer_to_human",
+   "error": null,
+   "from_text": false,
+   "guard": null
+  }
+ ],
+ "n_calls": 1,
+ "n_errors": 0,
+ "llm_replies": 5,
+ "truth_badges": 0,
+ "transferred": true,
+ "wall_s_not_a_result": 3.5,
+ "transcript": [
+  {
+   "role": "user",
+   "text": "Hi, can you book me a hotel near the airport?",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "I'm here to help with Skypiea Air bookings. For hotel reservations, I'd recommend checking with a hotel booking site or the airport directly. However, if you're planning to fly with Skypiea Air, I can help you book your flight. Could you please provide me with your full name and email so we can get started?",
+   "tool_calls": []
+  },
+  {
+   "role": "user",
+   "text": "Never mind the hotel. I lost my laptop on the plane yesterday and need someone to help me find it. Please put me through to a human.",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "I understand your concern, but unfortunately, Skypiea Air doesn't handle lost items. I can assist you with your flight bookings and other related services. Would you like to book a flight or check the status of an existing one? If you need to speak with a human, I can transfer you now. Could you please provide your full name and email so I can verify your booking?",
+   "tool_calls": []
+  },
+  {
+   "role": "user",
+   "text": "Yes, transfer me please.",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "",
+   "tool_calls": [
+    "transfer_to_human {\"summary\":\"Customer needs assistance with a lost laptop. Skypiea Air cannot handle lost items, customer requests to speak with a human.\"}"
+   ]
+  },
+  {
+   "role": "tool",
+   "text": "{\"transferred\": true, \"message\": \"A human colleague will take over. Tell the customer briefly.\"}",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "A human colleague will take over to assist you with your lost laptop. They will be in touch shortly.",
+   "tool_calls": []
+  },
+  {
+   "role": "user",
+   "text": "Thanks.",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "You're welcome. If you need any further assistance, feel free to reach out. Goodbye!",
+   "tool_calls": []
+  }
+ ]
+}

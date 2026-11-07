@@ -237,6 +237,7 @@ class Gateway:
         batch = session.start_call()
         self._inflight_delta(route.server, +1)
         cold, held_ms, info = False, 0.0, {}
+        hold_late_ms = hold_wait_ms = 0.0
         early_addr: str | None = None
         try:
             if self.tracker.ready(route.server) > 0:
@@ -245,10 +246,22 @@ class Gateway:
                 self.metrics.misses.labels(route.tool_class).inc()
                 self._spawn(self._ctrl("warm", self.controller.warm(
                     route.tool_class, 1, self.cfg.demand_ttl_s, "demand")))
+                t_hold = self.clock()
                 ok = await self.tracker.wait_ready(route.server, self.cfg.hold_ms / 1000.0)
-                held_ms = (self.clock() - t_arrive) * 1000.0
-                self.metrics.hold.labels(route.tool_class).observe(min(held_ms,
-                                                                       self.cfg.hold_ms))
+                t_resumed = self.clock()
+                # FR-9 hold metrics (all measured; docs/PRD_STATUS.md FR-9):
+                #   held_ms       the hold itself: from the start of the wait until a pod was
+                #                 Ready or the cap ran out; the wait's timeout IS the cap, so
+                #                 held_ms <= hold_ms by construction;
+                #   hold_late_ms  how much later than that the event loop resumed the call (a
+                #                 busy loop, e.g. several calls arriving at once);
+                #   hold_wait_ms  arrival -> resumed: what `held_ms` meant before W1 (the AWS
+                #                 runs' recorded held_ms, max 397.2 ms, used this definition).
+                wait_ms = (t_resumed - t_hold) * 1000.0
+                held_ms = min(wait_ms, self.cfg.hold_ms)
+                hold_late_ms = wait_ms - held_ms
+                hold_wait_ms = (t_resumed - t_arrive) * 1000.0
+                self.metrics.hold.labels(route.tool_class).observe(held_ms)
                 if not ok:
                     cold = True
                     if self.cfg.early_connect:
@@ -283,14 +296,17 @@ class Gateway:
             "i": len(session.calls), "tool_class": route.tool_class, "server": route.server,
             "batch_id": batch, "t_start_ms": round((t_arrive - session.created) * 1e3, 1),
             "t_end_ms": round((t_end - session.created) * 1e3, 1), "cold": cold,
-            "held_ms": round(held_ms, 1), "added_ms": round(added_ms, 1),
+            "held_ms": round(held_ms, 1), "hold_late_ms": round(hold_late_ms, 1),
+            "hold_wait_ms": round(hold_wait_ms, 1), "added_ms": round(added_ms, 1),
             "predicted": predicted, "warm_source": warm_source, "ok": not is_err})
         session.history.append(HistoryItem(route.tool_class, (t_arrive - session.created) * 1e3,
                                            (t_end - session.created) * 1e3, is_err, batch))
         req = DecideRequest(sid, (t_end - session.created) * 1e3, list(session.history),
                             list(session.oracle))
         self._spawn(self._predict(session, req))
-        info = {"cold": cold, "held_ms": round(held_ms, 1), "tool_class": route.tool_class,
+        info = {"cold": cold, "held_ms": round(held_ms, 1),
+                "hold_late_ms": round(hold_late_ms, 1), "hold_wait_ms": round(hold_wait_ms, 1),
+                "tool_class": route.tool_class,
                 "server": route.server, "added_ms": round(added_ms, 1), "predicted": predicted,
                 "warm_source": warm_source}
         return result, info
@@ -416,6 +432,7 @@ class Gateway:
                 hdr["X-Skypiea-Cold"] = "1" if info.get("cold") else "0"
                 if "held_ms" in info:
                     hdr["X-Skypiea-Held-Ms"] = str(info["held_ms"])
+                    hdr["X-Skypiea-Hold-Late-Ms"] = str(info.get("hold_late_ms", 0.0))
                     hdr["X-Skypiea-Added-Ms"] = str(info["added_ms"])
                     hdr["X-Skypiea-Predicted"] = "1" if info["predicted"] else "0"
                     if self.cfg.turn_hint and info.get("warm_source"):

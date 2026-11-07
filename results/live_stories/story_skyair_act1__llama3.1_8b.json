@@ -1,0 +1,60 @@
+{
+  "label": "demo run, not a result",
+  "conversation": "bd059a349e40",
+  "scenario": null,
+  "llm_model": "llama3.1:8b",
+  "turns": 6,
+  "llm_replies": 12,
+  "calls": 6,
+  "first_try_valid": 0.833,
+  "calls_valid": 0.833,
+  "errors": [
+    "duplicate"
+  ],
+  "invented_codes": 0,
+  "unknown_codes_from_customer": 0,
+  "invented_prices": 1,
+  "truth_badges": 1,
+  "not_done_badges": 0,
+  "text_calls": 0,
+  "handover": true,
+  "writes": [
+    {
+      "turn": 3,
+      "tool": "book_flight",
+      "outcome": "success"
+    },
+    {
+      "turn": 4,
+      "tool": "book_flight",
+      "outcome": "refused"
+    },
+    {
+      "turn": 5,
+      "tool": "add_baggage",
+      "outcome": "success"
+    }
+  ],
+  "completed": null,
+  "code_in_reply": false,
+  "think_ms_p50": 6559.0,
+  "think_ms_p95": 10686.6,
+  "think_ms_total": 68500.7,
+  "wait_ms": {
+    "base": 14541.9,
+    "pred": 12540.9
+  },
+  "idle_pod_s": {
+    "base": 28.6,
+    "pred": 210.4
+  },
+  "act": 1,
+  "title": "Act 1: a new customer books a trip",
+  "demo": "skyair",
+  "wall_s": 210.1,
+  "predictor_after": "ok",
+  "calls_ok": {
+    "base": 6,
+    "pred": 6
+  }
+}

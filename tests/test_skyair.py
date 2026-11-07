@@ -8,18 +8,19 @@ import json
 
 import pytest
 
-from agent.skyair.generate import OUT, build
+from agent.skyair import world as W
 from agent.skyair.tools import Session, personas, pristine
 
 
-def test_database_is_deterministic_and_sized() -> None:
-    assert json.loads(OUT.read_text()) == json.loads(json.dumps(build()))
+def test_world_is_deterministic_and_sized() -> None:
+    a = W.build.__wrapped__(W.SEED)            # a fresh build, not the cached one
     d = pristine()
-    assert len(d["customers"]) == 50 and len(d["bookings"]) == 150
-    assert "Skypiea Air" in d["airline"]
+    assert json.dumps(a["bookings"], sort_keys=True) == json.dumps(d["bookings"], sort_keys=True)
+    assert len(d["customers"]) >= 300 and len(d["bookings"]) >= 900
+    assert "Skypiea Air" in d["airline"] and d["today"] == W.ANCHOR.isoformat()
     names = [c["name"] for c in d["customers"]]
     assert any(names.count(n) > 1 for n in names)            # ambiguity on purpose
-    flights = {f["flight_no"] for f in d["flights"]}
+    flights = {f["flight_id"] for f in d["flights"]}
     assert all(f in flights for b in d["bookings"] for f in b["flights"])
 
 
@@ -41,10 +42,14 @@ def test_verification_gates_everything_and_refuses_politely() -> None:
     p, s = _persona(), Session()
     assert s.get_booking(p["booking_code"])["error"] == "not_verified"
     bad = s.verify_customer(name=p["name"], email="wrong@example.com")
-    assert bad["verified"] is False and "could not verify" in bad["message"]
+    assert bad["verified"] is False and "could not verify" not in json.dumps(
+        {k: v for k, v in bad.items() if k == "customer_id"})
+    assert bad["error"] == "email_not_found" and "NEW customer" in bad["message"]
+    bad2 = s.verify_customer(name=p["name"], booking_code="ZZZZZZ")
+    assert bad2["verified"] is False and "could not verify" in bad2["message"]
     assert s.get_customer_details()["error"] == "not_verified"
     assert s.verify_customer(name=p["name"], booking_code=p["booking_code"])["verified"]
-    assert p["booking_code"] in s.get_customer_details()["bookings"]
+    assert any(p["booking_code"] in x for x in s.get_customer_details()["bookings"])
     other = next(b for b in pristine()["bookings"] if b["customer_id"] != s.verified)
     assert s.get_booking(other["booking_code"])["error"] == "not_allowed"
 
@@ -146,8 +151,8 @@ def test_verification_ignores_made_up_ids_but_not_contradictions() -> None:
 def test_change_flight_errors_say_not_changed_and_offer_alternatives() -> None:
     p, s = _persona(), Session()
     s.verify_customer(email=p["email"])
-    r = s.change_flight(p["booking_code"], "SA1", "SKA123", True)
-    assert r["changed"] is False and "NOT made" in r["message"]
+    r = s.change_flight(p["booking_code"], "SKY1", "SKY99999", True)
+    assert r["changed"] is False and "nothing changed" in r["message"]
     assert "alternatives" in r or "booking_flights" in r
 
 

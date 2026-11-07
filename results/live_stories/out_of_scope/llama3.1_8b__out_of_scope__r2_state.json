@@ -1,0 +1,840 @@
+{
+ "type": "snapshot",
+ "settings": {
+  "mirror": "concurrent",
+  "hint": true,
+  "hint_mode": "typing",
+  "baseline_policy": "scale_to_zero",
+  "demo": "skyair",
+  "autopilot": false,
+  "autopilot_stopping": false,
+  "busy": null,
+  "lookahead": 1,
+  "console_map": {
+   "escalate": "generic_fallback",
+   "flight_search": "search"
+  },
+  "autopilot_cpm": 200,
+  "llm_model": "llama3.1:8b",
+  "llm_provider": "ollama (local)",
+  "story": null
+ },
+ "demo": {
+  "name": "skyair",
+  "profile": "support",
+  "profile_label": "support profile, trained on tau2-bench traces",
+  "agent": "Skye",
+  "human": "Customer",
+  "stories": [
+   {
+    "act": 1,
+    "title": "Act 1: a new customer books a trip"
+   },
+   {
+    "act": 2,
+    "title": "Act 2: change the schedule (watch the truth check)"
+   },
+   {
+    "act": 3,
+    "title": "Act 3: kill the predictor mid-conversation"
+   }
+  ],
+  "tools": [
+   "find_customer",
+   "verify_customer",
+   "get_customer_details",
+   "get_booking",
+   "search_flights",
+   "change_flight",
+   "cancel_booking",
+   "add_baggage",
+   "issue_refund",
+   "book_flight",
+   "list_offers",
+   "apply_promo",
+   "transfer_to_human"
+  ],
+  "script": [
+   "Hi, I'd like to move my flight to a later one.",
+   "My name is Tara Patel.",
+   "My email is tara.patel@example.com and my booking code is 5TGTBP.",
+   "Please move me to flight SA383 on 2026-12-12 at 09:40. Yes, I confirm the change.",
+   "Thanks, that's all."
+  ]
+ },
+ "llm_model": "llama3.1:8b",
+ "pricing": {
+  "vcpu_second_usd": 1.3993e-05,
+  "status": "assumption",
+  "source": "feat/infra docs/aws_plan.md, EC2 on-demand list price",
+  "cores": {
+   "user_lookup": 0.05,
+   "order_lookup": 0.05,
+   "product_lookup": 0.05,
+   "order_update": 0.05,
+   "refund_issue": 0.05,
+   "policy_check": 0.075,
+   "promo_code_lookup": 0.05,
+   "travel_booking": 0.05,
+   "read_file": 0.05,
+   "edit_file": 0.05,
+   "format_diff": 0.05,
+   "search": 0.05,
+   "shell": 0.05,
+   "run_tests": 0.075,
+   "post_comment": 0.05,
+   "generic_fallback": 0.075
+  }
+ },
+ "console_map_file": "configs/live/console_tool_map.yaml",
+ "conversation": {
+  "id": "0a18a7d292b2",
+  "turn": 3,
+  "calls": [],
+  "turns": [
+   {
+    "conversation": "0a18a7d292b2",
+    "turn": 1,
+    "source": "autopilot",
+    "llm_model": "llama3.1:8b",
+    "hint_mode": "typing",
+    "hint_sources": "open+typing+enter",
+    "lead_ms": 17566.2,
+    "typing_ms": 17100.0,
+    "lookahead": 1,
+    "console_map": true,
+    "first_tool": null,
+    "calls": 0,
+    "truth_claims": "",
+    "truth_verdict": "no_claim",
+    "truth_badge": "",
+    "truth_note_sent": false,
+    "truth_price_verdict": "none",
+    "truth_prices_unsourced": ""
+   },
+   {
+    "conversation": "0a18a7d292b2",
+    "turn": 2,
+    "source": "autopilot",
+    "llm_model": "llama3.1:8b",
+    "hint_mode": "typing",
+    "hint_sources": "typing+enter",
+    "lead_ms": 17105.3,
+    "typing_ms": 17100.0,
+    "lookahead": 1,
+    "console_map": true,
+    "first_tool": null,
+    "calls": 0,
+    "truth_claims": "",
+    "truth_verdict": "no_claim",
+    "truth_badge": "",
+    "truth_note_sent": false,
+    "truth_price_verdict": "none",
+    "truth_prices_unsourced": ""
+   },
+   {
+    "conversation": "0a18a7d292b2",
+    "turn": 3,
+    "source": "autopilot",
+    "llm_model": "llama3.1:8b",
+    "hint_mode": "typing",
+    "hint_sources": "typing+enter",
+    "lead_ms": 3906.1,
+    "typing_ms": 3900.0,
+    "lookahead": 1,
+    "console_map": true,
+    "first_tool": null,
+    "calls": 0,
+    "truth_claims": "",
+    "truth_verdict": "no_claim",
+    "truth_badge": "",
+    "truth_note_sent": false,
+    "truth_price_verdict": "none",
+    "truth_prices_unsourced": ""
+   }
+  ],
+  "abandoned": [],
+  "booking": {
+   "available": true,
+   "verified": null,
+   "bookings": []
+  },
+  "writes": [],
+  "truth": [
+   {
+    "turn": 1,
+    "claims": [],
+    "done": [],
+    "earlier": [],
+    "verdict": "no_claim",
+    "badges": [],
+    "prices": [],
+    "prices_unsourced": [],
+    "price_verdict": "none"
+   },
+   {
+    "turn": 2,
+    "claims": [],
+    "done": [],
+    "earlier": [],
+    "verdict": "no_claim",
+    "badges": [],
+    "prices": [],
+    "prices_unsourced": [],
+    "price_verdict": "none"
+   },
+   {
+    "turn": 3,
+    "claims": [],
+    "done": [],
+    "earlier": [],
+    "verdict": "no_claim",
+    "badges": [],
+    "prices": [],
+    "prices_unsourced": [],
+    "price_verdict": "none"
+   }
+  ],
+  "chat": [
+   {
+    "role": "user",
+    "text": "Hi Skye, what will the weather be like in Paris tomorrow?",
+    "turn": 1
+   },
+   {
+    "role": "assistant",
+    "text": "I can only help with Skypiea Air bookings. I can assist with finding and verifying customers, booking, checking, changing or cancelling flights, baggage, refunds and offers. What would you like to do with your Skypiea Air booking?",
+    "turn": 1
+   },
+   {
+    "role": "user",
+    "text": "OK. Can you write me a Python function that sorts a list?",
+    "turn": 2
+   },
+   {
+    "role": "assistant",
+    "text": "I can only help with Skypiea Air bookings. I can assist with finding and verifying customers, booking, checking, changing or cancelling flights, baggage, refunds and offers. What would you like to do with your Skypiea Air booking?",
+    "turn": 2
+   },
+   {
+    "role": "user",
+    "text": "Fine, thanks.",
+    "turn": 3
+   },
+   {
+    "role": "assistant",
+    "text": "I'm glad we could have a brief conversation. If you need any help with your Skypiea Air booking, feel free to ask anytime. Have a great day!",
+    "turn": 3
+   }
+  ],
+  "totals": {
+   "base": {
+    "calls": 0,
+    "ok": 0,
+    "wait_ms": 0,
+    "cold": 0,
+    "added_p50_ms": null,
+    "added_p95_ms": null,
+    "n_added": 0,
+    "idle_pod_s": 0.0,
+    "idle_cost_usd": 0.0
+   },
+   "pred": {
+    "calls": 0,
+    "ok": 0,
+    "wait_ms": 0,
+    "cold": 0,
+    "added_p50_ms": null,
+    "added_p95_ms": null,
+    "n_added": 0,
+    "idle_pod_s": 51.5,
+    "idle_cost_usd": 3.6006776190104974e-05
+   }
+  }
+ },
+ "last": {
+  "pods": {
+   "type": "pods",
+   "grid": {
+    "base": {
+     "edit_file": {
+      "state": "cold",
+      "replicas": 0,
+      "ready": 0,
+      "queued": 0,
+      "warm_for_s": 0.0,
+      "ttl_left_s": 0.0,
+      "inflight": 0
+     },
+     "format_diff": {
+      "state": "cold",
+      "replicas": 0,
+      "ready": 0,
+      "queued": 0,
+      "warm_for_s": 0.0,
+      "ttl_left_s": 0.0,
+      "inflight": 0
+     },
+     "generic_fallback": {
+      "state": "cold",
+      "replicas": 0,
+      "ready": 0,
+      "queued": 0,
+      "warm_for_s": 0.0,
+      "ttl_left_s": 0.0,
+      "inflight": 0
+     },
+     "order_lookup": {
+      "state": "cold",
+      "replicas": 0,
+      "ready": 0,
+      "queued": 0,
+      "warm_for_s": 0.0,
+      "ttl_left_s": 0.0,
+      "inflight": 0
+     },
+     "order_update": {
+      "state": "cold",
+      "replicas": 0,
+      "ready": 0,
+      "queued": 0,
+      "warm_for_s": 0.0,
+      "ttl_left_s": 0.0,
+      "inflight": 0
+     },
+     "policy_check": {
+      "state": "cold",
+      "replicas": 0,
+      "ready": 0,
+      "queued": 0,
+      "warm_for_s": 0.0,
+      "ttl_left_s": 0.0,
+      "inflight": 0
+     },
+     "post_comment": {
+      "state": "cold",
+      "replicas": 0,
+      "ready": 0,
+      "queued": 0,
+      "warm_for_s": 0.0,
+      "ttl_left_s": 0.0,
+      "inflight": 0
+     },
+     "product_lookup": {
+      "state": "cold",
+      "replicas": 0,
+      "ready": 0,
+      "queued": 0,
+      "warm_for_s": 0.0,
+      "ttl_left_s": 0.0,
+      "inflight": 0
+     },
+     "promo_code_lookup": {
+      "state": "cold",
+      "replicas": 0,
+      "ready": 0,
+      "queued": 0,
+      "warm_for_s": 0.0,
+      "ttl_left_s": 0.0,
+      "inflight": 0
+     },
+     "read_file": {
+      "state": "cold",
+      "replicas": 0,
+      "ready": 0,
+      "queued": 0,
+      "warm_for_s": 0.0,
+      "ttl_left_s": 0.0,
+      "inflight": 0
+     },
+     "refund_issue": {
+      "state": "cold",
+      "replicas": 0,
+      "ready": 0,
+      "queued": 0,
+      "warm_for_s": 0.0,
+      "ttl_left_s": 0.0,
+      "inflight": 0
+     },
+     "run_tests": {
+      "state": "cold",
+      "replicas": 0,
+      "ready": 0,
+      "queued": 0,
+      "warm_for_s": 0.0,
+      "ttl_left_s": 0.0,
+      "inflight": 0
+     },
+     "search": {
+      "state": "cold",
+      "replicas": 0,
+      "ready": 0,
+      "queued": 0,
+      "warm_for_s": 0.0,
+      "ttl_left_s": 0.0,
+      "inflight": 0
+     },
+     "shell": {
+      "state": "cold",
+      "replicas": 0,
+      "ready": 0,
+      "queued": 0,
+      "warm_for_s": 0.0,
+      "ttl_left_s": 0.0,
+      "inflight": 0
+     },
+     "travel_booking": {
+      "state": "cold",
+      "replicas": 0,
+      "ready": 0,
+      "queued": 0,
+      "warm_for_s": 0.0,
+      "ttl_left_s": 0.0,
+      "inflight": 0
+     },
+     "user_lookup": {
+      "state": "cold",
+      "replicas": 0,
+      "ready": 0,
+      "queued": 0,
+      "warm_for_s": 0.0,
+      "ttl_left_s": 0.0,
+      "inflight": 0
+     }
+    },
+    "pred": {
+     "edit_file": {
+      "state": "cold",
+      "replicas": 0,
+      "ready": 0,
+      "queued": 0,
+      "warm_for_s": 0.0,
+      "ttl_left_s": 0.0,
+      "inflight": 0
+     },
+     "format_diff": {
+      "state": "cold",
+      "replicas": 0,
+      "ready": 0,
+      "queued": 0,
+      "warm_for_s": 0.0,
+      "ttl_left_s": 0.0,
+      "inflight": 0
+     },
+     "generic_fallback": {
+      "state": "cold",
+      "replicas": 0,
+      "ready": 0,
+      "queued": 0,
+      "warm_for_s": 0.0,
+      "ttl_left_s": 0.0,
+      "inflight": 0
+     },
+     "order_lookup": {
+      "state": "cold",
+      "replicas": 0,
+      "ready": 0,
+      "queued": 0,
+      "warm_for_s": 0.0,
+      "ttl_left_s": 0.0,
+      "inflight": 0
+     },
+     "order_update": {
+      "state": "cold",
+      "replicas": 0,
+      "ready": 0,
+      "queued": 0,
+      "warm_for_s": 0.0,
+      "ttl_left_s": 0.0,
+      "inflight": 0
+     },
+     "policy_check": {
+      "state": "cold",
+      "replicas": 0,
+      "ready": 0,
+      "queued": 0,
+      "warm_for_s": 0.0,
+      "ttl_left_s": 0.0,
+      "inflight": 0
+     },
+     "post_comment": {
+      "state": "cold",
+      "replicas": 0,
+      "ready": 0,
+      "queued": 0,
+      "warm_for_s": 0.0,
+      "ttl_left_s": 0.0,
+      "inflight": 0
+     },
+     "product_lookup": {
+      "state": "cold",
+      "replicas": 0,
+      "ready": 0,
+      "queued": 0,
+      "warm_for_s": 0.0,
+      "ttl_left_s": 0.0,
+      "inflight": 0
+     },
+     "promo_code_lookup": {
+      "state": "cold",
+      "replicas": 0,
+      "ready": 0,
+      "queued": 0,
+      "warm_for_s": 0.0,
+      "ttl_left_s": 0.0,
+      "inflight": 0
+     },
+     "read_file": {
+      "state": "cold",
+      "replicas": 0,
+      "ready": 0,
+      "queued": 0,
+      "warm_for_s": 0.0,
+      "ttl_left_s": 0.0,
+      "inflight": 0
+     },
+     "refund_issue": {
+      "state": "cold",
+      "replicas": 0,
+      "ready": 0,
+      "queued": 0,
+      "warm_for_s": 0.0,
+      "ttl_left_s": 0.0,
+      "inflight": 0
+     },
+     "run_tests": {
+      "state": "cold",
+      "replicas": 0,
+      "ready": 0,
+      "queued": 0,
+      "warm_for_s": 0.0,
+      "ttl_left_s": 0.0,
+      "inflight": 0
+     },
+     "search": {
+      "state": "cold",
+      "replicas": 0,
+      "ready": 0,
+      "queued": 0,
+      "warm_for_s": 0.0,
+      "ttl_left_s": 0.0,
+      "inflight": 0
+     },
+     "shell": {
+      "state": "cold",
+      "replicas": 0,
+      "ready": 0,
+      "queued": 0,
+      "warm_for_s": 0.0,
+      "ttl_left_s": 0.0,
+      "inflight": 0
+     },
+     "travel_booking": {
+      "state": "cold",
+      "replicas": 0,
+      "ready": 0,
+      "queued": 0,
+      "warm_for_s": 0.0,
+      "ttl_left_s": 0.0,
+      "inflight": 0
+     },
+     "user_lookup": {
+      "state": "warm",
+      "replicas": 1,
+      "ready": 1,
+      "queued": 0,
+      "warm_for_s": 52.3,
+      "ttl_left_s": 25.24,
+      "inflight": 0
+     }
+    }
+   },
+   "errors": {
+    "base": null,
+    "pred": null
+   },
+   "ts": 1793997259.127
+  },
+  "slow": {
+   "type": "slow",
+   "idle": {
+    "base": {
+     "user_lookup": 251.74359535098483,
+     "order_lookup": 0.0,
+     "product_lookup": 0.0,
+     "order_update": 0.0,
+     "refund_issue": 0.0,
+     "policy_check": 0.0,
+     "promo_code_lookup": 62.74467029600055,
+     "travel_booking": 210.84998256694234,
+     "read_file": 0.0,
+     "edit_file": 0.0,
+     "format_diff": 0.0,
+     "search": 53.50433212397911,
+     "shell": 0.0,
+     "run_tests": 0.0,
+     "post_comment": 0.0,
+     "generic_fallback": 89.59016044500459
+    },
+    "pred": {
+     "user_lookup": 1142.8197520920075,
+     "order_lookup": 0.0,
+     "product_lookup": 0.0,
+     "order_update": 0.0,
+     "refund_issue": 0.0,
+     "policy_check": 0.0,
+     "promo_code_lookup": 63.23782593299984,
+     "travel_booking": 2103.114690386952,
+     "read_file": 34.391094209000585,
+     "edit_file": 0.0,
+     "format_diff": 0.0,
+     "search": 372.49025526798505,
+     "shell": 0.0,
+     "run_tests": 0.0,
+     "post_comment": 0.0,
+     "generic_fallback": 84.34159306494985
+    }
+   },
+   "model": {
+    "status": "ok",
+    "model_version": "lgbm-support-aabdfd2",
+    "profile": "support",
+    "synthetic": false,
+    "previous_version": null,
+    "degraded_count": 0,
+    "cold_start_matches_bundle": true,
+    "replicas": {
+     "spec": 1,
+     "ready": 1
+    }
+   },
+   "baseline_policy": {
+    "policy": "scale_to_zero",
+    "params": {}
+   },
+   "links": {
+    "base": "ok",
+    "pred": "ok"
+   },
+   "ts": 1793997258.146
+  },
+  "settings": {
+   "type": "settings",
+   "settings": {
+    "mirror": "concurrent",
+    "hint": true,
+    "hint_mode": "typing",
+    "baseline_policy": "scale_to_zero",
+    "demo": "skyair",
+    "autopilot": false,
+    "autopilot_stopping": false,
+    "busy": null,
+    "lookahead": 1,
+    "console_map": {
+     "escalate": "generic_fallback",
+     "flight_search": "search"
+    },
+    "autopilot_cpm": 200,
+    "llm_model": "llama3.1:8b",
+    "llm_provider": "ollama (local)",
+    "story": null
+   },
+   "ts": 1793997255.606
+  },
+  "status": {
+   "type": "status",
+   "text": "both stacks at 0 pods; new conversation",
+   "level": "info",
+   "ts": 1793997203.844
+  },
+  "predictor": {
+   "type": "predictor",
+   "conversation": "0a18a7d292b2",
+   "decisions": [
+    {
+     "trigger": "turn_start",
+     "turn": 1,
+     "after_call": -1,
+     "t_ms": 0.0,
+     "outcome": "ok",
+     "top3": [
+      {
+       "tool_class": "user_lookup",
+       "p": 0.50025
+      },
+      {
+       "tool_class": "reservation_lookup",
+       "p": 0.407206
+      },
+      {
+       "tool_class": "flight_search",
+       "p": 0.017514
+      }
+     ],
+     "warmed": [
+      "user_lookup"
+     ],
+     "model_version": "lgbm-support-aabdfd2",
+     "next_tool": null
+    },
+    {
+     "trigger": "turn_start",
+     "turn": 1,
+     "after_call": -1,
+     "t_ms": 0.0,
+     "outcome": "ok",
+     "top3": [
+      {
+       "tool_class": "user_lookup",
+       "p": 0.50025
+      },
+      {
+       "tool_class": "reservation_lookup",
+       "p": 0.407206
+      },
+      {
+       "tool_class": "flight_search",
+       "p": 0.017514
+      }
+     ],
+     "warmed": [
+      "user_lookup"
+     ],
+     "model_version": "lgbm-support-aabdfd2",
+     "next_tool": null
+    },
+    {
+     "trigger": "turn_start",
+     "turn": 1,
+     "after_call": -1,
+     "t_ms": 0.0,
+     "outcome": "ok",
+     "top3": [
+      {
+       "tool_class": "user_lookup",
+       "p": 0.50025
+      },
+      {
+       "tool_class": "reservation_lookup",
+       "p": 0.407206
+      },
+      {
+       "tool_class": "flight_search",
+       "p": 0.017514
+      }
+     ],
+     "warmed": [
+      "user_lookup"
+     ],
+     "model_version": "lgbm-support-aabdfd2",
+     "next_tool": null
+    },
+    {
+     "trigger": "turn_start",
+     "turn": 2,
+     "after_call": -1,
+     "t_ms": 0.0,
+     "outcome": "ok",
+     "top3": [
+      {
+       "tool_class": "user_lookup",
+       "p": 0.50025
+      },
+      {
+       "tool_class": "reservation_lookup",
+       "p": 0.407206
+      },
+      {
+       "tool_class": "flight_search",
+       "p": 0.017514
+      }
+     ],
+     "warmed": [
+      "user_lookup"
+     ],
+     "model_version": "lgbm-support-aabdfd2",
+     "next_tool": null
+    },
+    {
+     "trigger": "turn_start",
+     "turn": 2,
+     "after_call": -1,
+     "t_ms": 0.0,
+     "outcome": "ok",
+     "top3": [
+      {
+       "tool_class": "user_lookup",
+       "p": 0.50025
+      },
+      {
+       "tool_class": "reservation_lookup",
+       "p": 0.407206
+      },
+      {
+       "tool_class": "flight_search",
+       "p": 0.017514
+      }
+     ],
+     "warmed": [
+      "user_lookup"
+     ],
+     "model_version": "lgbm-support-aabdfd2",
+     "next_tool": null
+    },
+    {
+     "trigger": "turn_start",
+     "turn": 3,
+     "after_call": -1,
+     "t_ms": 0.0,
+     "outcome": "ok",
+     "top3": [
+      {
+       "tool_class": "user_lookup",
+       "p": 0.50025
+      },
+      {
+       "tool_class": "reservation_lookup",
+       "p": 0.407206
+      },
+      {
+       "tool_class": "flight_search",
+       "p": 0.017514
+      }
+     ],
+     "warmed": [
+      "user_lookup"
+     ],
+     "model_version": "lgbm-support-aabdfd2",
+     "next_tool": null
+    },
+    {
+     "trigger": "turn_start",
+     "turn": 3,
+     "after_call": -1,
+     "t_ms": 0.0,
+     "outcome": "ok",
+     "top3": [
+      {
+       "tool_class": "user_lookup",
+       "p": 0.50025
+      },
+      {
+       "tool_class": "reservation_lookup",
+       "p": 0.407206
+      },
+      {
+       "tool_class": "flight_search",
+       "p": 0.017514
+      }
+     ],
+     "warmed": [
+      "user_lookup"
+     ],
+     "model_version": "lgbm-support-aabdfd2",
+     "next_tool": null
+    }
+   ],
+   "ts": 1793997254.767
+  }
+ }
+}

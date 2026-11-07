@@ -1,0 +1,41 @@
+{
+  "label": "demo run, not a result",
+  "conversation": "68c7c6b6149a",
+  "scenario": "suite:transfer__unsupported",
+  "llm_model": "llama3.1:8b",
+  "turns": 4,
+  "llm_replies": 7,
+  "calls": 3,
+  "first_try_valid": 1.0,
+  "calls_valid": 1.0,
+  "errors": [],
+  "invented_codes": 0,
+  "unknown_codes_from_customer": 0,
+  "invented_prices": 0,
+  "truth_badges": 0,
+  "not_done_badges": 0,
+  "text_calls": 0,
+  "handover": true,
+  "writes": [],
+  "completed": true,
+  "oracle": "ok",
+  "code_in_reply": false,
+  "hint_modes": [
+    "off"
+  ],
+  "hint_changes": [],
+  "think_ms_p50": 614.6,
+  "think_ms_p95": 1048.9,
+  "think_ms_total": 4256.2,
+  "wait_ms": {
+    "base": 5836.0,
+    "pred": 5843.5
+  },
+  "idle_pod_s": {
+    "base": 10.5,
+    "pred": 10.3
+  },
+  "rep": 1,
+  "hint": "off",
+  "wall_s": 71.2
+}

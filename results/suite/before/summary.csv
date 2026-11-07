@@ -1,0 +1,73 @@
+model,scenario,variant,rep,pass,reason,n_calls,n_errors,llm_replies,truth_badges
+llama3.1:8b,new_booking,typos,1,True,ok,5,1,10,1
+llama3.1:8b,new_booking,wrong_email,1,True,ok,6,0,12,0
+llama3.1:8b,new_booking,changes_mind,1,True,ok,6,1,11,0
+llama3.1:8b,promo_booking,typos,1,False,0 new bookings (expected 1),7,0,13,3
+llama3.1:8b,promo_booking,wrong_email,1,False,0 new bookings (expected 1),7,2,13,0
+llama3.1:8b,promo_booking,changes_mind,1,False,0 new bookings (expected 1),6,1,12,0
+llama3.1:8b,change_date,typos,1,True,ok,5,0,10,0
+llama3.1:8b,change_date,wrong_email,1,True,ok,5,0,10,0
+llama3.1:8b,change_date,changes_mind,1,True,ok,5,0,10,0
+llama3.1:8b,add_bag,typos,1,False,bags 3 (expected 2),4,0,8,2
+llama3.1:8b,add_bag,unsupported,1,False,bags 3 (expected 2),5,0,10,1
+llama3.1:8b,add_bag,changes_mind,1,False,bags 3 (expected 2),5,0,10,1
+llama3.1:8b,cancel_refund,typos,1,True,ok,5,0,10,1
+llama3.1:8b,cancel_refund,wrong_email,1,False,booking confirmed (expected cancelled),5,2,10,1
+llama3.1:8b,cancel_refund,unsupported,1,True,ok,4,0,9,0
+llama3.1:8b,transfer,typos,1,True,ok,4,0,8,0
+llama3.1:8b,transfer,unsupported,1,True,ok,3,0,7,0
+llama3.1:8b,transfer,changes_mind,1,True,ok,3,0,7,0
+llama3.1:8b,new_booking,typos,2,True,ok,5,1,10,1
+llama3.1:8b,new_booking,wrong_email,2,True,ok,6,0,12,0
+llama3.1:8b,new_booking,changes_mind,2,True,ok,6,1,11,0
+llama3.1:8b,promo_booking,typos,2,False,0 new bookings (expected 1),7,0,13,2
+llama3.1:8b,promo_booking,wrong_email,2,False,0 new bookings (expected 1),6,2,12,0
+llama3.1:8b,promo_booking,changes_mind,2,False,0 new bookings (expected 1),6,1,12,0
+llama3.1:8b,change_date,typos,2,True,ok,5,0,10,0
+llama3.1:8b,change_date,wrong_email,2,True,ok,5,0,10,0
+llama3.1:8b,change_date,changes_mind,2,True,ok,5,0,10,0
+llama3.1:8b,add_bag,typos,2,False,bags 3 (expected 2),4,0,8,2
+llama3.1:8b,add_bag,unsupported,2,False,bags 3 (expected 2),5,0,10,1
+llama3.1:8b,add_bag,changes_mind,2,False,bags 3 (expected 2),5,0,10,1
+llama3.1:8b,cancel_refund,typos,2,True,ok,5,0,10,0
+llama3.1:8b,cancel_refund,wrong_email,2,False,booking confirmed (expected cancelled),5,2,10,1
+llama3.1:8b,cancel_refund,unsupported,2,True,ok,4,0,9,1
+llama3.1:8b,transfer,typos,2,True,ok,4,0,8,0
+llama3.1:8b,transfer,unsupported,2,True,ok,3,0,7,0
+llama3.1:8b,transfer,changes_mind,2,True,ok,3,0,7,0
+qwen2.5:7b,new_booking,typos,1,True,ok,3,0,8,1
+qwen2.5:7b,new_booking,wrong_email,1,True,ok,3,1,9,0
+qwen2.5:7b,new_booking,changes_mind,1,False,wrong flight SKA-SKB 2026-12-08,2,0,7,0
+qwen2.5:7b,promo_booking,typos,1,False,promo None (expected SKYWINTER10),4,1,10,3
+qwen2.5:7b,promo_booking,wrong_email,1,False,0 new bookings (expected 1),4,1,10,1
+qwen2.5:7b,promo_booking,changes_mind,1,False,0 new bookings (expected 1),4,0,10,0
+qwen2.5:7b,change_date,typos,1,False,flight not moved to 2026-12-07 (now 2026-12-05),2,0,7,0
+qwen2.5:7b,change_date,wrong_email,1,False,flight not moved to 2026-12-07 (now 2026-12-05),4,0,9,0
+qwen2.5:7b,change_date,changes_mind,1,False,flight not moved to 2026-12-08 (now 2026-12-05),3,1,8,3
+qwen2.5:7b,add_bag,typos,1,True,ok,3,0,7,0
+qwen2.5:7b,add_bag,unsupported,1,True,ok,3,0,8,1
+qwen2.5:7b,add_bag,changes_mind,1,False,bags 4 (expected 2),3,0,8,0
+qwen2.5:7b,cancel_refund,typos,1,True,ok,5,1,9,0
+qwen2.5:7b,cancel_refund,wrong_email,1,False,booking confirmed (expected cancelled),3,1,8,0
+qwen2.5:7b,cancel_refund,unsupported,1,False,cancelled but not refunded,2,0,7,4
+qwen2.5:7b,transfer,typos,1,True,ok,2,0,6,0
+qwen2.5:7b,transfer,unsupported,1,True,ok,1,0,5,0
+qwen2.5:7b,transfer,changes_mind,1,True,ok,1,0,5,0
+qwen2.5:7b,new_booking,typos,2,False,0 new bookings (expected 1),2,0,7,1
+qwen2.5:7b,new_booking,wrong_email,2,True,ok,3,1,9,0
+qwen2.5:7b,new_booking,changes_mind,2,False,wrong flight SKA-SKB 2026-12-08,2,0,7,0
+qwen2.5:7b,promo_booking,typos,2,False,promo None (expected SKYWINTER10),4,1,10,2
+qwen2.5:7b,promo_booking,wrong_email,2,False,0 new bookings (expected 1),4,1,10,1
+qwen2.5:7b,promo_booking,changes_mind,2,False,0 new bookings (expected 1),4,0,10,0
+qwen2.5:7b,change_date,typos,2,False,flight not moved to 2026-12-07 (now 2026-12-05),2,0,7,0
+qwen2.5:7b,change_date,wrong_email,2,False,flight not moved to 2026-12-07 (now 2026-12-05),4,1,9,2
+qwen2.5:7b,change_date,changes_mind,2,False,flight not moved to 2026-12-08 (now 2026-12-05),3,1,8,3
+qwen2.5:7b,add_bag,typos,2,True,ok,2,0,6,1
+qwen2.5:7b,add_bag,unsupported,2,False,bags 1 (expected 2),2,0,7,1
+qwen2.5:7b,add_bag,changes_mind,2,False,bags 4 (expected 2),3,0,8,0
+qwen2.5:7b,cancel_refund,typos,2,True,ok,5,1,9,0
+qwen2.5:7b,cancel_refund,wrong_email,2,False,booking confirmed (expected cancelled),3,1,8,0
+qwen2.5:7b,cancel_refund,unsupported,2,False,cancelled but not refunded,2,0,7,4
+qwen2.5:7b,transfer,typos,2,True,ok,2,0,6,0
+qwen2.5:7b,transfer,unsupported,2,True,ok,1,0,5,0
+qwen2.5:7b,transfer,changes_mind,2,True,ok,1,0,5,0

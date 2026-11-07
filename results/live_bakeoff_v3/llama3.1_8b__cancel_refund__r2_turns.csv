@@ -1,0 +1,6 @@
+conversation,turn,source,hint_mode,hint_sources,lead_ms,typing_ms,lookahead,console_map,first_tool,calls,base_first_wall_ms,base_first_cold,pred_first_wall_ms,pred_first_cold,pred_first_predicted,pred_first_warm_source,pred_first_warm,truth_claims,truth_verdict,truth_badge,truth_note_sent,truth_corrected,truth_price_verdict,truth_prices_unsourced,llm_model
+b10cc58916a1,1,autopilot,off,,,8400.0,1,True,verify_customer,1,2327.8,True,2314.9,True,False,,False,,no_claim,,False,,none,,llama3.1:8b
+b10cc58916a1,2,autopilot,off,,,18300.0,1,True,verify_customer,1,2075.3,True,2109.4,True,False,,False,,no_claim,,False,,sourced,,llama3.1:8b
+b10cc58916a1,3,autopilot,off,,,18600.0,1,True,cancel_booking,1,2999.8,True,40.8,False,False,,True,cancel+refund,not_done,Not done: no refund was issued,True,False,sourced,,llama3.1:8b
+b10cc58916a1,4,autopilot,off,,,17700.0,1,True,issue_refund,1,1913.5,True,39.9,False,False,,True,refund,agree,,False,,sourced,,llama3.1:8b
+b10cc58916a1,5,autopilot,off,,,5700.0,1,True,transfer_to_human,1,3682.4,True,3509.1,True,False,,False,,no_claim,,False,,none,,llama3.1:8b

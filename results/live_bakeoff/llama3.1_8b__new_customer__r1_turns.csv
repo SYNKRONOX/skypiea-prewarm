@@ -1,0 +1,7 @@
+conversation,turn,source,hint_mode,hint_sources,lead_ms,typing_ms,lookahead,console_map,first_tool,calls,base_first_wall_ms,base_first_cold,pred_first_wall_ms,pred_first_cold,pred_first_predicted,pred_first_warm_source,pred_first_warm,truth_claims,truth_verdict,truth_badge,truth_note_sent,truth_corrected,truth_price_verdict,truth_prices_unsourced,llm_model
+ee8eb9b721f2,1,autopilot,off,,,20400.0,1,True,find_customer,1,2469.4,True,1465.9,True,False,,False,,no_claim,,False,,none,,llama3.1:8b
+ee8eb9b721f2,2,autopilot,off,,,13800.0,1,True,search_flights,1,2192.9,True,2191.1,True,False,,False,,no_claim,,False,,sourced,,llama3.1:8b
+ee8eb9b721f2,3,autopilot,off,,,20700.0,1,True,book_flight,1,2148.7,True,2151.7,True,False,,False,book,agree,,False,,sourced,,llama3.1:8b
+ee8eb9b721f2,4,autopilot,off,,,8100.0,1,True,book_flight,1,2326.6,True,29.8,False,False,,True,book,agree,,False,,sourced,,llama3.1:8b
+ee8eb9b721f2,5,autopilot,off,,,10200.0,1,True,get_booking,1,2779.8,True,36.8,False,False,,True,,no_claim,,False,,sourced,,llama3.1:8b
+ee8eb9b721f2,6,autopilot,off,,,5700.0,1,True,transfer_to_human,1,3151.8,True,3182.7,True,False,,False,,no_claim,,False,,none,,llama3.1:8b

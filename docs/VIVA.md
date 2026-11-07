@@ -138,14 +138,34 @@ call is unaffected; the system becomes scale-to-zero. Tested by live failure inj
 Roles: **Parthav (P)**: predictor and simulator. **Mohnish (M)**: traces, replayer, data.
 **Dhanunjaya (D)**: controller, cluster, cloud. Roles follow the table in `README.md`.
 
-**Preferred: the Live Console.** `make live` (after `make fetch-models` or with local bundles),
-then follow the **7-minute presenter script in `docs/DEMO.md`** ("7-minute presenter script"),
-which is written for the console and is not copied here. It shows both stacks side by side:
-cold starts on the Normal stack, the predictor panel, the think window, the hint, the
-predictor kill, and the code-fix demo. Say the three plain facts from `README.md`: the tool
-containers are real and cold-start for real; the airline data is a mock database inside the
-console; the 8B model can claim actions it did not take (v1.2 support console: the truth panel
-shows the real state).
+**Preferred: the Live Console in story mode.** `make live` (after `make fetch-models` or with
+local bundles), then follow the **5-minute presenter script in `docs/DEMO.md`** ("Live demo:
+5-minute presenter script"; a 1-minute version is under it). It is built around the **Story**
+buttons, which send prepared customer lines to the **live** model (nothing pre-recorded):
+Act 1 a new customer books a trip (boarding-pass card, prices quoted from tool results),
+Act 2 a schedule change (truth check: "Not done" and "Not from a tool: $X" badges), Act 3 the
+predictor is killed mid-conversation (every call still succeeds; warm calls say why they were
+warm, never "predicted"). Optional: Demo → Code fix → Act (Dev assistant fixes a planted
+`merge_sort` bug; the test runner is **simulated**, no model-written code runs). Say the three
+plain facts from `docs/LIVE_DEMO.md`: the tool containers are real and cold-start for real;
+the airline data and the repository are mocks inside the console; the predictor sees only tool
+names and timing.
+
+If asked "which model and why": llama3.1:8b by default, chosen by correctness in a bake-off
+against qwen2.5:7b on five scripted personas, run three times as the tools improved
+(`docs/LIVE_DEMO.md`, "Model bake-off": 23 vs 22 of 30 tasks completed, 2 vs 8 false "done"
+claims; qwen invents fewer booking codes and never hands over unasked; demo runs, n = 10 per
+model per version). The Model dropdown
+switches live; switching starts a new conversation.
+
+If asked about **FR-9** ("the AWS runs show held_ms up to 397.2 ms but the cap is 150 ms"): the
+recorded value was measured from the call's arrival to the moment the event loop resumed it;
+the wait itself is `wait_ready(timeout = 150 ms)`. Overrun above 150 ms: p50 1.0 ms, p99 24 ms;
+the 397.2 ms call is a single outlier (`python -m gateway.hold_report`). The gateway now
+reports `held_ms` (the hold itself, never above the cap, tested), `hold_late_ms` and
+`hold_wait_ms` (`docs/PRD_STATUS.md` FR-9). **FR-6**: a reload of the real model under 8
+request threads took 0.49-0.50 s and served every in-flight request
+(`results/fr6_reload_check.json`; laptop, not AWS).
 
 **Alternative (no console): `make demo` + `make agent-demo`**, per **`docs/DEMO.md`** and
 **`docs/AGENT.md`**. The table below is for this path. Run whichever you choose once on the
@@ -168,7 +188,7 @@ All reported timings come from AWS (`README.md`, "kind is for functional checks 
 
 - **Agent or Ollama fails** (model slow to load, no output): stop after 20 s. Say "the live
   model is slow on this laptop, so here is the recorded run" and show the **recorded session**:
-  `docs/live_backup/` (console screenshots `docs/img/console_backup_*.png`, `export.csv`,
+  `docs/live_backup/` (newest: `docs/live_backup/w1/`; console screenshots `docs/img/console_backup_*.png`, `export.csv`,
   `session_log.txt`) or `docs/demo_transcript.log` for `make demo`. Walk through the same
   points from it: call, predicted next tool, pod warmed, next call warm.
 - **Cluster fails** (`make demo` errors, pods stuck Pending): do not debug live. Show the

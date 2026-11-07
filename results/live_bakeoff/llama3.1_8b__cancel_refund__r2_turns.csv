@@ -1,0 +1,6 @@
+conversation,turn,source,hint_mode,hint_sources,lead_ms,typing_ms,lookahead,console_map,first_tool,calls,base_first_wall_ms,base_first_cold,pred_first_wall_ms,pred_first_cold,pred_first_predicted,pred_first_warm_source,pred_first_warm,truth_claims,truth_verdict,truth_badge,truth_note_sent,truth_corrected,truth_price_verdict,truth_prices_unsourced,llm_model
+0c689e10c4b7,1,autopilot,off,,,8400.0,1,True,verify_customer,1,2750.5,True,1756.6,True,False,,False,,no_claim,,False,,none,,llama3.1:8b
+0c689e10c4b7,2,autopilot,off,,,18300.0,1,True,verify_customer,1,2280.2,True,2277.2,True,False,,False,,no_claim,,False,,sourced,,llama3.1:8b
+0c689e10c4b7,3,autopilot,off,,,18600.0,1,True,cancel_booking,1,2642.2,True,32.1,False,False,,True,cancel,agree,,False,,none,,llama3.1:8b
+0c689e10c4b7,4,autopilot,off,,,17700.0,1,True,issue_refund,1,2827.8,True,34.2,False,False,,True,refund+cancel,agree,,False,,sourced,,llama3.1:8b
+0c689e10c4b7,5,autopilot,off,,,5700.0,1,True,transfer_to_human,1,2989.8,True,3380.0,True,False,,False,,no_claim,,False,,none,,llama3.1:8b
