@@ -1,0 +1,141 @@
+{
+ "label": "CORRECTNESS run: real agent loop and real local LLM, tool handlers in-process, no cluster and no pods; scripted customer turns; timings are not results",
+ "scenario": "new_booking",
+ "variant": "typos",
+ "model": "qwen2.5:7b",
+ "rep": 1,
+ "pass": true,
+ "reason": "ok",
+ "expect": {
+  "origin": "AMD",
+  "destination": "BOM",
+  "fare": "Saver",
+  "email": "kavya.raman@example.net",
+  "date": "2027-01-12"
+ },
+ "customer_turns": [
+  "hii, first time flying with u guys. im Kavya Raman",
+  "i want to fly frm ahmedabad to mumbai on Tuesday 12 January, cheapest fare pls",
+  "the erliest flight is fine, saver fare. my emial is kavya.raman@example.net",
+  "yes i confirm, pls book it",
+  "thx thats all"
+ ],
+ "customer_turns_are": "scripted",
+ "calls": [
+  {
+   "turn": 2,
+   "tool": "search_flights",
+   "error": null,
+   "from_text": false,
+   "guard": null
+  },
+  {
+   "turn": 3,
+   "tool": "book_flight",
+   "error": null,
+   "from_text": false,
+   "guard": null
+  },
+  {
+   "turn": 4,
+   "tool": "book_flight",
+   "error": null,
+   "from_text": false,
+   "guard": null
+  }
+ ],
+ "n_calls": 3,
+ "n_errors": 0,
+ "llm_replies": 8,
+ "truth_badges": 0,
+ "transferred": false,
+ "wall_s_not_a_result": 15.3,
+ "transcript": [
+  {
+   "role": "user",
+   "text": "hii, first time flying with u guys. im Kavya Raman",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "Hello Kavya! Great to have you with Skypiea Air. Could you please provide your email address so I can verify your profile? This will help us assist you better. If you're not sure about it, just let me know and I can guide you through creating a profile.",
+   "tool_calls": []
+  },
+  {
+   "role": "user",
+   "text": "i want to fly frm ahmedabad to mumbai on Tuesday 12 January, cheapest fare pls",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "",
+   "tool_calls": [
+    "search_flights {\"destination\":\"Mumbai\",\"date\":\"12 Jan\",\"origin\":\"Ahmedabad\"}"
+   ]
+  },
+  {
+   "role": "tool",
+   "text": "{\"origin\": \"AMD (Ahmedabad)\", \"destination\": \"BOM (Mumbai)\", \"date\": \"2027-01-12\", \"currency\": \"INR\", \"flights\": [{\"flight_id\": \"SKY101-12JAN\", \"flight_no\": \"SKY101\", \"origin\": \"AMD\", \"destination\": \"BOM\", \"date\": \"2027-01-12\", \"depart\": \"06:00\", \"arrive\": \"07:05\", \"status\": \"scheduled\", \"duration\": \"1h 05m\", \"seats_left\": 25, \"fares\": {\"Saver\": 4440, \"Flex\": 5990, \"Business\": 13320}}, {\"flight_id\": \"SKY102-12JAN\", \"flight_no\": \"SKY102\", \"origin\": \"AMD\", \"destination\": \"BOM\", \"date\": \"2027-01-12\", \"depart\": \"14:20\", \"arrive\": \"15:25\", \"status\": \"scheduled\", \"duration\": \"1h 05m\", \"seats_left\": 3, \"fares\": {\"Saver\": 4300, \"Flex\": 5800, \"Business\": 12900}}]}",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "I found two flights for you, Kavya:\n\n1. Flight SKY101 departs at 06:00 and arrives at 07:05, with a fare of INR 4,440.\n2. Flight SKY102 departs at 14:20 and arrives at 15:25, with a fare of INR 4,300.\n\nShall I go ahead and book the cheaper flight for you, SKY102?",
+   "tool_calls": []
+  },
+  {
+   "role": "user",
+   "text": "the erliest flight is fine, saver fare. my emial is kavya.raman@example.net",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "",
+   "tool_calls": [
+    "book_flight {\"passengers\":1,\"customer_confirmed\":false,\"email\":\"kavya.raman@example.net\",\"fare\":\"Saver\",\"flight_no\":\"SKY101-12JAN\",\"name\":\"Kavya Raman\"}"
+   ]
+  },
+  {
+   "role": "tool",
+   "text": "{\"confirmation_needed\": true, \"summary\": \"Book SKY101 AMD->BOM on 2027-01-12 06:00-07:05, Saver fare, 1 passenger(s): INR 4,440, for Kavya Raman (kavya.raman@example.net).\", \"flight\": {\"flight_id\": \"SKY101-12JAN\", \"flight_no\": \"SKY101\", \"origin\": \"AMD\", \"destination\": \"BOM\", \"date\": \"2027-01-12\", \"depart\": \"06:00\", \"arrive\": \"07:05\", \"status\": \"scheduled\", \"duration\": \"1h 05m\"}, \"fare\": \"Saver\", \"passengers\": 1, \"price\": 4440, \"change_fee\": 2500, \"refundable_fare\": false, \"message\": \"Tell the customer exactly this summary and ask them to confirm with yes. Only after their yes, call the same tool again with customer_confirmed=true.\"}",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "Shall I go ahead and book SKY101 from Ahmedabad to Mumbai on 12 January 2027 at 06:00, with a Saver fare of INR 4,440 for you, Kavya Raman?",
+   "tool_calls": []
+  },
+  {
+   "role": "user",
+   "text": "yes i confirm, pls book it",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "",
+   "tool_calls": [
+    "book_flight {\"email\":\"kavya.raman@example.net\",\"fare\":\"Saver\",\"flight_no\":\"SKY101-12JAN\",\"name\":\"Kavya Raman\",\"passengers\":1,\"customer_confirmed\":true}"
+   ]
+  },
+  {
+   "role": "tool",
+   "text": "{\"booked\": true, \"booking_code\": \"2PKPM6\", \"customer_id\": \"C9001\", \"new_customer\": true, \"fare\": \"Saver\", \"paid\": 4440, \"currency\": \"INR\", \"flight\": {\"flight_id\": \"SKY101-12JAN\", \"flight_no\": \"SKY101\", \"origin\": \"AMD\", \"destination\": \"BOM\", \"date\": \"2027-01-12\", \"depart\": \"06:00\", \"arrive\": \"07:05\", \"status\": \"scheduled\", \"duration\": \"1h 05m\", \"seat\": \"25F\"}}",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "Your flight has been booked successfully, Kavya Raman. You're all set for your journey from Ahmedabad to Mumbai on 12 January 2027 at 06:00. Your booking code is 2PKPM6, and the fare is INR 4,440.\n\nIs there anything else you need help with?",
+   "tool_calls": []
+  },
+  {
+   "role": "user",
+   "text": "thx thats all",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "You're welcome, Kavya! Safe travels. If you have any more questions in the future, feel free to ask. Enjoy your flight!",
+   "tool_calls": []
+  }
+ ]
+}

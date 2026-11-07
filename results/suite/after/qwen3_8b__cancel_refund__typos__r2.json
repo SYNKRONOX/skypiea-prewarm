@@ -1,0 +1,158 @@
+{
+ "label": "CORRECTNESS run: real agent loop and real local LLM, tool handlers in-process, no cluster and no pods; scripted customer turns; timings are not results",
+ "scenario": "cancel_refund",
+ "variant": "typos",
+ "model": "qwen3:8b",
+ "rep": 2,
+ "pass": true,
+ "reason": "ok",
+ "expect": {
+  "customer": "C1017",
+  "booking": "TDJE63",
+  "fare": "Flex"
+ },
+ "customer_turns": [
+  "hi, i need to cancle a trip. im vikram joshi, emial vikram.joshi@example.org",
+  "pls cancel bookng TDJE63, yes i confirm the cancelation",
+  "and refund it to my card pls, yes i confirm the refund",
+  "yes",
+  "thx"
+ ],
+ "customer_turns_are": "scripted",
+ "calls": [
+  {
+   "turn": 2,
+   "tool": "verify_customer",
+   "error": null,
+   "from_text": false,
+   "guard": null
+  },
+  {
+   "turn": 2,
+   "tool": "get_booking",
+   "error": null,
+   "from_text": false,
+   "guard": null
+  },
+  {
+   "turn": 2,
+   "tool": "cancel_booking",
+   "error": null,
+   "from_text": false,
+   "guard": null
+  },
+  {
+   "turn": 3,
+   "tool": "issue_refund",
+   "error": null,
+   "from_text": false,
+   "guard": null
+  }
+ ],
+ "n_calls": 4,
+ "n_errors": 0,
+ "llm_replies": 9,
+ "truth_badges": 0,
+ "transferred": false,
+ "wall_s_not_a_result": 6.4,
+ "transcript": [
+  {
+   "role": "user",
+   "text": "hi, i need to cancle a trip. im vikram joshi, emial vikram.joshi@example.org",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "I'm sorry to hear that, Vikram. Could you please confirm the booking code or the details of the trip you'd like to cancel?",
+   "tool_calls": []
+  },
+  {
+   "role": "user",
+   "text": "pls cancel bookng TDJE63, yes i confirm the cancelation",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "",
+   "tool_calls": [
+    "verify_customer {\"booking_code\":\"TDJE63\",\"name\":\"vikram joshi\",\"email\":\"vikram.joshi@example.org\"}"
+   ]
+  },
+  {
+   "role": "tool",
+   "text": "{\"verified\": true, \"customer_id\": \"C1017\", \"name\": \"Vikram Joshi\", \"active_bookings\": [\"TDJE63 (LKO->DEL 2027-03-06, confirmed)\"]}",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "",
+   "tool_calls": [
+    "get_booking {\"booking_code\":\"TDJE63\"}"
+   ]
+  },
+  {
+   "role": "tool",
+   "text": "{\"booking_code\": \"TDJE63\", \"passengers\": [\"Vikram Joshi\"], \"fare\": \"Flex\", \"bags\": 1, \"status\": \"confirmed\", \"paid\": 7810, \"currency\": \"INR\", \"flights\": [{\"flight_id\": \"SKY439-06MAR\", \"flight_no\": \"SKY439\", \"origin\": \"LKO\", \"destination\": \"DEL\", \"date\": \"2027-03-06\", \"depart\": \"14:40\", \"arrive\": \"15:45\", \"status\": \"scheduled\", \"duration\": \"1h 05m\", \"seat\": \"6C\"}, {\"flight_id\": \"SKY313-09MAR\", \"flight_no\": \"SKY313\", \"origin\": \"DEL\", \"destination\": \"LKO\", \"date\": \"2027-03-09\", \"depart\": \"06:20\", \"arrive\": \"07:25\", \"status\": \"scheduled\", \"duration\": \"1h 05m\", \"seat\": \"16D\"}], \"change_fee_per_passenger\": 0, \"refundable_fare\": true, \"refund_eligible\": true, \"refund_amount_if_cancelled\": 7060, \"checked_baggage_included_kg\": 25, \"extra_bag_price\": 1800, \"promo\": null, \"refunded\": false}",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "",
+   "tool_calls": [
+    "cancel_booking {\"booking_code\":\"TDJE63\",\"customer_confirmed\":true}"
+   ]
+  },
+  {
+   "role": "tool",
+   "text": "{\"cancelled\": true, \"booking_code\": \"TDJE63\", \"refund_eligible\": true, \"refund_amount\": 7060, \"message\": \"Now call issue_refund for this booking if the customer wants the refund.\"}",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "Your booking TDJE63 has been cancelled. The refund amount is INR 7,060. Would you like to proceed with the refund?",
+   "tool_calls": []
+  },
+  {
+   "role": "user",
+   "text": "and refund it to my card pls, yes i confirm the refund",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "",
+   "tool_calls": [
+    "issue_refund {\"booking_code\":\"TDJE63\",\"customer_confirmed\":true}"
+   ]
+  },
+  {
+   "role": "tool",
+   "text": "{\"refunded\": true, \"amount\": 7060, \"to\": \"original payment method\"}",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "Your refund of INR 7,060 has been processed and will be credited to your original payment method. Safe travels, Vikram! \ud83d\ude0a",
+   "tool_calls": []
+  },
+  {
+   "role": "user",
+   "text": "yes",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "Your refund of INR 7,060 has been processed and will be credited to your original payment method. Safe travels, Vikram! \ud83d\ude0a",
+   "tool_calls": []
+  },
+  {
+   "role": "user",
+   "text": "thx",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "You're welcome! If you need any further assistance, feel free to ask. Safe travels, Vikram! \ud83d\ude0a",
+   "tool_calls": []
+  }
+ ]
+}

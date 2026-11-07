@@ -1,0 +1,127 @@
+{
+ "label": "CORRECTNESS run: real agent loop and real local LLM, tool handlers in-process, no cluster and no pods; scripted customer turns; timings are not results",
+ "scenario": "transfer",
+ "variant": "changes_mind",
+ "model": "llama3.1:8b",
+ "rep": 3,
+ "pass": true,
+ "reason": "ok",
+ "expect": {
+  "transfer": true,
+  "writes": 0
+ },
+ "customer_turns": [
+  "Hi, can you book me a hotel near the airport?",
+  "Never mind the hotel. I lost my laptop on the plane yesterday and need someone to help me find it. Please put me through to a human.",
+  "Yes, transfer me please.",
+  "Thanks."
+ ],
+ "customer_turns_are": "scripted",
+ "calls": [
+  {
+   "turn": 2,
+   "tool": "transfer_to_human",
+   "error": null,
+   "from_text": false,
+   "guard": null
+  },
+  {
+   "turn": 3,
+   "tool": "transfer_to_human",
+   "error": null,
+   "from_text": false,
+   "guard": null
+  },
+  {
+   "turn": 4,
+   "tool": "transfer_to_human",
+   "error": null,
+   "from_text": false,
+   "guard": null
+  }
+ ],
+ "n_calls": 3,
+ "n_errors": 0,
+ "llm_replies": 7,
+ "truth_badges": 0,
+ "transferred": true,
+ "wall_s_not_a_result": 3.5,
+ "transcript": [
+  {
+   "role": "user",
+   "text": "Hi, can you book me a hotel near the airport?",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "I can only help with Skypiea Air bookings. I can book flights, change dates or times, add checked bags, cancel and refund, and apply offers. If you'd like to book a flight with us, I'd be happy to assist you with that.",
+   "tool_calls": []
+  },
+  {
+   "role": "user",
+   "text": "Never mind the hotel. I lost my laptop on the plane yesterday and need someone to help me find it. Please put me through to a human.",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "",
+   "tool_calls": [
+    "transfer_to_human {\"summary\":\"Customer lost laptop on yesterday\u2019s flight and needs assistance\"}"
+   ]
+  },
+  {
+   "role": "tool",
+   "text": "{\"transferred\": true, \"message\": \"A human colleague will take over. Tell the customer briefly.\"}",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "I've transferred you to a human colleague who will assist you with your lost laptop. They will be in touch with you shortly.",
+   "tool_calls": []
+  },
+  {
+   "role": "user",
+   "text": "Yes, transfer me please.",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "",
+   "tool_calls": [
+    "transfer_to_human {\"summary\":\"Customer lost laptop on yesterday\u2019s flight and needs assistance\"}"
+   ]
+  },
+  {
+   "role": "tool",
+   "text": "{\"transferred\": true, \"message\": \"A human colleague will take over. Tell the customer briefly.\"}",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "A human colleague will take over and assist you with your lost laptop. They will be in touch with you shortly.",
+   "tool_calls": []
+  },
+  {
+   "role": "user",
+   "text": "Thanks.",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "",
+   "tool_calls": [
+    "transfer_to_human {\"summary\":\"Customer lost laptop on yesterday\u2019s flight and needs assistance\"}"
+   ]
+  },
+  {
+   "role": "tool",
+   "text": "{\"transferred\": true, \"message\": \"A human colleague will take over. Tell the customer briefly.\"}",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "Goodbye!",
+   "tool_calls": []
+  }
+ ]
+}

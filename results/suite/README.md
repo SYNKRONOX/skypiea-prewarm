@@ -12,8 +12,9 @@ times and are never used for any claim.
 - `before/`: code at `c0089f8` (feat/demo-realism start = feat/demo-polish Phase A), the old
   world (six fictional airports SKA..SKF, USD), llama3.1:8b and qwen2.5:7b, 2 reps each, run
   2026-11-06 23:58 to 2026-11-07 00:12 UTC.
-- `after/`: see its own summary (new India-centred world, STEP 3 guardrails), never overwrites
-  `before/`.
+- `after/`: code `a8b9693` (synthetic India-centred world, STEP 3 guardrails), llama3.1:8b,
+  qwen2.5:7b and qwen3:8b (thinking off), 3 reps each, run 2026-11-07 from 00:22 UTC. Never
+  overwrites `before/`. Comparison: `docs/SUITE_BEFORE_AFTER.md`.
 
 The two worlds have different people, places and dates, so a scenario's lines differ between
 before and after; the scenario shapes, the variants (typos, wrong email then right, changes

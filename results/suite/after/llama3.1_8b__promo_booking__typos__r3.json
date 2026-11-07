@@ -1,0 +1,210 @@
+{
+ "label": "CORRECTNESS run: real agent loop and real local LLM, tool handlers in-process, no cluster and no pods; scripted customer turns; timings are not results",
+ "scenario": "promo_booking",
+ "variant": "typos",
+ "model": "llama3.1:8b",
+ "rep": 3,
+ "pass": true,
+ "reason": "ok",
+ "expect": {
+  "customer": "C1001",
+  "origin": "AUH",
+  "destination": "DEL",
+  "date": "2027-01-11",
+  "fare": "Saver",
+  "promo": "SKYWINTER10"
+ },
+ "customer_turns": [
+  "hi its tara patel, emial tara.patel@example.com",
+  "i need a flght from abu dhabi to delhi on Monday 11 January, saver",
+  "the 05:30 one. is there any promo code i can use? SKYWINTER10 maybe?",
+  "ok book it with SKYWINTER10, yes i confirm",
+  "yes confirm the promo too",
+  "thx bye"
+ ],
+ "customer_turns_are": "scripted",
+ "calls": [
+  {
+   "turn": 1,
+   "tool": "find_customer",
+   "error": null,
+   "from_text": false,
+   "guard": null
+  },
+  {
+   "turn": 2,
+   "tool": "search_flights",
+   "error": null,
+   "from_text": false,
+   "guard": null
+  },
+  {
+   "turn": 3,
+   "tool": "book_flight",
+   "error": null,
+   "from_text": false,
+   "guard": null
+  },
+  {
+   "turn": 4,
+   "tool": "book_flight",
+   "error": null,
+   "from_text": false,
+   "guard": null
+  },
+  {
+   "turn": 5,
+   "tool": "book_flight",
+   "error": "duplicate",
+   "from_text": false,
+   "guard": "confirm_first"
+  },
+  {
+   "turn": 6,
+   "tool": "transfer_to_human",
+   "error": null,
+   "from_text": false,
+   "guard": null
+  }
+ ],
+ "n_calls": 6,
+ "n_errors": 1,
+ "llm_replies": 12,
+ "truth_badges": 0,
+ "transferred": true,
+ "wall_s_not_a_result": 12.9,
+ "transcript": [
+  {
+   "role": "user",
+   "text": "hi its tara patel, emial tara.patel@example.com",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "",
+   "tool_calls": [
+    "find_customer {\"name\":\"Tara Patel\",\"email\":\"tara.patel@example.com\"}"
+   ]
+  },
+  {
+   "role": "tool",
+   "text": "{\"found\": 1, \"customer_id\": \"C1001\", \"verified\": true, \"message\": \"Found and verified.\", \"name\": \"Tara Patel\", \"active_bookings\": [\"5TGTBP (BLR->DEL 2027-01-20, confirmed)\", \"8RK2RN (DEL->GOI 2027-02-11, confirmed)\"]}",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "Welcome back, Tara! I see you have two active bookings with us. Which one would you like to make changes to or check?",
+   "tool_calls": []
+  },
+  {
+   "role": "user",
+   "text": "i need a flght from abu dhabi to delhi on Monday 11 January, saver",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "",
+   "tool_calls": [
+    "search_flights {\"date\":\"Monday 11 January\",\"origin\":\"Abu Dhabi\",\"destination\":\"Delhi\"}"
+   ]
+  },
+  {
+   "role": "tool",
+   "text": "{\"origin\": \"AUH (Abu Dhabi)\", \"destination\": \"DEL (Delhi)\", \"date\": \"2027-01-11\", \"currency\": \"INR\", \"flights\": [{\"flight_id\": \"SKY112-11JAN\", \"flight_no\": \"SKY112\", \"origin\": \"AUH\", \"destination\": \"DEL\", \"date\": \"2027-01-11\", \"depart\": \"05:30\", \"arrive\": \"08:55\", \"status\": \"scheduled\", \"duration\": \"3h 25m\", \"seats_left\": 22, \"fares\": {\"Saver\": 23880, \"Flex\": 32240, \"Business\": 71640}}]}",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "I've found a flight from Abu Dhabi to Delhi on Monday 11 January. The flight details are:\n\n* Flight number: SKY112\n* Departure: 05:30\n* Arrival: 08:55\n* Duration: 3h 25m\n* Saver fare: INR 23,880\n\nWould you like to book this flight?",
+   "tool_calls": []
+  },
+  {
+   "role": "user",
+   "text": "the 05:30 one. is there any promo code i can use? SKYWINTER10 maybe?",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "",
+   "tool_calls": [
+    "book_flight {\"fare\":\"Saver\",\"email\":\"tara.patel@example.com\",\"name\":\"Tara Patel\",\"passengers\":\"1\",\"promo_code\":\"SKYWINTER10\",\"customer_confirmed\":\"false\",\"flight_no\":\"SKY112-11JAN\"}"
+   ]
+  },
+  {
+   "role": "tool",
+   "text": "{\"confirmation_needed\": true, \"summary\": \"Book SKY112 AUH->DEL on 2027-01-11 05:30-08:55, Saver fare, 1 passenger(s): INR 23,880, with SKYWINTER10 -INR 2,388 = INR 21,492.\", \"flight\": {\"flight_id\": \"SKY112-11JAN\", \"flight_no\": \"SKY112\", \"origin\": \"AUH\", \"destination\": \"DEL\", \"date\": \"2027-01-11\", \"depart\": \"05:30\", \"arrive\": \"08:55\", \"status\": \"scheduled\", \"duration\": \"3h 25m\"}, \"fare\": \"Saver\", \"passengers\": 1, \"price\": 21492, \"change_fee\": 5000, \"refundable_fare\": false, \"message\": \"Tell the customer exactly this summary and ask them to confirm with yes. Only after their yes, call the same tool again with customer_confirmed=true.\"}",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "Here is the summary:\n\nBook SKY112 AUH->DEL on 2027-01-11 05:30-08:55, Saver fare, 1 passenger(s): INR 23,880, with SKYWINTER10 -INR 2,388 = INR 21,492.\n\nShall I go ahead with booking this flight?",
+   "tool_calls": []
+  },
+  {
+   "role": "user",
+   "text": "ok book it with SKYWINTER10, yes i confirm",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "",
+   "tool_calls": [
+    "book_flight {\"promo_code\":\"SKYWINTER10\",\"customer_confirmed\":\"true\",\"email\":\"tara.patel@example.com\",\"fare\":\"Saver\",\"flight_no\":\"SKY112-11JAN\",\"name\":\"Tara Patel\",\"passengers\":\"1\"}"
+   ]
+  },
+  {
+   "role": "tool",
+   "text": "{\"booked\": true, \"booking_code\": \"SLQ9DP\", \"customer_id\": \"C1001\", \"promo_applied\": \"SKYWINTER10\", \"discount\": 2388, \"new_customer\": false, \"fare\": \"Saver\", \"paid\": 21492, \"currency\": \"INR\", \"flight\": {\"flight_id\": \"SKY112-11JAN\", \"flight_no\": \"SKY112\", \"origin\": \"AUH\", \"destination\": \"DEL\", \"date\": \"2027-01-11\", \"depart\": \"05:30\", \"arrive\": \"08:55\", \"status\": \"scheduled\", \"duration\": \"3h 25m\", \"seat\": \"17A\"}}",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "Your new booking is SLQ9DP. You've booked a Saver fare flight from Abu Dhabi to Delhi on Monday 11 January, departing at 05:30 and arriving at 08:55. The total cost is INR 21,492, with a discount of INR 2,388 applied using the promo code SKYWINTER10.",
+   "tool_calls": []
+  },
+  {
+   "role": "user",
+   "text": "yes confirm the promo too",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "",
+   "tool_calls": [
+    "book_flight {\"flight_no\":\"SKY112-11JAN\",\"name\":\"Tara Patel\",\"passengers\":\"1\",\"promo_code\":\"SKYWINTER10\",\"customer_confirmed\":\"true\",\"email\":\"tara.patel@example.com\",\"fare\":\"Saver\"}"
+   ]
+  },
+  {
+   "role": "tool",
+   "text": "{\"error\": \"duplicate\", \"booked\": false, \"booking_code\": \"SLQ9DP\", \"message\": \"The customer already has booking SLQ9DP on this flight; nothing new was booked.\"}",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "It seems that you already have a booking for this flight, SLQ9DP. I won't book it again. Your existing booking SLQ9DP remains confirmed.",
+   "tool_calls": []
+  },
+  {
+   "role": "user",
+   "text": "thx bye",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "",
+   "tool_calls": [
+    "transfer_to_human {\"summary\":\"Thank you for contacting Skypiea Air. Have a great day!\"}"
+   ]
+  },
+  {
+   "role": "tool",
+   "text": "{\"transferred\": true, \"message\": \"A human colleague will take over. Tell the customer briefly.\"}",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "Goodbye, Tara! Have a great day!",
+   "tool_calls": []
+  }
+ ]
+}

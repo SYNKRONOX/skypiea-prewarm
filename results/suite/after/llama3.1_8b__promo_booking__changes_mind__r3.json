@@ -1,0 +1,210 @@
+{
+ "label": "CORRECTNESS run: real agent loop and real local LLM, tool handlers in-process, no cluster and no pods; scripted customer turns; timings are not results",
+ "scenario": "promo_booking",
+ "variant": "changes_mind",
+ "model": "llama3.1:8b",
+ "rep": 3,
+ "pass": true,
+ "reason": "ok",
+ "expect": {
+  "customer": "C1001",
+  "origin": "AUH",
+  "destination": "DEL",
+  "date": "2027-01-11",
+  "fare": "Saver",
+  "promo": "SKYWINTER10"
+ },
+ "customer_turns": [
+  "Hello, Tara Patel here, email tara.patel@example.com.",
+  "I want to fly Abu Dhabi to Delhi on Monday 11 January, the 05:30 flight, Flex fare.",
+  "Hmm, actually Saver is fine, not Flex.",
+  "Yes, I confirm the Saver booking.",
+  "Please apply promo SKYWINTER10 to that booking. Yes, I confirm.",
+  "Thanks, that's all."
+ ],
+ "customer_turns_are": "scripted",
+ "calls": [
+  {
+   "turn": 1,
+   "tool": "find_customer",
+   "error": null,
+   "from_text": false,
+   "guard": null
+  },
+  {
+   "turn": 2,
+   "tool": "search_flights",
+   "error": null,
+   "from_text": false,
+   "guard": null
+  },
+  {
+   "turn": 3,
+   "tool": "search_flights",
+   "error": null,
+   "from_text": false,
+   "guard": null
+  },
+  {
+   "turn": 4,
+   "tool": "book_flight",
+   "error": null,
+   "from_text": false,
+   "guard": null
+  },
+  {
+   "turn": 5,
+   "tool": "apply_promo",
+   "error": null,
+   "from_text": false,
+   "guard": null
+  },
+  {
+   "turn": 6,
+   "tool": "transfer_to_human",
+   "error": null,
+   "from_text": false,
+   "guard": null
+  }
+ ],
+ "n_calls": 6,
+ "n_errors": 0,
+ "llm_replies": 12,
+ "truth_badges": 0,
+ "transferred": true,
+ "wall_s_not_a_result": 10.5,
+ "transcript": [
+  {
+   "role": "user",
+   "text": "Hello, Tara Patel here, email tara.patel@example.com.",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "",
+   "tool_calls": [
+    "find_customer {\"name\":\"Tara Patel\",\"email\":\"tara.patel@example.com\"}"
+   ]
+  },
+  {
+   "role": "tool",
+   "text": "{\"found\": 1, \"customer_id\": \"C1001\", \"verified\": true, \"message\": \"Found and verified.\", \"name\": \"Tara Patel\", \"active_bookings\": [\"5TGTBP (BLR->DEL 2027-01-20, confirmed)\", \"8RK2RN (DEL->GOI 2027-02-11, confirmed)\"]}",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "Welcome back, Tara! I see you have two active bookings with us. Which one would you like to manage today?",
+   "tool_calls": []
+  },
+  {
+   "role": "user",
+   "text": "I want to fly Abu Dhabi to Delhi on Monday 11 January, the 05:30 flight, Flex fare.",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "",
+   "tool_calls": [
+    "search_flights {\"date\":\"Monday 11 January\",\"origin\":\"Abu Dhabi\",\"destination\":\"Delhi\"}"
+   ]
+  },
+  {
+   "role": "tool",
+   "text": "{\"origin\": \"AUH (Abu Dhabi)\", \"destination\": \"DEL (Delhi)\", \"date\": \"2027-01-11\", \"currency\": \"INR\", \"flights\": [{\"flight_id\": \"SKY112-11JAN\", \"flight_no\": \"SKY112\", \"origin\": \"AUH\", \"destination\": \"DEL\", \"date\": \"2027-01-11\", \"depart\": \"05:30\", \"arrive\": \"08:55\", \"status\": \"scheduled\", \"duration\": \"3h 25m\", \"seats_left\": 22, \"fares\": {\"Saver\": 23880, \"Flex\": 32240, \"Business\": 71640}}]}",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "I've found a flight from Abu Dhabi to Delhi on Monday 11 January at 05:30. The Flex fare for this flight is INR 32,240. Would you like to book this flight?",
+   "tool_calls": []
+  },
+  {
+   "role": "user",
+   "text": "Hmm, actually Saver is fine, not Flex.",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "",
+   "tool_calls": [
+    "search_flights {\"origin\":\"Abu Dhabi\",\"date\":\"Monday 11 January\",\"destination\":\"Delhi\"}"
+   ]
+  },
+  {
+   "role": "tool",
+   "text": "{\"origin\": \"AUH (Abu Dhabi)\", \"destination\": \"DEL (Delhi)\", \"date\": \"2027-01-11\", \"currency\": \"INR\", \"flights\": [{\"flight_id\": \"SKY112-11JAN\", \"flight_no\": \"SKY112\", \"origin\": \"AUH\", \"destination\": \"DEL\", \"date\": \"2027-01-11\", \"depart\": \"05:30\", \"arrive\": \"08:55\", \"status\": \"scheduled\", \"duration\": \"3h 25m\", \"seats_left\": 22, \"fares\": {\"Saver\": 23880, \"Flex\": 32240, \"Business\": 71640}}]}",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "I've found the same flight, but this time with the Saver fare, which is INR 23,880. Would you like to book this flight?",
+   "tool_calls": []
+  },
+  {
+   "role": "user",
+   "text": "Yes, I confirm the Saver booking.",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "",
+   "tool_calls": [
+    "book_flight {\"customer_confirmed\":\"true\",\"fare\":\"Saver\",\"flight_no\":\"SKY112-11JAN\",\"name\":\"Tara Patel\",\"passengers\":\"1\",\"email\":\"tara.patel@example.com\"}"
+   ]
+  },
+  {
+   "role": "tool",
+   "text": "{\"booked\": true, \"booking_code\": \"SLQ9DP\", \"customer_id\": \"C1001\", \"new_customer\": false, \"fare\": \"Saver\", \"paid\": 23880, \"currency\": \"INR\", \"flight\": {\"flight_id\": \"SKY112-11JAN\", \"flight_no\": \"SKY112\", \"origin\": \"AUH\", \"destination\": \"DEL\", \"date\": \"2027-01-11\", \"depart\": \"05:30\", \"arrive\": \"08:55\", \"status\": \"scheduled\", \"duration\": \"3h 25m\", \"seat\": \"17A\"}}",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "Your new booking, SLQ9DP, is confirmed. You'll be flying from Abu Dhabi to Delhi on Monday 11 January at 05:30, in seat 17A, with a Saver fare of INR 23,880.",
+   "tool_calls": []
+  },
+  {
+   "role": "user",
+   "text": "Please apply promo SKYWINTER10 to that booking. Yes, I confirm.",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "",
+   "tool_calls": [
+    "apply_promo {\"customer_confirmed\":\"true\",\"booking_code\":\"SLQ9DP\",\"promo_code\":\"SKYWINTER10\"}"
+   ]
+  },
+  {
+   "role": "tool",
+   "text": "{\"applied\": true, \"booking_code\": \"SLQ9DP\", \"promo_code\": \"SKYWINTER10\", \"discount\": 2388, \"paid\": 21492}",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "The promo SKYWINTER10 has been applied to your booking SLQ9DP. Your new total is INR 21,492.",
+   "tool_calls": []
+  },
+  {
+   "role": "user",
+   "text": "Thanks, that's all.",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "",
+   "tool_calls": [
+    "transfer_to_human {\"summary\":\"Booking SLQ9DP confirmed, flying from Abu Dhabi to Delhi on Monday 11 January at 05:30, in seat 17A, with a Saver fare of INR 21,492.\"}"
+   ]
+  },
+  {
+   "role": "tool",
+   "text": "{\"transferred\": true, \"message\": \"A human colleague will take over. Tell the customer briefly.\"}",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "It was nice assisting you, Tara. Have a great day and safe travels with Skypiea Air!",
+   "tool_calls": []
+  }
+ ]
+}
