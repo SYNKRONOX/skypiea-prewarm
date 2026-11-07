@@ -19,3 +19,4 @@ times and are never used for any claim.
 The two worlds have different people, places and dates, so a scenario's lines differ between
 before and after; the scenario shapes, the variants (typos, wrong email then right, changes
 mind, unsupported request) and the oracle rules are the same.
+- `final_check/`: llama3.1:8b, 1 rep, on the final code (0e3c4af): 18/18.

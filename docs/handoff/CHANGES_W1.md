@@ -34,3 +34,12 @@ Each line: what a viewer of the Live Console (or a reader of the docs) sees diff
   warning pill (housekeeping).
 - `docs/MEASURED_VS_SCRIPTED.md` (new), linked from `docs/LIVE_DEMO.md` and the "?" help.
 - `make watch-pods` (`mk/console.mk`, `demo/watch_pods.py`), documented in `docs/LIVE_DEMO.md`.
+
+## W1 night, feat/demo-realism
+
+- Synthetic India-centred world (INR, IST, flight_ids like SKY214-20JAN, demo-world today 11 Jan 2027).
+- Skye guardrails (state block, gating, steering, validation/retry/auto-transfer, confirmation,
+  duplicate guard), greeting and suggestion chips, "What Skye knows now" box, Guardrails and
+  Proof panels in the Details drawer.
+- qwen3:8b selectable with thinking off; default stays llama3.1:8b.
+- Scenario suite and before/after docs; live smoke and recorded backup.
