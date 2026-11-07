@@ -118,7 +118,11 @@ TraceLab). A local web console at http://127.0.0.1:8090 lets you chat with **Sky
 assistant of the fictional airline Skypiea Air, run by a local LLM. Every tool call goes to
 both stacks, and the screen shows per call whether it was cold or warm and how long Skye waited
 on tools on each side. Presenter view and what each panel means: **[`docs/LIVE_DEMO.md`](docs/LIVE_DEMO.md)**.
-Design and data sources: [`docs/LIVE_CONSOLE.md`](docs/LIVE_CONSOLE.md).
+Design and data sources: [`docs/LIVE_CONSOLE.md`](docs/LIVE_CONSOLE.md). What on the screen is
+measured, scripted or mocked: [`docs/MEASURED_VS_SCRIPTED.md`](docs/MEASURED_VS_SCRIPTED.md).
+The synthetic airline world: [`docs/SKYPIEA_WORLD.md`](docs/SKYPIEA_WORLD.md). Skye's
+correctness suite, before and after the guardrails:
+[`docs/SUITE_BEFORE_AFTER.md`](docs/SUITE_BEFORE_AFTER.md).
 
 ```bash
 make doctor DOCTOR_MODE=live   # also checks ports 8090/3001/18180/18280, bundles and the LLM endpoint
@@ -698,6 +702,7 @@ expected, actual); include the output of `make doctor`. Security issues: [`SECUR
 | `make demo-portforward` | Restart the demo port-forwards | `make demo-clean` |
 | `make fetch-models` | Download and verify the real predictor bundles into `models/` | `rm -rf models/lgbm-*` |
 | `make live` / `make live-pf` | Live Console and its two stacks; restart port-forwards ([`docs/LIVE_DEMO.md`](docs/LIVE_DEMO.md)) | `make live-clean` |
+| `make watch-pods` | Pod events of both Live Console stacks, until Ctrl-C (read-only; [`docs/LIVE_DEMO.md`](docs/LIVE_DEMO.md)) | |
 | `make build-images` | 16 tool images, E0 probe, platform image | `make clean-images` |
 | `make cluster` / `make deploy` | kind cluster + registry; Helm install with the stub predictor | `make clean-cluster` |
 | `make deploy-kind-e0` / `make e0-kind` / `make e0-kind-parallel` | E0 cold starts on kind | `make clean-cluster` |
@@ -729,7 +734,7 @@ expected, actual); include the output of `make doctor`. Security issues: [`SECUR
 | [`configs/`](configs/) | Tool classes, vocabularies, model/policy configs, measured cold starts |
 | [`results/`](results/) | Committed result files |
 | [`docs/`](docs/) | Design, results, limits, handoff notes |
-| [`mk/`](mk/) | Make targets: `infra.mk`, `model.mk`, `demo.mk` (included from the root Makefile) |
+| [`mk/`](mk/) | Make targets: `infra.mk`, `model.mk`, `demo.mk`, `console.mk` (included from the root Makefile) |
 
 ## Team
 

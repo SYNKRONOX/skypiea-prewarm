@@ -77,6 +77,6 @@ include mk/model.mk
 # Demo (kind, functional) and the live-LLM agent demo: see mk/demo.mk, docs/DEMO.md, docs/AGENT.md
 include mk/demo.mk
 
-# Live Console / demo-polish targets owned by the console session (mk/console.mk). Optional
-# include ("-include"): this works before and after that file is merged.
--include mk/console.mk
+# Live Console / demo-polish targets owned by the console session (watch-pods, fr6-reload,
+# hold-report, ...): see mk/console.mk and docs/LIVE_DEMO.md
+include mk/console.mk

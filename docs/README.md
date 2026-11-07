@@ -38,6 +38,9 @@ is in [`CHANGELOG.md`](../CHANGELOG.md).
 - [`LIVE_DEMO.md`](LIVE_DEMO.md): the Live Console's Skypiea Air presentation view: how to run it, what is on the screen, the truth panel.
 - [`DEMO.md`](DEMO.md): `make demo` and `make live`: commands, timings, the presenter script, troubleshooting.
 - [`AGENT.md`](AGENT.md): the tool-calling agent through the gateway (`make agent-demo`, `make agent-live`).
+- [`MEASURED_VS_SCRIPTED.md`](MEASURED_VS_SCRIPTED.md): every number and element of the Live Console typed as measured, estimated, trained offline, mocked, scripted or live.
+- [`SKYPIEA_WORLD.md`](SKYPIEA_WORLD.md): the SYNTHETIC India-centred Skypiea Air world (46 real airport codes, INR fares, fixed demo-world date).
+- [`SUITE_BEFORE_AFTER.md`](SUITE_BEFORE_AFTER.md): Skye's scripted correctness suite before and after the guardrails (correctness runs, not latency results).
 - [`LIVE_CONSOLE.md`](LIVE_CONSOLE.md): Live Console design: vocabularies, two stacks, mirrored execution, hint, panels, lead-time options.
 - [`PORTABLE_MODELS.md`](PORTABLE_MODELS.md): how the predictor bundles are distributed (`make fetch-models`, release v1.2 asset).
 - [`MODELS_ATTRIBUTION.md`](MODELS_ATTRIBUTION.md): attribution and licences of the predictor bundles.
