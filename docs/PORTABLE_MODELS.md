@@ -52,3 +52,20 @@ arguments or tool payloads; the trace pipeline keeps none.
 Before publishing anything, confirm that redistributing models derived from TraceLab (CC BY 4.0),
 the Azure Copilot traces (CC BY) and tau2-bench (MIT) is acceptable, with attribution. The
 coding bundle uses TraceLab only.
+
+## LLMs used by the console (not distributed by us)
+
+The Live Console's language models are **not** part of the bundles or the release asset. Each
+user pulls them from the Ollama library on their own machine (`ollama pull <model>`, one model
+per call), under the model's own licence. Checked on 2026-11-07 with Ollama's local model
+metadata (`POST /api/show`, field `license`, first line) for the three models we ran:
+
+| Model (Ollama tag) | Role in the console | Licence (as shipped by Ollama) |
+|---|---|---|
+| `llama3.1:8b` | default | Llama 3.1 Community License Agreement (Meta) |
+| `qwen2.5:7b` | optional, Model toggle | Apache License 2.0 |
+| `qwen3:8b` | optional, Model toggle, thinking disabled | Apache License 2.0 |
+
+Recheck with `curl -s localhost:11434/api/show -d '{"model":"qwen3:8b"}'` and read `license`.
+Licences can differ between sizes of the same family (other Qwen 2.5 sizes have their own
+licence), so this table covers these three tags only.

@@ -72,8 +72,8 @@ default one ([`docs/TESTING.md`](docs/TESTING.md)). The `make live` ports are fi
 | [`traces/`](traces/) | Trace schema, one converter per dataset (`convert_*.py`), `pipeline.py`, `generate_synthetic.py`, tool classes |
 | [`data/`](data/) | `download.py`, `MANIFEST.json`, committed `samples/`; `raw/` and `processed/` are not committed |
 | [`replayer/`](replayer/) | Open-loop trace replayer (`replay.py`, configs) |
-| [`agent/`](agent/) | Tool-calling agent: LLM clients (`llm.py`), MCP client, loop, tasks, run harness, summarizer |
-| [`console/`](console/) | Live Console: mirrored conversation engine, pod poller, streaming LLM, web UI (`static/`) |
+| [`agent/`](agent/) | Tool-calling agent: LLM clients (`llm.py`), MCP client, loop, tasks, run harness, summarizer; the SYNTHETIC Skypiea Air world and its tools (`skyair/`), the mock repository (`devrepo/`), Skye's correctness suite (`suite/`) |
+| [`console/`](console/) | Live Console: mirrored conversation engine, guardrails (`guards.py`), truth check (`truth.py`), model toggle (`models.py`), pod poller, streaming LLM, model bake-off, web UI (`static/`) |
 | [`demo/`](demo/) | Scripts behind `make demo` / `make live` / `make fetch-models`: deploy, port-forwards, failure injection, console driver, table generators |
 | [`tools/`](tools/) | 16 MCP tool servers (one folder each), shared server code (`common/`), `tool_map.yaml`, image build and repo checks |
 | [`charts/skypiea/`](charts/skypiea/) | Helm chart: tools at 0 replicas, platform (gateway, controller, predictor), monitoring |
@@ -86,7 +86,7 @@ default one ([`docs/TESTING.md`](docs/TESTING.md)). The `make live` ports are fi
 | [`tests/`](tests/) | pytest suite (offline), `tests/redteam/` |
 | [`results/`](results/) | Committed result files |
 | [`docs/`](docs/) | Design, results, limits, demo guides, handoff reports |
-| [`mk/`](mk/) | Make fragments included by the root `Makefile`: `infra.mk`, `model.mk`, `demo.mk` |
+| [`mk/`](mk/) | Make fragments included by the root `Makefile`: `infra.mk`, `model.mk`, `demo.mk`, `console.mk` |
 | [`models/`](models/) | Predictor bundles (not committed; only the README) |
 | [`shaper/`](shaper/), [`report/`](report/) | Early placeholders: the shaper became the gateway's hold; `report/` is empty |
 
@@ -155,14 +155,39 @@ default one ([`docs/TESTING.md`](docs/TESTING.md)). The `make live` ports are fi
   OpenAI-compatible endpoint. Talks only to the gateway's `POST /mcp`. Records metadata only.
   Docs: [`docs/AGENT.md`](docs/AGENT.md). Tests: `tests/test_agent.py`, `test_vocab.py`,
   `test_live_tasks.py`.
+- **Skypiea Air world** (`agent/skyair/world.py`, `tools.py`): SYNTHETIC and India-centred,
+  generated from a fixed seed on every start: 46 real airport codes, INR fares by a documented
+  rule, 306 fictional customers, 930 bookings, a fixed demo-world date (Monday 11 January
+  2027). `python -m agent.skyair.world` prints a summary. Docs:
+  [`docs/SKYPIEA_WORLD.md`](docs/SKYPIEA_WORLD.md). Tests: `tests/test_skyair.py`,
+  `test_skyair_w1.py`, `test_skyair_night.py`.
+- **Correctness suite** (`agent/suite/`): 6 scenarios x 3 messy variants with an end-state
+  oracle, run through the console's engine with a real local LLM and no cluster:
+  `python -m agent.suite.run --models ... --reps N --out ...`, compared by
+  `python -m agent.suite.compare`. Results: `results/suite/`,
+  [`docs/SUITE_BEFORE_AFTER.md`](docs/SUITE_BEFORE_AFTER.md) (llama3.1:8b 54/54 after; the
+  guardrails were tuned on this suite, reps at temperature 0 with a fixed seed are nearly
+  identical, and before and after used different worlds).
 
 ### Live Console (`console/`)
 
 - `python -m console` (`make live-console`) serves http://127.0.0.1:8090. Runs each agent
   call against two stacks (`skypiea-base`, `skypiea-pred`) through port-forwarded gateways and
   polls both controllers. API: `/api/state`, `/events` (SSE), `/api/chat`, `/api/autopilot`,
-  `/api/export.csv`, `/api/<action>`. Docs: [`docs/LIVE_CONSOLE.md`](docs/LIVE_CONSOLE.md).
-  Tests: `tests/test_console.py`, `test_live_chart.py`.
+  `/api/export.csv`, `/api/<action>`. Docs: [`docs/LIVE_CONSOLE.md`](docs/LIVE_CONSOLE.md),
+  [`docs/LIVE_DEMO.md`](docs/LIVE_DEMO.md).
+- Binds to 127.0.0.1 only and has **no authentication**: every `POST /api/...` changes state
+  (hint, policy, model, predictor kill/restart, reset). Keep it on loopback ([`SECURITY.md`](SECURITY.md)).
+- Model toggle (`console/models.py`): local Ollama models with tool calling (`/api/tags`,
+  `/api/show`); qwen3 models run with thinking disabled. Every request uses temperature 0 and
+  a fixed seed (`console/llm_stream.py`). Default `llama3.1:8b`; install the optional ones with
+  `ollama pull qwen2.5:7b` and `ollama pull qwen3:8b` (one model per call).
+- Scenarios: three Skypiea Air scenarios (New customer books a trip, Change a booking, Cancel
+  and refund) and one code fix; each resets and sends prepared customer lines to the live
+  model (Auto-play). In the code and API they are still "stories" (`agent/tasks/stories.py`,
+  `POST /api/story`).
+- Tests: `tests/test_console.py`, `test_console_models.py`, `test_console_story.py`,
+  `test_truth.py`, `test_live_chart.py`.
 
 ### Tools (`tools/`)
 
@@ -254,6 +279,7 @@ must reach a server (`tests/test_tool_map_coverage.py`).
 | `demo`, `demo-portforward`, `demo-failures`, `demo-clean` | Whole stack on kind ([`docs/DEMO.md`](docs/DEMO.md)) |
 | `agent-demo`, `agent-live` | Agent through the gateway ([`docs/AGENT.md`](docs/AGENT.md)) |
 | `live`, `live-pf`, `live-console`, `live-screenshot`, `live-clean` | Live Console ([`docs/LIVE_CONSOLE.md`](docs/LIVE_CONSOLE.md), [`docs/LIVE_DEMO.md`](docs/LIVE_DEMO.md)) |
+| `watch-pods`, `fr6-reload`, `hold-report` | Pod events of both console stacks; FR-6 reload check; FR-9 hold report (`mk/console.mk`) |
 | `fetch-models`, `models-archive` | Download the bundles from release v1.2 of `MODELS_REPO` (default `SYNKRONOX/skypiea-prewarm`; `MODELS_REPO=""` uses origin if it is GitHub; `FETCH_DRY_RUN=1` prints the URL); build the archive to publish ([`docs/PORTABLE_MODELS.md`](docs/PORTABLE_MODELS.md)) |
 | `aws-plan`, `aws-apply`, `aws-tunnel`, `aws-kubeconfig`, `aws-shell`, `push-images-aws`, `push-images-aws-docker`, `deploy-aws`, `e0-aws`, `e0-aws-parallel`, `e0-aws-node`, `e0-aws-status`, `e0-aws-fetch`, `aws-gateway`, `aws-stop`, `aws-start`, `aws-destroy`, `aws-reminder` | AWS lifecycle ([`infra/aws/README.md`](infra/aws/README.md)) |
 
