@@ -56,7 +56,8 @@ make lint check-sizes           # All checks passed!  /  OK: ... tracked files, 
 make check-claims               # check-claims: ...; 0 mismatch(es)
 ```
 
-Clean-up: delete the clone (the venv is inside it, in `.venv/`).
+No Python 3.12 but Docker? `make test-docker` runs the same checks in a `python:3.12` container
+(231 s in our run, image pull included). Clean-up: delete the clone (the venv is in `.venv/`).
 
 **Tier 1 by hand** (Docker running):
 

@@ -70,7 +70,9 @@ model bundles that are not committed); `make lint` prints `All checks passed!`;
 `make check-sizes` prints `OK: ... tracked files, none over 50 MB.` What each check covers:
 [`docs/TESTING.md`](docs/TESTING.md).
 
-No `python3.12`? `make doctor` prints the install command; or `make setup PYTHON=/path/to/python3.12`.
+No `python3.12`? `make doctor` prints the install command; or `make setup PYTHON=/path/to/python3.12`;
+or, with Docker, `make test-docker` runs Tier 0 in a `python:3.12` container (231 s on our laptop,
+including the image pull; [`docs/handoff/NIGHT_W2.md`](docs/handoff/NIGHT_W2.md)).
 
 ### Tier 1: local demo on kind
 
@@ -737,6 +739,7 @@ expected, actual); include the output of `make doctor`. Security issues: [`SECUR
 | `make doctor [DOCTOR_MODE=test\|demo\|live]` | Check the machine; print the fix for each problem | (changes nothing) |
 | `make review [MODE=test]` | Tier 0 then Tier 1 on its own cluster `skypiea-review`; PASS/FAIL table with timings ([`docs/REVIEWER_GUIDE.md`](docs/REVIEWER_GUIDE.md)) | deletes only the cluster it created (`KEEP=1` keeps it) |
 | `make report` | OS, versions, `make doctor`, last test summary, to paste into an issue (no secrets, home shown as `~`) | (changes nothing) |
+| `make test-docker` | Tier 0 inside a `python:3.12` container, for machines without Python 3.12 (Docker, network) | (removes its container) |
 | `make check-claims` | README / PRD_STATUS numbers vs the committed result files; links, make targets, paths, commands in the docs | (changes nothing) |
 | `make setup` / `make lock` | `.venv` from `requirements.lock` / re-resolve the lock | `rm -rf .venv` |
 | `make test` / `make lint` / `make check-sizes` | pytest, ruff, no tracked file over 50 MB | |

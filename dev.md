@@ -268,7 +268,7 @@ must reach a server (`tests/test_tool_map_coverage.py`).
 | Target | What it does |
 |---|---|
 | `help` (default), `doctor`, `secret-sweep` | List targets; machine checks; secret sweep |
-| `review`, `report`, `check-claims` | Tier 0 + Tier 1 on an own cluster with a PASS/FAIL table (`tools/review.sh`); environment report for issues (`tools/report.sh`); docs vs evidence (`tools/check_claims.py`) |
+| `review`, `report`, `check-claims`, `test-docker` | Tier 0 + Tier 1 on an own cluster with a PASS/FAIL table (`tools/review.sh`); environment report for issues (`tools/report.sh`); docs vs evidence (`tools/check_claims.py`); Tier 0 in a python:3.12 container (`tools/test_docker.sh`) |
 | `setup`, `lock` | Create `.venv` from `requirements.lock`; re-resolve the lock |
 | `test`, `lint`, `check-sizes`, `infra-check`, `install-hooks` | Tests, ruff, size check, all checks, git hook |
 | `data`, `data-all`, `samples` | Trace pipeline for one / all sources; rebuild the committed samples |

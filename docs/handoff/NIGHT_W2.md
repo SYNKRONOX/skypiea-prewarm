@@ -46,3 +46,7 @@ session's `skypiea` cluster and `kind-registry` were not touched.
 | S9 | The Live Console accepts cross-site POSTs (no Origin / Content-Type check): a web page in the same browser can kill the predictor or change the hint | `console/` (Window 1) | SECURITY.md and KNOWN_ISSUES; xfail test; REQUESTS_W2 R9 |
 | S10 | `docs/LIVE_DEMO.md` still says "Until the v1.2 release exists" and `make -f Makefile -f mk/console.mk watch-pods` | Window 1's file | REQUESTS_W2 R11 |
 | S11 | `make test-docker`, first version, mounted the checkout: in a git worktree `.git` is a file pointing outside the mount ("fatal: not a git repository") | `tools/test_docker.sh` | fixed: files are streamed in with `git ls-files` and committed into a throwaway repo inside the container |
+
+`make test-docker` (TASK 8.4), this worktree, 2026-11-07: image `python:3.12-bookworm` pulled
+(Python 3.12.16), `pip check` clean, sizes OK, ruff clean, check-claims 0 mismatches,
+549 passed, 11 skipped, 1 xfailed; 231 s including the image pull. Shipped as `make test-docker`.

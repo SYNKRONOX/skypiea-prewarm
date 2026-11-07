@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help doctor review report secret-sweep setup lock test lint check-sizes check-claims install-hooks data data-all samples cluster deploy e1 clean-cluster
+.PHONY: help doctor review report secret-sweep setup lock test lint check-sizes check-claims test-docker install-hooks data data-all samples cluster deploy e1 clean-cluster
 
 # Infra targets (tool images, kind, AWS, E0, gateway/controller): see mk/infra.mk and docs/infra.md
 include mk/infra.mk
@@ -60,6 +60,9 @@ lint:                    ## ruff check .
 
 check-sizes:             ## fail if a tracked file is over 50 MB
 	$(PY) tools/check_sizes.py
+
+test-docker:             ## Tier 0 in a python:3.12 container (no local Python 3.12 needed; Docker + network)
+	@tools/test_docker.sh
 
 check-claims:            ## docs vs evidence: numbers vs result files, links, make targets, paths, commands
 	$(PY) tools/check_claims.py

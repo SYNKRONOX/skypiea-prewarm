@@ -13,7 +13,7 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 
 
-@pytest.mark.parametrize("script", ["tools/review.sh", "tools/report.sh"])
+@pytest.mark.parametrize("script", ["tools/review.sh", "tools/report.sh", "tools/test_docker.sh"])
 def test_scripts_parse_and_are_executable(script: str) -> None:
     p = ROOT / script
     assert os.access(p, os.X_OK)
