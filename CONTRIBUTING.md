@@ -5,8 +5,10 @@ reports of anything in the README that is broken, confusing or untrue.
 
 ## Reporting a problem
 
-Open an issue with the **Bug report** template: environment (paste `make doctor`), steps,
-expected, actual. Check README "Known limitations" first. Security problems: [`SECURITY.md`](SECURITY.md).
+Open an issue with the **Bug report** template: environment (paste the output of
+`make report`: commit, OS, versions, `make doctor` and the last test summary, with no secrets
+and your home directory shown as `~`), steps, expected, actual. `make review` runs Tier 0 and
+Tier 1 and prints a PASS/FAIL table you can paste too. How we triage: [`docs/TRIAGE.md`](docs/TRIAGE.md). Check README "Known limitations" first. Security problems: [`SECURITY.md`](SECURITY.md).
 
 ## Working on the code
 

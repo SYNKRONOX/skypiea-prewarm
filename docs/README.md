@@ -5,6 +5,8 @@ is in [`CHANGELOG.md`](../CHANGELOG.md).
 
 ## Requirements and developer docs
 
+- [`REVIEWER_GUIDE.md`](REVIEWER_GUIDE.md): **start here if you are reviewing**: paths by time and hardware, commands with expected output, how to use Skypiea yourself, PRD map, top problems, limits.
+- [`KNOWN_ISSUES.md`](KNOWN_ISSUES.md): known limitations with workarounds. [`TRIAGE.md`](TRIAGE.md): how red-team issues are handled.
 - [`../PRD.md`](../PRD.md): the original PRD v1.1, unchanged (emails removed).
 - [`PRD_STATUS.md`](PRD_STATUS.md): every FR, NFR, PRD experiment and scope item: Met / Partly met / Changed / Not done, with evidence.
 - [`../dev.md`](../dev.md): developer guide: request path, ports and metrics, folders, components, tests, how to add a tool, policy or dataset.
@@ -60,7 +62,6 @@ is in [`CHANGELOG.md`](../CHANGELOG.md).
 - [`handoff/OVERNIGHT_REPORT.md`](handoff/OVERNIGHT_REPORT.md): 2026-11-04/05 overnight AWS runs on the infra branch.
 - [`handoff/STATE_infra.md`](handoff/STATE_infra.md): infra branch state as of 2026-11-02.
 - [`handoff/STATE_model.md`](handoff/STATE_model.md): prediction-engine branch state of work.
-- [`handoff/phase2_model.txt`](handoff/phase2_model.txt): raw terminal log of the phase-2 model-branch session (plain text).
 
 ## Elsewhere in the repository
 

@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help doctor secret-sweep setup lock test lint check-sizes install-hooks data data-all samples cluster deploy e1 clean-cluster
+.PHONY: help doctor review report secret-sweep setup lock test lint check-sizes check-claims install-hooks data data-all samples cluster deploy e1 clean-cluster
 
 # Infra targets (tool images, kind, AWS, E0, gateway/controller): see mk/infra.mk and docs/infra.md
 include mk/infra.mk
@@ -21,6 +21,13 @@ DOCTOR_MODE ?= all
 doctor:                  ## check OS, Docker (running, memory), kind, kubectl, helm, Python 3.12, disk, ports, Ollama
 	@PYTHON=$(PYTHON) tools/doctor.sh $(DOCTOR_MODE)
 
+MODE ?= all
+review:                  ## Tier 0 then Tier 1 on its own cluster skypiea-review; PASS/FAIL table (MODE=test: Tier 0 only)
+	@MODE=$(MODE) tools/review.sh
+
+report:                  ## OS, versions, make doctor, last test summary, to paste into an issue (no secrets, no home paths)
+	@tools/report.sh
+
 secret-sweep:            ## credentials / AWS account ids in the tree (HISTORY=1: every commit); prints file names only
 	@tools/secret_sweep.sh
 
@@ -28,6 +35,11 @@ setup:                   ## create .venv and install requirements.lock (runtime 
 	@test -x .venv/bin/python || command -v $(PYTHON) >/dev/null 2>&1 || { \
 	  echo "make setup: $(PYTHON) not found. Install Python 3.12 (make doctor prints the command)" \
 	       "or point to it: make setup PYTHON=/path/to/python3.12" >&2; exit 1; }
+	@if [ -e .venv ] && ! .venv/bin/python -c 'import sys; sys.exit(sys.version_info[:2] != (3, 12))' 2>/dev/null; then \
+	  echo "make setup: .venv exists but is not Python 3.12. Delete the .venv folder and run make setup again" >&2; exit 1; fi
+	@test -x .venv/bin/python || $(PYTHON) -c 'import sys; sys.exit(sys.version_info[:2] != (3, 12))' 2>/dev/null || { \
+	  echo "make setup: $(PYTHON) is not a working Python 3.12 ($$($(PYTHON) --version 2>&1 | head -1)). Install 3.12" \
+	       "(make doctor prints the command) or point to it: make setup PYTHON=/path/to/python3.12" >&2; exit 1; }
 	test -x .venv/bin/python || $(PYTHON) -m venv .venv
 	.venv/bin/pip install -q --upgrade pip
 	.venv/bin/pip install -q -r requirements.lock
@@ -48,6 +60,9 @@ lint:                    ## ruff check .
 
 check-sizes:             ## fail if a tracked file is over 50 MB
 	$(PY) tools/check_sizes.py
+
+check-claims:            ## docs vs evidence: numbers vs result files, links, make targets, paths, commands
+	$(PY) tools/check_claims.py
 
 install-hooks:           ## git pre-commit hook: block files over 50 MB
 	cp tools/pre-commit.sh .git/hooks/pre-commit

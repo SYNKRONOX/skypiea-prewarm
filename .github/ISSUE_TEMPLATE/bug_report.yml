@@ -12,8 +12,9 @@ body:
     attributes:
       label: Environment
       description: |
-        Paste the full output of `make doctor` (it lists OS, Docker and its memory, kind,
-        kubectl, helm, Python, disk and ports), plus `git rev-parse --short HEAD`.
+        Paste the full output of `make report` (commit, OS, tool versions, `make doctor` and
+        the last test summary; it prints no secrets and shows your home directory as ~).
+        No `make report` yet? Paste `make doctor` and `git rev-parse --short HEAD`.
       render: text
     validations:
       required: true

@@ -1,3 +1,5 @@
+> **Reviewing this? Start here: [`docs/REVIEWER_GUIDE.md`](docs/REVIEWER_GUIDE.md)** (time-boxed paths, commands with expected output, PRD map).
+
 # Skypiea: predictive prewarming for agentic MCP tool calls on Kubernetes
 
 [![CI](https://github.com/SYNKRONOX/skypiea-prewarm/actions/workflows/ci.yml/badge.svg)](https://github.com/SYNKRONOX/skypiea-prewarm/actions/workflows/ci.yml)
@@ -38,7 +40,7 @@ Tier 1; neither needs datasets, an API key, a GPU or a cloud account.
 
 | Tier | What you get | Needs | Time (our laptop) |
 |---|---|---|---|
-| 0 | Unit tests, lint, size check | Python 3.12, make, git | `make setup` 35 s, `make test` about 2 min ([`docs/TESTING.md`](docs/TESTING.md#measured)) |
+| 0 | Unit tests, lint, size check | Python 3.12, make, git | `make setup` 59 s on a fresh clone, `make test` about 4 min (250 s; [`docs/handoff/NIGHT_W2.md`](docs/handoff/NIGHT_W2.md)) |
 | 1 | Whole stack on a local kind cluster; replay under scale-to-zero vs the predictor; scripted agent | + Docker (6 GB memory), kind, kubectl, Helm, 15 GB free disk | `make demo` 270 s on a new cluster with a warm Docker cache ([`docs/DEMO.md`](docs/DEMO.md)); a first build of the images takes longer |
 | 2 | Live Console: chat with a local LLM, every tool call sent to a baseline and a predictive stack | + the predictor bundles (`make fetch-models`), Ollama with a tool-calling model (llama3.1:8b; optional qwen2.5:7b, qwen3:8b) | `make live` 2 min 47 s on a new cluster, 44 s when up ([`docs/DEMO.md`](docs/DEMO.md)) |
 | 3 | The AWS setup we measured on (one EC2 node, k3s) | + your own AWS account; **costs money** | see Tier 3 |
@@ -733,6 +735,9 @@ expected, actual); include the output of `make doctor`. Security issues: [`SECUR
 | Command | What it does | Clean-up |
 |---|---|---|
 | `make doctor [DOCTOR_MODE=test\|demo\|live]` | Check the machine; print the fix for each problem | (changes nothing) |
+| `make review [MODE=test]` | Tier 0 then Tier 1 on its own cluster `skypiea-review`; PASS/FAIL table with timings ([`docs/REVIEWER_GUIDE.md`](docs/REVIEWER_GUIDE.md)) | deletes only the cluster it created (`KEEP=1` keeps it) |
+| `make report` | OS, versions, `make doctor`, last test summary, to paste into an issue (no secrets, home shown as `~`) | (changes nothing) |
+| `make check-claims` | README / PRD_STATUS numbers vs the committed result files; links, make targets, paths, commands in the docs | (changes nothing) |
 | `make setup` / `make lock` | `.venv` from `requirements.lock` / re-resolve the lock | `rm -rf .venv` |
 | `make test` / `make lint` / `make check-sizes` | pytest, ruff, no tracked file over 50 MB | |
 | `make secret-sweep [HISTORY=1]` | Credentials and AWS account ids in the tree (and history) | |

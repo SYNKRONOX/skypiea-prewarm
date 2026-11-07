@@ -52,19 +52,29 @@ hdr "Basics"
 for b in make git; do
   if has "$b"; then ok "$b"; else fail "$b not found" "sudo apt-get install -y $b"; fi
 done
+pyver() { "$1" -c 'import platform;print(platform.python_version())' 2>/dev/null; }
+py_runs=1
 if [ -x .venv/bin/python ] && .venv/bin/python -c 'import sys; sys.exit(sys.version_info[:2] != (3, 12))' 2>/dev/null; then
   ok ".venv with Python 3.12 (make setup done)"
+elif [ -e .venv ]; then
+  fail ".venv exists but is not Python 3.12 ($(pyver .venv/bin/python || echo 'broken')); make setup would reuse it" \
+       "delete the .venv folder, then make setup (with Python 3.12)"
 elif has "$PYBIN" && "$PYBIN" -c 'import sys; sys.exit(sys.version_info[:2] != (3, 12))' >/dev/null 2>&1; then
-  ok "$PYBIN is Python $("$PYBIN" -c 'import platform;print(platform.python_version())'); next: make setup"
+  ok "$PYBIN is Python $(pyver "$PYBIN"); next: make setup"
+elif has "$PYBIN" && [ -z "$(pyver "$PYBIN")" ]; then
+  py_runs=0
+  fail "$PYBIN is on PATH but does not run (a pyenv shim of a version that is not active?)" \
+       "point to a working Python 3.12: make setup PYTHON=/path/to/python3.12 (pyenv: PYTHON=\$(pyenv root)/versions/<3.12.x>/bin/python3.12)"
 elif has "$PYBIN"; then
-  fail "$PYBIN is Python $("$PYBIN" -c 'import platform;print(platform.python_version())' 2>/dev/null), not 3.12" \
+  py_runs=0
+  fail "$PYBIN is Python $(pyver "$PYBIN"), not 3.12" \
        "install Python 3.12, or point to it: make setup PYTHON=/path/to/python3.12"
 else
   fail "Python 3.12 not found ($PYBIN on PATH)" \
        "Ubuntu 24.04: sudo apt-get install -y python3.12 python3.12-venv; other systems: https://www.python.org/downloads/ or pyenv; or set PYTHON=/path/to/python3.12 for make setup"
 fi
-if has "$PYBIN" && ! "$PYBIN" -c 'import ensurepip' 2>/dev/null && [ ! -x .venv/bin/python ]; then
-  fail "python3.12 has no venv/ensurepip" "sudo apt-get install -y python3.12-venv"
+if [ "$py_runs" = 1 ] && has "$PYBIN" && ! "$PYBIN" -c 'import ensurepip' 2>/dev/null && [ ! -e .venv ]; then
+  fail "$PYBIN has no venv/ensurepip" "sudo apt-get install -y python3.12-venv"
 fi
 
 if need demo; then

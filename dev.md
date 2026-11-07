@@ -220,6 +220,7 @@ make setup        # .venv from requirements.lock
 make test         # pytest -q (tests/), offline, uses data/samples/
 make lint         # ruff check .
 make check-sizes  # no tracked file over 50 MB
+make check-claims # docs vs committed evidence: numbers, links, make targets, paths, commands (< 1 s)
 make secret-sweep # credentials / AWS account ids in the tree (HISTORY=1: all commits)
 make infra-check  # lint, tests, sizes, no secret-like file names tracked
 make redteam      # predictor red-team suite (tests/redteam)
@@ -267,6 +268,7 @@ must reach a server (`tests/test_tool_map_coverage.py`).
 | Target | What it does |
 |---|---|
 | `help` (default), `doctor`, `secret-sweep` | List targets; machine checks; secret sweep |
+| `review`, `report`, `check-claims` | Tier 0 + Tier 1 on an own cluster with a PASS/FAIL table (`tools/review.sh`); environment report for issues (`tools/report.sh`); docs vs evidence (`tools/check_claims.py`) |
 | `setup`, `lock` | Create `.venv` from `requirements.lock`; re-resolve the lock |
 | `test`, `lint`, `check-sizes`, `infra-check`, `install-hooks` | Tests, ruff, size check, all checks, git hook |
 | `data`, `data-all`, `samples` | Trace pipeline for one / all sources; rebuild the committed samples |

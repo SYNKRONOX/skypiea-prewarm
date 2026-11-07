@@ -20,6 +20,7 @@ jobs:
       - run: pip install -r requirements.lock && pip check
       - run: python tools/check_sizes.py
       - run: ruff check .
+      - run: python tools/check_claims.py   # docs vs committed evidence, < 1 s, offline
       - run: pytest -q
       - run: PYTHON=python bash tools/doctor.sh test
 
