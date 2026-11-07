@@ -1,0 +1,36 @@
+{
+ "label": "CORRECTNESS run: real agent loop and real local LLM, tool handlers in-process, no cluster and no pods; scripted customer turns; timings are not results",
+ "scenario": "free_typing",
+ "variant": "thanks",
+ "model": "qwen3:8b",
+ "rep": 3,
+ "pass": true,
+ "reason": "ok",
+ "expect": {
+  "opener": "thanks"
+ },
+ "customer_turns": [
+  "thanks"
+ ],
+ "customer_turns_are": "scripted",
+ "calls": [],
+ "n_calls": 0,
+ "n_errors": 0,
+ "llm_replies": 1,
+ "truth_badges": 0,
+ "transferred": false,
+ "guards": [],
+ "wall_s_not_a_result": 0.5,
+ "transcript": [
+  {
+   "role": "user",
+   "text": "thanks",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "You're welcome! If you need any assistance with your Skypiea Air booking, feel free to ask. Have a great day! \ud83d\ude0a",
+   "tool_calls": []
+  }
+ ]
+}

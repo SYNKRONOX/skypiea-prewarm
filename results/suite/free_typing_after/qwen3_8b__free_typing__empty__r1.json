@@ -1,0 +1,36 @@
+{
+ "label": "CORRECTNESS run: real agent loop and real local LLM, tool handlers in-process, no cluster and no pods; scripted customer turns; timings are not results",
+ "scenario": "free_typing",
+ "variant": "empty",
+ "model": "qwen3:8b",
+ "rep": 1,
+ "pass": true,
+ "reason": "ok",
+ "expect": {
+  "opener": "empty"
+ },
+ "customer_turns": [
+  ""
+ ],
+ "customer_turns_are": "scripted",
+ "calls": [],
+ "n_calls": 0,
+ "n_errors": 0,
+ "llm_replies": 0,
+ "truth_badges": 0,
+ "transferred": false,
+ "guards": [],
+ "wall_s_not_a_result": 0.0,
+ "transcript": [
+  {
+   "role": "user",
+   "text": "",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "It looks like your message was empty. How can I help you today? I can book a flight, change or cancel a booking, add bags, process refunds and apply offers.",
+   "tool_calls": []
+  }
+ ]
+}

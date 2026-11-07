@@ -1,0 +1,36 @@
+{
+ "label": "CORRECTNESS run: real agent loop and real local LLM, tool handlers in-process, no cluster and no pods; scripted customer turns; timings are not results",
+ "scenario": "free_typing",
+ "variant": "long",
+ "model": "llama3.1:8b",
+ "rep": 3,
+ "pass": true,
+ "reason": "ok",
+ "expect": {
+  "opener": "long"
+ },
+ "customer_turns": [
+  "Hi Skye, so let me tell you the whole story, because it has been quite a week. Hi Skye, so let me tell you the whole story, because it has been quite a week. Hi Skye, so let me tell you the whole story, because it has been quite a week. Hi Skye, so let me tell you the whole story, because it has been quite a week. Hi Skye, so let me tell you the whole story, because it has been quite a week. Hi Skye, so let me tell you the whole story, because it has been quite a week. My cousin is getting married in a few months and the whole family is travelling, some from Chennai, some from Kolkata, my aunt from Dubai, and nobody agrees on the dates yet, my uncle keeps changing his mind and my sister only has leave on weekends, and my grandmother does not like early flights, and we also need to think about luggage because of all the gifts. My cousin is getting married in a few months and the whole family is travelling, some from Chennai, some from Kolkata, my aunt from Dubai, and nobody agrees on the dates yet, my uncle keeps changing his mind and my sister only has leave on weekends, and my grandmother does not like early flights, and we also need to think about luggage because of all the gifts. My cousin is getting married in a few months and the whole family is travelling, some from Chennai, some from Kolkata, my aunt from Dubai, and nobody agrees on the dates yet, my uncle keeps changing his mind and my sister only has leave on weekends, and my grandmother does not like early flights, and we also need to think about luggage because of all the gifts. My cousin is getting married in a few months and the whole family is travelling, some from Chennai, some from Kolkata, my aunt from Dubai, and nobody agrees on the dates yet, my uncle keeps changing his mind and my sister only has leave on weekends, and my grandmother does not like early flights, and we also need to think about luggage because of all the gifts. My cousin is getting married in a few months and the whole family is travelling, some from Chennai, some from Kolkata, my aunt from Dubai, and nobody agrees on the dates yet, my uncle keeps changing his mind and my sister only has leave on weekends, and my grandmother does not like early flights, and we also need to think about luggage because of all the gifts. Anyway, I just wanted to say hello and see how this works."
+ ],
+ "customer_turns_are": "scripted",
+ "calls": [],
+ "n_calls": 0,
+ "n_errors": 0,
+ "llm_replies": 1,
+ "truth_badges": 0,
+ "transferred": false,
+ "guards": [],
+ "wall_s_not_a_result": 1.5,
+ "transcript": [
+  {
+   "role": "user",
+   "text": "Hi Skye, so let me tell you the whole story, because it has been quite a week. Hi Skye, so let me tell you the whole story, because it has been quite a week. Hi Skye, so let me tell you the whole story, because it has been quite a week. Hi Skye, so let me tell you the whole story, because it has been quite a week. Hi Skye, so let me tell you the whole story, because it has been quite a week. Hi Skye, so let me tell you the whole story, because it has been quite a week. My cousin is getting married in a few months and the whole family is travelling, some from Chennai, some from Kolkata, my aunt from Dubai, and nobody agrees on the dates yet, my uncle keeps changing his mind and my sister only has leave on weekends, and my grandmother does not like early flights, and we also need to think about luggage because of all the gifts. My cousin is getting married in a few months and the whole family is travelling, some from Chennai, some from Kolkata, my aunt from Dubai, and nobody agrees on the dates yet, my uncle keeps changing his mind and my sister only has leave on weekends, and my grandmother does not like early flights, and we also need to think about luggage because of all the gifts. My cousin is getting married in a few months and the whole family is travelling, some from Chennai, some from Kolkata, my aunt from Dubai, and nobody agrees on the dates yet, my uncle keeps changing his mind and my sister only has leave on weekends, and my grandmother does not like early flights, and we also need to think about luggage because of all the gifts. My cousin is getting married in a few months and the whole family is travelling, some from Chennai, some from Kolkata, my aunt from Dubai, and nobody agrees on the dates yet, my uncle keeps changing his mind and my sister only has leave on weekends, and my grandmother does not like early flights, and we also need to think about luggage because of all the gifts. My cousin is getting married in a few months and the whole family is travelling, some from Chennai, some from Kolkata, my aunt from Dubai, and nobody agrees on the dates yet, my uncle keeps changing his mind and my sister only has leave on weekends, and my grandmother does not like early flights, and we also need to think about luggage because of all the gifts. Anyway, I just wanted to say hello and see how this works.",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "I can only help with Skypiea Air bookings. I can book flights, look up bookings, change flight dates or times, add checked bags, cancel and refund, and apply offers. I can also transfer you to a human if you have a complaint or need help with something else.\n\nTo start, can you please tell me your full name and email address so I can verify you as a customer?",
+   "tool_calls": []
+  }
+ ]
+}

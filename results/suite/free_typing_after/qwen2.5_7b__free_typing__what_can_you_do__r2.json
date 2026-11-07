@@ -1,0 +1,38 @@
+{
+ "label": "CORRECTNESS run: real agent loop and real local LLM, tool handlers in-process, no cluster and no pods; scripted customer turns; timings are not results",
+ "scenario": "free_typing",
+ "variant": "what_can_you_do",
+ "model": "qwen2.5:7b",
+ "rep": 2,
+ "pass": true,
+ "reason": "ok",
+ "expect": {
+  "opener": "what_can_you_do"
+ },
+ "customer_turns": [
+  "what can you do?"
+ ],
+ "customer_turns_are": "scripted",
+ "calls": [],
+ "n_calls": 0,
+ "n_errors": 0,
+ "llm_replies": 1,
+ "truth_badges": 0,
+ "transferred": false,
+ "guards": [
+  "no_tools_small_talk"
+ ],
+ "wall_s_not_a_result": 0.5,
+ "transcript": [
+  {
+   "role": "user",
+   "text": "what can you do?",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "I can help you book a flight, change or cancel your booking, add extra bags, process refunds, and apply offers. Let me know what you need assistance with!",
+   "tool_calls": []
+  }
+ ]
+}

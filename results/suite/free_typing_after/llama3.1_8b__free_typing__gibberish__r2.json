@@ -1,0 +1,38 @@
+{
+ "label": "CORRECTNESS run: real agent loop and real local LLM, tool handlers in-process, no cluster and no pods; scripted customer turns; timings are not results",
+ "scenario": "free_typing",
+ "variant": "gibberish",
+ "model": "llama3.1:8b",
+ "rep": 2,
+ "pass": true,
+ "reason": "ok",
+ "expect": {
+  "opener": "gibberish"
+ },
+ "customer_turns": [
+  "asdkj qwpoe zzxv lkkk"
+ ],
+ "customer_turns_are": "scripted",
+ "calls": [],
+ "n_calls": 0,
+ "n_errors": 0,
+ "llm_replies": 1,
+ "truth_badges": 0,
+ "transferred": false,
+ "guards": [
+  "no_tools_small_talk"
+ ],
+ "wall_s_not_a_result": 1.0,
+ "transcript": [
+  {
+   "role": "user",
+   "text": "asdkj qwpoe zzxv lkkk",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "assistant\n\nI'm afraid I didn't quite catch what you needed. Could you please tell me what's on your mind? Are you looking to book a flight, check on a booking, or perhaps ask about a different query? I'm here to help with any Skypiea Air-related questions or concerns.",
+   "tool_calls": []
+  }
+ ]
+}

@@ -1,0 +1,58 @@
+{
+ "label": "CORRECTNESS run: real agent loop and real local LLM, tool handlers in-process, no cluster and no pods; scripted customer turns; timings are not results",
+ "scenario": "free_typing",
+ "variant": "what_can_you_do",
+ "model": "llama3.1:8b",
+ "rep": 3,
+ "pass": true,
+ "reason": "ok",
+ "expect": {
+  "opener": "what_can_you_do"
+ },
+ "customer_turns": [
+  "what can you do?"
+ ],
+ "customer_turns_are": "scripted",
+ "calls": [
+  {
+   "turn": 1,
+   "tool": "find_customer",
+   "error": "invalid_arguments",
+   "from_text": false,
+   "guard": "invalid_retry"
+  }
+ ],
+ "n_calls": 1,
+ "n_errors": 1,
+ "llm_replies": 2,
+ "truth_badges": 0,
+ "transferred": false,
+ "guards": [
+  "invalid_retry"
+ ],
+ "wall_s_not_a_result": 1.3,
+ "transcript": [
+  {
+   "role": "user",
+   "text": "what can you do?",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "",
+   "tool_calls": [
+    "find_customer {\"tools\":\"['find_customer', 'search_flights', 'book_flight', 'change_flight', 'cancel_booking', 'add_bag', 'refund_booking', 'apply_offer', 'transfer_to_human']\"}"
+   ]
+  },
+  {
+   "role": "tool",
+   "text": "{\"error\": \"invalid_arguments\", \"problems\": [\"missing name\"], \"hint\": \"The call to find_customer was not run: missing name. Fix the arguments and call it again (one retry), or ask the customer.\"}",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "I need the customer's full name and email to proceed. Can you please provide me with that information?",
+   "tool_calls": []
+  }
+ ]
+}

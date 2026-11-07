@@ -1,0 +1,38 @@
+{
+ "label": "CORRECTNESS run: real agent loop and real local LLM, tool handlers in-process, no cluster and no pods; scripted customer turns; timings are not results",
+ "scenario": "free_typing",
+ "variant": "hi",
+ "model": "llama3.1:8b",
+ "rep": 3,
+ "pass": true,
+ "reason": "ok",
+ "expect": {
+  "opener": "hi"
+ },
+ "customer_turns": [
+  "hi"
+ ],
+ "customer_turns_are": "scripted",
+ "calls": [],
+ "n_calls": 0,
+ "n_errors": 0,
+ "llm_replies": 1,
+ "truth_badges": 0,
+ "transferred": false,
+ "guards": [
+  "no_tools_small_talk"
+ ],
+ "wall_s_not_a_result": 0.3,
+ "transcript": [
+  {
+   "role": "user",
+   "text": "hi",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "assistant\n\nHello! Welcome to Skypiea Air. How can I help you today?",
+   "tool_calls": []
+  }
+ ]
+}

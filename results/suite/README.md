@@ -20,3 +20,6 @@ The two worlds have different people, places and dates, so a scenario's lines di
 before and after; the scenario shapes, the variants (typos, wrong email then right, changes
 mind, unsupported request) and the oracle rules are the same.
 - `final_check/`: llama3.1:8b, 1 rep, on the final code (0e3c4af): 18/18.
+- `free_typing_before/`, `free_typing_after/`: the free-typing robustness group (13 openers,
+  added after a bug found by hand), 3 models x 3 reps, before (origin/main 66404ff) and after
+  the fix (fix/free-typing 95b1fc6). Table: `docs/SUITE_BEFORE_AFTER.md`, last section.

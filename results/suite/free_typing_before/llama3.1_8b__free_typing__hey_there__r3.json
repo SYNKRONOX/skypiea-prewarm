@@ -1,0 +1,56 @@
+{
+ "label": "CORRECTNESS run: real agent loop and real local LLM, tool handlers in-process, no cluster and no pods; scripted customer turns; timings are not results",
+ "scenario": "free_typing",
+ "variant": "hey_there",
+ "model": "llama3.1:8b",
+ "rep": 3,
+ "pass": true,
+ "reason": "ok",
+ "expect": {
+  "opener": "hey_there"
+ },
+ "customer_turns": [
+  "hey there"
+ ],
+ "customer_turns_are": "scripted",
+ "calls": [
+  {
+   "turn": 1,
+   "tool": "find_customer",
+   "error": null,
+   "from_text": false,
+   "guard": null
+  }
+ ],
+ "n_calls": 1,
+ "n_errors": 0,
+ "llm_replies": 2,
+ "truth_badges": 0,
+ "transferred": false,
+ "guards": [],
+ "wall_s_not_a_result": 1.3,
+ "transcript": [
+  {
+   "role": "user",
+   "text": "hey there",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "",
+   "tool_calls": [
+    "find_customer {\"name\":\"none yet\"}"
+   ]
+  },
+  {
+   "role": "tool",
+   "text": "{\"found\": 0, \"message\": \"No customer named 'none yet'. Ask them to check the spelling or give their email. If they are NEW to Skypiea Air, offer to create their profile by booking: call search_flights(origin, destination, date), then book_flight(flight_id, fare, name, email).\"}",
+   "tool_calls": []
+  },
+  {
+   "role": "assistant",
+   "text": "Hi there! It seems we don't have a customer account for you yet. Can you please tell me your full name and email address so I can help you better? If you're new to Skypiea Air, I can also help you create a profile by booking a flight.",
+   "tool_calls": []
+  }
+ ]
+}
