@@ -327,7 +327,7 @@ function renderProof(c) {
   const old = box.querySelector('[data-seq="' + c.seq + '"]'); if (old) old.replaceWith(r); else box.prepend(r);
 }
 const GUARD = { gated: "tool not offered yet (steered)", invalid_retry: "invalid arguments: one retry with a hint",
-  auto_transfer: "two invalid calls: transferred to a human", ignored_text_call: "ignored text tool call", confirm_first: "no customer yes yet: run as a quote" };
+  auto_transfer: "two invalid calls: transferred to a human", ignored_text_call: "ignored text tool call", no_tools_small_talk: "small talk: answered without tools", confirm_first: "no customer yes yet: run as a quote" };
 function renderGuards(gs) {
   const box = $("guards"); box.textContent = "";
   if (!gs || !gs.length) { box.textContent = "None in this conversation."; return; }

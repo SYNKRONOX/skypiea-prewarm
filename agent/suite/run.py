@@ -101,7 +101,11 @@ async def run_case(case, model: str, llm, rep: int) -> dict[str, Any]:
     calls = sorted(conv.calls, key=lambda c: c.get("seq", 0))
     transferred = any(c["tool"] == "transfer_to_human" and not c.get("result_error")
                       for c in calls)
-    ok, reason = judge(case, conv.backend, pristine, transferred)
+    if case.scenario == "free_typing":
+        from agent.suite.scenarios import judge_free
+        ok, reason = judge_free(conv, pristine, set(conv.task.tool_names))
+    else:
+        ok, reason = judge(case, conv.backend, pristine, transferred)
     if err:
         ok, reason = False, f"run error: {err}"
     conv.close()
@@ -120,6 +124,7 @@ async def run_case(case, model: str, llm, rep: int) -> dict[str, Any]:
             "llm_replies": len(conv.think_log),
             "truth_badges": sum(len(t.get("badges", [])) for t in conv.truth),
             "transferred": transferred,
+            "guards": [g["kind"] for g in getattr(conv, "guards", [])],
             "wall_s_not_a_result": round(time.monotonic() - t0, 1),
             "transcript": transcript}
 
@@ -140,11 +145,15 @@ def table(rows: list[dict[str, Any]]) -> str:
     lines = [f"_{LABEL}._", "",
              "| Scenario | " + " | ".join(models) + " |",
              "|---|" + "---|" * len(models)]
-    for sc in SCENARIOS + ["**all**"]:
+    free = all(r["scenario"] == "free_typing" for r in rows)
+    keys = list(dict.fromkeys(r["variant"] for r in rows)) if free else SCENARIOS
+
+    def of(r: dict, sc: str) -> bool:
+        return sc == "**all**" or (r["variant"] if free else r["scenario"]) == sc
+    for sc in keys + ["**all**"]:
         cells = []
         for m in models:
-            rs = [r for r in rows if r["model"] == m and (sc == "**all**"
-                                                          or r["scenario"] == sc)]
+            rs = [r for r in rows if r["model"] == m and of(r, sc)]
             cells.append(f"{sum(r['pass'] for r in rs)}/{len(rs)}" if rs else "–")
         lines.append(f"| {sc} | " + " | ".join(cells) + " |")
     lines += ["", "Pass rate per rep (variance across reps):", ""]
@@ -171,7 +180,11 @@ async def main_async(a) -> int:
     from agent.suite.scenarios import build
     out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
-    cases = build(Session())
+    if a.group == "free_typing":
+        from agent.suite.scenarios import free_typing_cases
+        cases = free_typing_cases()
+    else:
+        cases = build(Session())
     if a.only:
         cases = [c for c in cases if c.scenario in a.only.split(",") or c.key in a.only.split(",")]
     rows = [json.loads(p.read_text()) for p in sorted(out.glob("*__r*.json"))] if a.resume else []
@@ -204,6 +217,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--reps", type=int, default=1)
     ap.add_argument("--out", default="results/suite/run")
     ap.add_argument("--only", default="", help="scenarios or scenario__variant keys")
+    ap.add_argument("--group", default="scenarios", choices=["scenarios", "free_typing"],
+                    help="free_typing: the 12 free-typing openers (added after a bug)")
     ap.add_argument("--resume", action="store_true", help="skip runs already in --out")
     ap.add_argument("--base-url", default=os.environ.get("AGENT_BASE_URL",
                                                          "http://localhost:11434/v1"))

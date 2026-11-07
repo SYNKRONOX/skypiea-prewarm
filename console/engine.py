@@ -44,7 +44,7 @@ from agent.llm import LLMError
 from agent.loop import render_result
 from agent.mcp_client import McpClient
 from agent.tasks import Task
-from console import textcalls, truth
+from console import guards, textcalls, truth
 
 ROOT = Path(__file__).resolve().parent.parent
 MAX_STEPS = 8
@@ -764,7 +764,19 @@ class Conversation:
                 self.messages.append({"role": "assistant", "content": self.empty_text()})
                 await self.publish({"type": "llm_replace", "turn": self.turn,
                                     "text": self.empty_text()})
-            for _ in range(MAX_STEPS if text.strip() else 0):
+            chat_only = None
+            if self.backend is not None and hasattr(self.backend, "state_block"):
+                prev = next((m.get("content") or "" for m in reversed(self.messages[:-1])
+                             if m.get("role") == "assistant" and m.get("content")), "")
+                chat_only = guards.small_talk(text, self.backend.pending,
+                                              prev.rstrip().endswith("?"))
+                if chat_only and chat_only != "empty":
+                    g = {"turn": self.turn, "tool": "-", "kind": "no_tools_small_talk",
+                         "detail": f"customer message classified as {chat_only}: no tools "
+                                   "offered for the reply"}
+                    self.guards.append(g)
+                    await self.publish({"type": "guard", "guard": g})
+            for step in range(MAX_STEPS if text.strip() else 0):
                 await self.publish({"type": "llm_start", "turn": self.turn})
 
                 streamed: list[str] = []
@@ -783,13 +795,31 @@ class Conversation:
                         # prices in the STATE block count as sourced for the price check
                         numbers_in(self.backend.state_block(), self.facts)
                     msgs = self.llm_messages()
+                    tools = self.offered_tools()
+                    if chat_only and step == 0:
+                        # small talk / injection: no tools for this reply (plain language)
+                        tools = []
+                        msgs = msgs + [{"role": "system",
+                                        "content": guards.SMALL_TALK_HINT[chat_only]}]
                     if text_retry:
                         msgs = msgs + [{"role": "system", "content": textcalls.RETRY_HINT}]
-                    r = await self.llm.reply(msgs, self.offered_tools(), on_text)
+                    r = await self.llm.reply(msgs, tools, on_text)
                 except LLMError as e:
                     await self.publish({"type": "error", "where": "llm", "detail": str(e)[:200]})
                     break
-                if not r.tool_calls and r.content and textcalls.looks_like_call(r.content):
+                if r.tool_calls and r.content and textcalls.looks_like_call(r.content):
+                    # a real call AND tool-call JSON echoed in the text: strip the text
+                    _calls, rest = textcalls.find_calls(r.content)
+                    r.content = rest
+                    r.message = {**r.message, "content": rest}
+                    g = {"turn": self.turn, "tool": ", ".join(n for n, _ in _calls) or "-",
+                         "kind": "ignored_text_call", "detail": "tool-call JSON echoed in the "
+                         "reply text next to a real call: removed from the text"}
+                    self.guards.append(g)
+                    await self.publish({"type": "guard", "guard": g})
+                    await self.publish({"type": "llm_replace", "turn": self.turn,
+                                        "text": rest})
+                elif not r.tool_calls and r.content and textcalls.looks_like_call(r.content):
                     calls, rest = textcalls.find_calls(r.content)
                     offered = {t["function"]["name"] for t in self.offered_tools()}
                     run = [(n, a) for n, a in calls if n in offered]
