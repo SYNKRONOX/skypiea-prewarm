@@ -5,12 +5,20 @@ demo/live_stacks.sh (controller /v1/state and /metrics, gateway /v1/sessions/<si
 data sources as `skypiea trace` / `explain` -, stub predictor /admin/policy, model /healthz).
 The console never sits on a tool call's path: the agent calls the gateways itself and the
 console only reads what the platform reports.
+
+/v1/sessions/<sid> needs the gateway's admin token (issue #7). The console reads it from the
+stack's Secret skypiea-admin with kubectl (the same kube context it already uses to scale the
+predictor), keeps it in memory only and sends it in X-Admin-Token. SKYPIEA_ADMIN_TOKEN_BASE /
+SKYPIEA_ADMIN_TOKEN_PRED override it.
 """
 
 from __future__ import annotations
 
 import asyncio
+import base64
+import os
 import subprocess
+import time
 from dataclasses import dataclass
 from typing import Any
 
@@ -59,10 +67,36 @@ def metric_by_label(text: str, name: str, label: str) -> dict[str, float]:
     return out
 
 
+ADMIN_SECRET, ADMIN_KEY = "skypiea-admin", "admin-token"
+TOKEN_RETRY_S = 30.0     # after a failed Secret read, try again at most this often
+
+
 class StackClient:
-    def __init__(self, stack: Stack, http: httpx.AsyncClient | None = None):
+    def __init__(self, stack: Stack, http: httpx.AsyncClient | None = None,
+                 context: str = "kind-skypiea"):
         self.s = stack
         self.http = http or httpx.AsyncClient(timeout=5)
+        self.context = context
+        self._token: str | None = None
+        self._token_failed_at = -TOKEN_RETRY_S
+
+    async def admin_token(self, refresh: bool = False) -> str | None:
+        """The gateway admin token of this stack (env override, else its Secret)."""
+        if env := os.environ.get(f"SKYPIEA_ADMIN_TOKEN_{self.s.key.upper()}"):
+            return env
+        if self._token and not refresh:
+            return self._token
+        if not refresh and time.monotonic() - self._token_failed_at < TOKEN_RETRY_S:
+            return None
+        rc, out = await read_secret(self.s.namespace, ADMIN_SECRET, ADMIN_KEY, self.context)
+        try:
+            tok = base64.b64decode(out, validate=True).decode() if rc == 0 and out else ""
+        except ValueError:
+            tok = ""
+        self._token = tok or None
+        if not tok:
+            self._token_failed_at = time.monotonic()
+        return self._token
 
     async def state(self) -> dict[str, Any]:
         return (await self.http.get(f"{self.s.controller}/v1/state")).json()
@@ -72,8 +106,15 @@ class StackClient:
         return metric_by_label(text, "skypiea_pod_seconds_idle_total", "tool")
 
     async def session(self, sid: str) -> dict[str, Any] | None:
-        r = await self.http.get(f"{self.s.gateway}/v1/sessions/{sid}")
-        return r.json() if r.status_code == 200 else None
+        for refresh in (False, True):      # a reinstalled stack has a new token: re-read once
+            tok = await self.admin_token(refresh)
+            if not tok:
+                return None
+            r = await self.http.get(f"{self.s.gateway}/v1/sessions/{sid}",
+                                    headers={"X-Admin-Token": tok})
+            if r.status_code != 401:
+                return r.json() if r.status_code == 200 else None
+        return None
 
     async def policy(self) -> dict[str, Any]:
         return (await self.http.get(f"{self.s.stub}/admin/policy")).json()
@@ -107,4 +148,18 @@ async def kubectl(*args: str, context: str = "kind-skypiea") -> tuple[int, str]:
                            text=True, timeout=120)
         out = (p.stdout + p.stderr).strip().splitlines()
         return p.returncode, (out[-1] if out else "")
+    return await asyncio.to_thread(run)
+
+
+async def read_secret(ns: str, name: str, key: str, context: str) -> tuple[int, str]:
+    """kubectl get secret -o jsonpath (stdout only: a warning on stderr is not the value).
+    Returns (rc, base64 value); the value is never logged."""
+    def run() -> tuple[int, str]:
+        try:
+            p = subprocess.run(["kubectl", "--context", context, "-n", ns, "get", "secret",
+                                name, "-o", f"jsonpath={{.data.{key}}}"],
+                               capture_output=True, text=True, timeout=15)
+        except (OSError, subprocess.TimeoutExpired):
+            return 1, ""
+        return p.returncode, p.stdout.strip()
     return await asyncio.to_thread(run)

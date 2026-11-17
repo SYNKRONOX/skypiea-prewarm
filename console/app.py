@@ -110,7 +110,8 @@ class Console:
         self.hub = Hub()
         self.llm = llm
         self.ctx = kube_context
-        self.stacks = {"base": base or StackClient(BASE), "pred": pred or StackClient(PRED)}
+        self.stacks = {"base": base or StackClient(BASE, context=kube_context),
+                       "pred": pred or StackClient(PRED, context=kube_context)}
         self.poller = Poller(self.stacks, self.hub.publish, self.model_health)
         self.poller.on_slow = self.publish_totals
         self.start_poller = start_poller

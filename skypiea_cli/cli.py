@@ -126,13 +126,19 @@ def policy_set(ctx: click.Context, name: str, params: tuple[str, ...]) -> None:
 @cli.command(help="Live sessions in the gateway.")
 @click.pass_context
 def sessions(ctx: click.Context) -> None:
-    s = _backend(ctx).sessions()
+    try:
+        s = _backend(ctx).sessions()
+    except RuntimeError as e:          # AdminTokenError: no / wrong admin token
+        raise click.ClickException(str(e)) from e
     _out(ctx, s, _table([[x["session_id"], x["calls"], x["ended"]] for x in s],
                         ["session", "calls", "ended"]) if s else "no live sessions")
 
 
 def _get_session(ctx: click.Context, sid: str) -> dict[str, Any]:
-    s = _backend(ctx).session(sid)
+    try:
+        s = _backend(ctx).session(sid)
+    except RuntimeError as e:          # AdminTokenError: no / wrong admin token
+        raise click.ClickException(str(e)) from e
     if s is None:
         raise click.ClickException(f"session {sid} not found (unknown, or purged 60 s after it "
                                    "ended)")

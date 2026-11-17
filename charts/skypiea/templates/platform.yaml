@@ -136,6 +136,20 @@ roleRef: {apiGroup: rbac.authorization.k8s.io, kind: Role, name: skypiea-gateway
 subjects:
   - {kind: ServiceAccount, name: skypiea-gateway, namespace: {{ $ns }}}
 ---
+# Gateway admin token (issue #7): GET /v1/sessions(/{sid}) need it in X-Admin-Token. Generated
+# once at install, kept across upgrades, never in the repo; mounted ONLY into the gateway. The
+# CLI and the Live Console read it with the operator's own kubeconfig.
+{{- $adm := lookup "v1" "Secret" $ns "skypiea-admin" }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: skypiea-admin
+  namespace: {{ $ns }}
+  labels: {{- include "skypiea.labels" $gw | nindent 4 }}
+type: Opaque
+data:
+  admin-token: {{ if and $adm $adm.data }}{{ index $adm.data "admin-token" }}{{ else }}{{ randAlphaNum 48 | b64enc }}{{ end }}
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -182,6 +196,8 @@ spec:
             - {name: SKYPIEA_EARLY_CONNECT, value: "1"}
             {{- end }}
             - {name: SKYPIEA_CONTROLLER_URL, value: "http://skypiea-controller.{{ $ns }}.svc:8081"}
+            - name: ADMIN_TOKEN
+              valueFrom: {secretKeyRef: {name: skypiea-admin, key: admin-token}}
             {{- if $p.predictor.url }}
             - {name: SKYPIEA_PREDICTOR_URL, value: {{ $p.predictor.url | quote }}}
             {{- else if eq $p.predictor.serve "model" }}

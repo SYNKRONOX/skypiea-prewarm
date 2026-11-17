@@ -226,7 +226,7 @@ def test_sessions_isolated_created_and_purged():
                            session_idle_s=600)
         r = await post(gw, call("read_file"), sid=None)
         new_sid = r.headers["Mcp-Session-Id"]
-        assert len(new_sid) == 32
+        assert len(new_sid) == 43            # secrets.token_urlsafe(32): 256 bits
         await post(gw, call("run_tests"), sid="other")
         await post(gw, call("run_tests"), sid=new_sid)
         hist = {q.session_id: [h.tool_class for h in q.history] for q in fake.requests}
@@ -398,14 +398,16 @@ def test_connect_failures_give_up_after_connect_retry_s():
 def test_session_introspection_predicted_flag_and_decision_log():
     async def go():
         gw, _, _, _ = make(predictor=FakePredictor(GOOD), ready={"order_lookup": 1,
-                                                                  "policy_check": 1})
+                                                                  "policy_check": 1},
+                           admin_token="tok")
         r1 = await post(gw, call("order_lookup"), sid="x")
         assert r1.headers["X-Skypiea-Predicted"] == "0"          # nothing predicted yet
         r2 = await post(gw, call("policy_check", 2), sid="x")
         assert r2.headers["X-Skypiea-Predicted"] == "1"          # previous decision warmed it
         assert float(r2.headers["X-Skypiea-Added-Ms"]) >= 0
         async with httpx.AsyncClient(transport=httpx.ASGITransport(gw.app(background=False)),
-                                     base_url="http://g") as c:
+                                     base_url="http://g",
+                                     headers={"X-Admin-Token": "tok"}) as c:
             s = (await c.get("/v1/sessions/x")).json()
             assert [x["tool_class"] for x in s["calls"]] == ["order_lookup", "policy_check"]
             assert [x["predicted"] for x in s["calls"]] == [False, True]

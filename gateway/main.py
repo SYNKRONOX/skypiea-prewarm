@@ -25,10 +25,10 @@ def _env(name: str, default: str) -> str:
     return os.environ.get(name, default)
 
 
-def gateway() -> None:
+def gateway_config() -> GatewayConfig:
     ns = _env("SKYPIEA_NAMESPACE", "skypiea-tools")
     ttl = _env("SKYPIEA_DEMAND_TTL_S", "0")
-    cfg = GatewayConfig(
+    return GatewayConfig(
         namespace=ns, hold_ms=float(_env("SKYPIEA_HOLD_MS", "150")),
         cold_timeout_s=float(_env("SKYPIEA_COLD_TIMEOUT_S", "120")),
         predictor_timeout_s=float(_env("SKYPIEA_PREDICTOR_TIMEOUT_MS", "300")) / 1000,
@@ -36,7 +36,14 @@ def gateway() -> None:
         session_idle_s=float(_env("SKYPIEA_SESSION_IDLE_S", "600")),
         turn_hint=_env("SKYPIEA_TURN_HINT", "0") == "1",
         early_connect=_env("SKYPIEA_EARLY_CONNECT", "0") == "1",
+        # GET /v1/sessions(/{sid}); unset or empty = disabled (from Secret skypiea-admin)
+        admin_token=os.environ.get("ADMIN_TOKEN") or None,
     )
+
+
+def gateway() -> None:
+    cfg = gateway_config()
+    ns = cfg.namespace
     http = httpx.AsyncClient(limits=httpx.Limits(max_connections=200))
     router = Router(ns)
     pred_url = _env("SKYPIEA_PREDICTOR_URL", "")

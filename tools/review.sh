@@ -61,7 +61,8 @@ if [ "$MODE" = all ]; then
       step 1 demo make --no-print-directory demo &&
       { step 1 agent-demo    make --no-print-directory agent-demo
         step 1 demo-failures make --no-print-directory demo-failures
-        step 1 cli-status    bin/skypiea --context "$KIND_CTX" status; }
+        step 1 cli-status    bin/skypiea --context "$KIND_CTX" status
+        step 1 session-auth  demo/session_auth_check.sh; }
     fi
     if [ "$created" = 1 ]; then
       if [ "${KEEP:-0}" = 1 ]; then

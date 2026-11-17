@@ -3,10 +3,16 @@
 Calls go through the API server's service/pod proxy (``/api/v1/namespaces/<ns>/services/
 <svc>:<port>/proxy/<path>``), so the CLI needs nothing but the kubeconfig the user already has
 (kind context or ~/.kube/skypiea-aws): no port-forward, no extra credentials, nothing stored.
+
+Session introspection (``sessions``, ``trace``, ``explain``) needs the gateway's admin token
+(issue #7): ``SKYPIEA_ADMIN_TOKEN`` if set, else read with the same kubeconfig from Secret
+``skypiea-admin`` (key ``admin-token``) that the chart creates. It is sent in X-Admin-Token
+and never printed or stored.
 """
 
 from __future__ import annotations
 
+import base64
 import json
 import os
 import socket
@@ -16,6 +22,11 @@ from contextlib import contextmanager
 from typing import Any, Protocol
 
 DEFAULT_NS = "skypiea-tools"
+ADMIN_SECRET, ADMIN_KEY = "skypiea-admin", "admin-token"
+
+
+class AdminTokenError(RuntimeError):
+    """The gateway refused session introspection (no token, wrong token, or disabled)."""
 
 
 class Backend(Protocol):
@@ -41,15 +52,30 @@ class KubeBackend:
         self.core = client.CoreV1Api(api_client)
         self.apps = client.AppsV1Api(api_client)
         self.api = api_client
+        self._token: str | None = None
+
+    def admin_token(self) -> str | None:
+        """SKYPIEA_ADMIN_TOKEN, else Secret skypiea-admin/admin-token in the namespace."""
+        if self._token is None:
+            tok = os.environ.get("SKYPIEA_ADMIN_TOKEN") or None
+            if tok is None:
+                try:
+                    sec = self.core.read_namespaced_secret(ADMIN_SECRET, self.namespace)
+                    raw = (sec.data or {}).get(ADMIN_KEY)
+                    tok = base64.b64decode(raw).decode() if raw else None
+                except Exception:  # no Secret, or no RBAC to read it
+                    tok = None
+            self._token = tok or ""
+        return self._token or None
 
     # ---- raw proxy ----
     def _proxy(self, kind: str, name: str, port: int, path: str, method: str = "GET",
-               body: Any = None) -> tuple[int, Any]:
+               body: Any = None, extra: dict[str, str] | None = None) -> tuple[int, Any]:
         url = f"/api/v1/namespaces/{self.namespace}/{kind}/{name}:{port}/proxy/{path.lstrip('/')}"
         # kubernetes-client >= 33: serialize (adds host + auth from the kubeconfig), then send
         method_, full_url, headers, body_, post = self.api.param_serialize(
             method, url, header_params={"Content-Type": "application/json",
-                                        "Accept": "application/json"},
+                                        "Accept": "application/json", **(extra or {})},
             body=body, auth_settings=["BearerToken"])
         try:
             resp = self.api.call_api(method_, full_url, header_params=headers, body=body_,
@@ -97,10 +123,22 @@ class KubeBackend:
                                              label_selector="skypiea.io/tool=skypiea-gateway")
         return [p.metadata.name for p in pods.items if p.status.phase == "Running"]
 
+    def _admin_get(self, pod: str, path: str) -> tuple[int, Any]:
+        tok = self.admin_token()
+        status, data = self._proxy("pods", pod, 8080, path,
+                                   extra={"X-Admin-Token": tok} if tok else None)
+        if status in (401, 403):
+            raise AdminTokenError(
+                f"gateway {pod} refused {path.split('/')[2]} (HTTP {status}): session "
+                f"introspection needs the admin token. Set SKYPIEA_ADMIN_TOKEN, or let the CLI "
+                f"read Secret {ADMIN_SECRET} in {self.namespace} (kubectl get secret "
+                f"{ADMIN_SECRET} must work with this kubeconfig).")
+        return status, data
+
     def session(self, sid: str) -> dict[str, Any] | None:
         # sessions live in one gateway replica: ask every gateway pod
         for pod in self._gateway_pods():
-            status, data = self._proxy("pods", pod, 8080, f"/v1/sessions/{sid}")
+            status, data = self._admin_get(pod, f"/v1/sessions/{sid}")
             if status == 200:
                 return {**data, "gateway_pod": pod}
         return None
@@ -108,7 +146,7 @@ class KubeBackend:
     def sessions(self) -> list[dict[str, Any]]:
         out = []
         for pod in self._gateway_pods():
-            status, data = self._proxy("pods", pod, 8080, "/v1/sessions")
+            status, data = self._admin_get(pod, "/v1/sessions")
             if status == 200:
                 out += [{**s, "gateway_pod": pod} for s in data["sessions"]]
         return out

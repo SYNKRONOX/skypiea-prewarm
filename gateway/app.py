@@ -17,8 +17,10 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import hmac
 import json
 import logging
+import secrets
 import time
 import uuid
 from dataclasses import dataclass, field
@@ -49,6 +51,14 @@ log = logging.getLogger("skypiea.gateway")
 SESSION_HEADER = "Mcp-Session-Id"
 ORACLE_HEADER = "X-Skypiea-Oracle"
 PASS_HEADERS = ("content-type", "accept", "mcp-protocol-version")
+ADMIN_HEADER = "X-Admin-Token"
+
+
+def new_session_id() -> str:
+    """A gateway-assigned Mcp-Session-Id: 256 bits from the OS CSPRNG, URL-safe ASCII. The id
+    is the capability for POST/DELETE /mcp on that session (SECURITY.md), so it must not be
+    guessable."""
+    return secrets.token_urlsafe(32)
 
 
 @dataclass
@@ -71,6 +81,9 @@ class GatewayConfig:
     # instead of waiting for the readiness probe (periodSeconds 1) and the EndpointSlice update.
     early_connect: bool = False
     early_poll_s: float = 0.05
+    # GET /v1/sessions(/{sid}) need this token in X-Admin-Token (env ADMIN_TOKEN, from a
+    # Secret). None = those endpoints are disabled (403): the secure default (issue #7).
+    admin_token: str | None = None
     gateway_id: str = field(default_factory=lambda: uuid.uuid4().hex[:8])
 
 
@@ -401,7 +414,7 @@ class Gateway:
                                                                   "version": "0.1.0"}}}
 
     async def mcp(self, request: Request) -> Response:
-        sid = request.headers.get(SESSION_HEADER) or uuid.uuid4().hex
+        sid = request.headers.get(SESSION_HEADER) or new_session_id()
         hdr = {SESSION_HEADER: sid}
         if request.method == "DELETE":
             self.sessions.end(sid)
@@ -446,14 +459,32 @@ class Gateway:
                                  "result": {"resultType": "complete"}}, headers=hdr)
         return _rpc_error(body.get("id"), -32601, f"method not supported: {method}")
 
-    async def list_sessions(self, _: Request) -> Response:
+    def _admin_denied(self, request: Request) -> Response | None:
+        """Session introspection is admin-only (issue #7, GHSA-r23c-9c4p-2vxp): it lists the
+        ids that act as capabilities for POST/DELETE /mcp. Same mechanism as the predictor's
+        /reload: ADMIN_TOKEN unset -> 403 (disabled); missing/wrong X-Admin-Token -> 401
+        (constant-time compare, checked before any lookup, so no existence oracle)."""
+        if not self.cfg.admin_token:
+            return JSONResponse({"error": "session introspection disabled (no ADMIN_TOKEN)"},
+                                status_code=403)
+        got = request.headers.get(ADMIN_HEADER, "")
+        if not hmac.compare_digest(got.encode("utf-8", "replace"),
+                                   self.cfg.admin_token.encode("utf-8")):
+            return JSONResponse({"error": "bad admin token"}, status_code=401)
+        return None
+
+    async def list_sessions(self, request: Request) -> Response:
+        if (deny := self._admin_denied(request)) is not None:
+            return deny
         return JSONResponse({"sessions": [
             {"session_id": k, "calls": len(v.calls), "ended": v.ended_at is not None}
             for k, v in self.sessions._s.items()]})
 
     async def get_session(self, request: Request) -> Response:
         """Calls and recent predictor decisions of one session (metadata only). Available until
-        the session is purged (NFR-6)."""
+        the session is purged (NFR-6). Admin token required."""
+        if (deny := self._admin_denied(request)) is not None:
+            return deny
         s = self.sessions._s.get(request.path_params["sid"])
         if s is None:
             return JSONResponse({"error": "unknown or purged session"}, status_code=404)
