@@ -53,3 +53,59 @@ def test_admin_token_reaches_only_the_gateway(extra):
     assert env["ADMIN_TOKEN"]["valueFrom"]["secretKeyRef"] == {"name": "skypiea-admin",
                                                                "key": "admin-token"}
     assert "value" not in env["ADMIN_TOKEN"]
+
+
+# ---------------- opt-in NetworkPolicy ----------------
+
+GW_CTL = [{"podSelector": {"matchLabels": {"skypiea.io/tool": "skypiea-gateway"}}},
+          {"podSelector": {"matchLabels": {"skypiea.io/tool": "skypiea-controller"}}}]
+
+
+def policies(*args: str) -> dict[str, dict]:
+    return {d["metadata"]["name"]: d for d in render(*args) if d["kind"] == "NetworkPolicy"}
+
+
+def selected(pol: dict) -> set[str]:
+    (expr,) = pol["spec"]["podSelector"]["matchExpressions"]
+    assert expr["key"] == "skypiea.io/tool" and expr["operator"] == "In"
+    return set(expr["values"])
+
+
+def test_network_policy_is_off_by_default():
+    assert policies() == {}
+    assert policies(*MODEL) == {}
+
+
+def test_network_policy_restricts_tools_and_predictors_to_gateway_and_controller():
+    on = ("--set", "networkPolicy.enabled=true", *MODEL)
+    docs = render(*on)
+    pods = {d["spec"]["template"]["metadata"]["labels"]["skypiea.io/tool"] for d in docs
+            if d["kind"] == "Deployment"}
+    pols = policies(*on)
+    assert set(pols) == {"skypiea-tools-ingress", "skypiea-predictor-ingress"}
+    tools = selected(pols["skypiea-tools-ingress"])
+    assert tools and tools <= pods
+    assert selected(pols["skypiea-predictor-ingress"]) == {"skypiea-predictor", "skypiea-model"}
+    covered = tools | selected(pols["skypiea-predictor-ingress"])
+    # every tool and predictor Deployment is covered; only platform / monitoring are not
+    assert pods - covered == {"skypiea-gateway", "skypiea-controller", "skypiea-prometheus",
+                              "skypiea-grafana"}
+    for p in pols.values():
+        assert p["spec"]["policyTypes"] == ["Ingress"]
+        assert p["spec"]["ingress"] == [{"from": GW_CTL}]
+
+
+def test_network_policy_extra_sources_are_appended():
+    extra = '[{"podSelector":{"matchLabels":{"skypiea.io/tool":"skypiea-prometheus"}}}]'
+    pols = policies("--set", "networkPolicy.enabled=true", "--set-json",
+                    f"networkPolicy.extraFrom={extra}")
+    for p in pols.values():
+        assert p["spec"]["ingress"][0]["from"][:2] == GW_CTL
+        assert p["spec"]["ingress"][0]["from"][2]["podSelector"]["matchLabels"] == {
+            "skypiea.io/tool": "skypiea-prometheus"}
+
+
+def test_chart_lints_with_network_policy_on():
+    r = subprocess.run(["helm", "lint", str(CHART), "--set", "networkPolicy.enabled=true"],
+                       capture_output=True, text=True)
+    assert r.returncode == 0, r.stdout + r.stderr

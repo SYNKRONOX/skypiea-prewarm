@@ -114,6 +114,15 @@ platform:
       requests: {cpu: 100m, memory: 128Mi}
       limits: {cpu: "1", memory: 512Mi}
 
+# Opt-in NetworkPolicy (templates/networkpolicy.yaml): ingress to tool pods and predictor pods
+# only from the gateway and the controller. Off by default. Needs a CNI that enforces
+# NetworkPolicy; enforcement was NOT verified on kind here (SECURITY.md). With it on, add
+# other sources you need (Prometheus scraping, the E0 probe, API-server proxy) as `from` peers:
+#   extraFrom: [{podSelector: {matchLabels: {skypiea.io/tool: skypiea-prometheus}}}]
+networkPolicy:
+  enabled: false
+  extraFrom: []
+
 # Monitoring: Prometheus (scrapes every pod with a skypiea.io/metrics-port annotation in this
 # namespace) and Grafana with the Skypiea dashboard provisioned (files/skypiea-dashboard.json).
 # ClusterIP only: kubectl port-forward svc/skypiea-grafana 3000 (anonymous Viewer). The admin
