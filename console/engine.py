@@ -33,6 +33,7 @@ import io
 import json
 import math
 import re
+import secrets
 import time
 import uuid
 from pathlib import Path
@@ -299,7 +300,9 @@ class Conversation:
         self.task, self.llm, self.stacks, self.poller = task, llm, stacks, poller
         self.publish, self.settings, self.clock = publish, settings, clock
         self.id = uuid.uuid4().hex[:12]
-        self.sid = uuid.uuid4().hex
+        # one Mcp-Session-Id for both stacks (their calls line up); it is the session's
+        # capability on both gateways, so as strong as the gateway's own ids (SECURITY.md)
+        self.sid = secrets.token_urlsafe(32)
         make = mcp_factory or (lambda url: McpClient(url, timeout_s=180))
         self.clients = {k: make(st.s.mcp_url) for k, st in stacks.items()}
         for c in self.clients.values():

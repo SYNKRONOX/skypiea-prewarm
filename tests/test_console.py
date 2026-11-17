@@ -536,3 +536,17 @@ def test_hint_change_is_recorded_with_its_sender_and_flagged_mid_conversation() 
     ev = [e for e in seen if e["type"] == "hint_change"]
     assert len(ev) == 2 and all(e["mid_conversation"] for e in ev)
     assert con.snapshot()["conversation"]["hint_changes"] == ch
+
+
+def test_conversation_session_id_is_unguessable() -> None:
+    """Issue #7 follow-up (found on the live cluster): the console picks ONE Mcp-Session-Id for
+    both stacks (so their calls line up), and that id is the session's capability on both
+    gateways. It must be as strong as the ids the gateway assigns: 256 bits from the OS CSPRNG
+    (secrets.token_urlsafe(32), 43 characters), not uuid4().hex (122 random bits)."""
+    import re
+    conv, gws, _, _ = run_conversation()
+    assert re.fullmatch(r"[A-Za-z0-9_-]{43}", conv.sid), conv.sid
+    sent = {sid for g in gws.values() for sid, _, _ in g.seen}
+    assert sent == {conv.sid}                       # both stacks, the same strong id
+    others = {run_conversation()[0].sid for _ in range(3)}
+    assert conv.sid not in others and len(others) == 3
