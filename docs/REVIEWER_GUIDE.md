@@ -167,5 +167,5 @@ directory shown as `~`). Known gaps: [`KNOWN_ISSUES.md`](KNOWN_ISSUES.md).
   make them repeatable on one machine, but model and Ollama versions change the text). kind
   timings depend on your laptop and are a lower bound.
 - Everything on kind is a **demo run, not a result**; the Skypiea Air world is **synthetic**;
-  the Live Console has **no authentication** and must stay on 127.0.0.1 (`../SECURITY.md`).
+  the Live Console has **no login** and must stay on 127.0.0.1 (`../SECURITY.md`).
 - Full list: README "Known limitations" and [`limits.md`](limits.md).

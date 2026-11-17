@@ -125,10 +125,10 @@ message took about 39-43 s to type, longer than TTL 30 s + 5 s), so the first ca
 (`results/live_console_leadtime/tables.md`, README "Lead-time grid").
 
 **19. Is the console secure?** It is a local demo with no authentication, bound to 127.0.0.1
-(`console/app.py`, `tests/test_console_security.py`). A known gap: it does not check the
-`Origin` of requests, so a web page in the same browser could change settings
-(`docs/handoff/REQUESTS_W2.md` R9; an expected-fail test shows it). `SECURITY.md` says how to
-run it safely.
+(`console/app.py`, `tests/test_console_security.py`). It used to accept cross-site requests
+(`docs/handoff/REQUESTS_W2.md` R9); since `fix/redteam-1` it checks Host on every request and
+Origin plus an `X-Skypiea-Client` header on every change (`console/xsite.py`). `SECURITY.md`
+says how to run it safely.
 
 **20. Is the LLM's text checked?** Only by simple rules: "done" claims against the writes that
 succeeded, and every price against tool results (`console/truth.py`, `docs/LIVE_DEMO.md`). The
@@ -159,5 +159,5 @@ soak on the cluster (NFR-4). (b) More AWS sessions per policy, so the keep-alive
 either separates or is a clear tie. (c) Measure exactly 2 starts at once. (d) The FR-9 forced
 race trial rate. (e) End-to-end NFR-1/NFR-2 on AWS. (f) A hybrid of keep-alive and prediction,
 and the lambda sweep past 100 (`docs/VIVA.md`, question 39). (g) For the demo: a held-out
-correctness suite written by someone who did not tune the guardrails, and fixing the
-console's cross-site gap (R9).
+correctness suite written by someone who did not tune the guardrails (the console's cross-site
+gap, R9, is fixed on `fix/redteam-1`).

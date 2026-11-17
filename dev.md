@@ -42,7 +42,7 @@ Full description, failure behaviour and live checks:
 
 | Component | Port | Endpoints | Metrics (`GET /metrics`) |
 |---|---|---|---|
-| Gateway (`skypiea-gateway`) | container 8080, Service 80 | `POST /mcp`, `DELETE /mcp`, `GET /healthz`, `GET /v1/sessions`, `GET /v1/sessions/{sid}` (used by the CLI), `POST /v1/hint` (only with `SKYPIEA_TURN_HINT=1`) | `skypiea_gateway_calls_total{tool,cold}`, `_added_latency_seconds{tool}`, `_hold_ms{tool}`, `_prewarm_hits_total` / `_misses_total`, `_predictor_latency_seconds`, `_predictor_errors_total`, `_sessions`, ... |
+| Gateway (`skypiea-gateway`) | container 8080, Service 80 | `POST /mcp`, `DELETE /mcp`, `GET /healthz`, `GET /v1/sessions`, `GET /v1/sessions/{sid}` (CLI and console; need `X-Admin-Token` = Secret `skypiea-admin`, disabled without `ADMIN_TOKEN`), `POST /v1/hint` (only with `SKYPIEA_TURN_HINT=1`) | `skypiea_gateway_calls_total{tool,cold}`, `_added_latency_seconds{tool}`, `_hold_ms{tool}`, `_prewarm_hits_total` / `_misses_total`, `_predictor_latency_seconds`, `_predictor_errors_total`, `_sessions`, ... |
 | Controller (`skypiea-controller`) | 8081 (`api`) | `POST /v1/warm`, `POST /v1/inflight`, `GET /v1/state` (used by the CLI and the console) | `skypiea_warm_pool_size{tool}`, `skypiea_pod_seconds_idle_total`, `skypiea_scale_events_total`, `skypiea_scale_refused_total`, `skypiea_scale_errors_total`, queue metrics |
 | Predictor service | 8090 | `POST /decide`, `GET /healthz`, `POST /reload`, `POST /rollback` (admin token) | `skypiea_predictor_requests_total`, `_latency_seconds`, `_degraded_total`, `_reloads_total`, `_model_info` |
 | Predictor placeholder (stand-in policies) | 8080 | `POST /decide`, `POST /admin/policy` | - |
@@ -176,8 +176,10 @@ default one ([`docs/TESTING.md`](docs/TESTING.md)). The `make live` ports are fi
   polls both controllers. API: `/api/state`, `/events` (SSE), `/api/chat`, `/api/autopilot`,
   `/api/export.csv`, `/api/<action>`. Docs: [`docs/LIVE_CONSOLE.md`](docs/LIVE_CONSOLE.md),
   [`docs/LIVE_DEMO.md`](docs/LIVE_DEMO.md).
-- Binds to 127.0.0.1 only and has **no authentication**: every `POST /api/...` changes state
-  (hint, policy, model, predictor kill/restart, reset). Keep it on loopback ([`SECURITY.md`](SECURITY.md)).
+- Binds to 127.0.0.1 only and has **no login**: every `POST /api/...` changes state
+  (hint, policy, model, predictor kill/restart, reset). `console/xsite.py` refuses a foreign
+  `Host` on every request, and a `POST` without the console's own `Origin` and an
+  `X-Skypiea-Client` header (R9). Keep it on loopback ([`SECURITY.md`](SECURITY.md)).
 - Model toggle (`console/models.py`): local Ollama models with tool calling (`/api/tags`,
   `/api/show`); qwen3 models run with thinking disabled. Every request uses temperature 0 and
   a fixed seed (`console/llm_stream.py`). Default `llama3.1:8b`; install the optional ones with

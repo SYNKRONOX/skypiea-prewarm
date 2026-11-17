@@ -305,8 +305,9 @@ language, is in [`docs/limits.md`](docs/limits.md).
   ([`docs/SUITE_BEFORE_AFTER.md`](docs/SUITE_BEFORE_AFTER.md)).
 - **The Skypiea Air world is synthetic.** Only the airport codes, city names and coordinates
   are real; flights, fares, customers and the demo-world date (11 January 2027) are generated.
-- **The Live Console has no authentication.** It binds to 127.0.0.1 only; anything that can
-  reach that port can change its settings ([`SECURITY.md`](SECURITY.md)).
+- **The Live Console has no login.** It binds to 127.0.0.1 only and refuses requests from
+  other web sites (Host, Origin and header checks); a local process that can reach that port
+  can still change its settings ([`SECURITY.md`](SECURITY.md)).
 - **Only Linux x86-64 and Windows + WSL2 are tested.** macOS and arm64 are untested.
 - **`make live` uses fixed local ports** (8090, 3001, 18180-18182, 18280-18283); it refuses to
   start when the console port is taken. `make demo` ports can be moved (`PF_BASE`, `GRAFANA_PORT`).

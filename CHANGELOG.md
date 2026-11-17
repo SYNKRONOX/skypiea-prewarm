@@ -3,6 +3,25 @@
 Each entry names the tag or branch it describes. Numbers are in the files linked from
 [`README.md`](README.md); none are repeated here.
 
+## Unreleased: security fixes (branch `fix/redteam-1`, not merged)
+
+- **Gateway session introspection needs the admin token** (issue #7, GHSA-r23c-9c4p-2vxp).
+  `GET /v1/sessions` and `GET /v1/sessions/{sid}` were unauthenticated: any caller on the
+  cluster network could list session ids, read calls and decisions, and use an id to append
+  calls (`POST /mcp`) or end the session (`DELETE /mcp`). They now need `X-Admin-Token`
+  (`ADMIN_TOKEN`; unset = disabled, 403). The chart generates Secret `skypiea-admin` and
+  passes it only to the gateway; `skypiea sessions/trace/explain` and the Live Console read it
+  with the operator's kubeconfig. Gateway-assigned `Mcp-Session-Id`s are 256-bit random
+  (`secrets.token_urlsafe(32)`, was `uuid4().hex`). `make review` Tier 1 checks it on the
+  cluster (`demo/session_auth_check.sh`). MCP protocol unchanged.
+- **Opt-in NetworkPolicy** (`networkPolicy.enabled`, default `false`): ingress to tool and
+  predictor pods only from the gateway and the controller. Enforcement NOT verified on kind.
+- **Live Console refuses cross-site requests** (REQUESTS_W2 R9): Host allowlist, same-origin
+  check and a required `X-Skypiea-Client` header on every state-changing request, no CORS
+  headers. Scripts that drive the console send Origin and the header.
+- Docs: `SECURITY.md` lists every endpoint with its auth requirement and the trust boundary;
+  `docs/KNOWN_ISSUES.md`, `docs/PRD_STATUS.md` (FR-7, NFR-6) say what was exposed before.
+
 ## v1.2: lead time, the support console, red-team readiness
 
 **Red-team readiness (branch `feat/redteam-ready`):**
