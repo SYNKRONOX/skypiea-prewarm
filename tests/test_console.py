@@ -268,13 +268,12 @@ def test_poller_states_warm_time_and_contention() -> None:
 
 # ---------------------------------------------------------------- web app
 def test_app_routes_offline() -> None:
-    from starlette.testclient import TestClient
-
     from console.app import Console, make_app
+    from tests.console_client import console_client
 
     c = Console(ScriptedStreamingLLM([]), base=FakeStack("base"), pred=FakeStack("pred"),
                 start_poller=False)
-    with TestClient(make_app(c)) as cl:
+    with console_client(make_app(c)) as cl:
         r = cl.get("/")
         assert r.status_code == 200 and "Skypiea Live Console" in r.text
         assert "http" not in r.text.replace("http-equiv", "")   # no external resources
@@ -496,13 +495,12 @@ def test_turn_records_export_without_text() -> None:
 
 
 def test_app_hint_modes_and_typing_route() -> None:
-    from starlette.testclient import TestClient
-
     from console.app import Console, make_app
+    from tests.console_client import console_client
 
     c = Console(ScriptedStreamingLLM([]), base=FakeStack("base"), pred=FakeStack("pred"),
                 start_poller=False)
-    with TestClient(make_app(c)) as cl:
+    with console_client(make_app(c)) as cl:
         assert cl.post("/api/hint", json={"mode": "typing"}).json()["settings"]["hint_mode"] \
             == "typing"
         assert cl.post("/api/hint", json={"mode": "later"}).status_code == 400
@@ -514,9 +512,8 @@ def test_app_hint_modes_and_typing_route() -> None:
 
 
 def test_hint_change_is_recorded_with_its_sender_and_flagged_mid_conversation() -> None:
-    from starlette.testclient import TestClient
-
     from console.app import Console, make_app
+    from tests.console_client import console_client
     con = Console(llm=None, base=FakeStack("base"), pred=FakeStack("pred"),
                   start_poller=False,
                   mcp_factory=factory({"base": FakeGW("base"), "pred": FakeGW("pred")}))
@@ -527,7 +524,7 @@ def test_hint_change_is_recorded_with_its_sender_and_flagged_mid_conversation() 
         seen.append(ev)
         await orig(ev)
     con.hub.publish = pub
-    with TestClient(make_app(con)) as tc:
+    with console_client(make_app(con)) as tc:
         con.new_conversation()
         con.conv.turn = 3                       # a conversation under way
         r = tc.post("/api/hint", json={"mode": "typing"}, headers={"X-Skypiea-Client": "t1"})

@@ -20,7 +20,11 @@ from pathlib import Path
 
 import httpx
 
-URL = "http://127.0.0.1:8090"
+from console.xsite import console_url, script_headers
+
+URL = console_url()             # http://127.0.0.1:$CONSOLE_PORT (default 8090)
+# the console refuses POSTs without its own Origin and X-Skypiea-Client (R9)
+HEADERS = script_headers("demo.console_run")
 
 
 class Listener(threading.Thread):
@@ -83,7 +87,7 @@ def main(argv: list[str] | None = None) -> int:
     out.mkdir(parents=True, exist_ok=True)
     lis = Listener()
     lis.start()
-    with httpx.Client(timeout=30) as c:
+    with httpx.Client(timeout=30, headers=HEADERS) as c:
         if settings(c)["demo"] != a.demo:
             c.post(f"{URL}/api/demo", json={"name": a.demo})
             time.sleep(1)

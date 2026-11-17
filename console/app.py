@@ -41,6 +41,7 @@ from console import truth
 from console.engine import TURN_FIELDS, Conversation, pricing, replay_plan, to_csv, totals
 from console.poller import Poller
 from console.stacks import BASE, BASELINE_POLICIES, PRED, StackClient, kubectl
+from console.xsite import CrossSiteGuard, console_port
 
 ROOT = Path(__file__).resolve().parent.parent
 STATIC = Path(__file__).resolve().parent / "static"
@@ -538,7 +539,10 @@ class Console:
             await self.busy(None)
 
 
-def make_app(console: Console) -> Starlette:
+def make_app(console: Console, port: int | None = None) -> CrossSiteGuard:
+    """The console app behind the cross-site guard (console/xsite.py, R9): Host must be
+    127.0.0.1 / localhost / [::1] with this port; POSTs need the console's own Origin and the
+    X-Skypiea-Client header. Port: CONSOLE_PORT (default 8090)."""
     c = console
 
     async def index(_: Request) -> Response:
@@ -765,7 +769,7 @@ def make_app(console: Console) -> Starlette:
         for t in list(c.tasks):
             t.cancel()
 
-    return Starlette(routes=[
+    return CrossSiteGuard(Starlette(routes=[
         Route("/", index), Route("/events", events), Route("/api/state", state),
         Route("/api/personas", personas_ep), Route("/api/models", models_ep),
         Route("/api/report", report_ep), Route("/api/story", story_ep, methods=["POST"]),
@@ -775,7 +779,7 @@ def make_app(console: Console) -> Starlette:
         Route("/api/export.csv", export), Route("/api/export_turns.csv", export),
         Route("/api/{name}", action, methods=["POST"]),
         Mount("/static", NoCacheStatic(directory=STATIC)),
-    ], lifespan=lifespan)
+    ], lifespan=lifespan), port or console_port())
 
 
 def main() -> None:
@@ -786,7 +790,7 @@ def main() -> None:
     os.environ.setdefault("AGENT_BASE_URL", "http://localhost:11434/v1")
     os.environ.setdefault("AGENT_MODEL", "llama3.1:8b")
     console = Console(StreamingLLM.from_env(), os.environ.get("KIND_CTX", "kind-skypiea"))
-    port = int(os.environ.get("CONSOLE_PORT", "8090"))
+    port = console_port()
     print(f"Skypiea Live Console: http://127.0.0.1:{port}  (LLM {console.llm.model} at "
           f"{console.llm.base_url})", flush=True)
-    uvicorn.run(make_app(console), host="127.0.0.1", port=port, log_level="warning")
+    uvicorn.run(make_app(console, port), host="127.0.0.1", port=port, log_level="warning")

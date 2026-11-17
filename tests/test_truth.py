@@ -94,15 +94,14 @@ def test_truth_in_the_engine_agree_disagree_and_correction() -> None:
 
 def test_booking_endpoint_and_chat_view() -> None:
     pytest.importorskip("starlette")
-    from starlette.testclient import TestClient
-
     from console.app import Console, chat_view, make_app
     from console.llm_stream import ScriptedStreamingLLM
+    from tests.console_client import console_client
     from tests.test_console import FakeStack
 
     c = Console(ScriptedStreamingLLM([]), base=FakeStack("base"), pred=FakeStack("pred"),
                 start_poller=False)
-    with TestClient(make_app(c)) as cl:
+    with console_client(make_app(c)) as cl:
         r = cl.get("/api/skyair/state").json()
         assert r["writes"] == [] and r["truth"] == []
         assert "Booking record" in cl.get("/").text

@@ -56,11 +56,10 @@ def test_act3_kills_after_turn_one_and_restarts(monkeypatch) -> None:
 
 
 def test_story_route_and_codefix_act(monkeypatch) -> None:
-    from starlette.testclient import TestClient
-
     from console.app import make_app
+    from tests.console_client import console_client
     c, _ = _console(monkeypatch, "codefix")
-    with TestClient(make_app(c)) as cl:
+    with console_client(make_app(c)) as cl:
         s = cl.get("/api/state").json()
         assert s["demo"]["agent"] == "Dev assistant" and len(s["demo"]["stories"]) == 1
         assert cl.post("/api/story", json={"act": 3}).status_code == 400

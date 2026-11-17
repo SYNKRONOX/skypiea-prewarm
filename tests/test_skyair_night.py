@@ -225,9 +225,8 @@ def test_proof_panel_values_equal_the_stub_gateways_record() -> None:
 
 def test_autopilot_accepts_suite_cases() -> None:
     pytest.importorskip("starlette")
-    from starlette.testclient import TestClient
-
     from console.app import Console, make_app
+    from tests.console_client import console_client
     from tests.test_console import FakeGW, FakeStack, factory
     con = Console(llm=None, base=FakeStack("base"), pred=FakeStack("pred"), start_poller=False,
                   mcp_factory=factory({"base": FakeGW("base"), "pred": FakeGW("pred")}))
@@ -236,7 +235,7 @@ def test_autopilot_accepts_suite_cases() -> None:
     async def autopilot(turns=None, script=None):
         played.append(script)
     con.autopilot = autopilot
-    with TestClient(make_app(con)) as tc:
+    with console_client(make_app(con)) as tc:
         assert tc.post("/api/autopilot", json={"scenario": "suite:nope"}).status_code == 400
         r = tc.post("/api/autopilot", json={"scenario": "suite:transfer__typos"})
         assert r.status_code == 202

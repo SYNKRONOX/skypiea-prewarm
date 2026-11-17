@@ -33,6 +33,7 @@ from pathlib import Path
 from typing import Any
 
 from console.engine import nearest_rank
+from console.xsite import console_url, script_headers
 
 
 def report(conv: Any, scenario: str | None) -> dict[str, Any]:
@@ -94,7 +95,7 @@ def report(conv: Any, scenario: str | None) -> dict[str, Any]:
 
 
 # ---------------------------------------------------------------- driver (HTTP)
-URL = "http://127.0.0.1:8090"
+URL = console_url()             # http://127.0.0.1:$CONSOLE_PORT (default 8090)
 
 
 def _wait(cond, timeout_s: float, what: str) -> None:
@@ -107,7 +108,7 @@ def _wait(cond, timeout_s: float, what: str) -> None:
 
 def run(models: list[str], scenarios: list[str], reps: int, out: Path, hint: str) -> list[dict]:
     import httpx
-    c = httpx.Client(base_url=URL, timeout=60, headers={"X-Skypiea-Client": "console.bakeoff"})
+    c = httpx.Client(base_url=URL, timeout=60, headers=script_headers("console.bakeoff"))
 
     def st() -> dict:
         return c.get("/api/state").json()
@@ -153,7 +154,7 @@ def run_stories(models: list[str], demo: str, out: Path,
     import httpx
 
     from agent.tasks.stories import stories
-    c = httpx.Client(base_url=URL, timeout=60, headers={"X-Skypiea-Client": "console.bakeoff"})
+    c = httpx.Client(base_url=URL, timeout=60, headers=script_headers("console.bakeoff"))
 
     def st() -> dict:
         return c.get("/api/state").json()
