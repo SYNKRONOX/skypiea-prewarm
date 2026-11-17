@@ -227,3 +227,56 @@ was not re-run in the clone: port 8090 is held by another checkout's console
 **Assumptions:** the task listed 13 openers while saying "12": all 13 kept. The pass rule is
 the one given (no tool-call JSON, no unknown tool, natural language) plus "database unchanged"
 and "no system prompt in the reply"; tool calls on openers are reported separately.
+
+## fix/redteam-1 (2026-11-17, branch from origin/main 8f81eb7; not pushed, not merged)
+
+Red-team fix for issue #7 / GHSA-r23c-9c4p-2vxp (unauthenticated gateway session
+introspection) and REQUESTS_W2 R9 (console cross-site requests). The `rt-baseline` tag was not
+touched.
+
+| Step | Commit | What |
+|---|---|---|
+| 1 gateway fix | `e5de779` | Failing test first (`tests/test_gateway_session_auth.py`; unauthenticated `GET /v1/sessions` returned 200 with the victim id). `GET /v1/sessions(/{sid})` now need `X-Admin-Token` (`ADMIN_TOKEN`, constant-time compare, the predictor's mechanism); unset → 403 (disabled), missing/wrong → 401 before any lookup. Gateway-assigned ids: `secrets.token_urlsafe(32)` (256 bits; was `uuid4().hex`, 122 bits). Chart: Secret `skypiea-admin` (generated, kept on upgrade), `secretKeyRef` in the gateway only. Callers: CLI (`sessions`/`trace`/`explain`: env or Secret via kubeconfig, clear error on refusal), Live Console (`StackClient` reads each stack's Secret with kubectl, re-reads once on 401). `make review` Tier 1 gets a `session-auth` step (`demo/session_auth_check.sh`). |
+| 2 NetworkPolicy | `70758a2` | `templates/networkpolicy.yaml`, `networkPolicy.enabled: false` by default: ingress to the 16 tool servers and to `skypiea-predictor`/`skypiea-model` only from gateway and controller; `extraFrom` for more peers. `helm template` renders 0 policies by default, 2 when on; `helm lint` passes. |
+| 3 R9 | `6911b07` | `console/xsite.py` pure-ASGI guard: Host allowlist on every request; Origin = own origin and non-empty `X-Skypiea-Client` on every non-GET/HEAD; no CORS headers. xfail test flipped to pass; 24 new cases (wrong Host, cross-origin, missing Origin/header, preflight, normal use from 127.0.0.1/localhost/[::1]). `demo/console_run.py`, `console.bakeoff` send Origin + header. |
+| 4 docs | `233363e` | `SECURITY.md` (trust boundary, every endpoint with its auth, what is fixed, what is still open), KNOWN_ISSUES, CHANGELOG, PRD_STATUS FR-7/NFR-6 (before the fix an in-cluster caller could list, read, append to and terminate sessions), README, dev.md, VIVA_QA, REVIEWER_GUIDE, LIVE_CONSOLE, REQUESTS_W2 R9 marked done. |
+
+**Checks run:** `make test` 643 passed, 4 skipped (no xfail left); `make lint` clean;
+`make check-sizes` OK; `make check-claims` 0 mismatches. `MODE=test make review`: Tier 0 PASS
+(doctor-test, setup, test, lint, check-sizes, check-claims).
+
+**Not run: `make review` Tier 1, `make demo`, `make live`, and enforcement of the
+NetworkPolicy.** The Docker daemon on this machine is stopped and starting it needs sudo
+(`make doctor DOCTOR_MODE=demo`: "Docker is installed but the daemon is not reachable").
+So the chart change (new Secret, `ADMIN_TOKEN` env), the CLI token path through the API-server
+pod proxy, the console reading the Secret from a real stack, and `demo/session_auth_check.sh`
+are tested with fakes and `helm template` only, not on a cluster. To finish:
+`sudo systemctl start docker`, then `make review` (Tier 0 + Tier 1 on its own cluster) and
+`make live`.
+
+**Live console smoke (own port 18990, no stacks, LLM qwen3:8b via Ollama):** headless Chrome
+driven over CDP clicked every control (details, theme, help, mirror, hint mode, policy, chat
+send, auto-play start/stop, replay, reset, kill/restart predictor, lookahead, story, demo,
+model). 22 page POSTs, 0 refused by the guard; each reached its handler (202/200). Errors after
+that came from the missing stacks, not the guard: `/api/policy` 500 (stub predictor not
+reachable), demo/model 409 while `reset` waited for pods, helm/kubectl steps failed. Also opened
+as `http://localhost:18990`: accepted. curl with a foreign Origin, a rebinding Host, no header,
+or a CORS preflight: 403, no `Access-Control-*` headers.
+
+**Assumptions and deviations (flagged):**
+- Disabled = 403 (same as the predictor's `/reload` with no token); a wrong/missing token = 401.
+- Required custom header: the existing `X-Skypiea-Client` (the page already sent it) rather
+  than a new name. Origin is required (not "if present"), stricter than R9 suggested; no
+  Content-Type rule (the custom header already forces a preflight).
+- kind and NetworkPolicy: the task asked to say kind's default CNI does not enforce
+  NetworkPolicy. kind v0.24.0's release notes announce network-policy support
+  (kube-network-policies) and this repo tests kind v0.33.0, so the docs say instead that
+  enforcement was NOT verified on kind or any cluster, and that older kindnet did not enforce
+  it. Nobody should rely on it without checking their CNI.
+- The real predictor (`skypiea-model`) keeps no `ADMIN_TOKEN` (its `/reload` stays disabled);
+  only the gateway gets the Secret.
+- Residuals written down in SECURITY.md "Still open", not fixed: other in-cluster endpoints are
+  unauthenticated (controller `/v1/warm`, stub `/admin/policy`, `POST /mcp` with one's own
+  session); clients may choose their own session ids (replayer: 32 random bits); the predictor
+  receives the raw session id although `services/predictor/schema.py` says "the gateway sends
+  a hash".
