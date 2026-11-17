@@ -245,14 +245,36 @@ touched.
 `make check-sizes` OK; `make check-claims` 0 mismatches. `MODE=test make review`: Tier 0 PASS
 (doctor-test, setup, test, lint, check-sizes, check-claims).
 
-**Not run: `make review` Tier 1, `make demo`, `make live`, and enforcement of the
-NetworkPolicy.** The Docker daemon on this machine is stopped and starting it needs sudo
-(`make doctor DOCTOR_MODE=demo`: "Docker is installed but the daemon is not reachable").
-So the chart change (new Secret, `ADMIN_TOKEN` env), the CLI token path through the API-server
-pod proxy, the console reading the Secret from a real stack, and `demo/session_auth_check.sh`
-are tested with fakes and `helm template` only, not on a cluster. To finish:
-`sudo systemctl start docker`, then `make review` (Tier 0 + Tier 1 on its own cluster) and
-`make live`.
+At first, Tier 1, `make demo` and `make live` could not run: the Docker daemon was stopped. They
+were run on 2026-11-17 once Docker was up (section below).
+
+### Verification on a real cluster (2026-11-17)
+
+Two more fixes came out of it, each with a test:
+
+| Fix | Commit | What |
+|---|---|---|
+| console session id | `5ef2734` | The Live Console sends ONE client-chosen `Mcp-Session-Id` to both gateways, and it was `uuid4().hex` (122 random bits): the session list on the live cluster showed the same 32-hex id on both stacks. That id is the session's capability for `POST`/`DELETE /mcp`, so it is now `secrets.token_urlsafe(32)` like the gateway's ids (`tests/test_console.py::test_conversation_session_id_is_unguessable`; failed before the fix). SECURITY.md had said the console uses the gateway-assigned id; corrected. |
+| session-auth check | `bb56ec4` | The first Tier 1 run passed, but its log showed `demo/session_auth_check.sh` took any `kubectl get --raw` error as "refused": kubectl renders the proxied 401 as "You must be logged in to the server". It also never sent a wrong token. It now port-forwards (loopback) to the gateway pod. It requires the gateway's own 401 ("bad admin token", no session id) for no token and for a wrong token, on `/v1/sessions` and `/v1/sessions/{sid}`. It also checks that only `Deployment/skypiea-gateway` references Secret `skypiea-admin`, through a `secretKeyRef`. `tests/test_session_auth_check.py` (fake kubectl, stub gateway) shows it fails on the pre-fix gateway (200 with ids), on a 401 that is not the gateway's, and on a leaked Secret. If the 401 check is removed, the test fails. |
+
+**`make review` (Tier 0 + Tier 1, own cluster `skypiea-review`):**
+- Run 1 on `a9fb89f`: PASS, 693 s. 643 passed, 4 skipped.
+- Run 2 on `bb56ec4` (the final code): PASS, 672 s. 649 passed, 4 skipped.
+- Every step passed in both runs: doctor-test, setup, test, lint, check-sizes, check-claims, doctor-demo, demo, agent-demo, demo-failures, cli-status, session-auth and clean-up. `make demo` runs inside Tier 1.
+
+**`make live`** (cluster `kind-skypiea`, both stacks, console on 8090, LLM `llama3.1:8b` via Ollama) came up, exit 0. It was run twice; the second run picked up `5ef2734`.
+
+| Check | Result |
+|---|---|
+| (a) `demo/session_auth_check.sh` on a real cluster | PASS in both review runs (Tier 1 `session-auth`, namespace `skypiea-tools`). The stricter version also passes on `skypiea-base` and `skypiea-pred`. |
+| (b) Secret `skypiea-admin`, only the gateway | On both stacks: Opaque, one key `admin-token` (48 characters). Referenced only by `deployments/skypiea-gateway` (and its pod), as `ADMIN_TOKEN` from `secretKeyRef {name: skypiea-admin, key: admin-token}`. No other Deployment, StatefulSet, DaemonSet, Job, CronJob or pod references it. The two stacks have different tokens. Each token survived the second `make live` (`helm upgrade`): Secret uid and token unchanged, compared by hash in one shell, never printed. |
+| (c) CLI through the token path | `skypiea sessions`, `trace <sid>` and `explain <sid>` exit 0 on both stacks. The token comes from the Secret through the kubeconfig. `trace` showed the call table; `explain` showed `stub-scale_to_zero` (base) and the `lgbm-support-aabdfd2` ranking (pred). `SKYPIEA_ADMIN_TOKEN` taken from the Secret is accepted. A wrong one gives exit 1 and "refused sessions (HTTP 401): session introspection needs the admin token…", without the value. |
+| (d) console with both stacks | The console process has no `SKYPIEA_ADMIN_TOKEN*` in its environment, so it reads each stack's Secret with kubectl. During a real chat it got the predictor's decisions and each call's proof from `GET /v1/sessions/{sid}`: 1 `predictor` event with decisions; 1 of 1 calls with `proof`. Its new session ids reach both gateways as 43 characters. Headless Chrome (CDP) used all 38 controls: theme, help, details open/close, mirror, hint mode (enter/typing/off), policy (keep-alive and back), persona chip and message, typed message + Send, topic chip, story "Change a booking", replay last, lookahead 2 and back to 1, auto-play start/stop, kill and restart the predictor, model qwen2.5 and back, demo airline, codefix and back to skyair, reset. The script waits for the console to go idle between actions. Result: 24 POSTs, 0 refused by the guard. Statuses: 202, plus 200 for stopping auto-play; no 4xx/5xx, no page JS exceptions. The settings ended at their defaults. For one POST the CDP log has no headers (Chrome sent the `ExtraInfo` event before the request event); the guard accepted it, so it carried Origin and the header. `.live/console.log` has no token, Secret, 401 or traceback lines. |
+| (e) unauthenticated `GET /v1/sessions`, both gateways | Base and pred: no token → 401 `{"error":"bad admin token"}`; wrong token → 401; right token → 200. `GET /v1/sessions/<unknown>`: 401 / 401 / 404 (the token is checked before the lookup). No refusal contains a session id. 403 ("disabled") was checked on a throwaway pod: the same gateway image with `ADMIN_TOKEN` unset answered 403 `session introspection disabled (no ADMIN_TOKEN)`, with or without a header. The pod was then deleted; the live Deployments were not changed. |
+
+The token was never printed, logged or written to a file. Scripts piped it from the Secret straight into a request header or the CLI's environment. They printed only status codes, key names, lengths and same/different comparisons.
+
+**Still not verified:** NetworkPolicy enforcement. No cluster ran with `networkPolicy.enabled=true`.
 
 **Live console smoke (own port 18990, no stacks, LLM qwen3:8b via Ollama):** headless Chrome
 driven over CDP clicked every control (details, theme, help, mirror, hint mode, policy, chat

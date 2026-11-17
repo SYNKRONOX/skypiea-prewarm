@@ -12,8 +12,10 @@ Each entry names the tag or branch it describes. Numbers are in the files linked
   (`ADMIN_TOKEN`; unset = disabled, 403). The chart generates Secret `skypiea-admin` and
   passes it only to the gateway; `skypiea sessions/trace/explain` and the Live Console read it
   with the operator's kubeconfig. Gateway-assigned `Mcp-Session-Id`s are 256-bit random
-  (`secrets.token_urlsafe(32)`, was `uuid4().hex`). `make review` Tier 1 checks it on the
-  cluster (`demo/session_auth_check.sh`). MCP protocol unchanged.
+  (`secrets.token_urlsafe(32)`, was `uuid4().hex`), and so is the one id the Live Console
+  sends to both stacks (was `uuid4().hex` too). `make review` Tier 1 checks it on the cluster
+  (`demo/session_auth_check.sh`: the gateway's own 401 for no token and a wrong token, and
+  only the gateway references the Secret). MCP protocol unchanged.
 - **Opt-in NetworkPolicy** (`networkPolicy.enabled`, default `false`): ingress to tool and
   predictor pods only from the gateway and the controller. Enforcement NOT verified on kind.
 - **Live Console refuses cross-site requests** (REQUESTS_W2 R9): Host allowlist, same-origin

@@ -104,8 +104,11 @@ deleting the Secret and running `helm upgrade` again (then restart the gateway).
   not data), or change the stub predictor's policy. The opt-in NetworkPolicy narrows who can
   reach tool and predictor pods; it does not cover the gateway or the controller.
 - **Client-chosen session ids.** The gateway accepts any `Mcp-Session-Id` a client sends (the
-  stateless revision has no `initialize` to assign one). The repo's agent and console use the
-  id the gateway assigns. The replayer (`replayer/replay.py`) sends `<run_id>-<8 hex>` (32
+  stateless revision has no `initialize` to assign one). The repo's agent uses the id the
+  gateway assigns. The Live Console chooses one id per conversation and sends it to both
+  stacks (so their calls line up); since `fix/redteam-1` it is `secrets.token_urlsafe(32)`,
+  as strong as the gateway's (before: `uuid4().hex`, 122 random bits; found on the live
+  cluster, `tests/test_console.py::test_conversation_session_id_is_unguessable`). The replayer (`replayer/replay.py`) sends `<run_id>-<8 hex>` (32
   random bits) and the scenario runner (`gateway/scenario_run.py`) `uuid4().hex` (122 random
   bits): fine for replays on a private cluster, but a client that wants its session protected
   must let the gateway assign the id.
