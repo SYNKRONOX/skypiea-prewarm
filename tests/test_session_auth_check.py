@@ -4,7 +4,8 @@ First version: it treated ANY error from `kubectl get --raw .../v1/sessions` as 
 kind the 401 shows only as kubectl's "You must be logged in to the server"), and it never sent
 a wrong token. It now port-forwards to the gateway pod and requires the gateway's own 401 for
 no token AND a wrong token, no session id in the refusal, and the Secret referenced only by the
-gateway. Here: a fake kubectl and a stub gateway on loopback."""
+gateway, the controller (/v1/warm, issue #23) and the stub predictor (/admin/policy, issue #27).
+Here: a fake kubectl and a stub gateway on loopback."""
 from __future__ import annotations
 
 import json
@@ -25,8 +26,16 @@ pytestmark = pytest.mark.skipif(not shutil.which("curl"), reason="needs curl")
 GATEWAY = {"kind": "Deployment", "metadata": {"name": "skypiea-gateway"}, "spec": {"template": {
     "spec": {"containers": [{"env": [{"name": "ADMIN_TOKEN", "valueFrom": {"secretKeyRef": {
         "name": "skypiea-admin", "key": "admin-token"}}}]}]}}}}
-CONTROLLER = {"kind": "Deployment", "metadata": {"name": "skypiea-controller"},
-              "spec": {"template": {"spec": {"containers": [{"env": []}]}}}}
+
+
+def _user(name: str) -> dict:
+    d = json.loads(json.dumps(GATEWAY))
+    d["metadata"]["name"] = name
+    return d
+
+
+TOOL = {"kind": "Deployment", "metadata": {"name": "skypiea-tool-read-file"},
+        "spec": {"template": {"spec": {"containers": [{"env": []}]}}}}
 
 FAKE_KUBECTL = r"""#!/usr/bin/env bash
 # fake kubectl: --context X -n Y <verb> ...
@@ -105,11 +114,16 @@ def test_fails_when_the_401_is_not_the_gateways(run):
     assert r.returncode != 0 and "not the gateway's refusal" in r.stderr
 
 
+def test_passes_with_the_controller_and_predictor_token(run):
+    r = run(workloads=(GATEWAY, _user("skypiea-controller"), _user("skypiea-predictor")))
+    assert r.returncode == 0, r.stderr
+
+
 def test_fails_when_another_workload_gets_the_secret(run):
-    leaky = json.loads(json.dumps(CONTROLLER).replace('"env": []', json.dumps(
+    leaky = json.loads(json.dumps(TOOL).replace('"env": []', json.dumps(
         {"env": [{"name": "X", "valueFrom": {"secretKeyRef": {"name": "skypiea-admin"}}}]})[1:-1]))
-    r = run(workloads=(GATEWAY, leaky))
-    assert r.returncode != 0 and "Deployment/skypiea-controller" in r.stderr
+    r = run(workloads=(GATEWAY, _user("skypiea-controller"), leaky))
+    assert r.returncode != 0 and "Deployment/skypiea-tool-read-file" in r.stderr
 
 
 def test_fails_when_the_gateway_has_no_token_from_the_secret(run):

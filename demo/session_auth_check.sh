@@ -22,12 +22,17 @@ k get secret skypiea-admin >/dev/null || fail "Secret skypiea-admin missing in $
 src=$(k get deploy skypiea-gateway \
       -o jsonpath='{.spec.template.spec.containers[0].env[?(@.name=="ADMIN_TOKEN")].valueFrom.secretKeyRef.name}')
 [ "$src" = skypiea-admin ] || fail "gateway ADMIN_TOKEN does not come from Secret skypiea-admin"
+# the token holders: the gateway (sessions, #7), the controller (/v1/warm, #23) and the stub
+# predictor (/admin/policy, #27); never a tool pod or anything else
 users=$(k get deploy,statefulset,daemonset,job,cronjob -o json | python3 -c '
 import json, sys
 print(" ".join(sorted(o["kind"] + "/" + o["metadata"]["name"]
                for o in json.load(sys.stdin)["items"] if "skypiea-admin" in json.dumps(o["spec"]))))')
-[ "$users" = "Deployment/skypiea-gateway" ] || fail "Secret skypiea-admin referenced by: $users"
-echo "session-auth: Secret skypiea-admin referenced only by Deployment/skypiea-gateway"
+allowed=" Deployment/skypiea-gateway Deployment/skypiea-controller Deployment/skypiea-predictor "
+for u in $users; do
+  case "$allowed" in *" $u "*) ;; *) fail "Secret skypiea-admin referenced by: $u (users: $users)" ;; esac
+done
+echo "session-auth: Secret skypiea-admin referenced only by: $users"
 
 log=$(mktemp); out=$(mktemp)
 k port-forward --address 127.0.0.1 "pod/$pod" :8080 >"$log" 2>&1 & pf=$!

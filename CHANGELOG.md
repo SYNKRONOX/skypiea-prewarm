@@ -13,6 +13,8 @@ with `retest-requested` until the reporting team's retest passes. Tier 0 only on
   (#27) and controller `POST /v1/warm` (#23, #5) need `X-Admin-Token` (Secret `skypiea-admin`,
   now mounted into the stub and the controller). Every caller sends it: CLI, Live Console,
   demo scripts, scenario/replay/concurrent checks, the agent, the AWS replay Job.
+  `demo/session_auth_check.sh` (Tier 1) now allows exactly these three holders of the Secret
+  (gateway, controller, stub predictor) and fails on any other workload.
 - **Input validation.** Stub policy params validated at set time, `/decide` fails open, per-
   session state LRU-capped (#27); every `/v1/warm` field bounded, fixed metric labels, the
   refused list drained (#23); predictor contract bounds `start_in_ms`, `ttl_s`, decisions (#12);
