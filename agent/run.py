@@ -21,6 +21,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import os
 import sys
 import time
 from datetime import UTC, datetime
@@ -82,7 +83,9 @@ def main(argv: list[str] | None = None) -> int:
     print(f"[agent] run {run_id}: scenario {a.scenario} ({task.name}), policy {a.policy}, "
           f"{a.sessions} sessions\n[agent] {label}", flush=True)
 
-    plat = Platform(a.controller, a.stub, a.model_url)
+    # the stub's POST /admin/policy needs the admin token (issue #27; agent_demo.sh exports it)
+    plat = Platform(a.controller, a.stub, a.model_url,
+                    admin_token=os.environ.get("SKYPIEA_ADMIN_TOKEN") or None)
     waited = 0.0 if a.no_wait else plat.wait_zero()
     before = plat.controller_metrics()
     m_before = plat.model_requests()

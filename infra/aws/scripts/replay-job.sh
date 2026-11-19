@@ -79,7 +79,10 @@ job = {"apiVersion": "batch/v1", "kind": "Job",
                         "command": ["python", "/work/check.py", *extra, *args],
                         "env": [{"name": "PYTHONUNBUFFERED", "value": "1"},
                                 {"name": "SKYPIEA_PLATFORM_IMAGE", "value": "@PLATIMG@"},
-                                {"name": "SKYPIEA_PREDICTOR_IMAGE", "value": "@PREDIMG@"}],
+                                {"name": "SKYPIEA_PREDICTOR_IMAGE", "value": "@PREDIMG@"},
+                                # stub /admin/policy + controller /v1/warm (issues #23, #27)
+                                {"name": "ADMIN_TOKEN", "valueFrom": {"secretKeyRef": {
+                                    "name": "skypiea-admin", "key": "admin-token"}}}],
                         "resources": {"requests": {"cpu": "50m", "memory": "64Mi"},
                                       "limits": {"cpu": "500m", "memory": "256Mi"}},
                         "securityContext": {"allowPrivilegeEscalation": False,

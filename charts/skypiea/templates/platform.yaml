@@ -137,8 +137,9 @@ subjects:
   - {kind: ServiceAccount, name: skypiea-gateway, namespace: {{ $ns }}}
 ---
 # Gateway admin token (issue #7): GET /v1/sessions(/{sid}) need it in X-Admin-Token. Generated
-# once at install, kept across upgrades, never in the repo; mounted ONLY into the gateway. The
-# CLI and the Live Console read it with the operator's own kubeconfig.
+# once at install, kept across upgrades, never in the repo; mounted into the gateway, the stub
+# predictor (POST /admin/policy, issue #27) and the controller (POST /v1/warm, issue #23). The
+# CLI, the Live Console and the demo scripts read it with the operator's own kubeconfig.
 {{- $adm := lookup "v1" "Secret" $ns "skypiea-admin" }}
 apiVersion: v1
 kind: Secret
@@ -259,6 +260,9 @@ spec:
           ports: [{name: http, containerPort: 8080}]
           env:
             - {name: SKYPIEA_POLICY, value: {{ $p.predictor.policy | quote }}}
+            # POST /admin/policy needs it (issue #27); GET stays open and read-only
+            - name: ADMIN_TOKEN
+              valueFrom: {secretKeyRef: {name: skypiea-admin, key: admin-token}}
           readinessProbe:
             httpGet: {path: /healthz, port: http}
             periodSeconds: 2

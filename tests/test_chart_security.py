@@ -46,13 +46,17 @@ def test_admin_token_secret_is_generated_and_not_in_values():
 
 
 @pytest.mark.parametrize("extra", [(), MODEL])
-def test_admin_token_reaches_only_the_gateway(extra):
+def test_admin_token_reaches_only_the_platform(extra):
+    """Gateway (#7), stub predictor POST /admin/policy (#27), controller POST /v1/warm (#23);
+    never a tool pod or the model."""
     specs = pod_specs(render(*extra))
-    assert {n for n, s in specs.items() if uses_admin_secret(s)} == {"skypiea-gateway"}
-    env = {e["name"]: e for e in specs["skypiea-gateway"]["containers"][0]["env"]}
-    assert env["ADMIN_TOKEN"]["valueFrom"]["secretKeyRef"] == {"name": "skypiea-admin",
-                                                               "key": "admin-token"}
-    assert "value" not in env["ADMIN_TOKEN"]
+    want = {"skypiea-gateway", "skypiea-predictor"}
+    assert {n for n, s in specs.items() if uses_admin_secret(s)} == want
+    for name in want:
+        env = {e["name"]: e for e in specs[name]["containers"][0]["env"]}
+        assert env["ADMIN_TOKEN"]["valueFrom"]["secretKeyRef"] == {"name": "skypiea-admin",
+                                                                   "key": "admin-token"}
+        assert "value" not in env["ADMIN_TOKEN"]
 
 
 # ---------------- opt-in NetworkPolicy ----------------

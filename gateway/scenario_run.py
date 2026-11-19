@@ -40,6 +40,8 @@ from pathlib import Path
 
 import httpx
 
+from gateway import admin_auth
+
 META = {"io.modelcontextprotocol/protocolVersion": "2026-07-28",
         "io.modelcontextprotocol/clientCapabilities": {}}
 STUB_POLICIES = ["scale_to_zero", "always_warm", "keep_alive", "markov1",
@@ -102,6 +104,7 @@ class Runner:
     def __init__(self, gw: str, ctl: str, stub: str, model: str, scenario: str, conc: int,
                  started: float):
         self.gw, self.ctl, self.stub, self.model = gw, ctl, stub, model
+        self.admin_token: str | None = None   # issues #23/#27: stub policy + controller warm
         self.scenario, self.conc, self.t0 = scenario, conc, started
         self.dataset = "real"
         # exact images (repo:tag, no registry host), set by the Job from the live Deployments
@@ -235,7 +238,8 @@ class Runner:
 
     async def policy(self, pol: str, sessions: dict[str, list[dict]], train: list[list[dict]],
                      profile: str | None) -> dict:
-        async with httpx.AsyncClient(timeout=30) as c:
+        async with httpx.AsyncClient(timeout=30,
+                                     headers=admin_auth.headers(self.admin_token)) as c:
             waited = await self.wait_zero(c, 600)
             before = await self.snapshot(c)
             m_before = await self.model_requests(c) if pol == "predictive" else None
@@ -311,6 +315,7 @@ def main() -> int:
           flush=True)
     r = Runner(gw, ctl, stub, model, a.scenario, a.concurrency, time.monotonic())
     r.dataset = a.dataset
+    r.admin_token = admin_auth.client_token(ns)
     failures = []
     for pol in pols:
         try:

@@ -36,10 +36,13 @@ def metric_sum(text: str, name: str) -> float:
 
 
 class Platform:
-    def __init__(self, controller: str, stub: str, model: str, timeout_s: float = 15.0):
+    def __init__(self, controller: str, stub: str, model: str, timeout_s: float = 15.0,
+                 admin_token: str | None = None):
         self.ctl = controller.rstrip("/")
         self.stub, self.model = stub.rstrip("/"), model.rstrip("/")
-        self.http = httpx.Client(timeout=timeout_s)
+        # the stub's POST /admin/policy needs the admin token (issue #27)
+        self.http = httpx.Client(timeout=timeout_s,
+                                 headers={"X-Admin-Token": admin_token} if admin_token else {})
 
     def live(self) -> dict[str, int]:
         st = self.http.get(f"{self.ctl}/v1/state").json()

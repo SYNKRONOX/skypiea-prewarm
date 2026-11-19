@@ -19,10 +19,11 @@ Policies (select with SKYPIEA_POLICY or POST /admin/policy {"name": ..., "params
 
 from __future__ import annotations
 
+import logging
 import math
 import os
 import time
-from collections import Counter, defaultdict
+from collections import Counter, OrderedDict, defaultdict
 from pathlib import Path
 from typing import Any
 
@@ -32,11 +33,42 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse
 from starlette.routing import Route
 
+from gateway import admin_auth
 from gateway.contract import DecideRequest
 from tools.common.toolmap import load
 
+log = logging.getLogger("skypiea.predictor_stub")
+
 ROOT = Path(__file__).resolve().parent.parent
 COLD_START = Path(os.environ.get("SKYPIEA_COLD_START", ROOT / "configs" / "cold_start.yaml"))
+MAX_SESSIONS = 10_000        # issue #27: learning bookkeeping per session, LRU-evicted
+MAX_TTL_S = 86_400
+
+# issue #27: the params each policy accepts; anything else is refused at set time (400)
+PARAMS = {"scale_to_zero": set(), "always_warm": {"ttl_s"}, "keep_alive": {"ttl_s"},
+          "markov1": {"tau", "ttl_s"}, "predictive": {"tau", "ttl_s"}, "oracle": {"ttl_s"}}
+TTL_REQUIRED = {"always_warm", "keep_alive"}   # these use an int TTL, never null
+
+
+def validate_params(name: str, params: object) -> dict[str, Any]:
+    """Raise ValueError unless params fit the policy (issue #27: never store a bad config)."""
+    if name not in PARAMS:
+        raise ValueError(f"unknown policy {name!r}; one of {sorted(PARAMS)}")
+    if not isinstance(params, dict):
+        raise ValueError("params must be an object")
+    if extra := set(params) - PARAMS[name]:
+        raise ValueError(f"policy {name} does not take {sorted(extra)}")
+    if "ttl_s" in params:
+        t = params["ttl_s"]
+        if t is None and name not in TTL_REQUIRED:
+            pass
+        elif isinstance(t, bool) or not isinstance(t, int) or not 0 <= t <= MAX_TTL_S:
+            raise ValueError(f"ttl_s must be an int in [0, {MAX_TTL_S}]")
+    if "tau" in params:
+        t = params["tau"]
+        if isinstance(t, bool) or not isinstance(t, (int, float)) or not 0.0 <= t <= 1.0:
+            raise ValueError("tau must be a number in [0, 1]")
+    return dict(params)
 
 
 def _servers_and_lead() -> tuple[dict[str, str], dict[str, float]]:
@@ -75,13 +107,13 @@ class StubPredictor:
         self.set_policy(name, params or {})
 
     def set_policy(self, name: str, params: dict[str, Any]) -> None:
-        if name not in POLICIES:
-            raise ValueError(f"unknown policy {name}; one of {sorted(POLICIES)}")
+        params = validate_params(name, params)
         self.name, self.params = name, params
         self.uni: Counter[str] = Counter()
         self.bi: dict[str, Counter[str]] = defaultdict(Counter)
         self.tri: dict[tuple[str, str], Counter[str]] = defaultdict(Counter)
-        self.seen: dict[str, int] = {}  # session -> history length already learned
+        # session -> history length already learned; LRU, at most MAX_SESSIONS (issue #27)
+        self.seen: OrderedDict[str, int] = OrderedDict()
 
     # online learning of transitions (markov1, predictive): each call is learned once
     def _learn(self, req: DecideRequest) -> list[str]:
@@ -94,10 +126,19 @@ class StubPredictor:
             if i >= 2:
                 self.tri[(seq[i - 2], seq[i - 1])][seq[i]] += 1
         self.seen[req.session_id] = len(seq)
+        self.seen.move_to_end(req.session_id)
+        while len(self.seen) > MAX_SESSIONS:
+            self.seen.popitem(last=False)
         return seq
 
     def decide(self, req: DecideRequest) -> dict:
-        return POLICIES[self.name](self, req, time.perf_counter())
+        """Fail open (issue #27): any error is the safe "nothing warmed" answer, never a 500."""
+        t0 = time.perf_counter()
+        try:
+            return POLICIES[self.name](self, req, t0)
+        except Exception:
+            log.exception("policy %s failed; answering 'nothing warmed'", self.name)
+            return _answer(self.name, {}, [], t0)
 
 
 def _scale_to_zero(self: StubPredictor, req: DecideRequest, t0: float) -> dict:
@@ -160,8 +201,15 @@ POLICIES = {"scale_to_zero": _scale_to_zero, "always_warm": _always_warm,
             "oracle": _oracle}
 
 
-def create_app(stub: StubPredictor | None = None) -> Starlette:
+_ENV = object()
+
+
+def create_app(stub: StubPredictor | None = None, admin_token: str | None | object = _ENV
+               ) -> Starlette:
+    """admin_token: POST /admin/policy needs it in X-Admin-Token (default: env ADMIN_TOKEN,
+    from Secret skypiea-admin); None = mutation disabled (403). GET stays read-only and open."""
     stub = stub or StubPredictor(os.environ.get("SKYPIEA_POLICY", "scale_to_zero"))
+    token = admin_auth.server_token() if admin_token is _ENV else admin_token
 
     async def decide(request: Request) -> JSONResponse:
         try:
@@ -172,11 +220,15 @@ def create_app(stub: StubPredictor | None = None) -> Starlette:
 
     async def policy(request: Request) -> JSONResponse:
         if request.method == "POST":
-            d = await request.json()
+            if (deny := admin_auth.check(request.headers.get(admin_auth.HEADER), token)):
+                return JSONResponse({"error": deny[1]}, status_code=deny[0])
             try:
+                d = await request.json()
+                if not isinstance(d, dict):
+                    raise ValueError("body must be a JSON object")
                 stub.set_policy(d["name"], d.get("params") or {})
-            except (KeyError, ValueError) as e:
-                return JSONResponse({"error": str(e)}, status_code=400)
+            except (KeyError, ValueError, TypeError) as e:
+                return JSONResponse({"error": f"bad request: {e}"}, status_code=400)
         return JSONResponse({"policy": stub.name, "params": stub.params})
 
     async def healthz(_: Request) -> JSONResponse:

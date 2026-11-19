@@ -81,6 +81,10 @@ FAILED=0
 step "5/8 deploy (profile prd, gateway -> stub predictor)"
 deploy stub
 demo/portforward.sh start
+# stub /admin/policy and controller /v1/warm need the admin token (issues #23, #27)
+SKYPIEA_ADMIN_TOKEN="$(kubectl --context "$CTX" -n "$NS" get secret skypiea-admin \
+  -o jsonpath='{.data.admin-token}' | base64 -d)"
+export SKYPIEA_ADMIN_TOKEN
 
 step "6/8 replay PRD Scenario A ($SESSIONS SYNTHETIC sessions, $CONC at once) under scale_to_zero"
 replay scale_to_zero

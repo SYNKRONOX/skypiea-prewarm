@@ -121,8 +121,13 @@ class StackClient:
 
     async def set_policy(self, key: str) -> dict[str, Any]:
         name, params = BASELINE_POLICIES[key]
-        r = await self.http.post(f"{self.s.stub}/admin/policy",
-                                 json={"name": name, "params": params})
+        for refresh in (False, True):   # the stub needs the admin token too (issue #27)
+            tok = await self.admin_token(refresh)
+            r = await self.http.post(f"{self.s.stub}/admin/policy",
+                                     json={"name": name, "params": params},
+                                     headers={"X-Admin-Token": tok} if tok else {})
+            if r.status_code != 401:
+                break
         r.raise_for_status()
         return r.json()
 

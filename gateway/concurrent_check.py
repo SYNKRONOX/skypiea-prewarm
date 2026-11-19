@@ -20,6 +20,8 @@ from pathlib import Path
 
 import httpx
 
+from gateway import admin_auth
+
 META = {"io.modelcontextprotocol/protocolVersion": "2026-07-28",
         "io.modelcontextprotocol/clientCapabilities": {}}
 
@@ -109,7 +111,8 @@ async def run(a) -> int:
     failures = []
     print(f"FUNCTIONAL CHECK ONLY: {len(all_sessions)} concurrent sessions per policy, "
           f"gap x{a.gap_scale}; latencies are not results.\n")
-    async with httpx.AsyncClient(timeout=300, limits=httpx.Limits(max_connections=200)) as c:
+    async with httpx.AsyncClient(timeout=300, limits=httpx.Limits(max_connections=200),
+                                 headers=admin_auth.headers(admin_auth.client_token(ns))) as c:
         for pol in a.policies.split(","):
             await wait_zero(c, ctl, 300)
             if pol != "predictive":   # predictive = the real predictor (gateway serves the model)

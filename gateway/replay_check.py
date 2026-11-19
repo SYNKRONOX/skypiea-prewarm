@@ -31,6 +31,8 @@ from pathlib import Path
 
 import httpx
 
+from gateway import admin_auth
+
 POLICIES = ["scale_to_zero", "always_warm", "keep_alive", "markov1", "predictive", "oracle"]
 META = {"io.modelcontextprotocol/protocolVersion": "2026-07-28",
         "io.modelcontextprotocol/clientCapabilities": {}}
@@ -177,6 +179,7 @@ def main() -> int:
         return 0
     scen = {k: schedule(v, a.gap_scale) for k, v in raw.items()}
     ctx = None if a.in_cluster else a.context
+    adm = admin_auth.headers(admin_auth.client_token(a.namespace, ctx))   # issues #23/#27
     policies = POLICIES if a.policies == "all" else a.policies.split(",")
     print("FUNCTIONAL CHECK ONLY: latencies below are not results.\n")
     failures, all_rows = [], []
@@ -187,11 +190,12 @@ def main() -> int:
             waited = wait_all_zero(ctl, 300)
             params = {"ttl_s": 90} if pol == "always_warm" else {}
             r = httpx.post(f"{pred}/admin/policy", json={"name": pol, "params": params},
+                           headers=adm,
                            timeout=5)
             r.raise_for_status()
             if pol == "always_warm":   # the baseline's standing pool: one pod per tool
                 for s in httpx.get(f"{ctl}/v1/state", timeout=5).json():
-                    httpx.post(f"{ctl}/v1/warm", json={"tool_class": s, "copies": 1,
+                    httpx.post(f"{ctl}/v1/warm", headers=adm, json={"tool_class": s, "copies": 1,
                                                        "ttl_s": 90, "reason": "always_warm"})
                 wait_all_ready(ctl, 300)
             if pol in ("markov1", "predictive"):  # learn transitions online first (not checked)
@@ -231,7 +235,8 @@ def main() -> int:
                     failures.append(f"{pol}: {k}")
         back = wait_all_zero(ctl, 180)
         print(f"\nall tools back at 0 replicas {back:.0f}s after the last session")
-        httpx.post(f"{pred}/admin/policy", json={"name": "scale_to_zero", "params": {}})
+        httpx.post(f"{pred}/admin/policy", json={"name": "scale_to_zero", "params": {}},
+                   headers=adm)
     if a.out:
         Path(a.out).write_text("\n".join(json.dumps(r) for r in all_rows) + "\n")
     print("\nFAILURES: " + ("; ".join(failures) if failures else "none"))

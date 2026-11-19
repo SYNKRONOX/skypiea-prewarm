@@ -17,6 +17,12 @@ PF_BASE="${PF_BASE:-18080}"
 URLS=(--gateway "http://127.0.0.1:$PF_BASE/mcp" --controller "http://127.0.0.1:$((PF_BASE + 1))"
       --stub "http://127.0.0.1:$((PF_BASE + 2))" --model-url "http://127.0.0.1:$((PF_BASE + 3))")
 demo/portforward.sh check || demo/portforward.sh start
+# the stub's POST /admin/policy needs the admin token (issue #27)
+if [ -z "${SKYPIEA_ADMIN_TOKEN:-}" ]; then
+  SKYPIEA_ADMIN_TOKEN="$(kubectl --context "${KIND_CTX:-kind-${CLUSTER:-skypiea}}" -n "${NS:-skypiea-tools}" \
+    get secret skypiea-admin -o jsonpath='{.data.admin-token}' | base64 -d)" || true
+  export SKYPIEA_ADMIN_TOKEN
+fi
 if [ "$LLM" = openai-compatible ]; then
   : "${AGENT_BASE_URL:?set AGENT_BASE_URL, e.g. http://localhost:11434/v1}"
   : "${AGENT_MODEL:?set AGENT_MODEL, e.g. llama3.1:8b}"

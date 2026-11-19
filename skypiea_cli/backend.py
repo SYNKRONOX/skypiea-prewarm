@@ -115,8 +115,18 @@ class KubeBackend:
         return self._svc("skypiea-predictor", 80, "/admin/policy")
 
     def set_policy(self, name: str, params: dict[str, Any]) -> dict[str, Any]:
-        return self._svc("skypiea-predictor", 80, "/admin/policy", "POST",
-                         {"name": name, "params": params})
+        tok = self.admin_token()           # issue #27: the stub's POST needs the admin token
+        status, data = self._proxy("services", "skypiea-predictor", 80, "/admin/policy", "POST",
+                                   {"name": name, "params": params},
+                                   extra={"X-Admin-Token": tok} if tok else None)
+        if status in (401, 403):
+            raise AdminTokenError(
+                f"predictor refused policy set (HTTP {status}): it needs the admin token. Set "
+                f"SKYPIEA_ADMIN_TOKEN, or let the CLI read Secret {ADMIN_SECRET} in "
+                f"{self.namespace}.")
+        if status >= 400:
+            raise RuntimeError(f"skypiea-predictor/admin/policy: HTTP {status}: {data}")
+        return data
 
     def _gateway_pods(self) -> list[str]:
         pods = self.core.list_namespaced_pod(self.namespace,
