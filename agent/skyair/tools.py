@@ -301,6 +301,12 @@ class Session:
         p = self.flights[fid]["price"]
         return {fare: W.fare_price(p, fare) * n for fare in W.FARES}
 
+    def fare_of(self, b: dict) -> int:
+        """The fare part of a booking (its flights at its fare, per passenger): what a
+        "% off your fare" promo applies to, as at book time (issue #22)."""
+        n = max(1, len(b["passengers"]))
+        return sum(self.fare_prices(fid, n)[b["fare"]] for fid in b["flights"])
+
     def bag_price(self, b: dict) -> int:
         return W.BAG_PRICE["international" if self._intl(b) else "domestic"]
 
@@ -756,7 +762,9 @@ class Session:
         if not self._promo_ok(o["promo_code"], b):
             return {"applied": False, "message": "This booking does not meet the conditions; "
                     "nothing was applied.", "conditions": o["conditions"]}
-        discount = round(b["paid"] * o["value"] / 100) if o["kind"] == "pct" else o["value"]
+        # issue #22: a percentage is of the fare only, never of bags or change fees paid since
+        discount = round(self.fare_of(b) * o["value"] / 100) if o["kind"] == "pct" \
+            else o["value"]
         discount = min(discount, b["paid"])
         if not customer_confirmed:
             return self._quote("apply_promo", {"booking_code": b["booking_code"],
