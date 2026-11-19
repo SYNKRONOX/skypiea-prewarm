@@ -119,6 +119,9 @@ class Metrics:
                                  registry=r)
         self.connect_retries = Counter("skypiea_gateway_connect_retries_total",
                                        "Upstream connect retries", ["tool"], registry=r)
+        self.maybe_executed = Counter("skypiea_gateway_upstream_dropped_total",
+                                      "tools/call connections dropped after sending; not "
+                                      "retried (issue #16)", ["tool"], registry=r)
         self.sessions = Gauge("skypiea_gateway_sessions", "Live sessions", registry=r)
         self.hints = Counter("skypiea_gateway_hints_total", "Turn-start hints received "
                              "(only with the turn hint enabled)", registry=r)
@@ -144,6 +147,11 @@ async def read_body(request: Request, limit: int) -> bytes:
         if len(buf) > limit:
             raise BodyTooLarge(len(buf))
     return bytes(buf)
+
+
+class MaybeExecuted(Exception):
+    """The connection dropped after the tools/call was sent (issue #16): the tool may have run,
+    so the gateway does not send it again."""
 
 
 def _too_large(limit: int) -> JSONResponse:
@@ -410,8 +418,10 @@ class Gateway:
     async def _forward(self, route, fwd: dict[str, Any], headers: dict[str, str],
                        early_addr: str | None = None) -> dict[str, Any]:
         """Send to a ready pod address (EndpointSlice) if known, else to the Service. On a
-        refused/reset connection (pod just went away, or Service not programmed yet) retry with
-        a short backoff for up to connect_retry_s."""
+        refused connection or connect timeout (nothing was sent: pod just went away, or Service
+        not programmed yet) retry with a short backoff for up to connect_retry_s. Once the
+        request may have reached the tool (dropped/reset after sending, read timeout) it is
+        never sent again (issue #16): MaybeExecuted, a clear error for the client."""
         deadline = self.clock() + self.cfg.connect_retry_s
         delay = 0.025
         while True:
@@ -422,7 +432,13 @@ class Gateway:
                 r = await self.http.post(url, json=fwd, timeout=self.cfg.upstream_timeout_s,
                                          headers=headers)
                 return r.json()
-            except (httpx.ConnectError, httpx.RemoteProtocolError, httpx.ConnectTimeout):
+            except (httpx.RemoteProtocolError, httpx.ReadError, httpx.ReadTimeout,
+                    httpx.WriteError, httpx.WriteTimeout) as e:
+                self.metrics.maybe_executed.labels(route.tool_class).inc()
+                log.warning("tools/call to %s dropped after sending (%s): not retried",
+                            route.server, type(e).__name__)
+                raise MaybeExecuted(type(e).__name__) from e
+            except (httpx.ConnectError, httpx.ConnectTimeout):
                 if self.clock() + delay > deadline:
                     raise
                 self.metrics.connect_retries.labels(route.tool_class).inc()
@@ -470,6 +486,11 @@ class Gateway:
                            if k.lower() in PASS_HEADERS}
             try:
                 result, info = await self.handle_call(body, sid, fwd_headers)
+            except MaybeExecuted as e:
+                return _rpc_error(body.get("id"), -32003,
+                                  f"tool connection dropped after the call was sent ({e}): the "
+                                  f"tool may have run; not retried to avoid running it twice. "
+                                  f"Check the tool's state before calling again.")
             except (httpx.HTTPError, ValueError) as e:
                 return _rpc_error(body.get("id"), -32002, f"tool call failed: {e}")
             if info:
