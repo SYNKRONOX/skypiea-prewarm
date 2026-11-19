@@ -100,6 +100,13 @@ class Metrics:
                                "(hold + cold wait + proxying)", ["tool"], registry=r,
                                buckets=(.001, .005, .01, .025, .05, .1, .15, .25, .5, 1, 2.5, 5,
                                         10, 30, 60, 120))
+        # FR-5 / issue #26: per-call latency as the client sees it (arrival to answer, incl. the
+        # tool's own time), labelled cold/warm so the two distributions graph separately
+        self.call_latency = Histogram("skypiea_gateway_call_latency_seconds",
+                                      "Per-call latency at the gateway (arrival to answer), "
+                                      "by cold/warm", ["tool", "cold"], registry=r,
+                                      buckets=(.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5,
+                                               10, 30, 60, 120))
         self.hold = Histogram("skypiea_gateway_hold_ms", "Time a call was held waiting for a "
                               "warm pod (FR-9)", ["tool"], registry=r,
                               buckets=(0, 1, 5, 10, 25, 50, 75, 100, 125, 150, 200))
@@ -335,6 +342,8 @@ class Gateway:
             self._inflight_delta(route.server, -1)
         t_end = self.clock()
         self.metrics.calls.labels(route.tool_class, str(cold).lower()).inc()
+        self.metrics.call_latency.labels(route.tool_class, str(cold).lower()).observe(
+            max(0.0, t_end - t_arrive))
         added_ms = max(0.0, t_end - t_arrive - upstream_s) * 1000.0
         self.metrics.added.labels(route.tool_class).observe(added_ms / 1000.0)
         is_err = "error" in result or bool((result.get("result") or {}).get("isError"))
