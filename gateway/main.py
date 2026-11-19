@@ -42,18 +42,31 @@ def gateway_config() -> GatewayConfig:
     )
 
 
+def build(cfg: GatewayConfig) -> dict:
+    """Gateway and its clients. Issue #18: one httpx pool per plane, so 200+ in-flight tool
+    calls cannot starve the predictor's /decide or the controller's /v1/warm of connections."""
+    ns = cfg.namespace
+    data = httpx.AsyncClient(limits=httpx.Limits(max_connections=200))       # tool calls
+    pred_http = httpx.AsyncClient(limits=httpx.Limits(max_connections=50))   # /decide
+    ctrl_http = httpx.AsyncClient(limits=httpx.Limits(max_connections=20))   # /v1/warm etc.
+    router = Router(ns)
+    pred_url = _env("SKYPIEA_PREDICTOR_URL", "")
+    predictor = (HttpPredictorClient(pred_url, cfg.predictor_timeout_s, pred_http)
+                 if pred_url else None)
+    controller = HttpControllerClient(_env("SKYPIEA_CONTROLLER_URL",
+                                           f"http://skypiea-controller.{ns}.svc:8081"), 0.5,
+                                      ctrl_http, admin_token=cfg.admin_token)
+    tracker = ReadyTracker()
+    gw = Gateway(cfg, router, predictor, controller, tracker, data)
+    return {"gateway": gw, "predictor": predictor, "controller": controller,
+            "router": router, "tracker": tracker}
+
+
 def gateway() -> None:
     cfg = gateway_config()
     ns = cfg.namespace
-    http = httpx.AsyncClient(limits=httpx.Limits(max_connections=200))
-    router = Router(ns)
-    pred_url = _env("SKYPIEA_PREDICTOR_URL", "")
-    predictor = HttpPredictorClient(pred_url, cfg.predictor_timeout_s, http) if pred_url else None
-    controller = HttpControllerClient(_env("SKYPIEA_CONTROLLER_URL",
-                                           f"http://skypiea-controller.{ns}.svc:8081"), 0.5, http,
-                                      admin_token=cfg.admin_token)
-    tracker = ReadyTracker()
-    gw = Gateway(cfg, router, predictor, controller, tracker, http)
+    parts = build(cfg)
+    gw, router, tracker = parts["gateway"], parts["router"], parts["tracker"]
     app = gw.app()
 
     async def run() -> None:
