@@ -506,6 +506,10 @@ class Session:
             return {"error": "unavailable", "changed": False, "message": "That flight does not "
                     "exist or is not available; nothing changed. Offer one of these (use its "
                     "flight_id).", "alternatives": alternatives()}
+        if new["flight_id"] == old or new["flight_id"] in b["flights"]:   # issue #21
+            return {"error": "same_flight", "changed": False, "message": "The booking is "
+                    "already on that flight; nothing changed and no fee was charged.",
+                    "alternatives": alternatives()}
         if (new["origin"], new["destination"]) != (o["origin"], o["destination"]):
             return {"error": "wrong_route", "changed": False, "message": "The new flight must "
                     "fly the same route; nothing changed.", "alternatives": alternatives()}
