@@ -49,6 +49,11 @@ async def startup(settings: kopf.OperatorSettings, **_) -> None:
     global _svc
     settings.posting.level = logging.WARNING
     settings.watching.server_timeout = 300
+    # issue #20: no Kubernetes call may hang forever
+    settings.watching.client_timeout = 330
+    settings.watching.connect_timeout = 10
+    settings.networking.request_timeout = 30
+    settings.networking.connect_timeout = 10
     settings.scanning.disabled = True   # no cluster-wide namespace/CRD discovery (namespaced RBAC)
     logging.getLogger("kopf.objects").setLevel(logging.WARNING)  # no per-event INFO lines
     _svc = ControllerService(K8sScaler(NS), _cfg())
@@ -61,13 +66,14 @@ async def startup(settings: kopf.OperatorSettings, **_) -> None:
 
     apps = client.AppsV1Api()
     deps = await asyncio.to_thread(apps.list_namespaced_deployment, NS,
-                                   label_selector="skypiea.io/tier")
+                                   label_selector="skypiea.io/tier", _request_timeout=30)
     for d in deps.items:
         server = _server_of(d.metadata.labels or {})
         if server in _svc.pool.s:
             _svc.pool.rebuild(server, d.spec.replicas or 0, d.status.ready_replicas or 0,
                               d.metadata.annotations or {}, time.time(), _svc.clock())
     log.info("rebuilt pool from %d deployments", len(deps.items))
+    _svc.last_tick_done = _svc.clock()
     _svc.ready_event.set()
     asyncio.get_running_loop().create_task(_svc.run())
 

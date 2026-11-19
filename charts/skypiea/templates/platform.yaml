@@ -90,6 +90,12 @@ spec:
           readinessProbe:
             httpGet: {path: /healthz, port: api}
             periodSeconds: 2
+          # issue #20: /healthz is 503 when the scaling loop is stuck -> restart
+          livenessProbe:
+            httpGet: {path: /healthz, port: api}
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            failureThreshold: 3
           resources: {{- toYaml $p.controller.resources | nindent 12 }}
           securityContext:
             allowPrivilegeEscalation: false

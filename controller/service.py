@@ -90,9 +90,10 @@ class K8sScaler:
     """One PATCH per change, carrying replicas AND the warm-state annotations, so a restart
     mid-scale never sees replicas without the matching annotations (or the reverse)."""
 
-    def __init__(self, namespace: str):
+    def __init__(self, namespace: str, timeout_s: float = 10.0):
         from kubernetes import client, config
 
+        self.timeout_s = timeout_s     # issue #20: every API call has a request timeout
         try:
             config.load_incluster_config()
         except config.ConfigException:
@@ -104,7 +105,7 @@ class K8sScaler:
         if annotations:
             body["metadata"] = {"annotations": annotations}
         await asyncio.to_thread(self.apps.patch_namespaced_deployment, k8s_name(server),
-                                self.ns, body)
+                                self.ns, body, _request_timeout=self.timeout_s)
 
 
 class Metrics:
@@ -139,7 +140,8 @@ class Metrics:
 class ControllerService:
     def __init__(self, scaler: Scaler, cfg: PoolConfig | None = None,
                  tool_map: ToolMap | None = None, clock=time.monotonic, wall=time.time,
-                 tick_s: float = 0.25, admin_token: str | None | object = _ENV):
+                 tick_s: float = 0.25, admin_token: str | None | object = _ENV,
+                 scale_timeout_s: float = 15.0, stuck_after_s: float = 60.0):
         # POST /v1/warm needs it (issue #23; env ADMIN_TOKEN from Secret skypiea-admin)
         self.admin_token = admin_auth.server_token() if admin_token is _ENV else admin_token
         self.tm = tool_map or load()
@@ -147,6 +149,10 @@ class ControllerService:
         self.scaler, self.clock, self.wall, self.tick_s = scaler, clock, wall, tick_s
         self.metrics = Metrics()
         self._last_tick = clock()
+        # issue #20: a hung scale call is abandoned after scale_timeout_s; /healthz is 503 when
+        # no tick has finished for stuck_after_s (the livenessProbe then restarts the pod)
+        self.scale_timeout_s, self.stuck_after_s = scale_timeout_s, stuck_after_s
+        self.last_tick_done = clock()
         self._lock = asyncio.Lock()
         self.ready_event = asyncio.Event()  # set once live state has been loaded (rebuild)
 
@@ -184,8 +190,10 @@ class ControllerService:
             done = []
             for a in actions:
                 try:
-                    await self.scaler.scale(a.server, a.to_replicas, a.annotations)
-                except Exception as e:  # retried on the next tick (plan is idempotent)
+                    await asyncio.wait_for(self.scaler.scale(a.server, a.to_replicas,
+                                                             a.annotations),
+                                           self.scale_timeout_s)
+                except Exception as e:  # incl. timeout; retried next tick (plan is idempotent)
                     self.metrics.errors.labels(a.server).inc()
                     log.warning("scale %s -> %d failed: %s", a.server, a.to_replicas, e)
                     continue
@@ -198,6 +206,7 @@ class ControllerService:
             for name, st in self.pool.s.items():
                 self.metrics.pool.labels(name).set(st.live)
                 self.metrics.stuck.labels(name).set(1 if name in stuck else 0)
+            self.last_tick_done = self.clock()
             return done
 
     def _drain_queue_events(self) -> None:
@@ -264,9 +273,13 @@ class ControllerService:
             return web.json_response(self.state())
 
         async def healthz(_: web.Request) -> web.Response:
-            ok = self.ready_event.is_set()
-            return web.json_response({"status": "ok" if ok else "starting"},
-                                     status=200 if ok else 503)
+            if not self.ready_event.is_set():
+                return web.json_response({"status": "starting"}, status=503)
+            age = self.clock() - self.last_tick_done
+            if age > self.stuck_after_s:          # issue #20: the scaling loop is stuck
+                return web.json_response({"status": "stuck", "last_tick_s_ago": round(age, 1)},
+                                         status=503)
+            return web.json_response({"status": "ok"})
 
         async def metrics(_: web.Request) -> web.Response:
             return web.Response(body=generate_latest(self.metrics.registry),
