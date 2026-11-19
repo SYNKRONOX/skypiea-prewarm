@@ -523,6 +523,24 @@ class Conversation:
             content = llm_content(p_res, p_info)
         return {"rec": rec, "args": args, "content": content, "finish": finish}
 
+    async def _expire_quote(self, text: str) -> None:
+        """Issue #19: a declined, ignored or stale write quote is dropped, so a later
+        unrelated "yes" cannot execute it."""
+        from console import guards
+        b = self.backend
+        p = getattr(b, "pending", None) if b is not None else None
+        if not isinstance(p, dict):
+            return
+        p.setdefault("turn", self.turn - 1)          # quoted during the previous turn
+        why = guards.quote_expired(p, text, self.turn)
+        if why:
+            b.pending = None
+            g = {"turn": self.turn, "tool": p.get("tool", "-"), "kind": "quote_expired",
+                 "detail": f"pending quote for {p.get('tool')} dropped ({why}): a new yes "
+                           f"needs a new quote"}
+            self.guards.append(g)
+            await self.publish({"type": "guard", "guard": g})
+
     def last_user_text(self) -> str:
         return next((m.get("content") or "" for m in reversed(self.messages)
                      if m.get("role") == "user"), "")
@@ -766,6 +784,7 @@ class Conversation:
             n_calls_before = self._next_seq
             self._turn_msg0 = len(self.messages)
             self.messages.append({"role": "user", "content": text})
+            await self._expire_quote(text)
             text_retry = False
             if not text.strip():            # an empty message: a fixed, polite answer
                 self.messages.append({"role": "assistant", "content": self.empty_text()})

@@ -87,6 +87,18 @@ def affirmative(text: str) -> bool:
     return bool(_YES.search(t)) and not _NO.search(t)
 
 
+def quote_expired(pending: dict, text: str, turn: int) -> str | None:
+    """Issue #19: why a pending write quote no longer stands at this user turn, or None.
+    A quote is answered on the very next turn: a decline, any other message, or a later turn
+    ends it (the model must quote again)."""
+    quoted = pending.get("turn", turn - 1)
+    if turn - quoted > 1:
+        return "stale"
+    if not affirmative(text):
+        return "declined" if _NO.search(text or "") else "new request"
+    return None
+
+
 # issue #10: the quoted target; a confirmed write must name the same values (or none)
 TARGET_KEYS = ("booking_code", "flight_no", "old_flight_no", "new_flight_no", "promo_code",
                "bags", "passengers", "fare")
