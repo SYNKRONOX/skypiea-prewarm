@@ -847,7 +847,9 @@ class Conversation:
                                         "text": rest})
                 elif not r.tool_calls and r.content and textcalls.looks_like_call(r.content):
                     calls, rest = textcalls.find_calls(r.content)
-                    offered = {t["function"]["name"] for t in self.offered_tools()}
+                    # issue #25: only the tools offered for THIS step (none on a flagged
+                    # small-talk / injection turn), never everything the state allows
+                    offered = {t["function"]["name"] for t in tools}
                     run = [(n, a) for n, a in calls if n in offered]
                     if run:     # a real, offered tool written as text: run it as a call
                         from agent.llm import ToolCall
