@@ -2,7 +2,7 @@
 # Skypiea platform image: gateway, controller (kopf) and the predictor placeholder.
 # Build from the repo root:  docker build -f deploy/platform/Dockerfile .
 # (deploy/platform/Dockerfile.dockerignore keeps the context to the few files needed)
-ARG PYTHON_IMAGE=python:3.12-slim-bookworm@sha256:e697c81897302a4c4333bade000d98038fbb21eb064f8ee1fd42d02ebcd9d337
+ARG PYTHON_IMAGE=python:3.12-slim-bookworm@sha256:935c3c5b12357a7e10caa9c1e6ca5692344d97cf229832ef584be2cec9fc03df
 
 FROM ${PYTHON_IMAGE} AS build
 ENV PIP_NO_CACHE_DIR=1 PIP_DISABLE_PIP_VERSION_CHECK=1
