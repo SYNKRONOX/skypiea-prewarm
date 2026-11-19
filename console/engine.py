@@ -567,8 +567,12 @@ class Conversation:
         key = (tool, str(args.get("booking_code") or args.get("flight_no") or
                          b.selected_booking or "").upper())
         repeat = key in self._done and not (b.pending and b.pending.get("tool") == tool)
+        if tool in WRITE_TOOLS and args.get("customer_confirmed") is True:
+            args = dict(args)
+            guards.fill_from_quote(tool, args, b.pending)    # issue #10: the quoted target
         if tool in WRITE_TOOLS and args.get("customer_confirmed") is True and (
-                repeat or not guards.confirmed_ok(tool, self.last_user_text(), b.pending)):
+                repeat or not guards.confirmed_ok(tool, self.last_user_text(), b.pending,
+                                                  args)):
             args = {**args, "customer_confirmed": False}
             res = b.call(tool, args)
             await self._guard(tool, "confirm_first", ("the same write already succeeded; a "

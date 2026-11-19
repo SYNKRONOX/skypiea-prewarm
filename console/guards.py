@@ -87,11 +87,40 @@ def affirmative(text: str) -> bool:
     return bool(_YES.search(t)) and not _NO.search(t)
 
 
-def confirmed_ok(tool: str, last_user: str, pending: dict | None) -> bool:
+# issue #10: the quoted target; a confirmed write must name the same values (or none)
+TARGET_KEYS = ("booking_code", "flight_no", "old_flight_no", "new_flight_no", "promo_code",
+               "bags", "passengers", "fare")
+
+
+def _same(key: str, quoted: Any, given: Any) -> bool:
+    q, g = str(quoted).strip().upper(), str(given).strip().upper()
+    if q == g:
+        return True
+    # a flight may be named without its date suffix (SKY137 for SKY137-20JAN)
+    return key.endswith("flight_no") and q.split("-")[0] == g and "-" not in g
+
+
+def matches_quote(pending: dict, args: dict[str, Any] | None) -> bool:
+    quoted = pending.get("args") or {}
+    return all(_same(k, quoted[k], (args or {})[k]) for k in TARGET_KEYS
+               if k in quoted and (args or {}).get(k) not in (None, ""))
+
+
+def fill_from_quote(tool: str, args: dict[str, Any], pending: dict | None) -> None:
+    """A confirmed write that omits the target uses the quoted one (never the 'selected'
+    booking, which may be another booking: issue #10). Given values are never changed."""
+    if pending and pending.get("tool") == tool:
+        for k, v in (pending.get("args") or {}).items():
+            if k in TARGET_KEYS and args.get(k) in (None, ""):
+                args[k] = v
+
+
+def confirmed_ok(tool: str, last_user: str, pending: dict | None,
+                 args: dict[str, Any] | None = None) -> bool:
     if not affirmative(last_user):
         return False
     if pending and pending.get("tool") == tool:
-        return True
+        return matches_quote(pending, args)     # a yes to THIS quote, for THIS target
     return bool(re.search(KEYWORDS.get(tool, r"$^"), last_user or "", re.I))
 
 
