@@ -30,7 +30,22 @@ def _backend(ctx: click.Context) -> Backend:
     from skypiea_cli.backend import KubeBackend
 
     o = ctx.obj
-    return KubeBackend(o["kubeconfig"], o["context"], o["namespace"])
+    try:
+        return KubeBackend(o["kubeconfig"], o["context"], o["namespace"])
+    except Exception as e:  # issue #24: one clean line, no traceback, no local paths
+        raise click.ClickException(kube_error(e, o["context"])) from None
+
+
+def kube_error(e: Exception, context: str | None) -> str:
+    msg = str(e)
+    if context and "Expected object with name" in msg:
+        return f"kube context {context!r} not found in the kubeconfig (kubectl config " \
+               f"get-contexts lists them)"
+    if isinstance(e, FileNotFoundError) or "No such file" in msg:
+        return "kubeconfig file not found (check --kubeconfig / KUBECONFIG)"
+    if "current-context" in msg or "Invalid kube-config" in msg:
+        return "no usable kubeconfig: set --context, or check KUBECONFIG"
+    return f"cannot load the kubeconfig ({type(e).__name__})"
 
 
 def _out(ctx: click.Context, data: Any, text: str) -> None:

@@ -258,6 +258,28 @@ def git_commit() -> str:
 
 
 def main() -> int:
+    """Issue #24: config and kube-context mistakes are one clean line and exit 2."""
+    try:
+        return _main()
+    except _CleanExit as e:
+        print(f"replay: {e}", file=sys.stderr)
+        return 2
+
+
+class _CleanExit(Exception):
+    pass
+
+
+def _load_config(path: str) -> Config:
+    try:
+        return Config.load(path)
+    except FileNotFoundError:
+        raise _CleanExit(f"config file not found: {path}") from None
+    except (TypeError, ValueError, yaml.YAMLError) as e:
+        raise _CleanExit(f"bad config {path}: {str(e).splitlines()[0][:200]}") from None
+
+
+def _main() -> int:
     from skypiea_cli.backend import KubeBackend, port_forward
 
     ap = argparse.ArgumentParser(description=__doc__,
@@ -268,12 +290,16 @@ def main() -> int:
     ap.add_argument("--context")
     ap.add_argument("--namespace", default="skypiea-tools")
     a = ap.parse_args()
-    cfg = Config.load(a.config)
+    cfg = _load_config(a.config)
     sessions = load_sessions(cfg)
     if cfg.mode == "functional":
         print(f"FUNCTIONAL run (gap x{cfg.gap_scale}, service x{cfg.service_scale}): "
               "not results.")
-    kube = KubeBackend(a.kubeconfig, a.context, a.namespace)
+    try:
+        kube = KubeBackend(a.kubeconfig, a.context, a.namespace)
+    except Exception as e:
+        from skypiea_cli.cli import kube_error
+        raise _CleanExit(kube_error(e, a.context)) from None
     policy = "unknown"
     if cfg.policy:
         kube.set_policy(cfg.policy["name"], cfg.policy.get("params") or {})
