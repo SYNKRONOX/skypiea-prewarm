@@ -114,6 +114,17 @@ class KubeBackend:
     def get_policy(self) -> dict[str, Any]:
         return self._svc("skypiea-predictor", 80, "/admin/policy")
 
+    def gateway_predictor_url(self) -> str | None:
+        """SKYPIEA_PREDICTOR_URL of the gateway Deployment ("" = none; None = unknown)."""
+        try:
+            d = self.apps.read_namespaced_deployment("skypiea-gateway", self.namespace)
+        except Exception:  # no gateway or no RBAC: unknown, fall back to the stub's view
+            return None
+        for e in d.spec.template.spec.containers[0].env or []:
+            if e.name == "SKYPIEA_PREDICTOR_URL":
+                return e.value or ""
+        return ""
+
     def set_policy(self, name: str, params: dict[str, Any]) -> dict[str, Any]:
         tok = self.admin_token()           # issue #27: the stub's POST needs the admin token
         status, data = self._proxy("services", "skypiea-predictor", 80, "/admin/policy", "POST",

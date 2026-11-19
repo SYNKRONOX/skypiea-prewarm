@@ -56,6 +56,32 @@ def cli(ctx: click.Context, kubeconfig, context, namespace, as_json) -> None:
                "json": as_json}
 
 
+def effective_policy(b: Any) -> dict[str, Any]:
+    """The policy the gateway actually uses (issue #8): the stub's only when the gateway's
+    SKYPIEA_PREDICTOR_URL points at the stub; the real model or no predictor otherwise."""
+    try:
+        stub = b.get_policy()
+    except RuntimeError:
+        stub = {"policy": "unavailable (predictor not reachable)"}
+    get_url = getattr(b, "gateway_predictor_url", None)
+    url = get_url() if get_url else None
+    if url is None or "skypiea-predictor" in url:      # unknown (old backend) or the stub
+        return {**stub, "served_by": "stub" if url else "unknown"}
+    if not url:
+        return {"policy": "scale_to_zero (the gateway has no predictor configured)",
+                "params": {}, "served_by": "none", "stub_policy": stub}
+    name = "skypiea-model" if "skypiea-model" in url else url
+    return {"policy": f"predictive (real predictor {name})", "params": {},
+            "served_by": "model", "predictor_url": url,
+            "note": f"the stub's policy {stub.get('policy')} is not used by the gateway",
+            "stub_policy": stub}
+
+
+def _policy_text(p: dict[str, Any]) -> str:
+    return (f"{p.get('policy')} {p.get('params') or ''}".rstrip()
+            + (f" ({p['note']})" if p.get("note") else ""))
+
+
 @cli.command(help="Tools, replicas, warm pool and the active policy.")
 @click.pass_context
 def status(ctx: click.Context) -> None:
@@ -67,10 +93,7 @@ def status(ctx: click.Context) -> None:
         state, ctl_err = {}, str(e)
     else:
         ctl_err = None
-    try:
-        policy = b.get_policy()
-    except RuntimeError:
-        policy = {"policy": "unavailable (predictor not reachable)"}
+    policy = effective_policy(b)
     tools = [d for d in deps if d.get("tier")]
     rows = []
     for d in sorted(tools, key=lambda d: d["tool"]):
@@ -79,7 +102,7 @@ def status(ctx: click.Context) -> None:
                      st.get("warm_for_s"), st.get("inflight")])
     platform = [[d["name"], f'{d["ready"]}/{d["replicas"]}'] for d in deps if not d.get("tier")]
     warm = sum(1 for d in tools if d["ready"] > 0)
-    text = (f"policy: {policy.get('policy')} {policy.get('params') or ''}\n"
+    text = (f"policy: {_policy_text(policy)}\n"
             f"warm pool: {warm} of {len(tools)} tools have a ready pod, "
             f"{sum(d['ready'] for d in tools)} ready pods in total\n\n"
             + _table(rows, ["tool", "tier", "replicas", "ready", "warm copies", "warm for s",
@@ -98,15 +121,24 @@ def policy() -> None:
 @policy.command("get")
 @click.pass_context
 def policy_get(ctx: click.Context) -> None:
-    p = _backend(ctx).get_policy()
-    _out(ctx, p, f"{p.get('policy')} {p.get('params') or ''}")
+    p = effective_policy(_backend(ctx))
+    _out(ctx, p, _policy_text(p))
 
 
 @policy.command("set")
 @click.argument("name")
 @click.option("-p", "--param", "params", multiple=True, help="key=value (numbers are parsed)")
+@click.option("--force", is_flag=True, help="set the stub policy even if the gateway does not "
+              "use the stub")
 @click.pass_context
-def policy_set(ctx: click.Context, name: str, params: tuple[str, ...]) -> None:
+def policy_set(ctx: click.Context, name: str, params: tuple[str, ...], force: bool) -> None:
+    b = _backend(ctx)
+    eff = effective_policy(b)
+    if eff.get("served_by") in ("model", "none") and not force:
+        raise click.ClickException(
+            f"the gateway uses {eff['policy']}, not the stub predictor: policy set would have "
+            f"no effect on the gateway. Redeploy with the stub (demo/deploy.sh SERVE=stub), or "
+            f"pass --force to change the stub anyway.")
     parsed: dict[str, Any] = {}
     for kv in params:
         if "=" not in kv:
@@ -117,7 +149,7 @@ def policy_set(ctx: click.Context, name: str, params: tuple[str, ...]) -> None:
         except ValueError:
             parsed[k] = v
     try:
-        res = _backend(ctx).set_policy(name, parsed)
+        res = b.set_policy(name, parsed)
     except RuntimeError as e:
         raise click.ClickException(str(e)) from e
     _out(ctx, res, f"policy set: {res.get('policy')} {res.get('params') or ''}")
