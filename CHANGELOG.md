@@ -3,7 +3,41 @@
 Each entry names the tag or branch it describes. Numbers are in the files linked from
 [`README.md`](README.md); none are repeated here.
 
-## Unreleased: security fixes (branch `fix/redteam-1`, not merged)
+## Unreleased: red-team fixes (branch `fix/redteam-2`, not merged)
+
+Every red-team issue #2-#27 has a commit here or on `fix/redteam-1` (#7). Issues stay open
+with `retest-requested` until the reporting team's retest passes. Tier 0 only on this branch
+(CI runs Tier 1); nothing was applied to AWS. Triage: `docs/handoff/TRIAGE_TABLE.md`.
+
+- **Admin token on the remaining mutating endpoints.** Stub predictor `POST /admin/policy`
+  (#27) and controller `POST /v1/warm` (#23, #5) need `X-Admin-Token` (Secret `skypiea-admin`,
+  now mounted into the stub and the controller). Every caller sends it: CLI, Live Console,
+  demo scripts, scenario/replay/concurrent checks, the agent, the AWS replay Job.
+- **Input validation.** Stub policy params validated at set time, `/decide` fails open, per-
+  session state LRU-capped (#27); every `/v1/warm` field bounded, fixed metric labels, the
+  refused list drained (#23); predictor contract bounds `start_in_ms`, `ttl_s`, decisions (#12);
+  gateway body limit 1 MiB with 413 before buffering (#15).
+- **Gateway.** Sliding 200-call history window plus `history_total` (decision P3), so long
+  sessions keep prewarming past call 1,000 (#14); no re-send of a `tools/call` that may have
+  reached the tool (-32003, #16); separate connection pools for tools, predictor, controller
+  (#18); cold calls fail fast (-32004) when the controller reports failing scale-ups (#4).
+- **Controller.** Timeouts on every Kubernetes call, the loop survives a hung patch,
+  `/healthz` 503 when stuck, livenessProbe (#20); `/v1/state` reports `scale_failing` (#4).
+- **FR-5.** Histogram `skypiea_gateway_call_latency_seconds{tool,cold}` and a Grafana panel
+  "Per-call latency, cold vs warm" (#26).
+- **AWS (static only, the live account was not changed).** `ec2:CreateTags` only on create
+  with `project=skypiea` (#11); node role only under the `skypiea-node-boundary` permissions
+  boundary, which the operator cannot remove (#13).
+- **SkyAir / Live Console.** Same-flight change refused, no fee (#21); promo on the fare only
+  (#22); seats follow bookings (#17); CSV exports neutralise formula cells (#6); a negated yes
+  is not consent (#9); a confirmed write must match the quoted target (#10); quotes expire
+  (#19); text-written tool calls obey a turn's tool suppression (#25).
+- **CLI / tooling.** `skypiea status` reports the predictor the gateway actually uses, `policy
+  set` refuses when it would have no effect (#8); clean one-line errors for a wrong
+  `--context` or a missing config (#24); `make doctor` (mode all) warns instead of failing
+  without Tier 2 bundles (#2); base image digest refreshed (apt 2.6.2, #3).
+
+## Security fixes (branch `fix/redteam-1`, merged to `main`)
 
 - **Gateway session introspection needs the admin token** (issue #7, GHSA-r23c-9c4p-2vxp).
   `GET /v1/sessions` and `GET /v1/sessions/{sid}` were unauthenticated: any caller on the

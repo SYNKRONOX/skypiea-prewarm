@@ -77,7 +77,7 @@ hint.
 | `decisions` | What to warm. Probabilities **may sum above 1** (several branches can be warmed at once). |
 | `decisions[].warm` | Boolean. `false` entries are allowed (logged) and do nothing. |
 | `decisions[].copies` | Integer in [0, 10]. The controller still applies its per-tool and cluster caps. |
-| `decisions[].start_in_ms` | Integer >= 0. The gateway waits this long before asking the controller (semi-Markov timing). |
+| `decisions[].start_in_ms` | Integer in [0, 600000] (issue #12; `ttl_s` null or in [0, 86400], at most 64 decisions). The gateway waits this long before asking the controller (semi-Markov timing). |
 | `decisions[].ttl_s` | Integer >= 0, or `null` -> controller default TTL (30 s). The pod is removed at TTL + 5 s after its last use (FR-3). Keep-alive baselines send their own T. |
 | `decisions[].prob` | In [0, 1]; for logging and analysis. |
 | `model_version` | Non-empty string; appears in the controller's `reason` (`predict:<model_version>`). |

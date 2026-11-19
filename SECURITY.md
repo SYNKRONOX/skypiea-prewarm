@@ -39,31 +39,36 @@ operator through a loopback port-forward). Nothing is exposed outside the cluste
 
 | Component | Endpoint | Requires | Notes |
 |---|---|---|---|
-| Gateway | `POST /mcp` | in-cluster; the `Mcp-Session-Id` is the session capability | MCP `tools/call`, `tools/list`, `ping`. No id: the gateway assigns one (256 bits). |
+| Gateway | `POST /mcp` | in-cluster; the `Mcp-Session-Id` is the session capability | MCP `tools/call`, `tools/list`, `ping`. No id: the gateway assigns one (256 bits). Body over 1 MiB (`maxBodyBytes`): 413 before it is buffered (issue #15). A call whose connection dropped after sending is never re-sent (-32003, issue #16). |
 | Gateway | `DELETE /mcp` | in-cluster; the session's `Mcp-Session-Id` | ends that session |
-| Gateway | `POST /v1/hint` | in-cluster; the session's `Mcp-Session-Id` | 404 unless `turnHint` is on; body `{"turn": <int>}` only |
+| Gateway | `POST /v1/hint` | in-cluster; the session's `Mcp-Session-Id` | 404 unless `turnHint` is on; body `{"turn": <int>}` only, at most 1 MiB |
 | Gateway | `GET /v1/sessions` | **admin token** (`X-Admin-Token`) | lists every session id. 403 if `ADMIN_TOKEN` is unset (disabled), 401 for a missing or wrong token. **Was unauthenticated before `fix/redteam-1`.** |
 | Gateway | `GET /v1/sessions/{sid}` | **admin token** (`X-Admin-Token`) | a session's calls and predictor decisions (metadata). Same 403/401; the token is checked before the lookup, so a wrong token never reveals whether an id exists. **Was unauthenticated before `fix/redteam-1`.** |
 | Gateway | `GET /healthz` | in-cluster | status and the number of live sessions (no ids) |
 | Gateway | `GET /metrics` | in-cluster | counters labelled by tool class only (no ids) |
-| Stub predictor (`skypiea-predictor`) | `POST /decide` | in-cluster | metadata in, warm decisions out |
-| Stub predictor | `GET`/`POST /admin/policy` | in-cluster | reads / sets the baseline policy (CLI `skypiea policy`, Live Console) |
+| Stub predictor (`skypiea-predictor`) | `POST /decide` | in-cluster | metadata in, warm decisions out; any internal error answers "nothing warmed" (200), never 500 (issue #27) |
+| Stub predictor | `GET /admin/policy` | in-cluster | reads the baseline policy (read-only) |
+| Stub predictor | `POST /admin/policy` | **admin token** (`X-Admin-Token`) | sets the baseline policy (CLI `skypiea policy set`, Live Console, demo scripts). 403 if `ADMIN_TOKEN` is unset, 401 for a missing or wrong token; params validated per policy, a bad body is 400 and never stored. **Was unauthenticated before `fix/redteam-2` (issue #27).** |
 | Stub predictor | `GET /healthz` | in-cluster | |
 | Real predictor (`skypiea-model`) | `POST /decide`, `GET /healthz`, `GET /metrics` | in-cluster | `docs/predictor_contract.md` |
 | Real predictor | `POST /reload`, `POST /rollback` | admin token (`X-Admin-Token`, its own `ADMIN_TOKEN`) | the chart sets no `ADMIN_TOKEN` for it, so both answer 403 (disabled) |
-| Controller | `POST /v1/warm`, `POST /v1/inflight` | in-cluster | start pods / report in-flight calls (the gateway's calls) |
-| Controller | `GET /v1/state`, `GET /healthz`, `GET /metrics` | in-cluster | pool state per tool (no session data) |
+| Controller | `POST /v1/warm` | **admin token** (`X-Admin-Token`) | start pods (the gateway sends its own token). Every field bounded (copies 0-10, ttl_s 0-86400, start_in_ms 0-600000, tool_class 1-128 chars); out of range is 400, never 500. **Was unauthenticated before `fix/redteam-2` (issues #23, #5).** |
+| Controller | `POST /v1/inflight` | in-cluster | in-flight counts per tool (the gateway's heartbeat); only known tools are kept |
+| Controller | `GET /v1/state`, `GET /healthz`, `GET /metrics` | in-cluster | pool state per tool (no session data); `/healthz` is 503 when the scaling loop is stuck, and the livenessProbe restarts the pod (issue #20) |
 | Tool pods | `POST /mcp`, `GET /healthz` | in-cluster; with the opt-in NetworkPolicy, only the gateway and controller | |
 | Live Console (127.0.0.1:8090) | every request | `Host` is `127.0.0.1:<port>`, `localhost:<port>` or `[::1]:<port>` | else 403 (DNS rebinding) |
 | Live Console | `GET /`, `/events`, `/static/*`, `/api/state`, `/api/personas`, `/api/models`, `/api/report`, `/api/skyair/state`, `/api/export.csv`, `/api/export_turns.csv` | Host check only | other sites cannot read the answers (no CORS headers) |
 | Live Console | `POST /api/chat`, `/api/autopilot`, `/api/story`, `/api/{reset,replay,policy,hint,typing,lookahead,cpm,mirror,predictor,model,demo}` | Host check **and** `Origin` equal to the console's own origin **and** a non-empty `X-Skypiea-Client` header | else 403. The page's JavaScript sends the header; `demo/console_run.py` and `console.bakeoff` send Origin and header (`console/xsite.py` `script_headers`). |
 
 **The admin token.** The chart generates Secret `skypiea-admin` (key `admin-token`, 48
-random characters) at install, keeps it across upgrades, and passes it **only to the gateway**
-(`ADMIN_TOKEN` from a `secretKeyRef`); it is never in the repository or in values files
-(`tests/test_chart_security.py`). The CLI (`skypiea sessions`, `trace`, `explain`) reads it with
-your kubeconfig, or from `SKYPIEA_ADMIN_TOKEN`; the Live Console reads each stack's Secret with
-`kubectl` (or `SKYPIEA_ADMIN_TOKEN_BASE` / `_PRED`). Neither prints nor stores it. Rotate it by
+random characters) at install, keeps it across upgrades, and passes it **only to the gateway,
+the stub predictor and the controller** (`ADMIN_TOKEN` from a `secretKeyRef`; never a tool pod
+or the model); it is never in the repository or in values files
+(`tests/test_chart_security.py`). The CLI (`skypiea sessions`, `trace`, `explain`,
+`policy set`) reads it with your kubeconfig, or from `SKYPIEA_ADMIN_TOKEN`; the Live Console
+reads each stack's Secret with `kubectl` (or `SKYPIEA_ADMIN_TOKEN_BASE` / `_PRED`); the demo
+scripts (`demo/run.sh`, `demo/agent_demo.sh`) export it as `SKYPIEA_ADMIN_TOKEN` and the AWS
+replay Job gets it from the Secret. None of them prints or stores it. Rotate it by
 deleting the Secret and running `helm upgrade` again (then restart the gateway).
 
 ## Fixed on branch `fix/redteam-1`
@@ -97,12 +102,51 @@ deleting the Secret and running `helm upgrade` again (then restart the gateway).
   `X-Skypiea-Client` header on every state-changing request, and sends no CORS headers
   (`console/xsite.py`, `tests/test_console_security.py`).
 
+## Fixed on branch `fix/redteam-2` (retest requested; issues stay open until retest passes)
+
+None of these was run on a cluster in this branch (Tier 0 only; CI runs Tier 1).
+
+- **Stub predictor admin endpoint (issue #27).** `POST /admin/policy` needs the admin token;
+  params are validated at set time (a bad config is 400 and never stored); `/decide` fails open
+  to "nothing warmed" instead of a persistent 500; per-session learning state is an LRU capped
+  at 10,000 sessions (`gateway/predictor_stub.py`, `tests/test_predictor_stub_admin.py`).
+- **Controller `/v1/warm` (issues #23, #5).** Admin token required; every field bounded (400,
+  never 500); the warm-request metric label is a fixed set; the refused-capacity list is
+  drained after counting, so caller input cannot grow controller memory
+  (`controller/service.py`, `tests/test_controller_warm_input.py`). #5's amplification through
+  the gateway's own demand warms stays bounded by the caps (`max_total`, per-node starts, TTL).
+- **Gateway body limit (issue #15).** `POST /mcp` and `/v1/hint` refuse bodies over 1 MiB with
+  413, from `Content-Length` before reading and while streaming
+  (`tests/test_gateway_body_limit.py`).
+- **No duplicate tool execution (issue #16).** A `tools/call` whose connection dropped after it
+  was sent is never re-sent; the client gets JSON-RPC -32003 "the tool may have run; not
+  retried" (`tests/test_gateway_no_replay.py`).
+- **AWS operator policy (issues #11, #13; static change, the live account was NOT changed).**
+  `ec2:CreateTags` only on create (`ec2:CreateAction`) with `project=skypiea`; the node role
+  can be created / given inline policies only under the `skypiea-node-boundary` permissions
+  boundary (`infra/aws/node-boundary-policy.json`), which the operator cannot remove or edit
+  (`tests/test_aws_policy_tags.py`, `tests/test_aws_policy_boundary.py`). An account admin
+  must create the boundary policy and re-attach the operator policy for this to take effect.
+- **Controller availability (issue #20).** Timeouts on every Kubernetes call, a hung patch no
+  longer freezes the loop, `/healthz` reports a stuck loop and a livenessProbe restarts it.
+- **Predictor contract bounds (issue #12):** `start_in_ms` <= 600000, `ttl_s` <= 86400, at most
+  64 decisions; anything else is off-contract and ignored (FR-4).
+- **Separate connection pools (issue #18)** for tool calls, the predictor and the controller.
+- **CSV exports (issue #6)** neutralise cells starting with `= + - @` (tab, CR).
+- **Live Console write guard (issues #9, #10, #19, #25).** A yes with any negation is not
+  consent; a confirmed write must target what was quoted (and an omitted target uses the
+  quoted one); quotes expire on a decline, a new request or the next turn; a tool call written
+  as text on a flagged turn (tools=[]) is never executed.
+- **Base image (issue #3)** refreshed to the current `python:3.12-slim-bookworm` digest (apt
+  2.6.2); images were not rebuilt or re-scanned in this branch.
+
 ## Still open (known, not fixed here)
 
-- **Everything else in-cluster is unauthenticated** (table above): any pod can call
-  `POST /mcp` with its own sessions, ask the controller to warm pods (`POST /v1/warm`: cost,
-  not data), or change the stub predictor's policy. The opt-in NetworkPolicy narrows who can
-  reach tool and predictor pods; it does not cover the gateway or the controller.
+- **The rest of the in-cluster surface is unauthenticated** (table above): any pod can call
+  `POST /mcp` with its own sessions (body and caps bounded), report in-flight counts
+  (`POST /v1/inflight`), call `/decide`, or read the stub's policy. The opt-in NetworkPolicy
+  narrows who can reach tool and predictor pods; it does not cover the gateway or the
+  controller.
 - **Client-chosen session ids.** The gateway accepts any `Mcp-Session-Id` a client sends (the
   stateless revision has no `initialize` to assign one). The repo's agent uses the id the
   gateway assigns. The Live Console chooses one id per conversation and sends it to both
