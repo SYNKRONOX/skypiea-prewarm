@@ -162,8 +162,11 @@ if need live; then
   elif [ -n "${PRED_IMAGE_TAG:-}" ]; then ok "no bundles; PRED_IMAGE_TAG=$PRED_IMAGE_TAG given"
   elif has docker && docker image inspect skypiea/predictor:af000231bc7b >/dev/null 2>&1; then
     ok "no bundles; the shipped predictor image skypiea/predictor:af000231bc7b is in Docker"
-  else fail "the predictor bundles are not in $bd/ (make live needs them)" \
-       "make fetch-models (README, Tier 2). If it says the release is not available, Tier 2 cannot run from a fresh clone (README, Known limitations)"; fi
+  elif [ "$MODE" = live ]; then fail "the predictor bundles are not in $bd/ (make live needs them)" \
+       "make fetch-models (README, Tier 2). If it says the release is not available, Tier 2 cannot run from a fresh clone (README, Known limitations)"
+  else   # issue #2: mode all (README Tier 1) must pass on a Tier 1 machine without bundles
+    warn "the predictor bundles are not in $bd/ (only Tier 2, make live, needs them)" \
+       "make fetch-models before Tier 2 (README)"; fi
   if has curl && curl -sf -m 3 "${AGENT_BASE_URL%/}/models" >/dev/null 2>&1; then
     ok "LLM endpoint ${AGENT_BASE_URL%/}/models reachable"
   else

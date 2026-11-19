@@ -128,3 +128,16 @@ def test_wrong_python_version_is_named(tmp_path):
     r = _run(tmp_path, "test", fake, {"PYTHON": "python3"})
     assert r.returncode == 1
     assert "python3 is Python 3.11.9, not 3.12" in r.stdout
+
+
+def test_all_mode_without_bundles_warns_not_fails(tmp_path):
+    """Issue #2: README Tier 1 runs `make doctor` (mode all); a correct Tier 1 machine has no
+    Tier 2 bundles yet, so that is a WARN there (FAIL only in mode live)."""
+    docker = ('case "$1" in info) case "$*" in *MemTotal*) echo 16000000000;; esac; exit 0;; '
+              'version) echo 29.9.2;; inspect|image) exit 1;; esac')
+    r = _run(tmp_path, "all", {**PY_OK, **K8S_OK, "docker": docker},
+             {"DOCTOR_MIN_DISK_GB": "0", "PF_BASE": "38080", "GRAFANA_PORT": "38090",
+              "REG_PORT": "38099", "CONSOLE_PORT": "38091"})
+    assert "FAIL" not in r.stdout, r.stdout
+    assert "WARN  the predictor bundles are not in models/" in r.stdout
+    assert r.returncode == 0

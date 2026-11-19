@@ -81,7 +81,7 @@ Prerequisites (tested versions; other recent ones should work): Docker 29.9.2 wi
 disk ([`docs/DEMO.md`](docs/DEMO.md), Prerequisites and Resources).
 
 ```bash
-make doctor                    # all checks (Docker running and its memory, kind, kubectl, helm, ports)
+make doctor                    # all checks (Docker running and its memory, kind, kubectl, helm, ports; Tier 2 bundles only WARN)
 make demo                      # kind cluster "skypiea" + local registry localhost:5001, 16 tool images,
                                # chart (profile prd), replay PRD Scenario A under scale_to_zero, then
                                # under the predictor; prints a table
