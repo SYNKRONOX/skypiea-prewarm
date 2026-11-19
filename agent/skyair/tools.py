@@ -164,7 +164,8 @@ class Session:
         self.today = TODAY
         self.bookings = {b["booking_code"]: copy.deepcopy(b) for b in db["bookings"]}
         self.customers = {c["customer_id"]: c for c in db["customers"]}
-        self.flights = db["flight_index"]
+        # per-conversation copy: bookings change seats_left (issue #17), never the shared world
+        self.flights = {k: dict(v) for k, v in db["flight_index"].items()}
         self.verified: str | None = None
         self.new_customers: set[str] = set()
         self.new_bookings: set[str] = set()
@@ -516,6 +517,11 @@ class Session:
             return {"error": "same_flight", "changed": False, "message": "The booking is "
                     "already on that flight; nothing changed and no fee was charged.",
                     "alternatives": alternatives()}
+        if new["seats_left"] < len(b["passengers"]):                     # issue #17
+            return {"error": "not_enough_seats", "changed": False, "message": f"Only "
+                    f"{new['seats_left']} seat(s) left on that flight for "
+                    f"{len(b['passengers'])} passenger(s); nothing changed.",
+                    "alternatives": alternatives()}
         if (new["origin"], new["destination"]) != (o["origin"], o["destination"]):
             return {"error": "wrong_route", "changed": False, "message": "The new flight must "
                     "fly the same route; nothing changed.", "alternatives": alternatives()}
@@ -542,6 +548,8 @@ class Session:
         code = b["booking_code"]
         before = self._flight_view(old, code)
         b["flights"] = [new["flight_id"] if f == old else f for f in b["flights"]]
+        self.flights[old]["seats_left"] += len(b["passengers"])        # issue #17: move seats
+        new["seats_left"] -= len(b["passengers"])
         b["paid"] += total
         after = self._flight_view(new["flight_id"], code)
         self._changed(code, "flight", before, after)
@@ -568,6 +576,8 @@ class Session:
                                   "Saver fare: no refund."),
                                refund_eligible=el, refund_amount=amt)
         b["status"] = "cancelled"
+        for fid in b["flights"]:                                        # issue #17: seats back
+            self.flights[fid]["seats_left"] += len(b["passengers"])
         self._changed(b["booking_code"], "status", "confirmed", "cancelled")
         return {"cancelled": True, "booking_code": b["booking_code"], "refund_eligible": el,
                 "refund_amount": amt, "message": ("Now call issue_refund for this booking if "
@@ -644,6 +654,10 @@ class Session:
             n = max(1, min(4, int(passengers or 1)))
         except (TypeError, ValueError):
             n = 1
+        if n > f["seats_left"]:                                          # issue #17
+            return {"error": "not_enough_seats", "booked": False, "seats_left": f["seats_left"],
+                    "message": f"Only {f['seats_left']} seat(s) left on {f['flight_no']} for "
+                    f"{n} passenger(s); nothing was booked."}
         self.selected_flight = f["flight_id"]
         if self.verified:
             cid, cname = self.verified, self.customers[self.verified]["name"]
@@ -714,6 +728,7 @@ class Session:
                                "status": ACTIVE, "currency": "INR",
                                "seats": {f["flight_id"]: seat_for(code, f["flight_id"])}}
         self.new_bookings.add(code)
+        f["seats_left"] -= n                                            # issue #17
         self._changed(code, "booking", None, "new")
         if promo:
             self.bookings[code]["paid"] = price - disc
