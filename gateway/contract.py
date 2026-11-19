@@ -13,6 +13,10 @@ from typing import Any
 
 CONTRACT_VERSION = "v1"
 RANK_SUM_TOLERANCE = 1e-6
+# issue #12: upper bounds, so a contract-valid answer cannot park long-sleeping warm tasks
+MAX_START_IN_MS = 600_000      # 10 min, the controller's own bound
+MAX_TTL_S = 86_400
+MAX_DECISIONS = 64
 
 
 @dataclass(frozen=True)
@@ -135,6 +139,8 @@ def parse_response(d: Any, max_copies: int = 10) -> DecideResponse:
         ranked.append(Ranked(r["tool_class"], _prob(r.get("p"), f"ranked[{i}].p")))
     if sum(r.p for r in ranked) > 1.0 + RANK_SUM_TOLERANCE:
         raise ContractError("ranked probabilities sum above 1 (FR-1)")
+    if len(dec_raw) > MAX_DECISIONS:
+        raise ContractError(f"at most {MAX_DECISIONS} decisions")
     decisions = []
     for i, x in enumerate(dec_raw):
         if not isinstance(x, dict) or not isinstance(x.get("tool_class"), str):
@@ -145,11 +151,15 @@ def parse_response(d: Any, max_copies: int = 10) -> DecideResponse:
         if isinstance(copies, bool) or not isinstance(copies, int) or not 0 <= copies <= max_copies:
             raise ContractError(f"decisions[{i}].copies must be an int in [0, {max_copies}]")
         start = x.get("start_in_ms", 0)
-        if isinstance(start, bool) or not isinstance(start, int) or start < 0:
-            raise ContractError(f"decisions[{i}].start_in_ms must be an int >= 0")
+        if isinstance(start, bool) or not isinstance(start, int) or \
+                not 0 <= start <= MAX_START_IN_MS:
+            raise ContractError(f"decisions[{i}].start_in_ms must be an int in "
+                                f"[0, {MAX_START_IN_MS}]")
         ttl = x.get("ttl_s")
-        if ttl is not None and (isinstance(ttl, bool) or not isinstance(ttl, int) or ttl < 0):
-            raise ContractError(f"decisions[{i}].ttl_s must be null or an int >= 0")
+        if ttl is not None and (isinstance(ttl, bool) or not isinstance(ttl, int)
+                                or not 0 <= ttl <= MAX_TTL_S):
+            raise ContractError(f"decisions[{i}].ttl_s must be null or an int in "
+                                f"[0, {MAX_TTL_S}]")
         decisions.append(Decision(x["tool_class"], x["warm"], copies, start, ttl,
                                   _prob(x.get("prob"), f"decisions[{i}].prob")))
     mv = d.get("model_version")
