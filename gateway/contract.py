@@ -43,10 +43,15 @@ class DecideRequest:
     # the client (metadata only: the turn number, never message text).
     trigger: str | None = None
     turn: int | None = None
+    # Optional (decision P3, issue #14): calls in the session so far when ``history`` is only
+    # the last HISTORY_WINDOW of them. None = history is complete (not sent).
+    history_total: int | None = None
 
     def to_json(self) -> dict[str, Any]:
         out = {"session_id": self.session_id, "now_ms": self.now_ms,
                "history": [asdict(h) for h in self.history]}
+        if self.history_total is not None:
+            out["history_total"] = self.history_total
         if self.oracle:
             out["oracle"] = [asdict(o) for o in self.oracle]
         if self.trigger is not None:
@@ -65,6 +70,8 @@ class DecideRequest:
             oracle=[OracleHint(str(o["tool_class"]), float(o["in_ms"]))
                     for o in d.get("oracle", []) or []],
             trigger=d.get("trigger"), turn=d.get("turn"),
+            history_total=(int(d["history_total"]) if d.get("history_total") is not None
+                           else None),
         )
 
 

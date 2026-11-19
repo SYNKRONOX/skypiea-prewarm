@@ -45,7 +45,7 @@ from gateway.controller_client import ControllerClient
 from gateway.predictor import PredictorClient
 from gateway.readiness import ReadyTracker
 from gateway.routing import Router
-from gateway.sessions import SessionStore
+from gateway.sessions import HISTORY_WINDOW, SessionStore  # noqa: F401 (re-export)
 
 log = logging.getLogger("skypiea.gateway")
 SESSION_HEADER = "Mcp-Session-Id"
@@ -189,7 +189,8 @@ class Gateway:
         if self.predictor is None:
             return
         t0 = self.clock()
-        entry = {"after_call": len(req.history) - 1, "t_ms": round(req.now_ms, 1)}
+        n = req.history_total if req.history_total is not None else len(req.history)
+        entry = {"after_call": n - 1, "t_ms": round(req.now_ms, 1)}
         source = "call"
         if req.trigger is not None:
             entry.update(trigger=req.trigger, turn=req.turn)
@@ -312,10 +313,11 @@ class Gateway:
             "held_ms": round(held_ms, 1), "hold_late_ms": round(hold_late_ms, 1),
             "hold_wait_ms": round(hold_wait_ms, 1), "added_ms": round(added_ms, 1),
             "predicted": predicted, "warm_source": warm_source, "ok": not is_err})
-        session.history.append(HistoryItem(route.tool_class, (t_arrive - session.created) * 1e3,
-                                           (t_end - session.created) * 1e3, is_err, batch))
+        session.record(HistoryItem(route.tool_class, (t_arrive - session.created) * 1e3,
+                                   (t_end - session.created) * 1e3, is_err, batch))
+        # P3 / issue #14: the last HISTORY_WINDOW calls plus history_total, never the full list
         req = DecideRequest(sid, (t_end - session.created) * 1e3, list(session.history),
-                            list(session.oracle))
+                            list(session.oracle), history_total=session.history_total)
         self._spawn(self._predict(session, req))
         info = {"cold": cold, "held_ms": round(held_ms, 1),
                 "hold_late_ms": round(hold_late_ms, 1), "hold_wait_ms": round(hold_wait_ms, 1),
@@ -352,7 +354,8 @@ class Gateway:
         self.metrics.hints.inc()
         now_ms = 0.0 if not session.history else (self.clock() - session.created) * 1e3
         req = DecideRequest(sid, now_ms, list(session.history), list(session.oracle),
-                            trigger="turn_start", turn=body.get("turn"))
+                            trigger="turn_start", turn=body.get("turn"),
+                            history_total=session.history_total)
         self._spawn(self._predict(session, req))
         return JSONResponse({"accepted": True, "session_id": sid}, status_code=202,
                             headers={SESSION_HEADER: sid})

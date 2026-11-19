@@ -9,6 +9,10 @@ from typing import Any
 
 from gateway.contract import HistoryItem, OracleHint
 
+# decision P3 / issue #14: the predictor reads the last 200 calls; the gateway keeps and sends
+# only those, plus history_total (the predictor refuses more than 1,000 items with 413)
+HISTORY_WINDOW = 200
+
 
 @dataclass
 class Session:
@@ -29,6 +33,13 @@ class Session:
     last_warm_source: str | None = None
     opened_by_hint: bool = False
     hints: int = 0
+    history_total: int = 0        # calls recorded so far (history keeps the last window)
+
+    def record(self, item: HistoryItem) -> None:
+        self.history.append(item)
+        self.history_total += 1
+        if len(self.history) > HISTORY_WINDOW:
+            del self.history[:len(self.history) - HISTORY_WINDOW]
 
     def start_call(self) -> int:
         """Calls that overlap an in-flight call of the same session share its batch."""

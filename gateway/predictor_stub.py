@@ -118,14 +118,19 @@ class StubPredictor:
     # online learning of transitions (markov1, predictive): each call is learned once
     def _learn(self, req: DecideRequest) -> list[str]:
         seq = [h.tool_class for h in req.history]
-        start = self.seen.get(req.session_id, 0)
-        for i in range(start, len(seq)):
+        # history may be the last window only (issue #14): index calls by their absolute
+        # position, history_total - len(history) is the offset of seq[0]
+        total = max(req.history_total or 0, len(seq))
+        off = total - len(seq)
+        start = max(self.seen.get(req.session_id, 0), off)
+        for a in range(start, total):
+            i = a - off
             self.uni[seq[i]] += 1
             if i >= 1:
                 self.bi[seq[i - 1]][seq[i]] += 1
             if i >= 2:
                 self.tri[(seq[i - 2], seq[i - 1])][seq[i]] += 1
-        self.seen[req.session_id] = len(seq)
+        self.seen[req.session_id] = total
         self.seen.move_to_end(req.session_id)
         while len(self.seen) > MAX_SESSIONS:
             self.seen.popitem(last=False)

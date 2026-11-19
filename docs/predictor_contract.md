@@ -23,9 +23,10 @@ implementation and validator are `gateway/contract.py` and `gateway/predictor.py
 |---|---|
 | `session_id` | Opaque id (the client's `Mcp-Session-Id`). Sessions are isolated. |
 | `now_ms` | Milliseconds since the session's first call reached the gateway (end of the latest call). |
-| `history` | All calls of this session so far, in arrival order. `tool_class` is the class from `tools/tool_map.yaml` (the predictor works on class names only). Times are on the same session clock as `now_ms`. |
+| `history` | The last 200 calls of this session (all of them while there are at most 200), in arrival order (decision P3, issue #14). `tool_class` is the class from `tools/tool_map.yaml` (the predictor works on class names only). Times are on the same session clock as `now_ms`. |
 | `error` | The call returned a JSON-RPC error or `isError: true`. |
 | `batch_id` | Calls that overlapped in time (parallel tool calls) share a batch id; ids increase. |
+| `history_total` | Optional int: how many calls the session has made in total. Sent with every request since issue #14; when it is larger than `len(history)`, `history` is the last window only. |
 | `oracle` | **Optional, oracle baseline only.** The replayer's true next calls, `in_ms` after `now_ms`. Real predictors must ignore it. |
 
 Metadata only: no prompts, arguments or results are ever sent.
