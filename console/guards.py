@@ -23,10 +23,13 @@ INTS = {"add_baggage": ["bags"], "book_flight": ["passengers"]}
 FARES = ("saver", "flex", "business")
 _YES = re.compile(r"\b(yes|yeah|yep|yup|confirm\w*|confrim\w*|go ahead|please do|proceed|"
                   r"sure|ok|okay|do it|book it|that'?s fine|sounds good|correct)\b", re.I)
-_NO = re.compile(r"\b(no|not yet|don'?t|do not|wait|hold on|cancel that)\b", re.I)
-KEYWORDS = {"book_flight": r"\bbook", "change_flight": r"\b(chang|chnag|mov|switch|resched)",
-            "cancel_booking": r"\bcancel", "add_baggage": r"\bbag",
-            "issue_refund": r"\brefund", "apply_promo": r"\b(promo|code|apply|offer|discount)"}
+_NO = re.compile(r"\b(no|not|never|not yet|don['’]?t|do not|wait|hold on|cancel that|stop)\b", re.I)
+# whole words (issue #9): "booking" is not "book", a "booking code" is not a promo
+KEYWORDS = {"book_flight": r"\bbook\b",
+            "change_flight": r"\b(chang\w*|chnag\w*|mov(e|ing)|switch\w*|resched\w*)\b",
+            "cancel_booking": r"\bcancel(l?ed|l?ing)?\b", "add_baggage": r"\b(bag|bags|baggage)\b",
+            "issue_refund": r"\brefund\w*\b",
+            "apply_promo": r"\b(promo\w*|apply|offer|discount)\b"}
 
 
 def validate(tool: str, args: dict[str, Any], backend: Any = None) -> list[str]:
@@ -78,8 +81,10 @@ def hint(tool: str, problems: list[str], backend: Any = None) -> str:
 
 
 def affirmative(text: str) -> bool:
+    """A yes with no negation anywhere (issue #9): "yes, but do not cancel" is not consent;
+    an unclear answer makes the engine show the quote and ask again."""
     t = text or ""
-    return bool(_YES.search(t)) and not (_NO.search(t) and not re.search(r"\byes\b", t, re.I))
+    return bool(_YES.search(t)) and not _NO.search(t)
 
 
 def confirmed_ok(tool: str, last_user: str, pending: dict | None) -> bool:
