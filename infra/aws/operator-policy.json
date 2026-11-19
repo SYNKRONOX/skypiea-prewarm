@@ -20,7 +20,8 @@
       "Resource": "arn:aws:ec2:ap-south-1:*:instance/*",
       "Condition": {
         "StringEquals": {
-          "ec2:InstanceType": "m7i-flex.large"
+          "ec2:InstanceType": "m7i-flex.large",
+          "aws:RequestTag/project": "skypiea"
         }
       }
     },
@@ -37,18 +38,63 @@
       ]
     },
     {
-      "Sid": "Ec2CreateInApSouth1",
+      "Sid": "Ec2CreateTaggedSkypieaInApSouth1",
       "Effect": "Allow",
       "Action": [
-        "ec2:CreateSecurityGroup",
+        "ec2:CreateSecurityGroup"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {
+          "aws:RequestedRegion": "ap-south-1",
+          "aws:RequestTag/project": "skypiea"
+        }
+      }
+    },
+    {
+      "Sid": "Ec2EgressRulesOnTaggedSkypieaGroups",
+      "Effect": "Allow",
+      "Action": [
         "ec2:AuthorizeSecurityGroupEgress",
-        "ec2:RevokeSecurityGroupEgress",
+        "ec2:RevokeSecurityGroupEgress"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {
+          "aws:RequestedRegion": "ap-south-1",
+          "aws:ResourceTag/project": "skypiea"
+        }
+      }
+    },
+    {
+      "Sid": "Ec2EgressRuleCreate",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:AuthorizeSecurityGroupEgress"
+      ],
+      "Resource": "arn:aws:ec2:ap-south-1:*:security-group-rule/*",
+      "Condition": {
+        "StringEquals": {
+          "aws:RequestTag/project": "skypiea"
+        }
+      }
+    },
+    {
+      "Sid": "TagOnlyOnCreateWithTheProjectTag",
+      "Effect": "Allow",
+      "Action": [
         "ec2:CreateTags"
       ],
       "Resource": "*",
       "Condition": {
         "StringEquals": {
-          "aws:RequestedRegion": "ap-south-1"
+          "aws:RequestedRegion": "ap-south-1",
+          "ec2:CreateAction": [
+            "RunInstances",
+            "CreateSecurityGroup",
+            "AuthorizeSecurityGroupEgress"
+          ],
+          "aws:RequestTag/project": "skypiea"
         }
       }
     },
