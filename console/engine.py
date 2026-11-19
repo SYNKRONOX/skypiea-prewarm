@@ -990,9 +990,18 @@ TURN_FIELDS = ["conversation", "turn", "source", "hint_mode", "hint_mode_end",
                "llm_model"]
 
 
+FORMULA_START = ("=", "+", "-", "@", "\t", "\r")
+
+
+def _cell(v: Any) -> Any:
+    """Issue #6: a text cell starting with = + - @ (or tab/CR) is prefixed with ' so a
+    spreadsheet shows it as text instead of running it as a formula. Numbers are kept."""
+    return f"'{v}" if isinstance(v, str) and v.startswith(FORMULA_START) else v
+
+
 def to_csv(calls: list[dict[str, Any]], fields: list[str] | None = None) -> str:
     buf = io.StringIO()
     w = csv.DictWriter(buf, fieldnames=fields or CSV_FIELDS, extrasaction="ignore")
     w.writeheader()
-    w.writerows(calls)
+    w.writerows({k: _cell(v) for k, v in row.items()} for row in calls)
     return buf.getvalue()
