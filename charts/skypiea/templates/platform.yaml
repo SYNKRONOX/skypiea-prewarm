@@ -193,6 +193,7 @@ spec:
             - {name: SKYPIEA_DEMAND_TTL_S, value: {{ $p.gateway.demandTtlS | quote }}}
             - {name: SKYPIEA_PREDICTOR_TIMEOUT_MS, value: {{ $p.gateway.predictorTimeoutMs | quote }}}
             - {name: SKYPIEA_SESSION_IDLE_S, value: {{ $p.gateway.sessionIdleS | quote }}}
+            - {name: SKYPIEA_MAX_BODY_BYTES, value: {{ $p.gateway.maxBodyBytes | default 1048576 | int64 | quote }}}
             {{- if $p.gateway.turnHint }}
             - {name: SKYPIEA_TURN_HINT, value: "1"}
             {{- end }}

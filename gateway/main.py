@@ -38,6 +38,7 @@ def gateway_config() -> GatewayConfig:
         early_connect=_env("SKYPIEA_EARLY_CONNECT", "0") == "1",
         # GET /v1/sessions(/{sid}); unset or empty = disabled (from Secret skypiea-admin)
         admin_token=os.environ.get("ADMIN_TOKEN") or None,
+        max_body_bytes=int(_env("SKYPIEA_MAX_BODY_BYTES", str(1024 * 1024))),   # issue #15
     )
 
 

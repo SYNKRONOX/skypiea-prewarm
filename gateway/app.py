@@ -84,6 +84,9 @@ class GatewayConfig:
     # GET /v1/sessions(/{sid}) need this token in X-Admin-Token (env ADMIN_TOKEN, from a
     # Secret). None = those endpoints are disabled (403): the secure default (issue #7).
     admin_token: str | None = None
+    # issue #15: POST /mcp and /v1/hint bodies above this are 413, checked from Content-Length
+    # before reading and again while streaming (the pod limit is 256 MiB)
+    max_body_bytes: int = 1024 * 1024
     gateway_id: str = field(default_factory=lambda: uuid.uuid4().hex[:8])
 
 
@@ -124,6 +127,27 @@ class Metrics:
                              registry=r)
         self.hint_warms = Counter("skypiea_gateway_hint_warms_total", "Warm requests sent "
                                   "because of a turn-start hint", ["tool"], registry=r)
+
+
+class BodyTooLarge(ValueError):
+    """Request body over GatewayConfig.max_body_bytes (HTTP 413, issue #15)."""
+
+
+async def read_body(request: Request, limit: int) -> bytes:
+    """The body, refused before it is buffered whole when it is over ``limit`` bytes."""
+    cl = request.headers.get("content-length")
+    if cl is not None and (not cl.isdigit() or int(cl) > limit):
+        raise BodyTooLarge(cl)
+    buf = bytearray()
+    async for chunk in request.stream():
+        buf += chunk
+        if len(buf) > limit:
+            raise BodyTooLarge(len(buf))
+    return bytes(buf)
+
+
+def _too_large(limit: int) -> JSONResponse:
+    return _rpc_error(None, -32600, f"request body over {limit} bytes", 413)
 
 
 def _rpc_error(id_: Any, code: int, msg: str, status: int = 200) -> JSONResponse:
@@ -338,7 +362,9 @@ class Gateway:
         if not sid:
             return JSONResponse({"error": f"{SESSION_HEADER} header required"}, status_code=400)
         try:
-            body = json.loads(await request.body() or b"{}")
+            body = json.loads(await read_body(request, self.cfg.max_body_bytes) or b"{}")
+        except BodyTooLarge:
+            return _too_large(self.cfg.max_body_bytes)
         except json.JSONDecodeError:
             return JSONResponse({"error": "body is not JSON"}, status_code=400)
         if (not isinstance(body, dict) or set(body) - {"turn"}
@@ -423,8 +449,10 @@ class Gateway:
             self.sessions.end(sid)
             return Response(status_code=204, headers=hdr)
         try:
-            body = json.loads(await request.body())
-        except json.JSONDecodeError:
+            body = json.loads(await read_body(request, self.cfg.max_body_bytes))
+        except BodyTooLarge:
+            return _too_large(self.cfg.max_body_bytes)
+        except (json.JSONDecodeError, UnicodeDecodeError):
             return _rpc_error(None, -32700, "parse error", 400)
         if not isinstance(body, dict):
             return _rpc_error(None, -32600, "batch requests are not supported", 400)
