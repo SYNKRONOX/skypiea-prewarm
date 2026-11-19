@@ -18,6 +18,9 @@ same Helm chart as kind (`charts/skypiea`, `values-aws.yaml`). The setup:
 
 - aws CLI v2 with a working profile: `aws sts get-caller-identity`.
 - Your IAM user needs `operator-policy.json`, attached as a customer-managed policy.
+- An account admin creates `node-boundary-policy.json` once as the customer-managed policy
+  `skypiea-node-boundary` (issue #13): the node role is created with it as its permissions
+  boundary, and the operator policy can write that role only while the boundary is set.
 - `session-manager-plugin`, for `aws ssm start-session`.
 - docker, helm, kubectl.
 

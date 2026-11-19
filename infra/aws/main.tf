@@ -66,6 +66,10 @@ resource "aws_iam_role" "node" {
   name               = "skypiea-node"
   description        = "Skypiea k3s node: pull our ECR repos, read/write our bucket, SSM sessions"
   assume_role_policy = data.aws_iam_policy_document.ec2_assume.json
+  # issue #13: the role can never hold more than this boundary (node-boundary-policy.json,
+  # created once by an account admin as the customer-managed policy skypiea-node-boundary).
+  # The operator policy can write this role only with the boundary set, and never remove it.
+  permissions_boundary = "arn:aws:iam::${local.account_id}:policy/skypiea-node-boundary"
 }
 
 # ECR: pull only, and only from the skypiea/* repositories created here.

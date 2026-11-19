@@ -121,7 +121,6 @@
       "Sid": "IamOnlyTheSkypieaNodeRole",
       "Effect": "Allow",
       "Action": [
-        "iam:CreateRole",
         "iam:DeleteRole",
         "iam:GetRole",
         "iam:TagRole",
@@ -131,7 +130,6 @@
         "iam:ListRolePolicies",
         "iam:ListAttachedRolePolicies",
         "iam:ListInstanceProfilesForRole",
-        "iam:PutRolePolicy",
         "iam:GetRolePolicy",
         "iam:DeleteRolePolicy",
         "iam:CreateInstanceProfile",
@@ -146,6 +144,47 @@
         "arn:aws:iam::*:role/skypiea-node",
         "arn:aws:iam::*:instance-profile/skypiea-node"
       ]
+    },
+    {
+      "Sid": "NodeRoleWritesOnlyUnderTheBoundary",
+      "Effect": "Allow",
+      "Action": [
+        "iam:CreateRole",
+        "iam:PutRolePolicy"
+      ],
+      "Resource": "arn:aws:iam::*:role/skypiea-node",
+      "Condition": {
+        "ArnLike": {
+          "iam:PermissionsBoundary": "arn:aws:iam::*:policy/skypiea-node-boundary"
+        }
+      }
+    },
+    {
+      "Sid": "ReadTheBoundary",
+      "Effect": "Allow",
+      "Action": [
+        "iam:GetPolicy",
+        "iam:GetPolicyVersion"
+      ],
+      "Resource": "arn:aws:iam::*:policy/skypiea-node-boundary"
+    },
+    {
+      "Sid": "NeverRemoveOrEditTheBoundary",
+      "Effect": "Deny",
+      "Action": [
+        "iam:DeleteRolePermissionsBoundary",
+        "iam:PutRolePermissionsBoundary",
+        "iam:CreatePolicyVersion",
+        "iam:DeletePolicy",
+        "iam:DeletePolicyVersion",
+        "iam:SetDefaultPolicyVersion",
+        "iam:AttachRolePolicy",
+        "iam:PutUserPolicy",
+        "iam:AttachUserPolicy",
+        "iam:PutUserPermissionsBoundary",
+        "iam:DeleteUserPermissionsBoundary"
+      ],
+      "Resource": "*"
     },
     {
       "Sid": "PassTheNodeRoleToEc2Only",
