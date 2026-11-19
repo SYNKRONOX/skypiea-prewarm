@@ -2,6 +2,8 @@
 
 Fixes are on branch `fix/redteam-2` (not merged yet), plus `fix/redteam-1` (merged) for #7.
 Every issue stays open until your retest passes. Full table: `docs/handoff/TRIAGE_TABLE.md`.
+Verified on our side with `make review` (Tier 0 + Tier 1 PASS) and on both `make live` stacks;
+nothing was applied to AWS (#11, #13 are repository changes).
 
 ## Cloudhack (Red Team 2)
 
@@ -18,7 +20,7 @@ Every issue stays open until your retest passes. Full table: `docs/handoff/TRIAG
 ## Altus
 
 - #8 CLI policy status: fixed (`0589485`), retest requested.
-- #9 negated yes: fixed (`45d7635`), retest requested.
+- #9 negated yes: fixed (`45d7635`, plus `1a1f657` so "I confirm the booking" still confirms a new booking), retest requested.
 - #10 quote target: fixed (`1affef7`), retest requested.
 - #11 `ec2:CreateTags`: fixed in the repo (`f58b3db`; the live AWS account was not changed), retest requested.
 - #12 `start_in_ms` bound: fixed (`e684663`), retest requested.

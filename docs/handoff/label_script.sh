@@ -6,7 +6,7 @@
 set -euo pipefail
 R=SYNKRONOX/skypiea-prewarm
 
-# #7: already fixed on fix/redteam-1 (merged); Cloudhack posted retest-passed.
+# #7: fixed on fix/redteam-1 (merged). retest-passed ONLY because Cloudhack already posted it on the issue.
 gh issue edit 7 --repo "$R" --add-label "confirmed,major,fixed,retest-passed" --remove-label "retest-requested"
 gh issue comment 7 --repo "$R" --body 'Thank you for the retest (retest-passed on e29fb39, fix e5de779). Labelled retest-passed.'
 
@@ -20,7 +20,7 @@ gh issue edit 4 --repo "$R" --add-label "confirmed,minor,retest-requested,fixed"
 gh issue comment 4 --repo "$R" --body 'Fix commit <H> (branch fix/redteam-2). Cold calls fail fast with JSON-RPC -32004 when the controller reports two failed scale-ups in a row (/v1/state scale_failing), instead of blocking for cold_timeout_s. Test: tests/test_cold_fail_fast.py. Retest requested. The issue stays open until your retest passes.'
 
 gh issue edit 5 --repo "$R" --add-label "confirmed,minor,retest-requested"
-gh issue comment 5 --repo "$R" --body 'Fix commit <H> (branch fix/redteam-2). Confirmed. Related to #23 but not the same root cause. The direct unauthenticated POST /v1/warm route is closed (admin token required). NOT fixed: cost amplification through POST /mcp demand warms (stateless MCP gateway; bounded by max_total 20, 2 starts/node, TTL eviction). Workaround: opt-in NetworkPolicy. Details: docs/handoff/TRIAGE_TABLE.md. Retest requested. The issue stays open until your retest passes.'
+gh issue comment 5 --repo "$R" --body 'Partly fixed, commit <H> (branch fix/redteam-2); no fixed label. Confirmed; related to #23 but a different root cause. Fixed part: the controller POST /v1/warm route now needs the admin token, so an unauthenticated client can no longer request warm pods directly. Remaining risk: any in-cluster client that can reach the gateway can still trigger demand warms through cold POST /mcp calls (the stateless MCP gateway has no client auth). The cost is bounded by the controller caps (max_total 20, 2 starts per node, TTL eviction). Workaround: enable the opt-in NetworkPolicy and keep the gateway ClusterIP-only. Next step: per-client authentication or rate limits on demand warms. Details: docs/handoff/TRIAGE_TABLE.md. Retest of the fixed part requested; the issue stays open.'
 
 gh issue edit 6 --repo "$R" --add-label "confirmed,minor,retest-requested,fixed"
 gh issue comment 6 --repo "$R" --body 'Fix commit <H> (branch fix/redteam-2). CSV exports (/api/export.csv, /api/export_turns.csv) prefix text cells starting with = + - @ (tab, CR) with '\''. Test: tests/test_console_csv_injection.py. Retest requested. The issue stays open until your retest passes.'

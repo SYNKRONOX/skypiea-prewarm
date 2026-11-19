@@ -23,3 +23,7 @@ mind, unsupported request) and the oracle rules are the same.
 - `free_typing_before/`, `free_typing_after/`: the free-typing robustness group (13 openers,
   added after a bug found by hand), 3 models x 3 reps, before (origin/main 66404ff) and after
   the fix (fix/free-typing 95b1fc6). Table: `docs/SUITE_BEFORE_AFTER.md`, last section.
+- `redteam2_check/`, `redteam2_final/`: llama3.1:8b, 1 rep, on `fix/redteam-2` (red-team round 2
+  guardrails #9, #10, #19, #25). `redteam2_check/` (on `1a6bbfd`): 16/18, both `new_booking`
+  failures from the #9 whole-word keyword ("I confirm the booking" no longer named
+  book_flight). `redteam2_final/` (on `1a1f657`, the fix): 18/18.

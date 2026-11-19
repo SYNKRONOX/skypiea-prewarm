@@ -6,8 +6,9 @@ Each entry names the tag or branch it describes. Numbers are in the files linked
 ## Unreleased: red-team fixes (branch `fix/redteam-2`, not merged)
 
 Every red-team issue #2-#27 has a commit here or on `fix/redteam-1` (#7). Issues stay open
-with `retest-requested` until the reporting team's retest passes. Tier 0 only on this branch
-(CI runs Tier 1); nothing was applied to AWS. Triage: `docs/handoff/TRIAGE_TABLE.md`.
+with `retest-requested` until the reporting team's retest passes. Verified locally with
+`make review` (Tier 0 + Tier 1 PASS), `make live` (both stacks) and the scenario suite;
+nothing was applied to AWS. Triage: `docs/handoff/TRIAGE_TABLE.md`.
 
 - **Admin token on the remaining mutating endpoints.** Stub predictor `POST /admin/policy`
   (#27) and controller `POST /v1/warm` (#23, #5) need `X-Admin-Token` (Secret `skypiea-admin`,

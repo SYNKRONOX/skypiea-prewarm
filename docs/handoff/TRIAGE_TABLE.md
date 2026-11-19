@@ -5,7 +5,8 @@ Teams: Altus = authors rutujmanware, vivek031, ancita13, SymmetricEntropy; Cloud
 others (vaishu0702). Severity is taken from the issue body. Outcomes were checked on Tier 0:
 for every code issue a regression test was written first and **failed before the fix** (the
 named test file), then passed; the static issues (#11, #13) were checked by reading the policy.
-Nothing in this branch was run on a cluster (CI runs Tier 1) and nothing was applied to AWS.
+Verified with `make review` (Tier 0 + Tier 1 on kind: PASS), on both `make live` stacks and with
+the scenario suite (section at the end). Nothing was applied to AWS.
 "Retest" is the reporting team's retest; it is `retest-requested` for every issue except #7.
 
 | # | Team | Severity | Outcome | Evidence | Fix commit / status |
@@ -17,7 +18,7 @@ Nothing in this branch was run on a cluster (CI runs Tier 1) and nothing was app
 | 6 | Cloudhack | Minor | confirmed: `to_csv` wrote `=...` cells verbatim | `tests/test_console_csv_injection.py` failed before the fix | `a9a7de3`; retest-requested |
 | 7 | Cloudhack | Major | confirmed: unauthenticated session enumeration / cross-session access | `tests/test_gateway_session_auth.py`; `demo/session_auth_check.sh` | `e5de779` (+ `5ef2734`, `bb56ec4`, merged in `e29fb39`); **retest-passed** (Cloudhack comment on the issue, tested `e29fb39`) |
 | 8 | Altus | Minor | confirmed: `skypiea status` read the stub's policy while the gateway served the model | code: `skypiea_cli/cli.py` read only `svc/skypiea-predictor`; `tests/test_cli_effective_policy.py` failed before the fix | `0589485`; retest-requested |
-| 9 | Altus | Major | confirmed: "Yes, but please do not cancel my booking" counted as consent; `\bbook` matched "booking" | `tests/test_guard_negated_yes.py` failed before the fix | `45d7635`; retest-requested |
+| 9 | Altus | Major | confirmed: "Yes, but please do not cancel my booking" counted as consent; `\bbook` matched "booking" | `tests/test_guard_negated_yes.py` failed before the fix | `45d7635`, plus `1a1f657` (the scenario suite showed the whole-word change stopped "I confirm the booking" confirming a new booking; fixed with a test); retest-requested |
 | 10 | Altus | Major | confirmed: confirmation compared only the tool name, not the quoted booking | `tests/test_guard_quote_target.py` failed before the fix | `1affef7`; retest-requested |
 | 11 | Altus | Major | confirmed (static review): unconditioned `ec2:CreateTags` defeats the `project=skypiea` tag scoping | `infra/aws/operator-policy.json` at `e29fb39`; `tests/test_aws_policy_tags.py` failed before the fix | `f58b3db` (repo only; **the live AWS account was not changed**); retest-requested |
 | 12 | Altus | Minor | confirmed: contract had no upper bound on `start_in_ms` / `ttl_s` / decisions | `tests/test_contract_bounds.py` (the gateway test hung on the 10^12 ms sleep before the fix) | `e684663`; retest-requested |
@@ -31,11 +32,11 @@ Nothing in this branch was run on a cluster (CI runs Tier 1) and nothing was app
 | 20 | Altus | Major | confirmed: no timeout on the scale patch; `/healthz` ignored the loop; no livenessProbe | `tests/test_controller_timeouts.py` failed before the fix | `db1ad7e`; retest-requested |
 | 21 | Cloudhack | Minor | confirmed: same-flight change charged the fee | `tests/test_skyair_issue21.py` failed before the fix | `eb9da86`; retest-requested |
 | 22 | Cloudhack | Minor | confirmed: percentage of `paid` (incl. bags) | `tests/test_skyair_issue22.py` failed before the fix | `4b32a0d`; retest-requested |
-| 23 | Altus | Major | confirmed: raw `reason` as a metric label, `refused` list never cleared, unbounded numbers -> 500 | `tests/test_controller_warm_input.py` failed before the fix | `20a94bf`; retest-requested |
+| 23 | Altus | Major | confirmed: raw `reason` as a metric label, `refused` list never cleared, unbounded numbers -> 500 | `tests/test_controller_warm_input.py` failed before the fix | `20a94bf` (+ `490b746`: Tier 1 session-auth check allows the controller as a token holder); retest-requested |
 | 24 | Cloudhack | Minor | confirmed: tracebacks for a wrong `--context` / missing config | `tests/test_clean_errors.py` failed before the fix | `b5c4f0c`; retest-requested |
 | 25 | Altus | Major | confirmed: text-written call gated by `offered_tools()`, not the turn's `tools=[]` | `tests/test_guard_text_call_suppressed.py` failed before the fix | `5582f9d`; retest-requested |
 | 26 | Altus | Major | confirmed: no cold/warm-labelled histogram (FR-5 acceptance text) | `tests/test_fr5_cold_warm_histogram.py` failed before the fix | `9e9e510` (histogram + Grafana panel; not yet seen on a cluster); retest-requested |
-| 27 | Altus | Major | confirmed: unauthenticated `POST /admin/policy`, `/decide` 500 on a bad config, unbounded `seen` | `tests/test_predictor_stub_admin.py` failed before the fix | `cd8a4d9`; retest-requested |
+| 27 | Altus | Major | confirmed: unauthenticated `POST /admin/policy`, `/decide` 500 on a bad config, unbounded `seen` | `tests/test_predictor_stub_admin.py` failed before the fix | `cd8a4d9` (+ `490b746`: Tier 1 session-auth check allows the stub predictor as a token holder); retest-requested |
 
 ## Not fixed
 
@@ -45,11 +46,27 @@ Nothing in this branch was run on a cluster (CI runs Tier 1) and nothing was app
   TTL eviction). Workaround: enable the opt-in NetworkPolicy and keep the gateway ClusterIP;
   the direct `/v1/warm` route now needs the admin token.
 
+## Verification on this branch
+
+- `make review` on `490b746`: every Tier 0 and Tier 1 step PASS (669 s). The first run (on
+  `1a6bbfd`) failed only `session-auth`, which still expected the gateway to be the only holder
+  of Secret `skypiea-admin`; fixed in `490b746` (test first).
+- `make live`, both stacks: `POST /admin/policy` and `POST /v1/warm` answer 401 with no token
+  and with a wrong token, 200 with the token (never printed); console Normal policy switch, Kill
+  and Restart predictor, `skypiea status` on both namespaces, two full console runs: all OK.
+  **Nothing reverted:** the token changes of #27 and #23 work on the cluster.
+- In-repo token callers exercised on a cluster: console, CLI, `demo/run.sh` (scenario_run),
+  `demo/agent_demo.sh` (agent), failure injection. Unit tests only: `gateway/replay_check.py`,
+  `gateway/concurrent_check.py` (need `data/processed`), `infra/aws/scripts/replay-job.sh` (AWS).
+- Scenario suite, llama3.1:8b, 1 rep: 16/18 (`results/suite/redteam2_check/`), both failures
+  `new_booking` caused by the #9 whole-word keyword; after `1a1f657`: 18/18
+  (`results/suite/redteam2_final/`), as at the earlier final check.
+- `main` CI run 44114708971 failed on a flaky red-team determinism test (flagged time-budget
+  fallback on a slow runner); fixed in `05c0665`.
+
 ## What was not verified on this branch
 
-- No Tier 1 / cluster run (`make demo`, `make live`, `make review`): the admin-token wiring for
-  the stub (#27) and the controller (#23) is covered by unit and chart tests only. If `make
-  demo` / `make live` break on the token, the instructions are to revert only `cd8a4d9` (#27);
-  #23's token change would then need the same check.
-- No AWS action: #11 / #13 are repository changes only.
-- No image rebuild or trivy rescan for #3.
+- No AWS action: #11 / #13 are repository changes only; #13 needs an admin to create
+  `skypiea-node-boundary`.
+- No trivy rescan for #3 (images were rebuilt by `make live`).
+- The red team's load reproductions for #15 and #18 were not re-run.

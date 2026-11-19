@@ -104,7 +104,9 @@ deleting the Secret and running `helm upgrade` again (then restart the gateway).
 
 ## Fixed on branch `fix/redteam-2` (retest requested; issues stay open until retest passes)
 
-None of these was run on a cluster in this branch (Tier 0 only; CI runs Tier 1).
+Verified on this branch with `make review` (Tier 0 and Tier 1 on kind, all steps PASS) and on
+both `make live` stacks: the stub's `POST /admin/policy` and the controller's `POST /v1/warm`
+answer 401 without a token and with a wrong one. Nothing was applied to AWS (#11, #13).
 
 - **Stub predictor admin endpoint (issue #27).** `POST /admin/policy` needs the admin token;
   params are validated at set time (a bad config is 400 and never stored); `/decide` fails open
