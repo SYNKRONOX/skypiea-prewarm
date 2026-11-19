@@ -27,6 +27,12 @@ class HttpControllerClient:
             "tool_class": tool_class, "copies": copies, "ttl_s": ttl_s, "reason": reason})
         r.raise_for_status()
 
+    async def scale_failing(self, server: str) -> bool:
+        """Issue #4: does the controller report that scaling this server up is failing?"""
+        r = await self.client.get(f"{self.url}/v1/state", timeout=self.timeout_s)
+        r.raise_for_status()
+        return bool((r.json().get(server) or {}).get("scale_failing"))
+
     async def inflight(self, gateway_id: str, counts: dict[str, int]) -> None:
         r = await self.client.post(f"{self.url}/v1/inflight", timeout=self.timeout_s,
                                    json={"gateway_id": gateway_id, "counts": counts})

@@ -87,6 +87,9 @@ class GatewayConfig:
     # issue #15: POST /mcp and /v1/hint bodies above this are 413, checked from Content-Length
     # before reading and again while streaming (the pod limit is 256 MiB)
     max_body_bytes: int = 1024 * 1024
+    # issue #4: during a cold wait, ask the controller this often whether scaling the tool up
+    # is failing (RBAC/IAM loss); if so the call fails fast with -32004
+    scale_check_s: float = 2.0
     gateway_id: str = field(default_factory=lambda: uuid.uuid4().hex[:8])
 
 
@@ -323,8 +326,13 @@ class Gateway:
                         if early_addr:
                             self.metrics.early.labels(route.tool_class).inc()
                     else:
-                        ok = await self.tracker.wait_ready(route.server,
-                                                           self.cfg.cold_timeout_s)
+                        ok = await self._wait_cold(route.server)
+                if ok is None:
+                    self.metrics.not_ready.labels(route.tool_class).inc()
+                    return ({"jsonrpc": "2.0", "id": body.get("id"), "error": {
+                        "code": -32004, "message": f"tool {route.server} cannot scale up: the "
+                        f"controller reports failing scale-ups (failing fast, not waiting "
+                        f"{self.cfg.cold_timeout_s:.0f}s)"}}, {"cold": cold})
                 if not ok:
                     self.metrics.not_ready.labels(route.tool_class).inc()
                     return ({"jsonrpc": "2.0", "id": body.get("id"), "error": {
@@ -402,6 +410,27 @@ class Gateway:
         self._spawn(self._predict(session, req))
         return JSONResponse({"accepted": True, "session_id": sid}, status_code=202,
                             headers={SESSION_HEADER: sid})
+
+    async def _wait_cold(self, server: str) -> bool | None:
+        """Wait for a Ready pod up to cold_timeout_s. None = the controller reports that
+        scaling this server up is failing (issue #4): give up early."""
+        probe = getattr(self.controller, "scale_failing", None)
+        ready = asyncio.ensure_future(self.tracker.wait_ready(server, self.cfg.cold_timeout_s))
+        if probe is None:
+            return await ready
+        try:
+            while True:
+                done, _ = await asyncio.wait({ready}, timeout=self.cfg.scale_check_s)
+                if done:
+                    return ready.result()
+                try:
+                    if await probe(server):
+                        return None
+                except Exception:  # controller unreachable: keep waiting as before
+                    pass
+        finally:
+            if not ready.done():
+                ready.cancel()
 
     async def _wait_early(self, server: str, timeout_s: float) -> tuple[bool, str | None]:
         """Ready (False/True, None) or the address of a not-yet-Ready pod whose /healthz

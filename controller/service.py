@@ -153,6 +153,8 @@ class ControllerService:
         # no tick has finished for stuck_after_s (the livenessProbe then restarts the pod)
         self.scale_timeout_s, self.stuck_after_s = scale_timeout_s, stuck_after_s
         self.last_tick_done = clock()
+        # issue #4: consecutive failed scale-ups per server; >= 2 is reported as failing
+        self.scale_failures: dict[str, int] = {}
         self._lock = asyncio.Lock()
         self.ready_event = asyncio.Event()  # set once live state has been loaded (rebuild)
 
@@ -195,8 +197,11 @@ class ControllerService:
                                            self.scale_timeout_s)
                 except Exception as e:  # incl. timeout; retried next tick (plan is idempotent)
                     self.metrics.errors.labels(a.server).inc()
+                    if a.direction == "up":
+                        self.scale_failures[a.server] = self.scale_failures.get(a.server, 0) + 1
                     log.warning("scale %s -> %d failed: %s", a.server, a.to_replicas, e)
                     continue
+                self.scale_failures.pop(a.server, None)
                 self.pool.applied(a, self.clock())
                 self.metrics.events.labels(a.server, a.direction, a.reason).inc()
                 log.info("scaled %s %d -> %d (%s)", a.server, a.from_replicas, a.to_replicas,
@@ -241,7 +246,8 @@ class ControllerService:
                        "copies": st.copies if now < st.warm_until + purge else 0,
                        "warm_for_s": round(max(0.0, st.warm_until - now), 2),
                        "inflight": self.pool.inflight(name, now),
-                       "queued": next((n for s, n in self.pool.queue if s == name), 0)}
+                       "queued": next((n for s, n in self.pool.queue if s == name), 0),
+                       "scale_failing": self.scale_failures.get(name, 0) >= 2}
                 for name, st in self.pool.s.items()}
 
     def web_app(self) -> web.Application:
