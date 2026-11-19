@@ -35,3 +35,17 @@ def test_keywords_are_whole_words():
     assert guards.confirmed_ok("book_flight", "yes, book it", None)
     assert guards.confirmed_ok("apply_promo", "yes, apply the promo", None)
     assert guards.confirmed_ok("cancel_booking", "yes, cancel it", None)
+
+
+@pytest.mark.parametrize("text", ["Yes, I confirm the booking.", "yes, go ahead with the booking",
+                                  "Yes, please make the booking", "yes, proceed with this booking"])
+def test_confirming_the_booking_names_book_flight(text):
+    # scenario suite new_booking (llama3.1:8b, fix/redteam-2): the whole-word change made
+    # "I confirm the booking" no longer name book_flight, so the new booking was never made
+    assert guards.confirmed_ok("book_flight", text, None)
+
+
+@pytest.mark.parametrize("text", ["yes, cancel my booking", "yes, change my booking",
+                                  "yes, what is my booking status"])
+def test_other_booking_phrases_do_not_name_book_flight(text):
+    assert not guards.confirmed_ok("book_flight", text, None)

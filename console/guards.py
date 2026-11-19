@@ -25,7 +25,9 @@ _YES = re.compile(r"\b(yes|yeah|yep|yup|confirm\w*|confrim\w*|go ahead|please do
                   r"sure|ok|okay|do it|book it|that'?s fine|sounds good|correct)\b", re.I)
 _NO = re.compile(r"\b(no|not|never|not yet|don['’]?t|do not|wait|hold on|cancel that|stop)\b", re.I)
 # whole words (issue #9): "booking" is not "book", a "booking code" is not a promo
-KEYWORDS = {"book_flight": r"\bbook\b",
+# "I confirm the booking" names book_flight; "cancel/change my booking" does not
+KEYWORDS = {"book_flight": r"\bbook\b|\b(confirm\w*|go ahead with|make|proceed with)\s+"
+                           r"(the|this|that|my)\s+booking\b",
             "change_flight": r"\b(chang\w*|chnag\w*|mov(e|ing)|switch\w*|resched\w*)\b",
             "cancel_booking": r"\bcancel(l?ed|l?ing)?\b", "add_baggage": r"\b(bag|bags|baggage)\b",
             "issue_refund": r"\brefund\w*\b",
