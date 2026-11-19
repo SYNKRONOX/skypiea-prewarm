@@ -15,12 +15,15 @@ class ControllerClient(Protocol):
 
 
 class HttpControllerClient:
-    def __init__(self, url: str, timeout_s: float = 0.5, client: httpx.AsyncClient | None = None):
+    def __init__(self, url: str, timeout_s: float = 0.5, client: httpx.AsyncClient | None = None,
+                 admin_token: str | None = None):
         self.url, self.timeout_s = url.rstrip("/"), timeout_s
         self.client = client or httpx.AsyncClient()
+        self.headers = {"X-Admin-Token": admin_token} if admin_token else {}   # issue #23
 
     async def warm(self, tool_class: str, copies: int, ttl_s: int | None, reason: str) -> None:
-        r = await self.client.post(f"{self.url}/v1/warm", timeout=self.timeout_s, json={
+        r = await self.client.post(f"{self.url}/v1/warm", timeout=self.timeout_s,
+                                   headers=self.headers, json={
             "tool_class": tool_class, "copies": copies, "ttl_s": ttl_s, "reason": reason})
         r.raise_for_status()
 

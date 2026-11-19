@@ -27,9 +27,47 @@ from prometheus_client import (
 )
 
 from controller.core import Action, PoolConfig, WarmPool
+from gateway import admin_auth
 from tools.common.toolmap import ToolMap, k8s_name, load
 
 log = logging.getLogger("skypiea.controller")
+
+# issue #23: every /v1/warm field is bounded; out of range -> 400
+MAX_COPIES = 10                 # same bound as the predictor contract (parse_response)
+MAX_TTL_S = 86_400
+MAX_START_IN_MS = 600_000
+MAX_TOOL_CLASS_LEN = 128
+# the metric label is one of these (never the raw caller string: bounded cardinality)
+REASONS = ("predict", "hint", "demand", "always_warm", "manual")
+_ENV = object()
+
+
+def _bounded_int(v, name: str, lo: int, hi: int) -> int:
+    if isinstance(v, bool) or not isinstance(v, int) or not lo <= v <= hi:
+        raise ValueError(f"{name} must be an int in [{lo}, {hi}]")
+    return v
+
+
+def parse_warm(d: object) -> tuple[str, int, int | None, str, int]:
+    """Validate a /v1/warm body; ValueError on anything off-range (issue #23)."""
+    if not isinstance(d, dict):
+        raise ValueError("body must be a JSON object")
+    cls = d.get("tool_class")
+    if not isinstance(cls, str) or not 0 < len(cls) <= MAX_TOOL_CLASS_LEN:
+        raise ValueError(f"tool_class must be a string of 1..{MAX_TOOL_CLASS_LEN} chars")
+    copies = _bounded_int(d.get("copies", 1), "copies", 0, MAX_COPIES)
+    ttl = d.get("ttl_s")
+    ttl = None if ttl is None else _bounded_int(ttl, "ttl_s", 0, MAX_TTL_S)
+    start = _bounded_int(d.get("start_in_ms") or 0, "start_in_ms", 0, MAX_START_IN_MS)
+    reason = d.get("reason", "")
+    if not isinstance(reason, str):
+        raise ValueError("reason must be a string")
+    return cls, copies, ttl, reason[:64] or "unspecified", start
+
+
+def reason_label(reason: str) -> str:
+    head = reason.split(":")[0]
+    return head if head in REASONS else "other"
 
 
 class Scaler(Protocol):
@@ -101,7 +139,9 @@ class Metrics:
 class ControllerService:
     def __init__(self, scaler: Scaler, cfg: PoolConfig | None = None,
                  tool_map: ToolMap | None = None, clock=time.monotonic, wall=time.time,
-                 tick_s: float = 0.25):
+                 tick_s: float = 0.25, admin_token: str | None | object = _ENV):
+        # POST /v1/warm needs it (issue #23; env ADMIN_TOKEN from Secret skypiea-admin)
+        self.admin_token = admin_auth.server_token() if admin_token is _ENV else admin_token
         self.tm = tool_map or load()
         self.pool = WarmPool(list(self.tm.servers), cfg)
         self.scaler, self.clock, self.wall, self.tick_s = scaler, clock, wall, tick_s
@@ -121,12 +161,14 @@ class ControllerService:
         n_ref = len(self.pool.refused)
         accepted = self.pool.warm(server, copies, ttl_s, self.clock(), start_in_ms)
         self._count_refused(n_ref)
-        self.metrics.warm_requests.labels(server, reason.split(":")[0]).inc()
+        self.metrics.warm_requests.labels(server, reason_label(reason)).inc()
         return {"server": server, "accepted": accepted, "requested": copies}
 
     def _count_refused(self, n_before: int) -> None:
+        """Count, then drop, what the pool refused (issue #23: the list never grows)."""
         for server, n, why in self.pool.refused[n_before:]:
             self.metrics.refused.labels(server, why).inc(n)
+        self.pool.refused.clear()
 
     # ---------------- reconcile ----------------
     async def tick(self) -> list[Action]:
@@ -195,19 +237,17 @@ class ControllerService:
 
     def web_app(self) -> web.Application:
         async def warm(request: web.Request) -> web.Response:
+            if (deny := admin_auth.check(request.headers.get(admin_auth.HEADER),
+                                         self.admin_token)):
+                return web.json_response({"error": deny[1]}, status=deny[0])
             try:
-                d = await request.json()
-                cls, copies = str(d["tool_class"]), int(d.get("copies", 1))
-                ttl = d.get("ttl_s")
-                ttl = None if ttl is None else int(ttl)
-                start_in_ms = int(d.get("start_in_ms") or 0)
-                reason = str(d.get("reason", ""))[:64] or "unspecified"
+                cls, copies, ttl, reason, start_in_ms = parse_warm(await request.json())
             except (ValueError, KeyError, TypeError) as e:
                 return web.json_response({"error": f"bad request: {e}"}, status=400)
-            if copies < 0 or (ttl is not None and ttl < 0) or start_in_ms < 0:
-                return web.json_response({"error": "copies, ttl_s and start_in_ms must be "
-                                                   ">= 0"}, status=400)
-            return web.json_response(self.warm(cls, copies, ttl, reason, start_in_ms))
+            try:
+                return web.json_response(self.warm(cls, copies, ttl, reason, start_in_ms))
+            except (ArithmeticError, ValueError) as e:     # never a 500 on caller input
+                return web.json_response({"error": f"bad request: {e}"}, status=400)
 
         async def inflight(request: web.Request) -> web.Response:
             try:

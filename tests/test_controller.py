@@ -252,8 +252,10 @@ def test_http_api_validates_and_maps_classes():
     from aiohttp.test_utils import TestClient, TestServer
 
     async def go():
-        svc = ControllerService(FakeScaler(), PoolConfig(max_per_tool=2), clock=Clock(0))
-        async with TestClient(TestServer(svc.web_app())) as c:
+        svc = ControllerService(FakeScaler(), PoolConfig(max_per_tool=2), clock=Clock(0),
+                                admin_token="t")
+        async with TestClient(TestServer(svc.web_app(), ),
+                              headers={"X-Admin-Token": "t"}) as c:
             r = await c.post("/v1/warm", json={"tool_class": "write_file", "copies": 5,
                                                "ttl_s": None, "reason": "predict:v1"})
             body = await r.json()

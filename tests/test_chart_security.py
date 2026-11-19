@@ -50,7 +50,7 @@ def test_admin_token_reaches_only_the_platform(extra):
     """Gateway (#7), stub predictor POST /admin/policy (#27), controller POST /v1/warm (#23);
     never a tool pod or the model."""
     specs = pod_specs(render(*extra))
-    want = {"skypiea-gateway", "skypiea-predictor"}
+    want = {"skypiea-gateway", "skypiea-predictor", "skypiea-controller"}
     assert {n for n, s in specs.items() if uses_admin_secret(s)} == want
     for name in want:
         env = {e["name"]: e for e in specs[name]["containers"][0]["env"]}

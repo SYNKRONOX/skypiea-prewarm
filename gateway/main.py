@@ -49,7 +49,8 @@ def gateway() -> None:
     pred_url = _env("SKYPIEA_PREDICTOR_URL", "")
     predictor = HttpPredictorClient(pred_url, cfg.predictor_timeout_s, http) if pred_url else None
     controller = HttpControllerClient(_env("SKYPIEA_CONTROLLER_URL",
-                                           f"http://skypiea-controller.{ns}.svc:8081"), 0.5, http)
+                                           f"http://skypiea-controller.{ns}.svc:8081"), 0.5, http,
+                                      admin_token=cfg.admin_token)
     tracker = ReadyTracker()
     gw = Gateway(cfg, router, predictor, controller, tracker, http)
     app = gw.app()
