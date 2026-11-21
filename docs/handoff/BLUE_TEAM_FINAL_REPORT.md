@@ -7,7 +7,7 @@
 | Repository | `SYNKRONOX/skypiea-prewarm` |
 | Team members | G. Parthav, L. Mohnish, Ch. Dhanunjaya |
 | Baseline tag and commit | `rt-baseline` `8f81eb7` |
-| Final commit | `<H>` (branch `fix/redteam-2`, from `main` `e29fb39`; not merged at the time of writing) |
+| Final commit | `` (branch `fix/redteam-2`, from `main` `e29fb39`; not merged at the time of writing) |
 | Deployment/test environment | Laptop, WSL2 (Linux 6.18), Docker 29.9.2, kind cluster (1 control plane + 1 worker) with a local registry, Helm chart `charts/skypiea`; Live Console with both stacks (`skypiea-base`, `skypiea-pred`); local LLM llama3.1:8b through Ollama (RTX 5070 Laptop GPU). AWS (EKS) account: **not changed** by this round. GitHub Actions CI (Tier 0 + kind e2e) runs on push. |
 
 Red teams: Altus (rutujmanware, vivek031, ancita13, SymmetricEntropy) and Cloudhack (Red Team 2).
@@ -120,7 +120,7 @@ rescan (#3) were not re-run by us.
 ## 7. Evidence
 
 - **Commits:** `fix/redteam-2` from `e29fb39` (one commit per issue, messages "Refs #N",
-  never "Fixes"); list with `git log --oneline e29fb39..<H>`. Verification commits:
+  never "Fixes"); list with `git log --oneline e29fb39..`. Verification commits:
   `05c0665` (CI flake, below), `490b746` (session-auth check for the new token holders),
   `1a1f657` (#9 regression found by the scenario suite).
 - **CI run:** last `main` run [44114708971](https://github.com/SYNKRONOX/skypiea-prewarm/actions/runs/44114708971)
